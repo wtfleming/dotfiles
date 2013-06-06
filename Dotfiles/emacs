@@ -1,2 +1,5 @@
 ; Map C-x C-u to undo
 (define-key global-map "\C-x\C-u" 'undo)
+
+; Set font size to 12pt
+(set-face-attribute 'default nil :height 120)
