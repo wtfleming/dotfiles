@@ -4,6 +4,9 @@
 ; Set font size to 12pt
 (set-face-attribute 'default nil :height 120)
 
+; Open .gz, etc files for editing
+(auto-compression-mode 1)
+
 ;; Emacs shell
 ; Dont echo passwords 
 (add-hook 'comint-output-filter-functions
