@@ -21,6 +21,12 @@
 (add-hook 'comint-output-filter-functions
       'comint-watch-for-password-prompt)
 
+
+; Ensure line and column numbers are displayed on the mode line
+(setq line-number-mode t) ; Default is on for line, but set it anyways
+(setq column-number-mode t)
+
+
 ;;; Paren Mode
 (setq show-paren-delay 0) ; how long to wait?
 (show-paren-mode t) ; turn paren-mode on
