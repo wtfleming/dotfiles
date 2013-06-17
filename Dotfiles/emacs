@@ -6,6 +6,12 @@
 
 ;;;(load-theme 'zenburn t)
 
+;;; Packages not available in the repositories
+(add-to-list 'load-path "~/.emacs.d/")
+
+; Editing hadoop pig scripts https://github.com/motus/pig-mode
+(load "pig-mode.el")
+
 
 ; Map C-x C-u to undo
 (define-key global-map "\C-x\C-u" 'undo)
