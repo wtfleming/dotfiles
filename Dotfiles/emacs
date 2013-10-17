@@ -30,6 +30,16 @@
 (add-hook 'comint-output-filter-functions
       'comint-watch-for-password-prompt)
 
+;; Backup files
+(setq
+   backup-by-copying t      ; don't clobber symlinks
+   backup-directory-alist
+   '(("." . "~/.saves"))    ; don't litter my fs tree
+   delete-old-versions t
+   kept-new-versions 6
+   kept-old-versions 2
+   version-control t)       ; use versioned backups
+
 
 ; Ensure line and column numbers are displayed on the mode line
 (setq line-number-mode t) ; Default is on for line, but set it anyways
