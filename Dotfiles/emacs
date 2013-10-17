@@ -73,6 +73,11 @@
 ;;; Javascript mode
 (setq js-indent-level 2)
 
+;; Uniquify
+(require 'uniquify)
+(setq  uniquify-buffer-name-style 'post-forward-angle-brackets)
+
+
 
 (defun google ()
   "Google the selected region if any, display a query prompt otherwise."
