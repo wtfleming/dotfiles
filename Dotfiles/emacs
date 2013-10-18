@@ -90,6 +90,11 @@
 (setq recentf-save-file "~/.emacs.d/.recentf")
 
 
+;; Wind Move
+; Move point from window to window using meta and the arrow keys,
+; rather than having to use C-x o
+(windmove-default-keybindings 'meta)
+
 
 (defun google ()
   "Google the selected region if any, display a query prompt otherwise."
