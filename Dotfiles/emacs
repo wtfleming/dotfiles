@@ -105,7 +105,8 @@
 ;; Show trailing whitespace
 (setq-default show-trailing-whitespace t)
 
-
+;; Highlight current line of characters
+(global-hl-line-mode t)
 
 (defun google ()
   "Google the selected region if any, display a query prompt otherwise."
