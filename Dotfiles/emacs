@@ -5,7 +5,7 @@
 
 
 (require 'package)
-(add-to-list 'package-archives 
+(add-to-list 'package-archives
   	     '("marmalade" . "http://marmalade-repo.org/packages/"))
 (add-to-list 'package-archives
              '("melpa" . "http://melpa.milkbox.net/packages/") t)
@@ -15,7 +15,7 @@
 (mapc
  (lambda (package)
    (or (package-installed-p package)
-       (if (y-or-n-p (format "Package %s is missing. Install it? " package)) 
+       (if (y-or-n-p (format "Package %s is missing. Install it? " package))
            (package-install package))))
  '(zenburn-theme scala-mode2))
 
@@ -40,7 +40,7 @@
 (auto-compression-mode 1)
 
 ;; Emacs shell
-; Dont echo passwords 
+; Dont echo passwords
 (add-hook 'comint-output-filter-functions
       'comint-watch-for-password-prompt)
 
@@ -77,10 +77,10 @@
 ;(setq show-paren-style 'expression) ; alternatives are 'parenthesis' and 'mixed'
 
 ;(set-face-background 'show-paren-match-face "#aaaaaa")
-;(set-face-attribute 'show-paren-match-face nil 
+;(set-face-attribute 'show-paren-match-face nil
 ;        :weight 'bold :underline nil :overline nil :slant 'normal)
-;(set-face-foreground 'show-paren-mismatch-face "red") 
-;(set-face-attribute 'show-paren-mismatch-face nil 
+;(set-face-foreground 'show-paren-mismatch-face "red")
+;(set-face-attribute 'show-paren-mismatch-face nil
 ;                    :weight 'bold :underline t :overline nil :slant 'normal)
 
 
