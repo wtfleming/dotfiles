@@ -68,7 +68,7 @@
 (global-set-key "\C-cb" 'org-iswitchb)
 ;(global-font-lock-mode 1) ; all buffers
 ;(add-hook 'org-mode-hook 'turn-on-font-lock) ; Org buffers only
-
+(setq org-return-follows-link t)
 
 
 ;;; Paren Mode
