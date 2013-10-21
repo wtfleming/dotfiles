@@ -125,3 +125,11 @@
     (url-hexify-string (if mark-active
          (buffer-substring (region-beginning) (region-end))
        (read-string "Google: "))))))
+
+
+
+(defun wtf-json-pretty-print ()
+  "JSON pretty print the selected region."
+  (interactive)
+  (save-excursion
+    (shell-command-on-region (mark) (point) "python -m json.tool" (buffer-name) t)))
