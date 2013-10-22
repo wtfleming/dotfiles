@@ -21,26 +21,26 @@
 
 (load-theme 'zenburn t)
 
-;;; Packages not available in the repositories
+;; Packages not available in the repositories
 (add-to-list 'load-path "~/.emacs.d/")
 
-; Editing hadoop pig scripts https://github.com/motus/pig-mode
-;(load "pig-mode.el")
+;; Editing hadoop pig scripts https://github.com/motus/pig-mode
+;;(load "pig-mode.el")
 
-; Use command as meta on OS X
+;; Use command as meta on OS X
 (setq mac-option-modifier 'super)
 (setq mac-command-modifier 'meta)
 
-; Only indent 2 spaces for clojure-mode
+;; Only indent 2 spaces for clojure-mode
 (setq lisp-indent-offset 2)
 
-; Map C-x C-u to undo
+;; Map C-x C-u to undo
 (define-key global-map "\C-x\C-u" 'undo)
 
-; Set font size to 12pt
+;; Set font size to 12pt
 (set-face-attribute 'default nil :height 120)
 
-; Open .gz, etc files for editing
+;; Open .gz, etc files for editing
 (auto-compression-mode 1)
 
 ;; Emacs shell
@@ -59,7 +59,7 @@
    version-control t)       ; use versioned backups
 
 
-; Ensure line and column numbers are displayed on the mode line
+;; Ensure line and column numbers are displayed on the mode line
 (setq line-number-mode t) ; Default is on for line, but set it anyways
 (setq column-number-mode t)
 
@@ -70,12 +70,10 @@
 (global-set-key "\C-cl" 'org-store-link)
 (global-set-key "\C-ca" 'org-agenda)
 (global-set-key "\C-cb" 'org-iswitchb)
-;(global-font-lock-mode 1) ; all buffers
-;(add-hook 'org-mode-hook 'turn-on-font-lock) ; Org buffers only
 (setq org-return-follows-link t)
 
 
-;;; Paren Mode
+;; Paren Mode
 (setq show-paren-delay 0) ; how long to wait?
 (show-paren-mode t) ; turn paren-mode on
 ;(setq show-paren-style 'expression) ; alternatives are 'parenthesis' and 'mixed'
@@ -88,7 +86,7 @@
 ;                    :weight 'bold :underline t :overline nil :slant 'normal)
 
 
-;;; Javascript mode
+;; Javascript mode
 (setq js-indent-level 2)
 
 ;; Uniquify
@@ -120,6 +118,8 @@
 ;; Highlight current line of characters
 (global-hl-line-mode t)
 
+
+;; Functions
 (defun google ()
   "Google the selected region if any, display a query prompt otherwise."
   (interactive)
@@ -135,6 +135,7 @@
   (interactive)
   (save-excursion
     (shell-command-on-region (mark) (point) "python -m json.tool" (buffer-name) t)))
+
 
 ;; Scala Mode 2
 (add-hook 'scala-mode-hook '(lambda ()
