@@ -25,7 +25,11 @@
 (add-to-list 'load-path "~/.emacs.d/")
 
 ; Editing hadoop pig scripts https://github.com/motus/pig-mode
-(load "pig-mode.el")
+;(load "pig-mode.el")
+
+; Use command as meta on OS X
+(setq mac-option-modifier 'super)
+(setq mac-command-modifier 'meta)
 
 ; Only indent 2 spaces for clojure-mode
 (setq lisp-indent-offset 2)
