@@ -69,6 +69,8 @@
 (setq column-number-mode t)
 
 
+;; Don't show the splash screen
+(setq inhibit-startup-screen t)
 
 ;; Org-mode settings
 (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
