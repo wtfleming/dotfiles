@@ -93,6 +93,11 @@
 ;                    :weight 'bold :underline t :overline nil :slant 'normal)
 
 
+;; don't let me accidentally exit out of emacs
+;; use "M-x kill-emacs" instead
+;;(global-unset-key "\C-x\C-c")
+
+
 ;; Javascript mode
 (setq js-indent-level 2)
 
