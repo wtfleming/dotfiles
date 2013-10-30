@@ -17,7 +17,7 @@
    (or (package-installed-p package)
        (if (y-or-n-p (format "Package %s is missing. Install it? " package))
            (package-install package))))
- '(zenburn-theme scala-mode2 rainbow-mode))
+ '(zenburn-theme scala-mode2 rainbow-mode anzu))
 
 (load-theme 'zenburn t)
 
@@ -52,6 +52,12 @@
 ; Dont echo passwords
 (add-hook 'comint-output-filter-functions
       'comint-watch-for-password-prompt)
+
+;; Anzu
+;; Displays current match and total matches information in the mode-line
+;; in various search modes.
+;; https://github.com/syohex/emacs-anzu
+(global-anzu-mode +1)
 
 ;; Backup files
 (setq
