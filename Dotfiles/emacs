@@ -103,6 +103,8 @@
 ;; use "M-x kill-emacs" instead
 ;;(global-unset-key "\C-x\C-c")
 
+;; Dired
+(setq dired-listing-switches "-lh")
 
 ;; Javascript mode
 (setq js-indent-level 2)
