@@ -85,7 +85,6 @@
 (global-set-key "\C-cb" 'org-iswitchb)
 (setq org-return-follows-link t)
 
-
 ;; Paren Mode
 (setq show-paren-delay 0) ; how long to wait?
 (show-paren-mode t) ; turn paren-mode on
