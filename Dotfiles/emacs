@@ -81,6 +81,10 @@
 ;; Don't show the splash screen
 (setq inhibit-startup-screen t)
 
+;; Don't include a message in the *scratch* buffer
+(setq initial-scratch-message "")
+
+
 ;; Org-mode settings
 (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
 (global-set-key "\C-cl" 'org-store-link)
