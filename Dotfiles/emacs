@@ -41,8 +41,7 @@
 ;; the same window, rather than a new one.
 (global-set-key (kbd "C-x C-b") 'buffer-menu)
 
-
-;; Only indent 2 spaces for clojure-mode
+;; Ensure we only indent 2 spaces for clojure-mode
 (setq lisp-indent-offset 2)
 
 ;; Map C-x C-u to undo
@@ -58,6 +57,10 @@
 ; Dont echo passwords
 (add-hook 'comint-output-filter-functions
       'comint-watch-for-password-prompt)
+
+;; Automatically indent new lines in programming major modes
+(electric-indent-mode +1)
+
 
 ;; Backup files
 (setq
