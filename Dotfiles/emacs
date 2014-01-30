@@ -60,7 +60,8 @@
       'comint-watch-for-password-prompt)
 
 ;; Automatically indent new lines in programming major modes
-(electric-indent-mode +1)
+;; For now turn off since it does not seem to play well with org-mode
+;(electric-indent-mode +1)
 
 
 ;; Backup files
