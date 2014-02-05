@@ -42,6 +42,10 @@
 ;; the same window, rather than a new one.
 (global-set-key (kbd "C-x C-b") 'buffer-menu)
 
+;; Disable emacs built in version control for faster startup
+;; I use magit instead of it
+(setq vc-handled-backends ())
+
 ;; magit
 (global-set-key (kbd "C-c m") 'magit-status)
 
