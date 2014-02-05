@@ -42,6 +42,9 @@
 ;; the same window, rather than a new one.
 (global-set-key (kbd "C-x C-b") 'buffer-menu)
 
+;; magit
+(global-set-key (kbd "C-c m") 'magit-status)
+
 ;; Ensure we only indent 2 spaces for clojure-mode
 (setq lisp-indent-offset 2)
 
