@@ -1,0 +1,3 @@
+emacs flyspell needs a spell checking tool, install one on os x
+
+brew install aspell --with-lang-en
