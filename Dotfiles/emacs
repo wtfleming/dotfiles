@@ -100,6 +100,7 @@
 (global-set-key "\C-ca" 'org-agenda)
 (global-set-key "\C-cb" 'org-iswitchb)
 (setq org-return-follows-link t)
+(setq org-startup-indented t)
 
 ;; Org Capture
 (setq org-directory "~/org-mode/")
