@@ -3,6 +3,9 @@ if [ -f ~/.bash_aliases ]; then
     . ~/.bash_aliases
 fi
 
+# Ensure emacs style editing
+set -o emacs
+
 # OS X ships with BSD ls rather than GNU ls
 # Add color to ls output
 if [ "$(uname)" == "Darwin" ]; then
