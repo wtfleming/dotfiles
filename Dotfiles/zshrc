@@ -1,2 +1,5 @@
 # Ensure keymap is bound to emacs mode
 bindkey -e
+
+# Don't exit the shell when typing Ctrl-d on an empty line
+setopt ignore_eof
