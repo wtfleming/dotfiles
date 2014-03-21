@@ -3,6 +3,12 @@ if [ -f ~/.bash_aliases ]; then
     . ~/.bash_aliases
 fi
 
+# Ensure emacs style editing
+set -o emacs
+
+# Don't exit the shell when typing Ctrl-d on an empty line
+IGNOREEOF=10
+
 # OS X ships with BSD ls rather than GNU ls
 # Add color to ls output
 if [ "$(uname)" == "Darwin" ]; then
