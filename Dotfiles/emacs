@@ -3,6 +3,24 @@
 (if (fboundp 'tool-bar-mode) (tool-bar-mode -1))
 (if (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
 
+;; Get current system type
+(defun insert-system-type()
+  (interactive)
+  "Get current system type"
+  (insert (format "%s" system-type)))
+
+;; Check if system is Darwin/Mac OS X
+(defun system-type-is-darwin ()
+  (interactive)
+  "Return true if system is darwin-based (Mac OS X)"
+  (string-equal system-type "darwin"))
+
+;; Check if system is GNU/Linux
+(defun system-type-is-gnu ()
+  (interactive)
+  "Return true if system is GNU/Linux-based"
+  (string-equal system-type "gnu/linux"))
+
 
 (require 'package)
 (add-to-list 'package-archives
@@ -48,6 +66,11 @@
 
 ;; magit
 (global-set-key (kbd "C-c m") 'magit-status)
+
+;; On OS X make magit commits work with emacs installed via homebrew
+(if (system-type-is-darwin)
+  (set-variable 'magit-emacsclient-executable "/usr/local/Cellar/emacs/24.3/bin/emacsclient"))
+
 
 ;; Ensure we only indent 2 spaces for clojure-mode
 (setq lisp-indent-offset 2)
