@@ -233,3 +233,5 @@
 
 (setq default-directory "~/")
 
+; tramp-mode
+(setq tramp-default-method "ssh")
