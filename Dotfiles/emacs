@@ -192,6 +192,12 @@
 (if (system-type-is-darwin)
   (x-focus-frame nil))
 
+
+;; ispell
+(if (system-type-is-darwin)
+  (setq ispell-program-name "/usr/local/bin/ispell"))
+
+
 ;; Functions
 (defun google ()
   "Google the selected region if any, display a query prompt otherwise."
