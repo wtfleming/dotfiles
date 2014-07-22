@@ -121,6 +121,8 @@
 (global-set-key "\C-cb" 'org-iswitchb)
 (setq org-return-follows-link t)
 (setq org-startup-indented t)
+(setq org-todo-keywords
+  '((sequence "TODO" "IN-PROGRESS" "WAITING" "DONE")))
 
 ;; Org Capture
 (setq org-directory "~/org-mode/")
