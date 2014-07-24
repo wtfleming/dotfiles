@@ -92,3 +92,16 @@
 ;; Automatically indent new lines in programming major modes
 ;; For now turn off since it does not seem to play well with org-mode
 ;(electric-indent-mode +1)
+
+;; Use Emacs terminfo, not system terminfo
+;; http://stackoverflow.com/questions/8918910/weird-character-zsh-in-emacs-terminal
+(setq system-uses-terminfo nil)
+
+;; Prefer utf-8 encoding
+(prefer-coding-system 'utf-8)
+
+;; Pasting over something kills it
+(delete-selection-mode 1)
+
+;; No tabs in indentation
+(setq-default indent-tabs-mode nil)
