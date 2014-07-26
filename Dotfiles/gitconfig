@@ -1,0 +1,9 @@
+[user]
+        name = Will Fleming
+        email = wfleming77@gmail.com
+[core]
+        editor = emacs
+[color]
+        ui = true
+[github]
+        user = wtfleming
