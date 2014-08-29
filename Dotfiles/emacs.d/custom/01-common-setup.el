@@ -42,6 +42,8 @@
 (add-hook 'comint-output-filter-functions
       'comint-watch-for-password-prompt)
 
+;; Use y or n for emacs yes or no questions
+(defalias 'yes-or-no-p 'y-or-n-p)
 
 ;; Backup files
 (setq
