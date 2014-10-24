@@ -45,3 +45,6 @@ fi
 PATH=$PATH:$HOME/.rvm/bin # Add RVM to PATH for scripting
 
 export PATH="/usr/local/heroku/bin:$PATH"
+
+# Hack to use the Energia bundled msp430-gcc on OS X
+export PATH="/Applications/Energia.app/Contents/Resources/Java/hardware/tools/msp430/bin:$PATH"
