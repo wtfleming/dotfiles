@@ -17,3 +17,7 @@ alias l='ls -CF'
 
 alias gut='git'
 alias exut='exit'
+
+
+# alias emacs='/Applications/MacPorts/Emacs.app/Contents/MacOS/Emacs'
+# alias emacsclient='/Applications/MacPorts/Emacs.app/Contents/MacOS/bin/emacsclient'
