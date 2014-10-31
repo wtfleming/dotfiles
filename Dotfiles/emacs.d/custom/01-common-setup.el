@@ -28,6 +28,9 @@
 (setq mac-option-modifier 'super)
 (setq mac-command-modifier 'meta)
 
+;; Let M-x toggle-frame-fullscreen work correctly on OS X
+(setq ns-use-native-fullscreen nil)
+
 ;; Map C-x C-u to undo
 (define-key global-map "\C-x\C-u" 'undo)
 
