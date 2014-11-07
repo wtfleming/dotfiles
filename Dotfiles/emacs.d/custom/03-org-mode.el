@@ -18,3 +18,8 @@
       "* TODO %?\n %i\n")
      ("l" "Link" plain (file (concat org-directory "/links.org"))
        "- %?\n %x\n")))
+
+;; Org agenda
+; Store list of agenda files in org folder so we can easily use
+; git to keep it synced
+(setq org-agenda-files (concat org-directory ".agenda-files"))
