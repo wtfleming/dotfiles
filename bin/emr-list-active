@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+set -x
+
+elastic-mapreduce --credentials ~/.ec2/credentials-us-west-1.json --list --active
