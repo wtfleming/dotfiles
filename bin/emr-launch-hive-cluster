@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+set -x
+
+elastic-mapreduce --create --alive --name "forecast dev" --credentials ~/.ec2/credentials-us-west-1.json --ami-version 3.3.0 --impala-interactive --instance-group master --instance-type m1.large --instance-count 1 --instance-group core --instance-type m2.4xlarge --instance-count 10 --bid-price 1.00

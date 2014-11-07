@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+set -x
+
+ssh -i ~/.ec2/uberads.us-west-1.elasticmapreduce.pem -L 9100:localhost:9100 -L 9101:localhost:9101 -L 9103:localhost:9103 -L 9026:localhost:9026 -L 9035:localhost:9035 -A hadoop@$1
+
+
