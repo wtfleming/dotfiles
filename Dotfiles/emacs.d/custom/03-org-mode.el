@@ -26,3 +26,9 @@
 
 ; Don't close windows on exit
 (setq org-agenda-window-setup 'current-window)
+
+; Use solarized CSS for export  http://thomasf.github.io/solarized-css/
+(setq org-export-html-style-include-scripts nil
+      org-export-html-style-include-default nil)
+(setq org-export-html-style
+      (concat "<link rel=\"stylesheet\" type=\"text/css\" href=\"" (expand-file-name org-directory) "css/solarized-light.min.css\" />"))
