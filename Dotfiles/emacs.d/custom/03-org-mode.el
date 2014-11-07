@@ -23,3 +23,6 @@
 ; Store list of agenda files in org folder so we can easily use
 ; git to keep it synced
 (setq org-agenda-files (concat org-directory ".agenda-files"))
+
+; Don't close windows on exit
+(setq org-agenda-window-setup 'current-window)
