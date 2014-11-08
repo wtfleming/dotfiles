@@ -27,6 +27,19 @@
          (buffer-substring (region-beginning) (region-end))
        (read-string "Google: "))))))
 
+(defun wtf-googlemaps-lat-lon ()
+  "Open in google maps the selected region if any, otherwise display a query prompt. Expects lat/lon pair to be whitespace separated"
+  (interactive)
+  (let* ((lat-lon-string (url-hexify-string (if mark-active
+         (buffer-substring (region-beginning) (region-end))
+         (read-string "Googlemaps lat/lon: "))))
+         (lat-lon-list (split-string lat-lon-string))
+         (lat (nth 0 lat-lon-list))
+         (lon (nth 1 lat-lon-list))
+         (url-params (concat lat "%2C" lon)))
+    (browse-url
+     (concat "http://maps.google.com/?q=" lat))))
+
 (defun wtf-json-pretty-print ()
   "JSON pretty print the selected region."
   (interactive)
