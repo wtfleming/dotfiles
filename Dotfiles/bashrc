@@ -40,8 +40,8 @@ if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
     . /etc/bash_completion
 fi
 
-
-#$(boot2docker shellinit)
+# Init boot2docker and quiet output
+#$(boot2docker shellinit > /dev/null 2>&1)
 
 export GIT_EDITOR=emacs
 export GIT_AUTHOR_NAME="Will Fleming"
