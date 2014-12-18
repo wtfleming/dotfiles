@@ -111,13 +111,12 @@
 ; rather than having to use C-x o
 (windmove-default-keybindings 'meta)
 
-;; Show trailing whitespace
+;; ------------ trailing-whitespace-----------------
 (setq-default show-trailing-whitespace t)
 
-; don't highlight trailing whitespace in some modes
-(dolist (hook '(shell-mode-hook eshell-mode-hook dired-mode-hook))
+(dolist (hook '(shell-mode-hook eshell-mode-hook dired-mode-hook buffer-menu-mode-hook))
   (add-hook hook (lambda () (set-variable 'show-trailing-whitespace nil))))
-
+;; ------------------------------------------------
 
 ;; Highlight current line of characters
 (global-hl-line-mode t)
