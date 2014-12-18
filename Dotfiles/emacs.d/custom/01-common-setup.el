@@ -21,10 +21,12 @@
 ;; Enable company mode for auto-completion
 (add-hook 'after-init-hook 'global-company-mode)
 
-
 ;; Disable emacs built in version control for faster startup
 ;; Use magit instead of it
 (setq vc-handled-backends ())
+
+;; No beep warning
+(setq visible-bell t)
 
 ;; Override opening the buffer menu so it happens in
 ;; the same window, rather than a new one.
@@ -47,12 +49,13 @@
 ;; Open .gz, etc files for editing
 (auto-compression-mode 1)
 
+;; ----------- emacs shell ----------------------------
 ;; Emacs shell
 ; Dont echo passwords
 (add-hook 'comint-output-filter-functions
       'comint-watch-for-password-prompt)
 
-; Clear shell buffer with C-c l (like C-l in a terminal)
+;; Clear shell buffer with C-c l (like C-l in a terminal)
 (defun my-clear ()
   (interactive)
   (let ((comint-buffer-maximum-size 0))
@@ -62,7 +65,7 @@
   (local-set-key "\C-cl" 'my-clear))
 
 (add-hook 'shell-mode-hook 'my-shell-hook)
-
+;; -------------------------------------------
 
 ;; Use y or n for emacs yes or no questions
 (defalias 'yes-or-no-p 'y-or-n-p)
