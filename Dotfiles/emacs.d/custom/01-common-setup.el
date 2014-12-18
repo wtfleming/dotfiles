@@ -31,6 +31,10 @@
 ;; Set default major mode to text-mode
 (setq default-major-mode 'text-mode)
 
+;; Enable flyspell in text-mode
+(dolist (hook '(text-mode-hook))
+      (add-hook hook (lambda () (flyspell-mode 1))))
+
 ;; Override opening the buffer menu so it happens in
 ;; the same window, rather than a new one.
 (global-set-key (kbd "C-x C-b") 'buffer-menu)
