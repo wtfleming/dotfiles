@@ -28,10 +28,12 @@
 ;; No beep warning
 (setq visible-bell t)
 
+;; Set default major mode to text-mode
+(setq default-major-mode 'text-mode)
+
 ;; Override opening the buffer menu so it happens in
 ;; the same window, rather than a new one.
 (global-set-key (kbd "C-x C-b") 'buffer-menu)
-
 
 ;; Use command as meta on OS X
 (setq mac-option-modifier 'super)
@@ -91,6 +93,9 @@
 
 ;; Don't include a message in the *scratch* buffer
 (setq initial-scratch-message "")
+
+;; Set *scratch* buffer to use text-mode instead of lisp-interaction-mode
+(setq initial-major-mode 'text-mode)
 
 
 ;; don't let me accidentally exit out of emacs
