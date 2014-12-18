@@ -25,8 +25,8 @@
 ;; Use magit instead of it
 (setq vc-handled-backends ())
 
-;; No beep warning
-(setq visible-bell t)
+;; No beep warning or flash
+(setq ring-bell-function 'ignore)
 
 ;; Set default major mode to text-mode
 (setq default-major-mode 'text-mode)
