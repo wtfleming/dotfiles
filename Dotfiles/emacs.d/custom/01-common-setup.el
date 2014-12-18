@@ -11,12 +11,16 @@
    (or (package-installed-p package)
        (if (y-or-n-p (format "Package %s is missing. Install it? " package))
            (package-install package))))
- '(zenburn-theme scala-mode2 rainbow-mode expand-region cider color-identifiers-mode magit pig-mode git-gutter))
+ '(zenburn-theme scala-mode2 rainbow-mode expand-region cider color-identifiers-mode magit pig-mode git-gutter company))
 
 (load-theme 'zenburn t)
 
 ;; Enable git-gutter globally
 (global-git-gutter-mode +1)
+
+;; Enable company mode for auto-completion
+(add-hook 'after-init-hook 'global-company-mode)
+
 
 ;; Disable emacs built in version control for faster startup
 ;; Use magit instead of it
