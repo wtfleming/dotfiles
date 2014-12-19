@@ -18,6 +18,9 @@
 ;; Enable git-gutter globally
 (global-git-gutter-mode +1)
 
+;; semantic-mode
+(semantic-mode 1)
+
 ;; Enable company mode for auto-completion
 (add-hook 'after-init-hook 'global-company-mode)
 
