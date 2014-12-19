@@ -11,14 +11,17 @@
    (or (package-installed-p package)
        (if (y-or-n-p (format "Package %s is missing. Install it? " package))
            (package-install package))))
- '(zenburn-theme scala-mode2 rainbow-mode expand-region cider color-identifiers-mode magit pig-mode git-gutter company helm))
+ '(zenburn-theme scala-mode2 rainbow-mode expand-region cider color-identifiers-mode magit pig-mode git-gutter company helm projectile helm-projectile))
 
 (load-theme 'zenburn t)
 
 ;; Enable git-gutter globally
 (global-git-gutter-mode +1)
 
-;; semantic-mode
+;; Enable projectile
+(projectile-global-mode)
+
+;; Enable semantic-mode
 (semantic-mode 1)
 
 ;; Enable company mode for auto-completion
