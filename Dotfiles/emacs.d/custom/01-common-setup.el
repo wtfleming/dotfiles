@@ -11,7 +11,7 @@
    (or (package-installed-p package)
        (if (y-or-n-p (format "Package %s is missing. Install it? " package))
            (package-install package))))
- '(zenburn-theme scala-mode2 rainbow-mode expand-region cider color-identifiers-mode magit pig-mode git-gutter company))
+ '(zenburn-theme scala-mode2 rainbow-mode expand-region cider color-identifiers-mode magit pig-mode git-gutter company helm))
 
 (load-theme 'zenburn t)
 
@@ -110,6 +110,7 @@
 ; Move point from window to window using meta and the arrow keys,
 ; rather than having to use C-x o
 (windmove-default-keybindings 'meta)
+
 
 ;; ------------ trailing-whitespace-----------------
 (setq-default show-trailing-whitespace t)
