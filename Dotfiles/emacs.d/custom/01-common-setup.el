@@ -121,7 +121,8 @@
 ;; ------------ trailing-whitespace-----------------
 (setq-default show-trailing-whitespace t)
 
-(dolist (hook '(shell-mode-hook eshell-mode-hook dired-mode-hook buffer-menu-mode-hook))
+;; Disable trailing whitespace in some modes
+(dolist (hook '(shell-mode-hook eshell-mode-hook dired-mode-hook buffer-menu-mode-hook cider-repl-mode-hook))
   (add-hook hook (lambda () (set-variable 'show-trailing-whitespace nil))))
 ;; ------------------------------------------------
 
