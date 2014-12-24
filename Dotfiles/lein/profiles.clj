@@ -2,5 +2,6 @@
                   [lein-cljsbuild "1.0.3"]
                   [lein-try "0.4.3"]
                   [lein-simpleton "1.3.0"]
+                  [lein-ancient "0.5.5"]
                   [cider/cider-nrepl "0.8.2-SNAPSHOT"]
                   [codox "0.8.10"]] }}
