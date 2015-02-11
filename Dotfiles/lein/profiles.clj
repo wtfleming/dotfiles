@@ -1,4 +1,4 @@
-{:user {:plugins [[jonase/eastwood "0.2.0"]
+{:user {:plugins [[jonase/eastwood "0.2.1"]
                   [lein-cljsbuild "1.0.4"]
                   [lein-try "0.4.3"]
                   [lein-simpleton "1.3.0"]
