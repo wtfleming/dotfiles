@@ -40,6 +40,11 @@ if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
     . /etc/bash_completion
 fi
 
+# OS X boot2docker
+#export DOCKER_HOST=tcp://192.168.59.103:2376
+#export DOCKER_CERT_PATH=/Users/wtf/.boot2docker/certs/boot2docker-vm
+#export DOCKER_TLS_VERIFY=1
+
 # Init boot2docker and quiet output
 #$(boot2docker shellinit > /dev/null 2>&1)
 
