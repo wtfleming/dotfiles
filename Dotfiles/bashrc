@@ -63,7 +63,8 @@ export PATH="/usr/local/heroku/bin:$PATH"
 export PATH="/Applications/Energia.app/Contents/Resources/Java/hardware/tools/msp430/bin:$PATH"
 
 # Google C++ Mocking Framework
-export GMOCK_HOME=$HOME/bin/gmock-1.6.0
+#export GMOCK_HOME=$HOME/bin/gmock-1.6.0
+export GMOCK_HOME=$HOME/bin/gmock-1.7.0
 
 # ruby rbenv
 export PATH="$HOME/.rbenv/bin:$PATH"
