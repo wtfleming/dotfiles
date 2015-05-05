@@ -21,3 +21,7 @@ alias exut='exit'
 
 # alias emacs='/Applications/MacPorts/Emacs.app/Contents/MacOS/Emacs'
 # alias emacsclient='/Applications/MacPorts/Emacs.app/Contents/MacOS/bin/emacsclient'
+
+#alias emacs='/home/wtf/bin/emacs-24.5/src/emacs'
+#alias emacsclient='/home/wtf/bin/emacs-24.5/src/emacsclient'
+
