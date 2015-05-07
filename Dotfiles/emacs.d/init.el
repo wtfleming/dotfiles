@@ -22,3 +22,4 @@
 (load "14-tramp.el")
 (load "15-ibuffer.el")
 (load "16-helm.el")
+(load "17-yasnippet.el")
