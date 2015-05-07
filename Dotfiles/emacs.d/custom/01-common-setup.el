@@ -11,7 +11,7 @@
    (or (package-installed-p package)
        (if (y-or-n-p (format "Package %s is missing. Install it? " package))
            (package-install package))))
- '(zenburn-theme scala-mode2 rainbow-mode expand-region cider color-identifiers-mode magit pig-mode git-gutter company helm projectile helm-projectile))
+ '(zenburn-theme scala-mode2 rainbow-mode expand-region cider color-identifiers-mode magit pig-mode git-gutter company helm projectile helm-projectile yasnippet))
 
 (load-theme 'zenburn t)
 
