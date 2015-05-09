@@ -23,3 +23,4 @@
 (load "15-ibuffer.el")
 (load "16-helm.el")
 (load "17-yasnippet.el")
+(load "18-abbrev-mode.el")
