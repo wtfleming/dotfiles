@@ -73,3 +73,6 @@ eval "$(rbenv init -)"
 export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH"
 
 PATH=$PATH:$HOME/bin/elastic-mapreduce-ruby
+
+# List tmux sessions on login. If none, don't show the error.
+tmux list-sessions 2> /dev/null
