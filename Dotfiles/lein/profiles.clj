@@ -5,6 +5,6 @@
                   [com.jakemccrary/lein-test-refresh "0.9.0"]
                   [lein-kibit "0.1.2"]
                   [lein-pprint "1.1.1"]
-                  [lein-ancient "0.6.6"]
+                  ;[lein-ancient "0.6.7"]
                   [cider/cider-nrepl "0.9.0-SNAPSHOT"]
                   [codox "0.8.10"]] }}
