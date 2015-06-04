@@ -77,6 +77,9 @@ PATH=$PATH:$HOME/bin/elastic-mapreduce-ruby
 # List tmux sessions on login. If none, don't show the error.
 tmux list-sessions 2> /dev/null
 
+[[ -e ~/.git-completion.bash ]] && source ~/.git-completion.bash
+[[ -e ~/.git-prompt.sh ]] && source ~/.git-prompt.sh
+
 
 MAGENTA="\[\033[0;35m\]"
 YELLOW="\[\033[0;33m\]"
