@@ -74,8 +74,12 @@ export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH"
 
 PATH=$PATH:$HOME/bin/elastic-mapreduce-ruby
 
-# List tmux sessions on login. If none, don't show the error.
-tmux list-sessions 2> /dev/null
+# Only run this tmux command in an interactive shell
+# since it writes to stdout, which breaks scp
+case "$-" in
+    # List tmux sessions on login. If none, don't show the error.
+    *i*) tmux list-sessions 2> /dev/null
+esac
 
 [[ -e ~/.git-completion.bash ]] && source ~/.git-completion.bash
 [[ -e ~/.git-prompt.sh ]] && source ~/.git-prompt.sh
