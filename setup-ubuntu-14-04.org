@@ -1,0 +1,106 @@
+* General
+mkdir ~/bin
+mkdir ~/src
+
+sudo apt-get install htop cmake
+
+* Classic window manager
+sudo apt-get install gnome-session-fallback
+
+* Git
+Ubuntu 14.04 does not have Git 2.x deb packages, so use a PPA:
+
+sudo apt-get install python-software-properties
+sudo add-apt-repository ppa:git-core/ppa
+sudo apt-get update
+sudo apt-get install git
+
+Add github ssh keys
+https://help.github.com/articles/generating-ssh-keys/
+
+
+* Dotfiles
+git clone git@github.com:wtfleming/dotfiles.git
+cp ~/src/dotfiles/Dotfiles/gitconfig ~/.gitconfig
+cp ~/src/dotfiles/Dotfiles/bash_aliases ~/.bash_aliases
+cp ~/src/dotfiles/Dotfiles/bashrc ~/.bashrc
+cp ~/src/dotfiles/Dotfiles/bash_logout ~/.bash_logout
+cp ~/src/dotfiles/Dotfiles/bash_profile ~/.bash_profile
+
+* tmux
+cp ~/src/dotfiles/Dotfiles/tmux.conf ~/.tmux.conf
+
+
+* Emacs 24.5
+
+sudo apt-get install build-essential libncurses5-dev
+sudo apt-get build-dep emacs24
+cd ~/bin
+wget http://ftp.gnu.org/gnu/emacs/emacs-24.5.tar.gz
+tar xzvf emacs-24.5.tar.gz
+cd emacs-24.5
+./configure
+# server-config ./configure --with-xpm=no --with-gif=no --without-x
+make
+# optional make install
+
+in bash_aliases add
+alias emacs='/home/wtf/bin/emacs-24.5/src/emacs'
+alias emacsclient='/home/wtf/bin/emacs-24.5/src/emacsclient'
+
+cp -r ~/src/dotfiles/Dotfiles/emacs.d ~/.emacs.d/
+
+cd ~/.emacs.d
+git clone git@github.com:AndreaCrotti/yasnippet-snippets.git
+mkdir ~/.emacs.d/snippets
+
+First time loading need to m-x package-list-packages
+
+* Java 8
+sudo add-apt-repository ppa:webupd8team/java
+sudo apt-get update
+sudo apt-get install oracle-java8-installer
+
+java -version
+
+* lein
+cd ~/bin
+wget https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein
+chmod a+x ~/bin/lein
+
+cp -r ~/src/dotfiles/Dotfiles/lein/ ~/.lein/
+
+* nodejs 0.12 and npm
+# Needed nodejs for jekyll blog
+curl -sL https://deb.nodesource.com/setup_0.12 | sudo bash -
+sudo apt-get install -y nodejs
+
+
+* Ruby via rbenv
+sudo apt-get update
+sudo apt-get install git-core curl zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev python-software-properties libffi-dev
+
+
+cd
+git clone git://github.com/sstephenson/rbenv.git .rbenv
+echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+exec $SHELL
+
+git clone git://github.com/sstephenson/ruby-build.git ~/.rbenv/plugins/ruby-build
+echo 'export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH"' >> ~/.bashrc
+exec $SHELL
+
+git clone https://github.com/sstephenson/rbenv-gem-rehash.git ~/.rbenv/plugins/rbenv-gem-rehash
+
+rbenv install 2.2.2
+rbenv global 2.2.2
+ruby -v
+
+gem install bundler
+
+
+
+* Inkscape
+sudo add-apt-repository ppa:inkscape.dev/stable
+sudo apt-get update
+sudo apt-get install inkscape
