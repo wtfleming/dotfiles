@@ -1,8 +1,10 @@
 (require 'package)
+;; (add-to-list 'package-archives
+;;   	     '("marmalade" . "http://marmalade-repo.org/packages/"))
+;; (add-to-list 'package-archives
+;;              '("melpa" . "http://melpa.milkbox.net/packages/") t)
 (add-to-list 'package-archives
-  	     '("marmalade" . "http://marmalade-repo.org/packages/"))
-(add-to-list 'package-archives
-             '("melpa" . "http://melpa.milkbox.net/packages/") t)
+             '("melpa-stable" . "http://stable.melpa.org/packages/") t)
 (package-initialize)
 
 ;; Check if the packages are installed; if not, install them.
@@ -11,7 +13,7 @@
    (or (package-installed-p package)
        (if (y-or-n-p (format "Package %s is missing. Install it? " package))
            (package-install package))))
- '(zenburn-theme scala-mode2 rainbow-mode expand-region cider color-identifiers-mode magit pig-mode git-gutter company helm projectile helm-projectile yasnippet))
+ '(zenburn-theme scala-mode2 rainbow-mode expand-region cider color-identifiers-mode magit git-gutter company helm projectile helm-projectile yasnippet))
 
 (load-theme 'zenburn t)
 
