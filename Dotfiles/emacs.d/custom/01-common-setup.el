@@ -17,6 +17,10 @@
 
 (load-theme 'zenburn t)
 
+;; Maximize Emacs frame on startup
+;; http://emacs.stackexchange.com/questions/2999/how-to-maximize-my-emacs-frame-on-start-up
+(add-to-list 'default-frame-alist '(fullscreen . maximized))
+
 ;; Enable git-gutter globally
 (global-git-gutter-mode +1)
 
