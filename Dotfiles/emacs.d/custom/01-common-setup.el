@@ -19,9 +19,23 @@
    (or (package-installed-p package)
        (if (y-or-n-p (format "Package %s is missing. Install it? " package))
            (package-install package))))
- '(zenburn-theme scala-mode2 rainbow-mode expand-region cider color-identifiers-mode magit git-gutter company helm projectile helm-projectile yasnippet))
+ '(zenburn-theme scala-mode2 rainbow-mode expand-region cider color-identifiers-mode magit git-gutter company helm projectile helm-projectile yasnippet paredit))
 
+;; Load a theme
 (load-theme 'zenburn t)
+
+;; Enable paredit in some modes
+(autoload 'enable-paredit-mode "paredit" "Turn on pseudo-structural editing of Lisp code." t)
+(add-hook 'emacs-lisp-mode-hook       #'enable-paredit-mode)
+(add-hook 'eval-expression-minibuffer-setup-hook #'enable-paredit-mode)
+(add-hook 'ielm-mode-hook             #'enable-paredit-mode)
+(add-hook 'lisp-mode-hook             #'enable-paredit-mode)
+(add-hook 'lisp-interaction-mode-hook #'enable-paredit-mode)
+(add-hook 'scheme-mode-hook           #'enable-paredit-mode)
+
+(add-hook 'cider-repl-mode-hook       #'paredit-mode)
+(add-hook 'clojure-mode-hook          #'paredit-mode)
+
 
 ;; Maximize Emacs frame on startup
 ;; http://emacs.stackexchange.com/questions/2999/how-to-maximize-my-emacs-frame-on-start-up
