@@ -1,13 +1,19 @@
 (require 'package)
-;; (add-to-list 'package-archives
-;;   	     '("marmalade" . "http://marmalade-repo.org/packages/"))
-;; (add-to-list 'package-archives
-;;              '("melpa" . "http://melpa.milkbox.net/packages/") t)
+(add-to-list 'package-archives
+             '("melpa" . "http://melpa.org/packages/") t)
 (add-to-list 'package-archives
              '("melpa-stable" . "http://stable.melpa.org/packages/") t)
-(package-initialize)
+
+;; Requires Emacs 24.4 or newer
+(add-to-list 'package-pinned-packages '(cider . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(magit . "melpa-stable") t)
+
+(package-initialize t)
 
 ;; Check if the packages are installed; if not, install them.
+;; The very first time you start Emacs you will need to run:
+;; M-x package-list-packages
+;; and then restart Emacs.
 (mapc
  (lambda (package)
    (or (package-installed-p package)
