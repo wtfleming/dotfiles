@@ -19,7 +19,7 @@
    (or (package-installed-p package)
        (if (y-or-n-p (format "Package %s is missing. Install it? " package))
            (package-install package))))
- '(zenburn-theme scala-mode2 rainbow-mode expand-region cider color-identifiers-mode magit git-gutter company helm projectile helm-projectile yasnippet paredit))
+ '(zenburn-theme scala-mode2 rainbow-mode expand-region cider color-identifiers-mode magit git-gutter company helm projectile helm-projectile yasnippet paredit rainbow-delimiters))
 
 ;; Load a theme
 (load-theme 'zenburn t)
@@ -36,6 +36,8 @@
 (add-hook 'cider-repl-mode-hook       #'paredit-mode)
 (add-hook 'clojure-mode-hook          #'paredit-mode)
 
+;; Enable rainbow-delimiters-mode when programming
+(add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
 
 ;; Maximize Emacs frame on startup
 ;; http://emacs.stackexchange.com/questions/2999/how-to-maximize-my-emacs-frame-on-start-up
