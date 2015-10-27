@@ -5,23 +5,26 @@
              '("melpa-stable" . "http://stable.melpa.org/packages/") t)
 
 ;; Requires Emacs 24.4 or newer
+(add-to-list 'package-pinned-packages '(clojure-mode . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(clojure-mode-extra-font-locking . "melpa-stable") t)
 (add-to-list 'package-pinned-packages '(cider . "melpa-stable") t)
 (add-to-list 'package-pinned-packages '(magit . "melpa-stable") t)
 
-(package-initialize t)
+(package-initialize)
 
 ;; Check if the packages are installed; if not, install them.
 ;; The very first time you start Emacs you will need to run:
 ;; M-x package-list-packages
 ;; and then restart Emacs.
+
 (mapc
  (lambda (package)
    (or (package-installed-p package)
        (if (y-or-n-p (format "Package %s is missing. Install it? " package))
            (package-install package))))
- '(zenburn-theme scala-mode2 rainbow-mode expand-region cider color-identifiers-mode magit git-gutter company helm projectile helm-projectile yasnippet paredit rainbow-delimiters))
+ '(zenburn-theme rainbow-mode expand-region cider clojure-mode clojure-mode-extra-font-locking color-identifiers-mode magit git-gutter company helm projectile helm-projectile yasnippet paredit rainbow-delimiters))
 
-;; Load a theme
+;; Load Zenburn
 (load-theme 'zenburn t)
 
 ;; Enable paredit in some modes
