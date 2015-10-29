@@ -22,10 +22,16 @@
    (or (package-installed-p package)
        (if (y-or-n-p (format "Package %s is missing. Install it? " package))
            (package-install package))))
- '(zenburn-theme rainbow-mode expand-region cider clojure-mode clojure-mode-extra-font-locking color-identifiers-mode magit git-gutter company helm projectile helm-projectile yasnippet paredit rainbow-delimiters))
+ '(zenburn-theme rainbow-mode expand-region cider clojure-mode clojure-mode-extra-font-locking color-identifiers-mode magit git-gutter company helm projectile helm-projectile yasnippet paredit rainbow-delimiters beacon))
 
 ;; Load Zenburn
 (load-theme 'zenburn t)
+
+;; Beacon — Never lose your cursor again
+;; https://github.com/Malabarba/beacon
+(beacon-mode 1)
+(setq beacon-push-mark 35)
+(setq beacon-color "#666600")
 
 ;; Enable paredit in some modes
 (autoload 'enable-paredit-mode "paredit" "Turn on pseudo-structural editing of Lisp code." t)
