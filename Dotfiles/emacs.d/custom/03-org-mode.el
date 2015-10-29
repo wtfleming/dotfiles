@@ -24,6 +24,13 @@
 ; git to keep it synced
 (setq org-agenda-files (concat org-directory ".agenda-files"))
 
+; Start the agenda on today instead of the monday of this week
+(setq org-agenda-start-on-weekday nil)
+
+; Show two weeks in the agenda view
+(setq org-agenda-span 14)
+
+;; Misc
 ; Don't close windows on exit
 (setq org-agenda-window-setup 'current-window)
 
@@ -32,3 +39,4 @@
       org-export-html-style-include-default nil)
 (setq org-export-html-style
       (concat "<link rel=\"stylesheet\" type=\"text/css\" href=\"" (expand-file-name org-directory) "css/solarized-light.min.css\" />"))
+
