@@ -42,12 +42,6 @@
 (add-hook 'lisp-interaction-mode-hook #'enable-paredit-mode)
 (add-hook 'scheme-mode-hook           #'enable-paredit-mode)
 
-(add-hook 'cider-repl-mode-hook       #'paredit-mode)
-(add-hook 'clojure-mode-hook          #'paredit-mode)
-
-;; Enable http://wikemacs.org/wiki/Subword-mode in some modes
-(add-hook 'clojure-mode-hook #'subword-mode)
-
 ;; Enable rainbow-delimiters-mode when programming
 (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
 
