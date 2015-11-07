@@ -104,3 +104,25 @@ gem install bundler
 sudo add-apt-repository ppa:inkscape.dev/stable
 sudo apt-get update
 sudo apt-get install inkscape
+
+* Docker
+
+$ sudo apt-key adv --keyserver hkp://pgp.mit.edu:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
+
+$ sudo emacs /etc/apt/sources.list.d/docker.list
+Remove any existing entries
+Add:
+# Ubuntu Trusty
+deb https://apt.dockerproject.org/repo ubuntu-trusty main
+
+$ sudo apt-get update
+$ sudo apt-get purge lxc-docker*
+$ sudo apt-cache policy docker-engine
+$ sudo apt-get update
+$ sudo apt-get install docker-engine
+
+# Start the docker daemon.
+$ sudo service docker start
+
+# Verify docker is installed correctly.
+$ sudo docker run hello-world
