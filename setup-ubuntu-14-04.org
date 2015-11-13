@@ -126,3 +126,10 @@ $ sudo service docker start
 
 # Verify docker is installed correctly.
 $ sudo docker run hello-world
+
+* golang
+https://golang.org/doc/install
+
+Make a link like this with ln
+go -> $HOME/bin/go-1.5.1
+$ mkdir $HOME/bin/gopkg
