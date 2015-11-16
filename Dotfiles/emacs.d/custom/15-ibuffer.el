@@ -12,9 +12,9 @@
 ;; Show groups
 (setq ibuffer-saved-filter-groups
       (quote (("default"
-               ("org-agenda" (or
-                              (mode . org-agenda-mode)
-                              (predicate . (my-org-agenda-filter))))
+               ;; ("org-agenda" (or
+               ;;                (mode . org-agenda-mode)
+               ;;                (predicate . (my-org-agenda-filter))))
                ("dired" (mode . dired-mode))
                ("erc" (mode . erc-mode))
                ("emacs" (or
