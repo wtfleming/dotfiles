@@ -25,6 +25,7 @@
                ("Programming"
                 (or
                  (mode . pig-mode)
+                 (mode . clojure-mode)
                  (mode . scala-mode)
                  (mode . python-mode)
                  (mode . emacs-lisp-mode)
