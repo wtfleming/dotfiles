@@ -25,3 +25,4 @@
 (add-hook 'clojure-mode-hook #'subword-mode)
 
 (add-hook 'clojure-mode-hook #'paredit-mode)
+(add-hook 'clojure-mode-hook #'eldoc-mode)
