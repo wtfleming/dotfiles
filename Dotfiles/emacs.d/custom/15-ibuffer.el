@@ -21,6 +21,10 @@
                          (name . "^\\*scratch\\*$")
                          (name . "^\\*Completions\\*$")
                          (name . "^\\*Messages\\*$")))
+               ("magit" (name . "^\\*magit"))
+               ("helm" (or
+                        (name . "^\\*helm")
+                        (name . "^\\*Helm")))
                ("org-mode" (mode . org-mode))
                ("Programming"
                 (or
