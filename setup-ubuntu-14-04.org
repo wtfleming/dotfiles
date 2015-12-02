@@ -133,3 +133,11 @@ https://golang.org/doc/install
 Make a link like this with ln
 go -> $HOME/bin/go-1.5.1
 $ mkdir $HOME/bin/gopkg
+* Erlang
+apt-get install wget libssl-dev ncurses-dev m4
+wget http://www.erlang.org/download/otp_src_18.1.tar.gz
+tar -xzvf otp_src_18.1.tar.gz
+cd otp_src_18.1/
+./configure
+make
+
