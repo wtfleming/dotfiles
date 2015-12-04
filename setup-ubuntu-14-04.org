@@ -134,7 +134,14 @@ Make a link like this with ln
 go -> $HOME/bin/go-1.5.1
 $ mkdir $HOME/bin/gopkg
 * Erlang and Elixir
-apt-get install wget libssl-dev ncurses-dev m4
+
+Install wxwidgets (need at least version 3)
+This step is optional and only needed if you want to run graphical tools like Observer
+sudo apt-key adv --fetch-keys http://repos.codelite.org/CodeLite.asc
+sudo apt-add-repository 'deb http://repos.codelite.org/wx3.0.2/ubuntu/ trusty universe'
+sudo apt-get install libwxbase3.0-0-unofficial libwxbase3.0-dev libwxgtk3.0-0-unofficial libwxgtk3.0-dev wx3.0-headers wx-common
+
+apt-get install wget libssl-dev ncurses-dev m4 unixodbc-dev
 wget http://www.erlang.org/download/otp_src_18.1.tar.gz
 tar -xzvf otp_src_18.1.tar.gz
 cd otp_src_18.1/
