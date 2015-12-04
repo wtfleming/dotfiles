@@ -111,3 +111,7 @@ export PS1=$LIGHT_GRAY"\u@\h"'$(
 export GOPATH="$HOME/bin/gopkg"
 export GOROOT="$HOME/bin/go"
 export PATH=$PATH:$GOROOT/bin
+
+# Erlang and Elixir
+export PATH="$HOME/bin/erlang/bin:$PATH"
+export PATH="$HOME/bin/elixir/bin:$PATH"
