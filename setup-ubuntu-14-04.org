@@ -133,7 +133,7 @@ https://golang.org/doc/install
 Make a link like this with ln
 go -> $HOME/bin/go-1.5.1
 $ mkdir $HOME/bin/gopkg
-* Erlang
+* Erlang and Elixir
 apt-get install wget libssl-dev ncurses-dev m4
 wget http://www.erlang.org/download/otp_src_18.1.tar.gz
 tar -xzvf otp_src_18.1.tar.gz
@@ -141,3 +141,13 @@ cd otp_src_18.1/
 ./configure
 make
 
+Download a precompiled elixir release from https://github.com/elixir-lang/elixir/releases/ and put it in $HOME/bin
+
+ln -s ~/bin/otp_src_18.1/ erlang
+ln -s ~/bin/elixir-1.1.1/ elixir
+
+Install hex
+mix local.hex
+
+For phoenix on ubuntu we need to
+apt-get install inotify-tools
