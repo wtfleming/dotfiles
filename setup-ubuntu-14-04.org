@@ -145,8 +145,18 @@ apt-get install wget libssl-dev ncurses-dev m4 unixodbc-dev
 wget http://www.erlang.org/download/otp_src_18.1.tar.gz
 tar -xzvf otp_src_18.1.tar.gz
 cd otp_src_18.1/
+export ERL_TOP=`pwd`
 ./configure
 make
+
+Optionally run the tests to ensure the build is working properly
+cd release/tests/test_server
+$ERL_TOP/bin/erl -s ts install -s ts smoke_test batch -s init stop
+
+To verify that everything is ok you should open `$ERL_TOP/release/tests/test_server/index.html`
+in your web browser and make sure that there are zero failed test cases.
+
+
 
 Download a precompiled elixir release from https://github.com/elixir-lang/elixir/releases/ and put it in $HOME/bin
 
