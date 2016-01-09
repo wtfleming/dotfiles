@@ -77,11 +77,12 @@ chmod a+x ~/bin/lein
 
 cp -r ~/src/dotfiles/Dotfiles/lein/ ~/.lein/
 
-* nodejs 0.12 and npm
-# Needed nodejs for jekyll blog
-curl -sL https://deb.nodesource.com/setup_0.12 | sudo bash -
-sudo apt-get install -y nodejs
 
+* nodejs 5.x and npm
+# https://github.com/nodesource/distributions
+# Needed nodejs for jekyll blog
+curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
+sudo apt-get install -y nodejs
 
 * Ruby via rbenv
 sudo apt-get update
