@@ -63,6 +63,11 @@ Note that on raspbian on a raspberry pi you will need to uncomment the line in /
 In order to get apt-get build-dep working
 
 
+Install org via package-list-packages to get latest version
+
+Install latex files for org-mode export to pdf
+sudo apt-get install texlive-latex-base texlive-latex-extra texlive-fonts-recommended
+
 * Java 8
 sudo add-apt-repository ppa:webupd8team/java
 sudo apt-get update
