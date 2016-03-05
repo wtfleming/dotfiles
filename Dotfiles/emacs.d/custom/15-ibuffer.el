@@ -1,6 +1,9 @@
 (global-set-key (kbd "C-x C-b") 'ibuffer)
 (autoload 'ibuffer "ibuffer" "List buffers." t)
 
+;; Hide helm buffers
+(add-to-list 'ibuffer-never-show-predicates "^\\*[Hh]elm")
+
 ;; Show org-agenda files in own group
 ;; http://emacs.stackexchange.com/questions/2087/predicates-in-ibuffer-saved-filter-groups
 (defun my-org-agenda-filter ()
@@ -22,9 +25,9 @@
                          (name . "^\\*Completions\\*$")
                          (name . "^\\*Messages\\*$")))
                ("magit" (name . "^\\*magit"))
-               ("helm" (or
-                        (name . "^\\*helm")
-                        (name . "^\\*Helm")))
+;               ("helm" (or
+;                        (name . "^\\*helm")
+;                        (name . "^\\*Helm")))
                ("org-mode" (mode . org-mode))
                ("Programming"
                 (or
