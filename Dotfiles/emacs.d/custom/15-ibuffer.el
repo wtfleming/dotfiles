@@ -80,3 +80,16 @@
 
 ;; Hide the summary at the bottom of the buffer
 (setq ibuffer-display-summary nil)
+
+;; With this, when you press 'up' or 'down' to the top/bottom of IBuffer,
+;; the cursor wraps around to the bottom/top, so you can continue from there.
+(defun ibuffer-previous-line ()
+  (interactive) (previous-line)
+  (if (<= (line-number-at-pos) 2)
+      (goto-line (count-lines (point-min) (point-max)))))
+(defun ibuffer-next-line ()
+  (interactive) (next-line)
+  (if (>= (line-number-at-pos) (+ (count-lines (point-min) (point-max)) 1))
+      (goto-line 3)))
+(define-key ibuffer-mode-map (kbd "<up>") 'ibuffer-previous-line)
+(define-key ibuffer-mode-map (kbd "<down>") 'ibuffer-next-line)
