@@ -122,3 +122,4 @@ export PATH="$HOME/bin/elixir/bin:$PATH"
 # OS X
 # If you installed the SDK via Homebrew, otherwise ~/Library/Android/sdk
 # export ANDROID_HOME=/usr/local/opt/android-sdk
+# export ANDROID_NDK="$HOME/bin/android-ndk-r11c"
