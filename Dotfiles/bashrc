@@ -1,3 +1,9 @@
+# If this is a work box, include anything not checked into public source control
+if [ -f ~/.bashrc_spot ]; then
+    . ~/.bashrc_spot
+fi
+
+
 # Alias definitions, stored in a different file.
 if [ -f ~/.bash_aliases ]; then
     . ~/.bash_aliases
