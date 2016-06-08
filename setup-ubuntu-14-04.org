@@ -158,9 +158,9 @@ sudo apt-get install libwxbase3.0-0-unofficial libwxbase3.0-dev libwxgtk3.0-0-un
 sudo apt-get install erlang-dev
 
 apt-get install wget libssl-dev ncurses-dev m4 unixodbc-dev
-wget http://www.erlang.org/download/otp_src_18.2.1.tar.gz
-tar -xzvf otp_src_18.2.1.tar.gz
-cd otp_src_18.2.1/
+wget http://www.erlang.org/download/otp_src_18.3.tar.gz
+tar -xzvf otp_src_18.3.tar.gz
+cd otp_src_18.3/
 export ERL_TOP=`pwd`
 ./configure
 make
@@ -176,11 +176,11 @@ in your web browser and make sure that there are zero failed test cases.
 
 Download a precompiled elixir release from https://github.com/elixir-lang/elixir/releases/ and put it in $HOME/bin
 
-wget https://github.com/elixir-lang/elixir/releases/download/v1.2.1/Precompiled.zip
-unzip Precompiled.zip -d elixir-1.2.1
+wget https://github.com/elixir-lang/elixir/releases/download/v1.2.6/Precompiled.zip
+unzip Precompiled.zip -d elixir-1.2.6
 
-ln -s ~/bin/otp_src_18.2.1/ erlang
-ln -s ~/bin/elixir-1.2.1/ elixir
+ln -s ~/bin/otp_src_18.3/ erlang
+ln -s ~/bin/elixir-1.2.6/ elixir
 
 Install hex
 mix local.hex
