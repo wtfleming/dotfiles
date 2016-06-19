@@ -162,8 +162,12 @@ wget http://www.erlang.org/download/otp_src_18.3.tar.gz
 tar -xzvf otp_src_18.3.tar.gz
 cd otp_src_18.3/
 export ERL_TOP=`pwd`
-./configure
+
+# Specify where to install
+./configure --prefix=/home/wtf/bin/erlang-18.3
 make
+# install so we can use tools like exrm to build a release
+make install
 
 Optionally run the tests to ensure the build is working properly
 cd release/tests/test_server
