@@ -1,3 +1,16 @@
 emacs flyspell needs a spell checking tool, install one on os x
 
 brew install ispell --with-lang-en
+
+
+disable mission control since I use those keyboard shortcuts in emacs
+http://apple.stackexchange.com/questions/18043/how-can-i-make-ctrlright-left-arrow-stop-changing-desktops-in-lion
+
+# React native
+brew install node
+brew install watchman
+brew install flow
+brew install android-sdk
+
+
+

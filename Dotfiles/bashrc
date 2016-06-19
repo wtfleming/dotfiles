@@ -1,3 +1,9 @@
+# If this is a work box, include anything not checked into public source control
+if [ -f ~/.bashrc_spot ]; then
+    . ~/.bashrc_spot
+fi
+
+
 # Alias definitions, stored in a different file.
 if [ -f ~/.bash_aliases ]; then
     . ~/.bash_aliases
@@ -117,4 +123,9 @@ export PATH="$HOME/bin/erlang/bin:$PATH"
 export PATH="$HOME/bin/elixir/bin:$PATH"
 
 # Android for React Native
-export ANDROID_HOME=/home/wtf/Android/Sdk
+# Ubuntu
+#export ANDROID_HOME=/home/wtf/Android/Sdk
+# OS X
+# If you installed the SDK via Homebrew, otherwise ~/Library/Android/sdk
+# export ANDROID_HOME=/usr/local/opt/android-sdk
+# export ANDROID_NDK="$HOME/bin/android-ndk-r11c"
