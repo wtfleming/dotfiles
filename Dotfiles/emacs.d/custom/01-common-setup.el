@@ -22,7 +22,7 @@
    (or (package-installed-p package)
        (if (y-or-n-p (format "Package %s is missing. Install it? " package))
            (package-install package))))
- '(zenburn-theme rainbow-mode expand-region cider clojure-mode clojure-mode-extra-font-locking color-identifiers-mode magit git-gutter company helm projectile helm-projectile yasnippet paredit rainbow-delimiters beacon elixir-mode alchemist csharp-mode omnisharp))
+ '(zenburn-theme rainbow-mode expand-region cider clojure-mode clojure-mode-extra-font-locking color-identifiers-mode magit git-gutter company helm projectile helm-projectile yasnippet paredit rainbow-delimiters beacon elixir-mode alchemist csharp-mode omnisharp lua-mode))
 
 ;; Load Zenburn
 (load-theme 'zenburn t)
