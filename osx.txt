@@ -14,3 +14,6 @@ brew install android-sdk
 
 
 
+
+# Tern (for javascript)
+sudo npm install -g tern
