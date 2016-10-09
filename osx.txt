@@ -1,3 +1,6 @@
+Install dev tools - this is one way to prompt it:
+git --version
+
 emacs flyspell needs a spell checking tool, install one on os x
 
 brew install ispell --with-lang-en
