@@ -1,6 +1,8 @@
 Install dev tools - this is one way to prompt it:
 git --version
 
+brew install git-lfs
+git lfs install
 
 $ brew update
 $ brew install emacs --with-cocoa
