@@ -1,6 +1,11 @@
 Install dev tools - this is one way to prompt it:
 git --version
 
+To have launchd start emacs now and restart at login:
+  brew services start emacs
+Or, if you don't want/need a background service you can just run:
+  emacs
+
 emacs flyspell needs a spell checking tool, install one on os x
 
 brew install ispell --with-lang-en
