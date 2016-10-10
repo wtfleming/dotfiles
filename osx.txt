@@ -15,6 +15,7 @@ emacs flyspell needs a spell checking tool, install one on os x
 
 brew install ispell --with-lang-en
 
+brew install elixir
 
 disable mission control since I use those keyboard shortcuts in emacs
 http://apple.stackexchange.com/questions/18043/how-can-i-make-ctrlright-left-arrow-stop-changing-desktops-in-lion
