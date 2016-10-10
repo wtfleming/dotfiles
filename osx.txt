@@ -1,6 +1,11 @@
 Install dev tools - this is one way to prompt it:
 git --version
 
+
+$ brew update
+$ brew install emacs --with-cocoa
+$ brew linkapps emacs
+
 To have launchd start emacs now and restart at login:
   brew services start emacs
 Or, if you don't want/need a background service you can just run:
