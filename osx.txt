@@ -34,3 +34,15 @@ brew install android-sdk
 
 # Tern (for javascript)
 sudo npm install -g tern
+
+
+
+# Get copy/paste working in tmux again, add these to .tmux.conf
+
+set -g default-shell $SHELL 
+set -g default-command "reattach-to-user-namespace -l ${SHELL}"
+
+and run:
+brew install reattach-to-user-namespace
+
+Broke in Sierra, see https://github.com/tmux/tmux/issues/543
