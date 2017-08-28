@@ -125,3 +125,6 @@ export PATH="$HOME/bin/elixir/bin:$PATH"
 # If you installed the SDK via Homebrew, otherwise ~/Library/Android/sdk
 # export ANDROID_HOME=/usr/local/opt/android-sdk
 # export ANDROID_NDK="$HOME/bin/android-ndk-r11c"
+
+# So we can use the aws command line tool on macOS when installed via pip
+export PATH="$HOME/Library/Python/2.7/bin:$PATH"
