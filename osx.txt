@@ -24,7 +24,10 @@ Go to System Preferences > Keyboard > Keyboard Shortcuts > Mission Control and c
 http://apple.stackexchange.com/questions/18043/how-can-i-make-ctrlright-left-arrow-stop-changing-desktops-in-lion
 
 # React native
-brew install node
+
+# Actually, don't use homebrew to install node - use nvm so we can use different versions with fewer problems (ie. we're using AWS lambda and need node 6)
+# brew install node
+
 brew install watchman
 brew install flow
 brew install android-sdk
