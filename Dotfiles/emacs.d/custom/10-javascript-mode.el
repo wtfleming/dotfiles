@@ -1,6 +1,7 @@
 ;; Javascript mode
 
 (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+; (add-to-list 'auto-mode-alist '("\\.jsx$" . js2-mode))
 
 ;; ; Use tabs instead of spaces just for javascript mode
 ;; (add-hook 'js2-mode-hook (lambda ()
