@@ -3,6 +3,7 @@ git --version
 
 brew install git-lfs
 git lfs install
+git config --global core.excludesfile ~/.gitexcludes
 
 $ brew update
 $ brew install emacs --with-cocoa
