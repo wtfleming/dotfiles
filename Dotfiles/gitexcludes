@@ -1,2 +1,9 @@
 .DS_Store
 
+# Emacs temporary files
+*~
+\#*\#
+.\#*
+
+# Ignore tern files http://ternjs.net/
+.tern-port
