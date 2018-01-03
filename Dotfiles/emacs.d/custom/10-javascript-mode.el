@@ -10,8 +10,8 @@
 ;;                                 indent-tabs-mode t)))
 
 (add-hook 'js2-mode-hook (lambda () (setq js2-basic-offset 2)))
-
 (add-hook 'js2-mode-hook (lambda () (tern-mode t)))
+(add-hook 'js2-mode-hook (lambda () (subword-mode +1)))
 
 (eval-after-load 'company
   '(add-to-list 'company-backends 'company-tern))
