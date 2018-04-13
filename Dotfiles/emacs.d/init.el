@@ -26,4 +26,4 @@
 (load "18-abbrev-mode.el")
 (load "19-csharp-mode.el")
 (load "20-web-mode.el")
-
+(load "21-reason-mode.el")

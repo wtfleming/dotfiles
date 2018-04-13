@@ -22,7 +22,7 @@
    (or (package-installed-p package)
        (if (y-or-n-p (format "Package %s is missing. Install it? " package))
            (package-install package))))
- '(zenburn-theme rainbow-mode expand-region cider clojure-mode clojure-mode-extra-font-locking color-identifiers-mode magit git-gutter company helm projectile helm-projectile yasnippet paredit rainbow-delimiters beacon elixir-mode alchemist csharp-mode omnisharp lua-mode js2-mode tern company-tern elm-mode web-mode restclient))
+ '(zenburn-theme rainbow-mode expand-region cider clojure-mode clojure-mode-extra-font-locking color-identifiers-mode magit git-gutter company helm projectile helm-projectile yasnippet paredit rainbow-delimiters beacon elixir-mode alchemist csharp-mode omnisharp lua-mode js2-mode tern company-tern elm-mode web-mode restclient reason-mode))
 
 ;; Load Zenburn
 (load-theme 'zenburn t)
@@ -117,15 +117,21 @@
 (defalias 'yes-or-no-p 'y-or-n-p)
 
 ;; Backup files
-(setq
-   backup-by-copying t      ; don't clobber symlinks
-   backup-directory-alist
-   '(("." . "~/.saves"))    ; don't litter my fs tree
-   delete-old-versions t
-   kept-new-versions 6
-   kept-old-versions 2
-   version-control t)       ; use versioned backups
+;; (setq
+;;    backup-by-copying t      ; don't clobber symlinks
+;;    backup-directory-alist
+;;    '(("." . "~/.saves"))    ; don't litter my fs tree
+;;    delete-old-versions t
+;;    kept-new-versions 6
+;;    kept-old-versions 2
+;;    version-control t)       ; use versioned backups
 
+;; Disable backup files
+(setq backup-inhibited t)
+;; Disable auto save files
+(setq auto-save-default nil)
+;; Disable lock files - temp symlinks that start with .#
+(setq create-lockfiles nil)
 
 ;; Ensure line and column numbers are displayed on the mode line
 (setq line-number-mode t) ; Default is on for line, but set it anyways
