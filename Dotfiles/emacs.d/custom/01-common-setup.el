@@ -22,7 +22,7 @@
    (or (package-installed-p package)
        (if (y-or-n-p (format "Package %s is missing. Install it? " package))
            (package-install package))))
- '(zenburn-theme rainbow-mode expand-region cider clojure-mode clojure-mode-extra-font-locking color-identifiers-mode magit git-gutter company helm projectile helm-projectile yasnippet paredit rainbow-delimiters beacon elixir-mode alchemist csharp-mode omnisharp lua-mode js2-mode tern company-tern elm-mode web-mode restclient reason-mode))
+ '(zenburn-theme rainbow-mode expand-region cider clojure-mode clojure-mode-extra-font-locking color-identifiers-mode magit git-gutter company helm projectile helm-projectile yasnippet rainbow-delimiters beacon elixir-mode alchemist csharp-mode omnisharp lua-mode js2-mode tern company-tern elm-mode web-mode restclient reason-mode))
 
 ;; Load Zenburn
 (load-theme 'zenburn t)
@@ -32,15 +32,6 @@
 (beacon-mode 1)
 (setq beacon-push-mark 35)
 (setq beacon-color "#666600")
-
-;; Enable paredit in some modes
-(autoload 'enable-paredit-mode "paredit" "Turn on pseudo-structural editing of Lisp code." t)
-(add-hook 'emacs-lisp-mode-hook       #'enable-paredit-mode)
-(add-hook 'eval-expression-minibuffer-setup-hook #'enable-paredit-mode)
-(add-hook 'ielm-mode-hook             #'enable-paredit-mode)
-(add-hook 'lisp-mode-hook             #'enable-paredit-mode)
-(add-hook 'lisp-interaction-mode-hook #'enable-paredit-mode)
-(add-hook 'scheme-mode-hook           #'enable-paredit-mode)
 
 ;; Enable rainbow-delimiters-mode when programming
 (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
