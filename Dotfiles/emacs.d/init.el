@@ -12,8 +12,6 @@
 (load "04-paren-mode.el")
 (load "05-uniquify.el")
 (load "06-expand-region.el")
-(load "07-scala-mode-2.el")
-(load "08-clojure.el")
 (load "09-dired.el")
 (load "10-javascript-mode.el")
 (load "11-saveplace.el")
