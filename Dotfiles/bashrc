@@ -64,6 +64,10 @@ PATH=$PATH:$HOME/bin
 
 PATH=$PATH:$HOME/.rvm/bin # Add RVM to PATH for scripting
 
+# Use ruby's bundler without needing sudo
+export GEM_HOME=$HOME/.gem
+export PATH="$GEM_HOME/bin:$PATH"
+
 export PATH="/usr/local/heroku/bin:$PATH"
 
 # Hack to use the Energia bundled msp430-gcc on OS X
