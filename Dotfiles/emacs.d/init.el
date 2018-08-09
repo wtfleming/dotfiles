@@ -25,3 +25,4 @@
 (load "19-csharp-mode.el")
 (load "20-web-mode.el")
 (load "21-reason-mode.el")
+(load "22-typescript.el")
