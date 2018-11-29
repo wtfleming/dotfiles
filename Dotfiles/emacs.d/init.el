@@ -26,3 +26,4 @@
 (load "20-web-mode.el")
 (load "21-reason-mode.el")
 (load "22-typescript.el")
+(load "23-hydra.el")
