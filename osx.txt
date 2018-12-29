@@ -1,3 +1,21 @@
+Install Chrome
+Make default browser
+System Preferences -> General -> Default web browser
+
+Install homebrew
+https://brew.sh/
+
+
+
+Install dotfiles
+https://github.com/wtfleming/dotfiles
+
+brew install tmux
+brew install wget
+brew install htop
+brew install watchman
+
+
 Install dev tools - this is one way to prompt it:
 git --version
 
@@ -12,10 +30,6 @@ $ brew cask install emacs
 # To update
 $ brew cask upgrade
 
-# Old way to install (before October 2017)
-# $ brew install emacs --with-cocoa --with-gnutls --with-rsvg --with-imagemagick
-# $ brew install emacs --with-cocoa
-# $ brew linkapps emacs
 
 To have launchd start emacs now and restart at login:
   brew services start emacs
@@ -26,29 +40,48 @@ emacs flyspell needs a spell checking tool, install one on os x
 
 brew install ispell --with-lang-en
 
-brew install elixir
 
 disable mission control since I use those keyboard shortcuts in emacs
 Go to System Preferences > Keyboard > Keyboard Shortcuts > Mission Control and change the settings for "Move left a space" and "Move right a space" or disable them completely.
 http://apple.stackexchange.com/questions/18043/how-can-i-make-ctrlright-left-arrow-stop-changing-desktops-in-lion
 
-# React native
 
-# Actually, don't use homebrew to install node - use nvm so we can use different versions with fewer problems (ie. we're using AWS lambda and need node 6)
-# brew install node
+Install nvm
+https://github.com/creationix/nvm
+nvm install v10.15.0
 
-brew install watchman
-brew install flow
-brew install android-sdk
+# Install Yarn
+# Since we are using nvm don't install homebrew node
+brew install yarn --without-node
+
+yarn global add reason-cli@latest-macos
+yarn global add bs-platform
 
 
+Install Docker
+https://hub.docker.com/editions/community/docker-ce-desktop-mac
+
+$ docker login
+Username is not the default email displayed, look it up by logging into https://hub.docker.com
 
 
 # Tern (for javascript)
-sudo npm install -g tern
+npm install -g tern
 
 
 
+brew install awscli
+$ aws configure
+
+
+brew install elixir
+
+
+
+
+
+
+# Is this still needed?
 # Get copy/paste working in tmux again, add these to .tmux.conf
 
 set -g default-shell $SHELL 
