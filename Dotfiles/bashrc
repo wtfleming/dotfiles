@@ -62,27 +62,20 @@ export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
 
 PATH=$PATH:$HOME/bin
 
-PATH=$PATH:$HOME/.rvm/bin # Add RVM to PATH for scripting
+# PATH=$PATH:$HOME/.rvm/bin # Add RVM to PATH for scripting
 
 # Use ruby's bundler without needing sudo
-export GEM_HOME=$HOME/.gem
-export PATH="$GEM_HOME/bin:$PATH"
+# export GEM_HOME=$HOME/.gem
+# export PATH="$GEM_HOME/bin:$PATH"
 
-export PATH="/usr/local/heroku/bin:$PATH"
+# export PATH="/usr/local/heroku/bin:$PATH"
 
 # Hack to use the Energia bundled msp430-gcc on OS X
-export PATH="/Applications/Energia.app/Contents/Resources/Java/hardware/tools/msp430/bin:$PATH"
+# export PATH="/Applications/Energia.app/Contents/Resources/Java/hardware/tools/msp430/bin:$PATH"
 
 # Google C++ Mocking Framework
-#export GMOCK_HOME=$HOME/bin/gmock-1.6.0
-export GMOCK_HOME=$HOME/bin/gmock-1.7.0
-
-# ruby rbenv
-export PATH="$HOME/.rbenv/bin:$PATH"
-eval "$(rbenv init -)"
-export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH"
-
-PATH=$PATH:$HOME/bin/elastic-mapreduce-ruby
+# export GMOCK_HOME=$HOME/bin/gmock-1.6.0
+# export GMOCK_HOME=$HOME/bin/gmock-1.7.0
 
 # Only run this tmux command in an interactive shell
 # since it writes to stdout, which breaks scp
