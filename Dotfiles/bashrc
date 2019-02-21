@@ -46,13 +46,6 @@ if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
     . /etc/bash_completion
 fi
 
-# OS X boot2docker
-#export DOCKER_HOST=tcp://192.168.59.103:2376
-#export DOCKER_CERT_PATH=/Users/wtf/.boot2docker/certs/boot2docker-vm
-#export DOCKER_TLS_VERIFY=1
-
-# Init boot2docker and quiet output
-#$(boot2docker shellinit > /dev/null 2>&1)
 
 export GIT_EDITOR=emacs
 export GIT_AUTHOR_NAME="Will Fleming"
@@ -62,27 +55,14 @@ export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
 
 PATH=$PATH:$HOME/bin
 
-PATH=$PATH:$HOME/.rvm/bin # Add RVM to PATH for scripting
 
 # Use ruby's bundler without needing sudo
 export GEM_HOME=$HOME/.gem
 export PATH="$GEM_HOME/bin:$PATH"
 
-export PATH="/usr/local/heroku/bin:$PATH"
-
-# Hack to use the Energia bundled msp430-gcc on OS X
-export PATH="/Applications/Energia.app/Contents/Resources/Java/hardware/tools/msp430/bin:$PATH"
-
 # Google C++ Mocking Framework
-#export GMOCK_HOME=$HOME/bin/gmock-1.6.0
-export GMOCK_HOME=$HOME/bin/gmock-1.7.0
-
-# ruby rbenv
-export PATH="$HOME/.rbenv/bin:$PATH"
-eval "$(rbenv init -)"
-export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH"
-
-PATH=$PATH:$HOME/bin/elastic-mapreduce-ruby
+# export GMOCK_HOME=$HOME/bin/gmock-1.6.0
+# export GMOCK_HOME=$HOME/bin/gmock-1.7.0
 
 # Only run this tmux command in an interactive shell
 # since it writes to stdout, which breaks scp
@@ -119,8 +99,8 @@ export PS1=$LIGHT_GRAY"\u@\h"'$(
 
 
 # Erlang and Elixir
-export PATH="$HOME/bin/erlang/bin:$PATH"
-export PATH="$HOME/bin/elixir/bin:$PATH"
+# export PATH="$HOME/bin/erlang/bin:$PATH"
+# export PATH="$HOME/bin/elixir/bin:$PATH"
 
 # Android for React Native
 # Ubuntu
