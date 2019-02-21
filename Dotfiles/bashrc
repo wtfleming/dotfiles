@@ -57,8 +57,8 @@ PATH=$PATH:$HOME/bin
 
 
 # Use ruby's bundler without needing sudo
-export GEM_HOME=$HOME/.gem
-export PATH="$GEM_HOME/bin:$PATH"
+# export GEM_HOME=$HOME/.gem
+# export PATH="$GEM_HOME/bin:$PATH"
 
 # Google C++ Mocking Framework
 # export GMOCK_HOME=$HOME/bin/gmock-1.6.0
