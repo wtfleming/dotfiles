@@ -66,6 +66,29 @@ ln -s ~/bin/emacs-26.1/src/emacs ~/bin/emacs
 
 
 
+* Tensorflow and Keras
+Based off https://www.pyimagesearch.com/2019/01/30/ubuntu-18-04-install-tensorflow-and-keras-for-deep-learning/
+
+sudo add-apt-repository ppa:graphics-drivers/ppa
+sudo apt-get update
+
+# For GF1xx GPUs use `nvidia-390` (390.87)
+# For G8x, G9x and GT2xx GPUs use `nvidia-340` (340.107)
+# For NV4x and G7x GPUs use `nvidia-304` (304.137) End-Of-Life!   
+
+sudo apt install nvidia-driver-418 nvidia-settings
+
+sudo reboot now
+
+# Once your machine is booted, you’ll want to verify that NVIDIA drivers have been successfully installed:
+$ nvidia-smi
+
+
+# Install PTS and benchmark your gear:
+sudo apt-get install phoronix-test-suite
+
+# Run the benchmark:
+phoronix-test-suite default-benchmark openarena xonotic tesseract gputest unigine-valley
 
 
 
