@@ -66,8 +66,10 @@ ln -s ~/bin/emacs-26.1/src/emacs ~/bin/emacs
 
 
 
-* Tensorflow and Keras
+* Nvidia drivers for Tensorflow and Keras
 Based off https://www.pyimagesearch.com/2019/01/30/ubuntu-18-04-install-tensorflow-and-keras-for-deep-learning/
+and https://www.tensorflow.org/install/gpu
+
 
 sudo add-apt-repository ppa:graphics-drivers/ppa
 sudo apt-get update
@@ -86,9 +88,74 @@ $ nvidia-smi
 
 # Install PTS and benchmark your gear:
 sudo apt-get install phoronix-test-suite
-
-# Run the benchmark:
 phoronix-test-suite default-benchmark openarena xonotic tesseract gputest unigine-valley
+
+# Install CUDA Toolkit and cuDNN (GPU only)
+https://developer.nvidia.com/cuda-10.0-download-archive
+
+
+wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-repo-ubuntu1804_10.0.130-1_amd64.deb
+sudo dpkg -i cuda-repo-ubuntu1804_10.0.130-1_amd64.deb
+sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
+sudo apt-get update
+wget http://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/nvidia-machine-learning-repo-ubuntu1804_1.0.0-1_amd64.deb
+sudo apt install ./nvidia-machine-learning-repo-ubuntu1804_1.0.0-1_amd64.deb
+sudo apt-get update
+
+
+# Install development and runtime libraries (~4GB)
+sudo apt-get install --no-install-recommends cuda-10-0 libcudnn7=7.4.1.5-1+cuda10.0 libcudnn7-dev=7.4.1.5-1+cuda10.0
+
+
+# Install TensorRT. Requires that libcudnn7 is installed above.
+sudo apt-get update && \
+        sudo apt-get install nvinfer-runtime-trt-repo-ubuntu1804-5.0.2-ga-cuda10.0 \
+        && sudo apt-get update \
+        && sudo apt-get install -y --no-install-recommends libnvinfer-dev=5.0.2-1+cuda10.0
+
+
+The following packages have unmet dependencies:
+ libnvinfer-dev : Depends: libnvinfer5 (= 5.0.2-1+cuda10.0) but 5.1.2-1+cuda10.1 is to be installed
+E: Unable to correct problems, you have held broken packages.
+
+
+
+
+echo 'export PATH=/usr/local/cuda-10.0/bin${PATH:+:${PATH}}' >> ~/.bashrc
+
+echo 'export LD_LIBRARY_PATH=/usr/local/cuda-10.0/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}' >> ~/.bashrc
+source ~/.bashrc
+
+sudo ldconfig
+
+nvidia-smi
+
+
+# Confirm that the CUDA Toolkit has been successfully installed:
+$ nvcc -V
+
+* Anaconda and Tensorflow
+https://www.digitalocean.com/community/tutorials/how-to-install-anaconda-on-ubuntu-18-04-quickstart
+https://towardsdatascience.com/tensorflow-gpu-installation-made-easy-use-conda-instead-of-pip-52e5249374bc
+
+cd ~/tmp
+curl -O https://repo.anaconda.com/archive/Anaconda3-2019.03-Linux-x86_64.sh
+
+bash Anaconda3-2019.03-Linux-x86_64.sh
+
+source ~/.bashrc
+
+conda list
+
+conda create --name tf_gpu tensorflow-gpu 
+
+conda activate tf_gpu
+
+
+open a python repl and validate the installation by running:
+
+import tensorflow as tf
+sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
 
 
 
