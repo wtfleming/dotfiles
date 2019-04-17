@@ -14,6 +14,7 @@
 (global-set-key (kbd "C-h SPC") 'helm-all-mark-rings)
 (global-set-key (kbd "C-c h x") 'helm-register)
 (global-set-key (kbd "C-c h g") 'helm-google-suggest)
+(global-set-key (kbd "C-c p h") 'helm-projectile)
 
 (setq helm-split-window-in-side-p           t ; open helm buffer inside current window, not occupy whole other window
       helm-move-to-line-cycle-in-source     t ; move to end or beginning of source when reaching top or bottom of source.
