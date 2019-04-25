@@ -2,6 +2,7 @@
   (interactive)
   (tide-setup)
   (flycheck-mode +1)
+  ; (flycheck-select-checker 'typescript-tslint)
   (setq flycheck-check-syntax-automatically '(save mode-enabled))
   (eldoc-mode +1)
   (tide-hl-identifier-mode +1)
