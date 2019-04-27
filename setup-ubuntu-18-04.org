@@ -66,6 +66,36 @@ ln -s ~/bin/emacs-26.1/src/emacs ~/bin/emacs
 
 
 
+
+* SSH
+sudo apt update
+sudo apt install openssh-server
+
+# Verify SSH is running:
+sudo systemctl status ssh
+
+Can find ip address on local network with
+http://192.168.2.1
+
+or on the command line
+ip a
+
+
+To disable the SSH service to start during system boot run:
+sudo systemctl disable ssh
+
+To enable it again type:
+sudo systemctl enable ssh
+
+Add the public key to ~/.ssh/authorized_keys (the file should be mode 600)
+
+Disable ssh access via password
+
+Edit /etc/ssh/sshd_config and set:
+PasswordAuthentication no
+ChallengeResponseAuthentication no
+UsePAM no
+
 * Nvidia drivers for Tensorflow and Keras
 Based off https://www.pyimagesearch.com/2019/01/30/ubuntu-18-04-install-tensorflow-and-keras-for-deep-learning/
 and https://www.tensorflow.org/install/gpu
