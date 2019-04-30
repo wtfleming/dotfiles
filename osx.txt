@@ -15,6 +15,7 @@ brew install wget
 brew install htop
 brew install watchman
 brew install coreutils
+brew install p7zip
 
 # For exporting LaTex from emacs
 brew cask install mactex
