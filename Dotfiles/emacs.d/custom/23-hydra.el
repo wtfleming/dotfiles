@@ -259,3 +259,93 @@ T - tag prefix
 
 (define-key projectile-mode-map (kbd "C-c p") 'hydra-projectile/body)
 (define-key projectile-mode-map (kbd "s-p") 'hydra-projectile/body)
+
+
+;; (defhydra hydra-flycheck(
+;;                          ;;:pre (progn (setq hydra-lv t) (flycheck-list-errors))
+;;                          :pre (flycheck-list-errors)
+;;                               :post (quit-windows-on "*Flycheck errors*")
+;;                                         ;:post (progn (setq hydra-lv nil) (quit-windows-on "*Flycheck errors*"))
+;;                                         ;:hint nil
+;;                               :color teal)
+;;   "Errors"
+;;   ("f"  flycheck-error-list-set-filter                            "Filter")
+;;   ("j"  flycheck-next-error                                       "Next")
+;;   ("k"  flycheck-previous-error                                   "Previous")
+;;   ("gg" flycheck-first-error                                      "First")
+;;   ("G"  (progn (goto-char (point-max)) (flycheck-previous-error)) "Last")
+;;   ("q"  nil "Cancel" :color blue))
+
+;; (global-set-key (kbd "C-c e") #'hydra-flycheck/body)
+
+
+;; For jumping between code errors with C-x `
+(defhydra hydra-next-error
+    (global-map "C-x")
+    "
+Compilation errors:
+_j_: next error        _h_: first error    _q_uit
+_k_: previous error    _l_: last error
+"
+    ("`" next-error     nil)
+    ("j" next-error     nil :bind nil)
+    ("k" previous-error nil :bind nil)
+    ("h" first-error    nil :bind nil)
+    ("l" (condition-case err
+             (while t
+               (next-error))
+           (user-error nil))
+     nil :bind nil)
+    ("q" nil            nil :color blue))
+
+
+
+(defhydra hydra-rectangle (:body-pre (rectangle-mark-mode 1)
+                           :color pink
+                           :post (deactivate-mark))
+  "
+  ^_k_^     _d_elete    _s_tring
+_h_   _l_   _o_k        _y_ank
+
+  ^_j_^     _n_ew-copy  _r_eset
+^^^^        _e_xchange  _u_ndo
+^^^^        ^ ^         _p_aste
+"
+  ("h" backward-char nil)
+  ("l" forward-char nil)
+  ("k" previous-line nil)
+  ("j" next-line nil)
+  ("e" exchange-point-and-mark nil)
+  ("n" copy-rectangle-as-kill nil)
+  ("d" delete-rectangle nil)
+  ("r" (if (region-active-p)
+           (deactivate-mark)
+         (rectangle-mark-mode 1)) nil)
+  ("y" yank-rectangle nil)
+  ("u" undo nil)
+  ("s" string-rectangle nil)
+  ("p" kill-rectangle nil)
+  ("o" nil nil))
+(global-set-key (kbd "C-x SPC") 'hydra-rectangle/body)
+
+
+
+(defun my/insert-unicode (unicode-name)
+  "Same as C-x 8 enter UNICODE-NAME."
+  (insert-char (gethash unicode-name (ucs-names))))
+
+(global-set-key
+ (kbd "C-x 9")
+ (defhydra hydra-unicode (:hint nil)
+   "
+        Unicode  _e_ €  _s_ ZERO WIDTH SPACE
+                 _f_ ♀  _o_ °   _m_ µ
+                 _r_ ♂  _a_ →
+        "
+   ("e" (my/insert-unicode "EURO SIGN"))
+   ("r" (my/insert-unicode "MALE SIGN"))
+   ("f" (my/insert-unicode "FEMALE SIGN"))
+   ("s" (my/insert-unicode "ZERO WIDTH SPACE"))
+   ("o" (my/insert-unicode "DEGREE SIGN"))
+   ("a" (my/insert-unicode "RIGHTWARDS ARROW"))
+   ("m" (my/insert-unicode "MICRO SIGN"))))
