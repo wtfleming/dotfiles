@@ -27,3 +27,4 @@
 (load "21-reason-mode.el")
 (load "22-typescript.el")
 (load "23-hydra.el")
+(load "24-multiple-cursors.el")
