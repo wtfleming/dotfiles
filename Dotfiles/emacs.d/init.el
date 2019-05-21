@@ -28,3 +28,4 @@
 (load "22-typescript.el")
 (load "23-hydra.el")
 (load "24-multiple-cursors.el")
+(load "25-doom-modeline.el")
