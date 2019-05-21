@@ -50,8 +50,7 @@
 (setq doom-modeline-buffer-modification-icon t)
 
 ;; Whether display minor modes in mode-line or not.
-(setq doom-modeline-minor-modes t)
-;;(setq doom-modeline-minor-modes nil)
+(setq doom-modeline-minor-modes nil)
 
 
 ;; If non-nil, a word count will be added to the selection-info modeline segment.
