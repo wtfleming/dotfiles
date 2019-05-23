@@ -22,7 +22,7 @@
    (or (package-installed-p package)
        (if (y-or-n-p (format "Package %s is missing. Install it? " package))
            (package-install package))))
- '(zenburn-theme rainbow-mode expand-region color-identifiers-mode magit git-gutter company helm projectile helm-projectile yasnippet rainbow-delimiters beacon elixir-mode alchemist csharp-mode omnisharp lua-mode js2-mode tern company-tern web-mode restclient reason-mode tide hydra multiple-cursors doom-modeline all-the-icons))
+ '(zenburn-theme rainbow-mode expand-region color-identifiers-mode magit git-gutter company helm projectile helm-projectile yasnippet rainbow-delimiters beacon elixir-mode alchemist csharp-mode omnisharp lua-mode js2-mode tern company-tern web-mode restclient reason-mode tide hydra multiple-cursors doom-modeline all-the-icons neotree))
 
 ;; Note that for all-the-icons to work you must manually install them by calling
 ;; M-x all-the-icons-install-fonts
@@ -30,6 +30,14 @@
 
 ;; Load Zenburn
 (load-theme 'zenburn t)
+
+;; neotree
+;; https://github.com/jaypei/emacs-neotree
+(require 'neotree)
+(global-set-key [f8] 'neotree-toggle)
+(setq neo-theme (if (display-graphic-p) 'icons 'arrow))
+(setq neo-smart-open t)
+
 
 ;; Beacon — Never lose your cursor again
 ;; https://github.com/Malabarba/beacon
