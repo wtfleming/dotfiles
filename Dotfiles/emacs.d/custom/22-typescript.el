@@ -19,4 +19,7 @@
 
 (add-hook 'typescript-mode-hook #'setup-tide-mode)
 
+;; Move cursor by camelCase
+(add-hook 'typescript-mode-hook (lambda () (subword-mode +1)))
+
 (setq typescript-indent-level 2)
