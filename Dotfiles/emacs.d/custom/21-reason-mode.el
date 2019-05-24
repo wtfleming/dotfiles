@@ -27,4 +27,7 @@
                               (add-hook 'before-save-hook 'refmt-before-save)
                               (merlin-mode)))
 
+(add-hook 'reason-mode-hook
+          (lambda () (setq-local indent-line-function 'indent-relative)))
+
 (setq merlin-ac-setup t)
