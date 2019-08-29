@@ -26,4 +26,8 @@
 (setq helm-buffers-fuzzy-matching t
       helm-recentf-fuzzy-match    t)
 
+;; Allow arrow keys to once again change directories in helm-find-files
+;; See https://github.com/emacs-helm/helm/wiki/FAQ#arrow-keys-behavior-have-changed
+(customize-set-variable 'helm-ff-lynx-style-map t)
+
 (helm-mode 1)
