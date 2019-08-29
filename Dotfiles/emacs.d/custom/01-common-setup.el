@@ -195,3 +195,6 @@
 
 ;; No tabs in indentation
 (setq-default indent-tabs-mode nil)
+
+;; Use shader-mode for Unity shaders
+(add-to-list 'auto-mode-alist '("\\.shader\\'" . shader-mode))
