@@ -6,3 +6,5 @@ PATH=$PATH:~/bin
 # alias emacsclient="/usr/local/Cellar/emacs/24.4/bin/emacsclient"
 
 # [[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # Load RVM into a shell session *as a function*
+
+export PATH="$HOME/.cargo/bin:$PATH"
