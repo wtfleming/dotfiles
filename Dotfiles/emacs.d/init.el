@@ -24,7 +24,7 @@
 (load "18-abbrev-mode.el")
 (load "19-csharp-mode.el")
 (load "20-web-mode.el")
-(load "21-reason-mode.el")
+;;(load "21-reason-mode.el")
 (load "22-typescript.el")
 (load "23-hydra.el")
 (load "24-multiple-cursors.el")
