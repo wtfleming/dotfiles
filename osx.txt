@@ -42,24 +42,25 @@ Or, if you don't want/need a background service you can just run:
 
 emacs flyspell needs a spell checking tool, install one on os x
 
-brew install ispell --with-lang-en
+brew install ispell
+# brew install ispell --with-lang-en
 
 
 disable mission control since I use those keyboard shortcuts in emacs
 Go to System Preferences > Keyboard > Keyboard Shortcuts > Mission Control and change the settings for "Move left a space" and "Move right a space" or disable them completely.
 http://apple.stackexchange.com/questions/18043/how-can-i-make-ctrlright-left-arrow-stop-changing-desktops-in-lion
 
+Install asdf
+https://github.com/asdf-vm/asdf
 
-Install nvm
-https://github.com/creationix/nvm
-nvm install v10.15.0
+If change made to zsh config:
+echo -e '\n. $HOME/.asdf/asdf.sh' >> ~/.zshrc
+
+
 
 # Install Yarn
 # Since we are using nvm don't install homebrew node
 brew install yarn --without-node
-
-yarn global add reason-cli@latest-macos
-yarn global add bs-platform
 
 
 Install Docker
