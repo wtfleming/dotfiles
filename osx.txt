@@ -96,3 +96,21 @@ and run:
 brew install reattach-to-user-namespace
 
 Broke in Sierra, see https://github.com/tmux/tmux/issues/543
+
+
+
+
+
+
+
+# Make sure to use coursier v1.1.0-M9 or newer.
+curl -L -o coursier https://git.io/coursier-cli
+chmod +x coursier
+./coursier bootstrap \
+  --java-opt -Xss4m \
+  --java-opt -Xms100m \
+  --java-opt -Dmetals.client=emacs \
+  org.scalameta:metals_2.12:0.8.1 \
+  -r bintray:scalacenter/releases \
+  -r sonatype:snapshots \
+  -o ~/bin/metals-emacs -f
