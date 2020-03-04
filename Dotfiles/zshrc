@@ -9,6 +9,7 @@ alias exot='exit'
 
 path+=("$HOME/bin")
 path+=("$HOME/bin/sbt/bin")
+path+=("$HOME/bin/apache-maven-3.6.3/bin")
 path+=("$HOME/.cargo/bin")
 path+=("$HOME/anaconda3/bin")
 
