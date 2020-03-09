@@ -114,3 +114,10 @@ chmod +x coursier
   -r bintray:scalacenter/releases \
   -r sonatype:snapshots \
   -o ~/bin/metals-emacs -f
+
+
+# SAM
+brew tap aws/tap
+brew install aws-sam-cli
+Verify the installation:
+sam --version
