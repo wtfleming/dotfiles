@@ -11,8 +11,8 @@
 ;;(add-hook 'js2-mode-hook (lambda () (flycheck-mode t)))
 
 
-(eval-after-load 'company
-  '(add-to-list 'company-backends 'company-tern))
+;; (eval-after-load 'company
+;;   '(add-to-list 'company-backends 'company-tern))
 
 ;; (add-hook 'js2-mode-hook
 ;;           (defun my-js2-mode-setup ()
