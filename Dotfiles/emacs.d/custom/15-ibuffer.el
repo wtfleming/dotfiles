@@ -36,6 +36,7 @@
                  (mode . scala-mode)
                  (mode . python-mode)
                  (mode . emacs-lisp-mode)
+                 (mode . elixir-mode)
                  ;; etc
                  ))
                ))))
