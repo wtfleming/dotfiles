@@ -46,3 +46,5 @@ autoload -Uz compinit && compinit
 [[ -e ~/.git-prompt.sh ]] && source ~/.git-prompt.sh
 setopt PROMPT_SUBST ; PS1='[%n@%m %c$(__git_ps1 " (%s)")]\$ '
 
+# https://github.com/asdf-vm/asdf
+. $(brew --prefix asdf)/asdf.sh

@@ -59,6 +59,8 @@ http://apple.stackexchange.com/questions/18043/how-can-i-make-ctrlright-left-arr
 Install asdf
 https://github.com/asdf-vm/asdf
 
+brew install asdf
+
 If change made to zsh config:
 echo -e '\n. $HOME/.asdf/asdf.sh' >> ~/.zshrc
 
