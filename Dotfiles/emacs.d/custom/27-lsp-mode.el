@@ -8,3 +8,30 @@
 ;; rustup component add rls rust-analysis rust-src
 
 (add-hook 'scala-mode-hook #'lsp)
+
+
+
+;;(require 'company-lsp)
+;;(push 'company-lsp company-backends)
+
+;; (use-package lsp-mode
+;;   ;; Optional - enable lsp-mode automatically in scala files
+;;   :hook  (scala-mode . lsp)
+;;          (lsp-mode . lsp-lens-mode)
+;;   :config (setq lsp-prefer-flymake nil))
+
+;; ;; Enable nice rendering of documentation on hover
+;; (use-package lsp-ui)
+
+
+
+;; (defvar lsp-elixir--config-options (make-hash-table))
+
+;;   (add-hook 'lsp-after-initialize-hook
+;;             (lambda ()
+;;               (lsp--set-configuration `(:elixirLS, lsp-elixir--config-options))))
+
+;;(add-to-list 'exec-path "~/bin/elixir-ls")
+;(add-to-list 'exec-path "/Users/wtf/src/open-source/elixir-ls/release")
+;(add-hook 'elixir-mode-hook #'lsp)
+
