@@ -1,3 +1,5 @@
+(setq package-user-dir (format "~/.emacs.d/elpa-%d" emacs-major-version))
+
 (require 'package)
 (add-to-list 'package-archives
              '("melpa" . "http://melpa.org/packages/") t)
