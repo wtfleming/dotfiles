@@ -4,6 +4,10 @@
 (require 'lsp-ui)
 (add-hook 'lsp-mode-hook 'lsp-ui-mode)
 
+;;(setq lsp-ui-doc-enable nil)
+(setq lsp-ui-doc-position 'bottom)
+(setq lsp-ui-doc-delay 1.0)
+
 ;; Run this command in a terminal to install the rust language server
 ;; rustup component add rls rust-analysis rust-src
 
