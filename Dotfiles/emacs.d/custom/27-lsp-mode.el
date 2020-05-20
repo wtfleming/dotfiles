@@ -17,6 +17,12 @@
 ;; cd elixir-ls (that you just cloned)
 ;; mix deps.get
 ;; mix elixir_ls.release -o ~/bin/elixir-ls
+;;
+;; If using asdf and a recent macos (ie Catalina) you may need to use a more recent OTP to build
+;; change the .tool-versions to look something like this, then asdf install
+;; Then run asdf global for elixir and erlang
+;; elixir 1.10.3-otp-23
+;; erlang 23.0
 (add-to-list 'exec-path "~/bin/elixir-ls")
 (add-hook 'elixir-mode-hook #'lsp)
 
