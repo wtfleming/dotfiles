@@ -35,7 +35,7 @@
 ;;             (lambda ()
 ;;               (lsp--set-configuration `(:elixirLS, lsp-elixir--config-options))))
 
-;;(add-to-list 'exec-path "~/bin/elixir-ls")
-;(add-to-list 'exec-path "/Users/wtf/src/open-source/elixir-ls/release")
-;(add-hook 'elixir-mode-hook #'lsp)
+;;(add-to-list 'exec-path "/Users/wtf/src/open-source/elixir-ls/release")
+(add-to-list 'exec-path "~/bin/elixir-ls")
+(add-hook 'elixir-mode-hook #'lsp)
 
