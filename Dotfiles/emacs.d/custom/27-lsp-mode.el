@@ -13,6 +13,12 @@
 
 (add-hook 'scala-mode-hook #'lsp)
 
+;; Clone https://github.com/elixir-lsp/elixir-ls
+;; cd elixir-ls (that you just cloned)
+;; mix deps.get
+;; mix elixir_ls.release -o ~/bin/elixir-ls
+(add-to-list 'exec-path "~/bin/elixir-ls")
+(add-hook 'elixir-mode-hook #'lsp)
 
 
 ;;(require 'company-lsp)
@@ -36,6 +42,6 @@
 ;;               (lsp--set-configuration `(:elixirLS, lsp-elixir--config-options))))
 
 ;;(add-to-list 'exec-path "/Users/wtf/src/open-source/elixir-ls/release")
-(add-to-list 'exec-path "~/bin/elixir-ls")
-(add-hook 'elixir-mode-hook #'lsp)
+
+
 
