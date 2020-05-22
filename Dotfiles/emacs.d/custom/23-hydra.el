@@ -20,7 +20,7 @@
 ; TODO there are two helps defined here, choose one to keep
 
 ; Help
-(setq my-default-hydra-delay 0.5)
+(setq my-default-hydra-delay 0.0)
 
 (defhydra hydra-metahelp-menu (:hint nil :exit t :idle my-default-hydra-delay :foreign-keys warn)
   "
