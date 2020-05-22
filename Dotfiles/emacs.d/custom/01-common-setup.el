@@ -208,4 +208,9 @@
 (add-to-list 'auto-mode-alist '("\\.shader\\'" . shader-mode))
 (add-to-list 'auto-mode-alist '("\\.hlsl\\'" . shader-mode))
 
+;; Ask before exiting emacs
 (setq confirm-kill-emacs #'y-or-n-p)
+
+;; Enable uppercasing and lowercasing on regions
+(put 'downcase-region 'disabled nil)
+(put 'upcase-region 'disabled nil)
