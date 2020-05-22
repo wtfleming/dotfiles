@@ -207,3 +207,5 @@
 ;; Use shader-mode for Unity shaders
 (add-to-list 'auto-mode-alist '("\\.shader\\'" . shader-mode))
 (add-to-list 'auto-mode-alist '("\\.hlsl\\'" . shader-mode))
+
+(setq confirm-kill-emacs #'y-or-n-p)
