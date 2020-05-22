@@ -36,7 +36,7 @@ _F_unction (info)      _C-p_: external package
 _I_:key input method                                           ^^^^^^                 _q_uit
 "
   ("?" counsel-hydra-heads)
-  ("a"   counsel-apropos-thing-at-point)
+  ("a"   apropos-command)
   ("b"   describe-bindings)
   ("c"   describe-key-briefly)
   ("C"   describe-coding-system)
