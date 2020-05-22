@@ -1,6 +1,8 @@
 (require 'lsp-mode)
 (add-hook 'rust-mode-hook #'lsp)
 
+(setq lsp-enable-snippet t)
+
 (require 'lsp-ui)
 (add-hook 'lsp-mode-hook 'lsp-ui-mode)
 
