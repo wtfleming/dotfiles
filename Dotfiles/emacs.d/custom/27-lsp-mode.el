@@ -1,20 +1,20 @@
+;; ---- lsp-mode ----
 (require 'lsp-mode)
 (add-hook 'rust-mode-hook #'lsp)
-
 (setq lsp-enable-snippet t)
 
+;; ---- lsp-ui ----
 (require 'lsp-ui)
 (add-hook 'lsp-mode-hook 'lsp-ui-mode)
-
-;;(setq lsp-ui-doc-enable nil)
+(setq lsp-ui-doc-enable t)
 (setq lsp-ui-doc-position 'bottom)
 (setq lsp-ui-doc-delay 1.0)
 
-;; Run this command in a terminal to install the rust language server
+;; ---- Rust ----
+;; Run this command in a terminal to install the rust language server:
 ;; rustup component add rls rust-analysis rust-src
 
-(add-hook 'scala-mode-hook #'lsp)
-
+;; ---- Elixir ----
 ;; Clone https://github.com/elixir-lsp/elixir-ls
 ;; cd elixir-ls (that you just cloned)
 ;; mix deps.get
@@ -28,28 +28,22 @@
 (add-to-list 'exec-path "~/bin/elixir-ls")
 (add-hook 'elixir-mode-hook #'lsp)
 
+;; Ignore these directories in elixir projects
+(push "[/\\\\]\\deps$" lsp-file-watch-ignored)
+(push "[/\\\\]\\.elixir_ls$" lsp-file-watch-ignored)
+(push "[/\\\\]_build$" lsp-file-watch-ignored)
 
-;;(require 'company-lsp)
-;;(push 'company-lsp company-backends)
+(defvar lsp-elixir--config-options (make-hash-table))
+(add-hook 'lsp-after-initialize-hook
+          (lambda ()
+            (lsp--set-configuration `(:elixirLS, lsp-elixir--config-options))))
+
+
+;; ---- Scala ----
+(add-hook 'scala-mode-hook #'lsp)
 
 ;; (use-package lsp-mode
 ;;   ;; Optional - enable lsp-mode automatically in scala files
 ;;   :hook  (scala-mode . lsp)
 ;;          (lsp-mode . lsp-lens-mode)
 ;;   :config (setq lsp-prefer-flymake nil))
-
-;; ;; Enable nice rendering of documentation on hover
-;; (use-package lsp-ui)
-
-
-
-;; (defvar lsp-elixir--config-options (make-hash-table))
-
-;;   (add-hook 'lsp-after-initialize-hook
-;;             (lambda ()
-;;               (lsp--set-configuration `(:elixirLS, lsp-elixir--config-options))))
-
-;;(add-to-list 'exec-path "/Users/wtf/src/open-source/elixir-ls/release")
-
-
-
