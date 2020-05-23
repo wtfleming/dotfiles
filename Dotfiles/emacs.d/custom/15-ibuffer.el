@@ -15,20 +15,6 @@
 ;; Show groups
 (setq ibuffer-saved-filter-groups
       (quote (("default"
-               ;; ("org-agenda" (or
-               ;;                (mode . org-agenda-mode)
-               ;;                (predicate . (my-org-agenda-filter))))
-               ("dired" (mode . dired-mode))
-               ("erc" (mode . erc-mode))
-               ("emacs" (or
-                         (name . "^\\*scratch\\*$")
-                         (name . "^\\*Completions\\*$")
-                         (name . "^\\*Messages\\*$")))
-               ("magit" (name . "^\\*magit"))
-;               ("helm" (or
-;                        (name . "^\\*helm")
-;                        (name . "^\\*Helm")))
-               ("org-mode" (mode . org-mode))
                ("Programming"
                 (or
                  (mode . pig-mode)
@@ -37,10 +23,32 @@
                  (mode . python-mode)
                  (mode . emacs-lisp-mode)
                  (mode . elixir-mode)
-                 ;; etc
+                 (mode . conf-toml-mode)
+                 (mode . rust-mode)
                  ))
+               ("org-mode" (mode . org-mode))
+               ;; ("org-agenda" (or
+               ;;                (mode . org-agenda-mode)
+               ;;                (predicate . (my-org-agenda-filter))))
+               ("Dired" (mode . dired-mode))
+               ("erc" (mode . erc-mode))
+               ("Markdown" (mode . markdown-mode))
+;               ("helm" (or
+;                        (name . "^\\*helm")
+;                        (name . "^\\*Helm")))
+
+               ("Emacs" (or
+                         (mode . package-menu-mode)
+                         (name . "^\\*scratch\\*$")
+                         (name . "^\\*Completions\\*$")
+                         (name . "^\\*Messages\\*$")))
+               ("Magit" (mode . magit-status-mode))
+
                ))))
 
+
+;; Don't show filter groups if there are no buffers in that group
+(setq ibuffer-show-empty-filter-groups nil)
 
 (add-hook 'ibuffer-mode-hook
           (lambda ()
