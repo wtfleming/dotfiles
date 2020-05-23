@@ -25,6 +25,13 @@ cp ~/src/dotfiles/Dotfiles/tmux.conf ~/.tmux.conf
 
 
 * Emacs 26.3
+Note this doesn't seem to build on ubuntu 18.04 anymore - it seems to require libncurses-dev6 and we only have 5?
+Can use a ppa instead
+
+sudo add-apt-repository ppa:kelleyk/emacs
+sudo apt-get update
+sudo apt install emacs26
+
 
 sudo apt-get install build-essential libncurses5-dev libjpeg-dev
 sudo apt-get build-dep emacs25
