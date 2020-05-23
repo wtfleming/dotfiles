@@ -24,6 +24,48 @@ cp ~/src/dotfiles/Dotfiles/bash_profile ~/.bash_profile
 cp ~/src/dotfiles/Dotfiles/tmux.conf ~/.tmux.conf
 
 
+* Emacs 26.3
+
+sudo apt-get install build-essential libncurses5-dev libjpeg-dev
+sudo apt-get build-dep emacs25
+sudo apt-get install libjpeg9
+cd ~/bin
+wget http://ftp.gnu.org/gnu/emacs/emacs-26.3.tar.gz
+tar xzvf emacs-26.3.tar.gz
+cd emacs-26.3
+./configure
+# server or embedded (beaglebone) config
+# ./configure --with-xpm=no --with-gif=no --without-x
+make
+# optional make install
+
+in bash_aliases add
+alias emacs='/home/wtf/bin/emacs-26.3/src/emacs'
+alias emacsclient='/home/wtf/bin/emacs-26.3/src/emacsclient'
+
+cp -r ~/src/dotfiles/Dotfiles/emacs.d ~/.emacs.d/
+
+cd ~/.emacs.d
+git clone git@github.com:AndreaCrotti/yasnippet-snippets.git
+mkdir ~/.emacs.d/snippets
+
+First time loading need to m-x package-list-packages
+
+
+Note that on raspbian on a raspberry pi you will need to uncomment the line in /etc/apt/sources.list
+#deb-src http://archive.raspbian.org/raspbian/ jessie main contrib non-free rpi
+In order to get apt-get build-dep working
+
+
+Install org via package-list-packages to get latest version
+
+Install latex files for org-mode export to pdf
+sudo apt-get install texlive-latex-base texlive-latex-extra texlive-fonts-recommended
+
+Link to it so .gitconfig can properly find it
+ln -s ~/bin/emacs-26.3/src/emacs ~/bin/emacs
+
+
 * Emacs 26.1
 
 sudo apt-get install build-essential libncurses5-dev
