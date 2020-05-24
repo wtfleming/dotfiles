@@ -30,7 +30,7 @@ _b_indings             _k_ey                   _s_ymbol               _e_:*Messa
 _c_:key-briefly        _K_ey (info)            _S_ymbol (info)        _i_nfo manual   _l_ossage
 _C_oding system        _L_anguage environment  _C-s_yntax table ^     _._:local help
 _d_ocumentation        _m_ode                  _v_ariable
-_E_macs...             _p_ackage (by topic)    _V_ariable (counsel)
+_E_macs...             _p_ackage (by topic)
 _f_unction             _P_ackage (by name)     _w_hereis (func->keys)
 _F_unction (info)      _C-p_: external package
 _I_:key input method                                           ^^^^^^                 _q_uit
@@ -43,7 +43,7 @@ _I_:key input method                                           ^^^^^^           
   ("d"   apropos-documentation)
   ("e"   view-echo-area-messages)
   ("E"   hydra-metahelp-emacs-menu/body)
-  ("f"   counsel-describe-function)
+  ("f"   describe-function)
   ("F"   Info-goto-emacs-command-node)
   ("i"   info)
   ("I"   describe-input-method)
@@ -60,7 +60,6 @@ _I_:key input method                                           ^^^^^^           
   ("S"   info-lookup-symbol)
   ("C-s" describe-syntax)
   ("v"   describe-variable)
-  ("V"   counsel-describe-variable)
   ("w"   where-is)
   ("."   display-local-help))
 
