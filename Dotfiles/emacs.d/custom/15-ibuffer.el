@@ -25,6 +25,7 @@
                  (mode . elixir-mode)
                  (mode . conf-toml-mode)
                  (mode . rust-mode)
+                 (mode . web-mode)
                  ))
                ("org-mode" (mode . org-mode))
                ;; ("org-agenda" (or
