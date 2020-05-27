@@ -161,10 +161,8 @@
 ;; Set *scratch* buffer to use text-mode instead of lisp-interaction-mode
 (setq initial-major-mode 'text-mode)
 
-
-;; don't let me accidentally exit out of emacs
-;; use "M-x kill-emacs" instead
-;;(global-unset-key "\C-x\C-c")
+;; Don't bind (suspend-emacs)
+(global-unset-key (kbd "C-z"))
 
 ;; Wind Move
 ; Move point from window to window using meta and the arrow keys,
