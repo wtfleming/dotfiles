@@ -374,3 +374,25 @@ _h_   _l_   _o_k        _y_ank
   ("<down-mouse-1>" ignore)
   ("<drag-mouse-1>" ignore)
   ("q" nil))
+
+(defhydra hydra-windows-nav (:color red)
+  ("s" shrink-window-horizontally "shrink horizontally" :column "Sizing")
+  ("e" enlarge-window-horizontally "enlarge horizontally")
+  ("b" balance-windows "balance window height")
+  ("m" maximize-window "maximize current window")
+  ("M" minimize-window "minimize current window")
+
+  ("h" split-window-below "split horizontally" :column "Split management")
+  ("v" split-window-right "split vertically")
+  ("d" delete-window "delete current window")
+  ("x" delete-other-windows "delete-other-windows")
+
+
+  ("z" ace-window "ace window" :color blue :column "Navigation")
+  ("h" windmove-left "← window")
+  ("j" windmove-down "↓ window")
+  ("k" windmove-up "↑ window")
+  ("l" windmove-right "→ window")
+  ("r" toggle-window-split "rotate windows") ; Located in utility functions
+  ("q" nil "quit menu" :color blue :column nil))
+(global-set-key (kbd "M-n") 'hydra-windows-nav/body)
