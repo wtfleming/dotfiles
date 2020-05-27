@@ -396,3 +396,16 @@ _h_   _l_   _o_k        _y_ank
   ("r" toggle-window-split "rotate windows") ; Located in utility functions
   ("q" nil "quit menu" :color blue :column nil))
 (global-set-key (kbd "M-n") 'hydra-windows-nav/body)
+
+
+
+(defhydra hydra-git-gutter (:body-pre (git-gutter-mode 1)
+                                      :hint nil)
+  ("n" git-gutter:next-hunk "next hunk")
+  ("p" git-gutter:previous-hunk "previous hunk")
+  ("h" (progn (goto-char (point-min)) (git-gutter:next-hunk 1)) "first hunk")
+  ("l" (progn (goto-char (point-min)) (git-gutter:previous-hunk 1)) "last hunk")
+  ("<SPC>" git-gutter:popup-hunk "popup hunk")
+  ("s" git-gutter:stage-hunk "stage hunk")
+  ("r" git-gutter:revert-hunk "revert hunk")
+  ("q" nil "quit"))
