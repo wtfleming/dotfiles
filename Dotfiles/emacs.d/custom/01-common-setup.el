@@ -24,7 +24,7 @@
    (or (package-installed-p package)
        (if (y-or-n-p (format "Package %s is missing. Install it? " package))
            (package-install package))))
- '(all-the-icons beacon cargo color-identifiers-mode company company-lsp csharp-mode doom-modeline elixir-mode expand-region exunit flycheck-inline flycheck-rust git-gutter helm helm-lsp helm-projectile hydra js2-mode lsp-mode lsp-ui lua-mode magit multiple-cursors neotree omnisharp projectile rainbow-delimiters rainbow-mode restclient rust-mode scala-mode shader-mode tern tide web-mode yaml-mode yasnippet zenburn-theme))
+ '(all-the-icons beacon cargo color-identifiers-mode company company-lsp csharp-mode doom-modeline elixir-mode expand-region exunit flycheck-inline flycheck-rust git-gutter helm helm-lsp helm-projectile hydra js2-mode lsp-mode lsp-ui lua-mode multiple-cursors neotree omnisharp projectile rainbow-delimiters rainbow-mode restclient rust-mode scala-mode shader-mode tern tide web-mode yaml-mode yasnippet zenburn-theme use-package))
 
 (require 'yaml-mode)
 (add-to-list 'auto-mode-alist '("\\.yml\\'" . yaml-mode))
