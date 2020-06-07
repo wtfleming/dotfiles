@@ -9,7 +9,6 @@
 (load "01-common-setup.el")
 (load "02-magit.el")
 (load "03-org-mode.el")
-(load "06-expand-region.el")
 (load "09-dired.el")
 (load "10-javascript-mode.el")
 (load "11-saveplace.el")
