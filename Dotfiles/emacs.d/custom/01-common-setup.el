@@ -46,6 +46,11 @@
              :config
              (load-theme 'zenburn t))
 
+(use-package uniquify
+             :ensure nil
+             :config
+             (setq uniquify-buffer-name-style 'post-forward-angle-brackets))
+
 
 ;; neotree
 ;; https://github.com/jaypei/emacs-neotree
