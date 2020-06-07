@@ -10,7 +10,6 @@
 (load "02-magit.el")
 (load "03-org-mode.el")
 (load "04-paren-mode.el")
-(load "05-uniquify.el")
 (load "06-expand-region.el")
 (load "09-dired.el")
 (load "10-javascript-mode.el")
