@@ -46,10 +46,15 @@
              :config
              (load-theme 'zenburn t))
 
+;; uniquify
 (use-package uniquify
              :ensure nil
              :config
              (setq uniquify-buffer-name-style 'post-forward-angle-brackets))
+
+;; paren-mode
+(setq show-paren-delay 0) ; how long to wait?
+(show-paren-mode t) ; turn paren-mode on
 
 
 ;; neotree
