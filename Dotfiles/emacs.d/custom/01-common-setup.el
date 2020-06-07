@@ -24,7 +24,7 @@
    (or (package-installed-p package)
        (if (y-or-n-p (format "Package %s is missing. Install it? " package))
            (package-install package))))
- '(all-the-icons beacon cargo color-identifiers-mode company company-lsp csharp-mode doom-modeline elixir-mode expand-region exunit flycheck-inline flycheck-rust git-gutter helm helm-lsp helm-projectile hydra js2-mode lsp-mode lsp-ui lua-mode multiple-cursors neotree omnisharp projectile rainbow-delimiters rainbow-mode restclient rust-mode scala-mode shader-mode tern tide web-mode yasnippet use-package))
+ '(all-the-icons beacon cargo color-identifiers-mode company company-lsp csharp-mode doom-modeline elixir-mode exunit flycheck-inline flycheck-rust git-gutter helm helm-lsp helm-projectile hydra js2-mode lsp-mode lsp-ui lua-mode multiple-cursors neotree omnisharp projectile rainbow-delimiters rainbow-mode restclient rust-mode scala-mode shader-mode tern tide web-mode yasnippet use-package))
 
 
 ;; Note that for all-the-icons to work you must manually install them by calling
@@ -51,6 +51,11 @@
              :ensure nil
              :config
              (setq uniquify-buffer-name-style 'post-forward-angle-brackets))
+
+;; expand-region
+(use-package expand-region
+             :ensure t
+             :bind (("C-=" . er/expand-region)))
 
 ;; paren-mode
 (setq show-paren-delay 0) ; how long to wait?
