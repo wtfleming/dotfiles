@@ -82,6 +82,7 @@ yarn-error.log*
 ### Scala language server
 # https://scalameta.org/metals/
 .metals
+metals.sbt
 
 ### AWS
 .aws-sam
