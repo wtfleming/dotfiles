@@ -31,9 +31,9 @@
 ;; M-x all-the-icons-install-fonts
 
 (use-package yaml-mode
-             :ensure t
-             :mode (("\\.yml$" . yaml-mode)
-                    ("\\.yaml$" . yaml-mode)))
+  :ensure t
+  :mode (("\\.yml$" . yaml-mode)
+         ("\\.yaml$" . yaml-mode)))
 
 
 ;; (with-eval-after-load 'flycheck
@@ -42,20 +42,24 @@
 
 ;; Zenburn
 (use-package zenburn-theme
-             :ensure t
-             :config
-             (load-theme 'zenburn t))
+  :ensure t
+  :config
+  (load-theme 'zenburn t))
 
 ;; uniquify
 (use-package uniquify
-             :ensure nil
-             :config
-             (setq uniquify-buffer-name-style 'post-forward-angle-brackets))
+  :ensure nil
+  :config
+  (setq uniquify-buffer-name-style 'post-forward-angle-brackets))
 
 ;; expand-region
 (use-package expand-region
-             :ensure t
-             :bind (("C-=" . er/expand-region)))
+  :ensure t
+  :bind (("C-=" . er/expand-region)))
+
+;; https://github.com/lassik/emacs-format-all-the-code
+(use-package format-all
+  :ensure t)
 
 ;; paren-mode
 (setq show-paren-delay 0) ; how long to wait?
