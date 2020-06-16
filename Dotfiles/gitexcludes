@@ -84,5 +84,8 @@ yarn-error.log*
 .metals
 metals.sbt
 
+### https://scalacenter.github.io/bloop/
+.bloop
+
 ### AWS
 .aws-sam
