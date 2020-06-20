@@ -244,3 +244,15 @@
 (setq save-place-file "~/.emacs.d/saveplace") ;; keep my ~/ clean
 (setq-default save-place t)                   ;; activate it for all buffers
 (require 'saveplace)                          ;; get the package
+
+;; recentf
+(use-package recentf
+  :config
+  (setq recentf-save-file "~/.emacs.d/.recentf"
+        recentf-max-saved-items 500
+        recentf-max-menu-items 25
+        ;; disable recentf-cleanup on Emacs start, because it can cause problems with remote files
+        recentf-auto-cleanup 'never)
+  (recentf-mode +1))
+
+(global-set-key "\C-x\ \C-r" 'recentf-open-files)
