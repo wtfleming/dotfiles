@@ -11,7 +11,6 @@
 (load "03-org-mode.el")
 (load "09-dired.el")
 (load "10-javascript-mode.el")
-(load "12-recentf.el")
 (load "13-ispell.el")
 (load "14-tramp.el")
 (load "15-ibuffer.el")
