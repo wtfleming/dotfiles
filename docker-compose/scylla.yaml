@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  # scylladb services...
+  scylla:
+    image: scylladb/scylla:3.0.10
+    networks:
+      - scylla
+    volumes:
+      - ./data/scylla:/var/lib/scylla
+    command: "--smp 1 --memory 256M --experimental 1"
+
+networks:
+  scylla:
