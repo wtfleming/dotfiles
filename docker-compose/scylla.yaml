@@ -1,7 +1,7 @@
+# For more info see https://docs.scylladb.com/operating-scylla/procedures/tips/best_practices_scylla_on_docker/
 version: '3'
 
 services:
-  # scylladb services...
   scylla:
     image: scylladb/scylla:3.0.10
     networks:
