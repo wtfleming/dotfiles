@@ -1,18 +1,19 @@
 (setq package-user-dir (format "~/.emacs.d/elpa-%d" emacs-major-version))
 
 (require 'package)
+(setq package-enable-startup nil)
 (add-to-list 'package-archives
              '("melpa" . "http://melpa.org/packages/") t)
 (add-to-list 'package-archives
              '("melpa-stable" . "http://stable.melpa.org/packages/") t)
 
 ;; Requires Emacs 24.4 or newer
-(add-to-list 'package-pinned-packages '(clojure-mode . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(clojure-mode-extra-font-locking . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(cider . "melpa-stable") t)
 (add-to-list 'package-pinned-packages '(magit . "melpa-stable") t)
 
 (package-initialize)
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
 
 ;; Check if the packages are installed; if not, install them.
 ;; The very first time you start Emacs you will need to run:
@@ -24,7 +25,7 @@
    (or (package-installed-p package)
        (if (y-or-n-p (format "Package %s is missing. Install it? " package))
            (package-install package))))
- '(all-the-icons beacon color-identifiers-mode company company-lsp csharp-mode doom-modeline elixir-mode exunit flycheck-inline git-gutter helm helm-lsp helm-projectile hydra js2-mode lsp-mode lsp-ui lua-mode multiple-cursors neotree omnisharp projectile rainbow-delimiters rainbow-mode restclient scala-mode shader-mode tern tide yasnippet use-package lsp-metals))
+ '(all-the-icons beacon color-identifiers-mode company company-lsp csharp-mode doom-modeline elixir-mode exunit flycheck-inline git-gutter helm helm-lsp helm-projectile hydra js2-mode lsp-mode lsp-ui lua-mode multiple-cursors neotree omnisharp projectile rainbow-delimiters rainbow-mode restclient scala-mode shader-mode tern tide yasnippet lsp-metals))
 
 
 ;; Note that for all-the-icons to work you must manually install them by calling
