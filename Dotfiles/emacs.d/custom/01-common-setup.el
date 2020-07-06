@@ -3,9 +3,9 @@
 (require 'package)
 (setq package-enable-startup nil)
 (add-to-list 'package-archives
-             '("melpa" . "http://melpa.org/packages/") t)
+             '("melpa" . "https://melpa.org/packages/") t)
 (add-to-list 'package-archives
-             '("melpa-stable" . "http://stable.melpa.org/packages/") t)
+             '("melpa-stable" . "https://stable.melpa.org/packages/") t)
 
 ;; Requires Emacs 24.4 or newer
 (add-to-list 'package-pinned-packages '(magit . "melpa-stable") t)
