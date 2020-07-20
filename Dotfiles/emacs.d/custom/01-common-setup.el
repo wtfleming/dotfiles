@@ -31,6 +31,12 @@
 ;; Note that for all-the-icons to work you must manually install them by calling
 ;; M-x all-the-icons-install-fonts
 
+
+(use-package dockerfile-mode
+  :ensure t
+  :mode
+  (("Dockerfile\\'" . dockerfile-mode)))
+
 (use-package yaml-mode
   :ensure t
   :mode (("\\.yml$" . yaml-mode)
