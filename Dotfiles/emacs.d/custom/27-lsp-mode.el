@@ -47,3 +47,13 @@
 ;;   :hook  (scala-mode . lsp)
 ;;          (lsp-mode . lsp-lens-mode)
 ;;   :config (setq lsp-prefer-flymake nil))
+
+;; C++
+;; To install the language server
+;; $ brew install ccls
+(use-package ccls
+    :ensure t
+    :hook ((c-mode c++-mode objc-mode cuda-mode) .
+         (lambda () (require 'ccls) (lsp))))
+
+(add-hook 'c++-mode-hook #'lsp)
