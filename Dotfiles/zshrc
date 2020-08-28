@@ -48,9 +48,9 @@ autoload -Uz compinit && compinit
 setopt PROMPT_SUBST ; PS1='[%n@%m %c$(__git_ps1 " (%s)")]\$ '
 
 # On OS X with java 8 and 11 installed, use 8
-alias j11="export JAVA_HOME=`/usr/libexec/java_home -v 11`"
-alias j8="export JAVA_HOME=`/usr/libexec/java_home -v 1.8`"
-j8
+# alias j11="export JAVA_HOME=`/usr/libexec/java_home -v 11`"
+# alias j8="export JAVA_HOME=`/usr/libexec/java_home -v 1.8`"
+# j8
 
 # https://github.com/asdf-vm/asdf
 . $(brew --prefix asdf)/asdf.sh
