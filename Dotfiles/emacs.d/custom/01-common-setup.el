@@ -76,6 +76,12 @@
   :config
   (midnight-delay-set 'midnight-delay "4:30am"))
 
+
+;; Compatability with HCL and Terraform syntax
+(use-package hcl-mode
+  :ensure t
+  :mode "\\.tpl\\'")
+
 ;; paren-mode
 (setq show-paren-delay 0) ; how long to wait?
 (show-paren-mode t) ; turn paren-mode on
