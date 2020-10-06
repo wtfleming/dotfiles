@@ -6,6 +6,8 @@ Install homebrew
 https://brew.sh/
 
 
+If zsh complains about unsecure files run
+compaudit | xargs chmod g-w
 
 Install dotfiles
 https://github.com/wtfleming/dotfiles
