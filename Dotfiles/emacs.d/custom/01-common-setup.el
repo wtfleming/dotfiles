@@ -80,7 +80,8 @@
 ;; Compatability with HCL and Terraform syntax
 (use-package hcl-mode
   :ensure t
-  :mode "\\.tpl\\'")
+  :mode (("\\.tpl\\'" . hcl-mode)
+         ("\\.tf\\'" . hcl-mode)))
 
 ;; paren-mode
 (setq show-paren-delay 0) ; how long to wait?
