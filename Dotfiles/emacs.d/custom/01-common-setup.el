@@ -276,3 +276,8 @@
   (recentf-mode +1))
 
 (global-set-key "\C-x\ \C-r" 'recentf-open-files)
+
+(add-hook 'go-mode-hook (lambda () (subword-mode +1)))
+(add-hook 'elixir-mode-hook (lambda () (subword-mode +1)))
+
+(require 'go-mode)
