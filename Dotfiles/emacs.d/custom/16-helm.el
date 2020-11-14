@@ -10,10 +10,10 @@
 (global-set-key (kbd "M-y") 'helm-show-kill-ring)
 (global-set-key (kbd "C-x b") 'helm-mini)
 (global-set-key (kbd "C-x C-f") 'helm-find-files)
-(global-set-key (kbd "C-c h o") 'helm-occur)
+;;(global-set-key (kbd "C-c h o") 'helm-occur)
 (global-set-key (kbd "C-h SPC") 'helm-all-mark-rings)
-(global-set-key (kbd "C-c h x") 'helm-register)
-(global-set-key (kbd "C-c h g") 'helm-google-suggest)
+;;(global-set-key (kbd "C-c h x") 'helm-register)
+;;(global-set-key (kbd "C-c h g") 'helm-google-suggest)
 (global-set-key (kbd "C-c p h") 'helm-projectile)
 
 (setq helm-split-window-in-side-p           t ; open helm buffer inside current window, not occupy whole other window
