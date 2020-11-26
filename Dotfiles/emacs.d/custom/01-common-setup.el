@@ -279,5 +279,6 @@
 
 (add-hook 'go-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'elixir-mode-hook (lambda () (subword-mode +1)))
+(add-hook 'rust-mode-hook (lambda () (subword-mode +1)))
 
 (require 'go-mode)
