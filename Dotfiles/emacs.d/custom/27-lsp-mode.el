@@ -1,6 +1,5 @@
 ;; ---- lsp-mode ----
 (require 'lsp-mode)
-(add-hook 'rust-mode-hook #'lsp)
 (setq lsp-enable-snippet t)
 
 ;; ---- lsp-ui ----
@@ -13,6 +12,7 @@
 ;; ---- Rust ----
 ;; Run this command in a terminal to install the rust language server:
 ;; rustup component add rls rust-analysis rust-src
+(add-hook 'rust-mode-hook #'lsp-deferred)
 
 ;; ---- Elixir ----
 ;; Clone https://github.com/elixir-lsp/elixir-ls
@@ -26,7 +26,7 @@
 ;; elixir 1.10.3-otp-23
 ;; erlang 23.0
 (add-to-list 'exec-path "~/bin/elixir-ls")
-(add-hook 'elixir-mode-hook #'lsp)
+(add-hook 'elixir-mode-hook #'lsp-deferred)
 
 ;; Ignore these directories in elixir projects
 (push "[/\\\\]\\deps$" lsp-file-watch-ignored)
@@ -40,7 +40,7 @@
 
 
 ;; ---- Scala ----
-(add-hook 'scala-mode-hook #'lsp)
+(add-hook 'scala-mode-hook #'lsp-deferred)
 
 ;; (use-package lsp-mode
 ;;   ;; Optional - enable lsp-mode automatically in scala files
@@ -51,9 +51,18 @@
 ;; C++
 ;; To install the language server
 ;; $ brew install ccls
-(use-package ccls
-    :ensure t
-    :hook ((c-mode c++-mode objc-mode cuda-mode) .
-         (lambda () (require 'ccls) (lsp))))
+;; (use-package ccls
+;;     :ensure t
+;;     :hook ((c-mode c++-mode objc-mode cuda-mode) .
+;;          (lambda () (require 'ccls) (lsp))))
 
-(add-hook 'c++-mode-hook #'lsp)
+;; (add-hook 'c++-mode-hook #'lsp-deferred)
+
+
+;;  ---- Go----
+;; go get golang.org/x/tools/gopls
+;; GO111MODULE=on go get golang.org/x/tools/gopls@latest
+(add-hook 'go-mode-hook #'lsp-deferred)
+(setq lsp-gopls-staticcheck t)
+(setq lsp-eldoc-render-all t)
+(setq lsp-gopls-complete-unimported t)
