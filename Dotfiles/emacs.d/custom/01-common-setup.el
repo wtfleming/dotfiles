@@ -25,12 +25,21 @@
    (or (package-installed-p package)
        (if (y-or-n-p (format "Package %s is missing. Install it? " package))
            (package-install package))))
- '(all-the-icons beacon color-identifiers-mode csharp-mode doom-modeline elixir-mode exunit flycheck-inline git-gutter helm helm-lsp helm-projectile hydra js2-mode lsp-mode lsp-ui lua-mode multiple-cursors neotree omnisharp projectile rainbow-delimiters rainbow-mode scala-mode shader-mode tern tide yasnippet lsp-metals go-mode))
+ '(all-the-icons beacon color-identifiers-mode csharp-mode doom-modeline elixir-mode exunit flycheck-inline git-gutter helm helm-lsp helm-projectile hydra js2-mode lsp-mode lsp-ui lua-mode multiple-cursors neotree omnisharp projectile rainbow-delimiters rainbow-mode scala-mode shader-mode tern tide yasnippet lsp-metals))
 
 
 ;; Note that for all-the-icons to work you must manually install them by calling
 ;; M-x all-the-icons-install-fonts
 
+(use-package go-mode
+  :defer t
+  :ensure t
+  :mode ("\\.go\\'" . go-mode))
+
+;; (use-package yasnippet
+;;   :ensure t
+;;   :commands yas-minor-mode
+;;   :hook (go-mode . yas-minor-mode))
 
 (use-package company
   :ensure t
@@ -294,4 +303,3 @@
 (add-hook 'elixir-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'rust-mode-hook (lambda () (subword-mode +1)))
 
-(require 'go-mode)
