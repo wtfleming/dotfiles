@@ -25,11 +25,24 @@
    (or (package-installed-p package)
        (if (y-or-n-p (format "Package %s is missing. Install it? " package))
            (package-install package))))
- '(all-the-icons beacon color-identifiers-mode company company-lsp csharp-mode doom-modeline elixir-mode exunit flycheck-inline git-gutter helm helm-lsp helm-projectile hydra js2-mode lsp-mode lsp-ui lua-mode multiple-cursors neotree omnisharp projectile rainbow-delimiters rainbow-mode scala-mode shader-mode tern tide yasnippet lsp-metals go-mode))
+ '(all-the-icons beacon color-identifiers-mode csharp-mode doom-modeline elixir-mode exunit flycheck-inline git-gutter helm helm-lsp helm-projectile hydra js2-mode lsp-mode lsp-ui lua-mode multiple-cursors neotree omnisharp projectile rainbow-delimiters rainbow-mode scala-mode shader-mode tern tide yasnippet lsp-metals go-mode))
 
 
 ;; Note that for all-the-icons to work you must manually install them by calling
 ;; M-x all-the-icons-install-fonts
+
+
+(use-package company
+  :ensure t
+  :config
+  (setq company-idle-delay 0)
+  (setq company-minimum-prefix-length 1)
+  (add-hook 'after-init-hook 'global-company-mode))
+
+(use-package company-lsp
+  :ensure t
+  :commands company-lsp)
+
 
 (use-package restclient
   :ensure t
@@ -123,9 +136,6 @@
 
 ;; Enable semantic-mode
 (semantic-mode 1)
-
-;; Enable company mode for auto-completion
-(add-hook 'after-init-hook 'global-company-mode)
 
 ;; Disable emacs built in version control for faster startup
 ;; Use magit instead of it
