@@ -5,6 +5,7 @@
         (rust-mode . lsp-deferred)
         (scala-mode . lsp-deferred))
 
+(setq lsp-eldoc-render-all t)
 ;; (setq lsp-enable-snippet t)
 
 (use-package lsp-ui
@@ -31,7 +32,6 @@
 ;; GO111MODULE=on go get golang.org/x/tools/gopls@latest
 ;;(add-hook 'go-mode-hook #'lsp-deferred)
 (setq lsp-gopls-staticcheck t)
-(setq lsp-eldoc-render-all t)
 (setq lsp-gopls-complete-unimported t)
 
 
@@ -74,3 +74,4 @@
 ;;          (lambda () (require 'ccls) (lsp))))
 
 ;; (add-hook 'c++-mode-hook #'lsp-deferred)
+
