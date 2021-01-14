@@ -36,6 +36,11 @@
 ;;   :commands yas-minor-mode
 ;;   :hook (go-mode . yas-minor-mode))
 
+;; Dired
+(require 'dired )
+(setq dired-listing-switches "-lh")
+
+
 (use-package company
   :ensure t
   :config

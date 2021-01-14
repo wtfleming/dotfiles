@@ -9,7 +9,6 @@
 (load "01-common-setup.el")
 (load "03-org-mode.el")
 (load "07-macos.el")
-(load "09-dired.el")
 (load "15-ibuffer.el")
 (load "16-helm.el")
 (load "17-yasnippet.el")
