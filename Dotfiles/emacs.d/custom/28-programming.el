@@ -10,6 +10,11 @@
 (add-to-list 'auto-mode-alist '("\\.shader\\'" . shader-mode))
 (add-to-list 'auto-mode-alist '("\\.hlsl\\'" . shader-mode))
 
+;; ------- magit -------
+(use-package magit
+             :ensure t
+             :bind (("C-c m" . magit-status)))
+
 
 ;; ------- Rust -------
 ;; Run this command in a terminal to install the rust language server
