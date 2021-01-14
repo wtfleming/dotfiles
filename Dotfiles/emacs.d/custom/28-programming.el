@@ -1,3 +1,6 @@
+;; (with-eval-after-load 'flycheck
+;;   (add-hook 'flycheck-mode-hook #'flycheck-inline-mode))
+
 ;; Enable rainbow-delimiters-mode when programming
 (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
 
