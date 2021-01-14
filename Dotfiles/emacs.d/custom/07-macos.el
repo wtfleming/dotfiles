@@ -9,3 +9,7 @@
 
 ;; Let M-x toggle-frame-fullscreen work correctly on OS X
 (setq ns-use-native-fullscreen nil)
+
+;; ispell installed with homebrew
+(if (system-type-is-darwin)
+  (setq ispell-program-name "/usr/local/bin/ispell"))
