@@ -1,6 +1,15 @@
+;; Enable rainbow-delimiters-mode when programming
+(add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
+
+;; Enable git-gutter globally
+(global-git-gutter-mode +1)
+
 ;; Enable trailing whitespace in programming modes
 (dolist (hook '(prog-mode-hook))
   (add-hook hook (lambda () (set-variable 'show-trailing-whitespace t))))
+
+;; Disable emacs built in version control for faster startup
+(setq vc-handled-backends ())
 
 (add-hook 'go-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'elixir-mode-hook (lambda () (subword-mode +1)))
@@ -132,3 +141,26 @@
   :defer t
   :ensure t
   :mode ("\\.go\\'" . go-mode))
+
+
+;; ------- Misc -------
+(use-package dockerfile-mode
+  :ensure t
+  :mode
+  (("Dockerfile\\'" . dockerfile-mode)))
+
+(use-package yaml-mode
+  :ensure t
+  :mode (("\\.yml$" . yaml-mode)
+         ("\\.yaml$" . yaml-mode)))
+
+;; https://github.com/lassik/emacs-format-all-the-code
+(use-package format-all
+  :ensure t)
+
+
+;; Compatability with HCL and Terraform syntax
+(use-package hcl-mode
+  :ensure t
+  :mode (("\\.tpl\\'" . hcl-mode)
+         ("\\.tf\\'" . hcl-mode)))

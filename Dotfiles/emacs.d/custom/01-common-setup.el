@@ -57,17 +57,6 @@
   :ensure t
   :mode ("\\.http\\'" . restclient-mode))
 
-(use-package dockerfile-mode
-  :ensure t
-  :mode
-  (("Dockerfile\\'" . dockerfile-mode)))
-
-(use-package yaml-mode
-  :ensure t
-  :mode (("\\.yml$" . yaml-mode)
-         ("\\.yaml$" . yaml-mode)))
-
-
 ;; (with-eval-after-load 'flycheck
 ;;   (add-hook 'flycheck-mode-hook #'flycheck-inline-mode))
 
@@ -89,10 +78,6 @@
   :ensure t
   :bind (("C-=" . er/expand-region)))
 
-;; https://github.com/lassik/emacs-format-all-the-code
-(use-package format-all
-  :ensure t)
-
 ;; https://www.emacswiki.org/emacs/MidnightMode
 ;; By default, the ‘midnight-hook’ is configured to just run the CleanBufferList command.
 (use-package midnight
@@ -101,12 +86,6 @@
   :config
   (midnight-delay-set 'midnight-delay "4:30am"))
 
-
-;; Compatability with HCL and Terraform syntax
-(use-package hcl-mode
-  :ensure t
-  :mode (("\\.tpl\\'" . hcl-mode)
-         ("\\.tf\\'" . hcl-mode)))
 
 ;; paren-mode
 (setq show-paren-delay 0) ; how long to wait?
@@ -127,15 +106,11 @@
 (setq beacon-push-mark 35)
 (setq beacon-color "#666600")
 
-;; Enable rainbow-delimiters-mode when programming
-(add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
 
 ;; Maximize Emacs frame on startup
 ;; http://emacs.stackexchange.com/questions/2999/how-to-maximize-my-emacs-frame-on-start-up
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
 
-;; Enable git-gutter globally
-(global-git-gutter-mode +1)
 
 ;; Enable projectile
 (projectile-mode +1)
@@ -145,10 +120,6 @@
 
 ;; Enable semantic-mode
 (semantic-mode 1)
-
-;; Disable emacs built in version control for faster startup
-;; Use magit instead of it
-(setq vc-handled-backends ())
 
 (setq visible-bell t)
 
