@@ -6,6 +6,10 @@
 (add-hook 'elixir-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'rust-mode-hook (lambda () (subword-mode +1)))
 
+;; Use shader-mode for Unity shaders
+(add-to-list 'auto-mode-alist '("\\.shader\\'" . shader-mode))
+(add-to-list 'auto-mode-alist '("\\.hlsl\\'" . shader-mode))
+
 
 ;; ------- Rust -------
 ;; Run this command in a terminal to install the rust language server
