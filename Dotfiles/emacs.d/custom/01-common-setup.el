@@ -279,4 +279,6 @@
 
 (global-set-key "\C-x\ \C-r" 'recentf-open-files)
 
+;; tramp
+(setq tramp-default-method "ssh")
 
