@@ -9,6 +9,7 @@
 (load "01-common-setup.el")
 (load "02-magit.el")
 (load "03-org-mode.el")
+(load "07-macos.el")
 (load "09-dired.el")
 (load "13-ispell.el")
 (load "14-tramp.el")
