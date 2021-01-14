@@ -108,3 +108,9 @@
   '(add-to-list 'company-backends 'company-omnisharp))
 
 (add-hook 'csharp-mode-hook #'company-mode)
+
+;; ------- Go -------
+(use-package go-mode
+  :defer t
+  :ensure t
+  :mode ("\\.go\\'" . go-mode))
