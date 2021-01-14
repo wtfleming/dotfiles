@@ -1,3 +1,9 @@
+;; Enable trailing whitespace in programming modes
+(dolist (hook '(prog-mode-hook))
+  (add-hook hook (lambda () (set-variable 'show-trailing-whitespace t))))
+
+
+
 ;; ------- Rust -------
 ;; Run this command in a terminal to install the rust language server
 ;; rustup component add rls rust-analysis rust-src
