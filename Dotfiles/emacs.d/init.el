@@ -11,7 +11,6 @@
 (load "07-macos.el")
 (load "15-ibuffer.el")
 (load "16-helm.el")
-(load "18-abbrev-mode.el")
 (load "23-hydra.el")
 (load "24-multiple-cursors.el")
 (load "25-doom-modeline.el")
