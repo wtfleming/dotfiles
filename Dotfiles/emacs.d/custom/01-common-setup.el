@@ -31,11 +31,6 @@
 ;; Note that for all-the-icons to work you must manually install them by calling
 ;; M-x all-the-icons-install-fonts
 
-(use-package go-mode
-  :defer t
-  :ensure t
-  :mode ("\\.go\\'" . go-mode))
-
 ;; (use-package yasnippet
 ;;   :ensure t
 ;;   :commands yas-minor-mode
