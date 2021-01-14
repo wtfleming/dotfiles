@@ -234,9 +234,6 @@
 ; rather than having to use C-x o
 (windmove-default-keybindings 'meta)
 
-;; Enable trailing whitespace in programming modes
-(dolist (hook '(prog-mode-hook))
-  (add-hook hook (lambda () (set-variable 'show-trailing-whitespace t))))
 ;; ------------------------------------------------
 
 ;; Highlight current line of characters
