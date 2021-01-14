@@ -126,6 +126,14 @@
 ;;   :commands yas-minor-mode
 ;;   :hook (go-mode . yas-minor-mode))
 
+(setq yas-snippet-dirs
+      '("~/.emacs.d/snippets"                 ;; personal snippets
+        "~/.emacs.d/yasnippet-snippets"       ;; https://github.com/AndreaCrotti/yasnippet-snippets
+        ))
+
+(yas-global-mode 1)
+
+
 ;; ------- Dired -------
 (require 'dired )
 (setq dired-listing-switches "-lh")
