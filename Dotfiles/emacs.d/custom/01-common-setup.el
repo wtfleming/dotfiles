@@ -158,13 +158,6 @@
 ;; the same window, rather than a new one.
 (global-set-key (kbd "C-x C-b") 'buffer-menu)
 
-;; Use command as meta on OS X
-(setq mac-option-modifier 'super)
-(setq mac-command-modifier 'meta)
-
-;; Let M-x toggle-frame-fullscreen work correctly on OS X
-(setq ns-use-native-fullscreen nil)
-
 ;; Map C-x C-u to undo
 (define-key global-map "\C-x\C-u" 'undo)
 
@@ -239,11 +232,6 @@
 ;; Highlight current line of characters
 (global-hl-line-mode t)
 
-;; Open emacs in front of the terminal window on OS X instead of behind
-;; http://stackoverflow.com/questions/10171280/how-to-launch-gui-emacs-from-command-line-in-osx
-(if (system-type-is-darwin)
-  (x-focus-frame nil))
-
 (setq default-directory "~/")
 
 
@@ -291,7 +279,4 @@
 
 (global-set-key "\C-x\ \C-r" 'recentf-open-files)
 
-(add-hook 'go-mode-hook (lambda () (subword-mode +1)))
-(add-hook 'elixir-mode-hook (lambda () (subword-mode +1)))
-(add-hook 'rust-mode-hook (lambda () (subword-mode +1)))
 

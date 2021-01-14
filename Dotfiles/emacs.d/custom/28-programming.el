@@ -2,6 +2,9 @@
 (dolist (hook '(prog-mode-hook))
   (add-hook hook (lambda () (set-variable 'show-trailing-whitespace t))))
 
+(add-hook 'go-mode-hook (lambda () (subword-mode +1)))
+(add-hook 'elixir-mode-hook (lambda () (subword-mode +1)))
+(add-hook 'rust-mode-hook (lambda () (subword-mode +1)))
 
 
 ;; ------- Rust -------
