@@ -12,7 +12,6 @@
 (load "15-ibuffer.el")
 (load "16-helm.el")
 (load "23-hydra.el")
-(load "24-multiple-cursors.el")
 (load "25-doom-modeline.el")
 (load "27-lsp-mode.el")
 (load "28-programming.el")
