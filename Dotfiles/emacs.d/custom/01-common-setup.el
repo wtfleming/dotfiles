@@ -252,10 +252,6 @@
 ;; No tabs in indentation
 (setq-default indent-tabs-mode nil)
 
-;; Use shader-mode for Unity shaders
-(add-to-list 'auto-mode-alist '("\\.shader\\'" . shader-mode))
-(add-to-list 'auto-mode-alist '("\\.hlsl\\'" . shader-mode))
-
 ;; Ask before exiting emacs
 (setq confirm-kill-emacs #'y-or-n-p)
 
