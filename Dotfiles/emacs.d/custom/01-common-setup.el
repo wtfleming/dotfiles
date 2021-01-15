@@ -25,7 +25,7 @@
    (or (package-installed-p package)
        (if (y-or-n-p (format "Package %s is missing. Install it? " package))
            (package-install package))))
- '(all-the-icons beacon color-identifiers-mode csharp-mode doom-modeline elixir-mode exunit flycheck-inline git-gutter hydra js2-mode lua-mode neotree omnisharp projectile rainbow-delimiters rainbow-mode scala-mode shader-mode tern tide yasnippet lsp-metals))
+ '(all-the-icons beacon color-identifiers-mode csharp-mode doom-modeline elixir-mode exunit flycheck-inline git-gutter hydra js2-mode lua-mode neotree omnisharp projectile rainbow-delimiters rainbow-mode scala-mode shader-mode tern tide lsp-metals))
 
 
 ;; Note that for all-the-icons to work you must manually install them by calling
@@ -129,10 +129,10 @@
 
 ;; -------yasnippet -------
 
-;; (use-package yasnippet
-;;   :ensure t
-;;   :commands yas-minor-mode
-;;   :hook (go-mode . yas-minor-mode))
+(use-package yasnippet
+  :ensure t
+  :commands yas-minor-mode
+  :hook (go-mode . yas-minor-mode))
 
 (setq yas-snippet-dirs
       '("~/.emacs.d/snippets"                 ;; personal snippets
