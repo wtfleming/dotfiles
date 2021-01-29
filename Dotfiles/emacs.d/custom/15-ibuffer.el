@@ -18,6 +18,7 @@
                ("Programming"
                 (or
                  (mode . pig-mode)
+                 (mode . go-mode)
                  (mode . clojure-mode)
                  (mode . scala-mode)
                  (mode . python-mode)
@@ -43,8 +44,9 @@
                          (name . "^\\*scratch\\*$")
                          (name . "^\\*Completions\\*$")
                          (name . "^\\*Messages\\*$")))
-               ("Magit" (mode . magit-status-mode))
-
+               ("Magit" (or
+                         (name . "^magit-")
+                         (mode . magit-status-mode)))
                ))))
 
 
