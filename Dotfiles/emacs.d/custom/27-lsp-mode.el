@@ -30,9 +30,11 @@
 ;;  ---- Go----
 ;; go get golang.org/x/tools/gopls
 ;; GO111MODULE=on go get golang.org/x/tools/gopls@latest
-;;(add-hook 'go-mode-hook #'lsp-deferred)
 (setq lsp-gopls-staticcheck t)
 (setq lsp-gopls-complete-unimported t)
+(lsp-register-custom-settings
+ '(("gopls.completeUnimported" t t)
+   ("gopls.staticcheck" t t)))
 
 
 
