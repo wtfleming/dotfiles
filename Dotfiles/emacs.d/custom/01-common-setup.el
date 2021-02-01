@@ -25,7 +25,7 @@
    (or (package-installed-p package)
        (if (y-or-n-p (format "Package %s is missing. Install it? " package))
            (package-install package))))
- '(all-the-icons beacon color-identifiers-mode csharp-mode doom-modeline elixir-mode exunit flycheck-inline git-gutter hydra js2-mode lua-mode neotree projectile rainbow-delimiters rainbow-mode scala-mode shader-mode tern tide lsp-metals))
+ '(all-the-icons beacon color-identifiers-mode csharp-mode doom-modeline elixir-mode exunit flycheck-inline git-gutter hydra js2-mode lua-mode projectile rainbow-delimiters rainbow-mode scala-mode shader-mode tern tide lsp-metals))
 
 
 ;; Note that for all-the-icons to work you must manually install them by calling
@@ -226,10 +226,14 @@
 
 ;; ------- neotree -------
 ;; https://github.com/jaypei/emacs-neotree
-(require 'neotree)
-(global-set-key [f8] 'neotree-toggle)
-(setq neo-theme (if (display-graphic-p) 'icons 'arrow))
-(setq neo-smart-open t)
+(use-package neotree
+  :ensure t
+  :init
+  (require 'neotree)
+  (global-set-key [f8] 'neotree-toggle)
+  :config
+  (setq neo-theme (if (display-graphic-p) 'icons 'arrow))
+  (setq neo-smart-open t))
 
 ;; ------- beacon -------
 ;; Beacon — Never lose your cursor again
