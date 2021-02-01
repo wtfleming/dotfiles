@@ -163,6 +163,17 @@
 ;;text-mode-hook))
 ;;(add-hook hook (lambda () (abbrev-mode 1))))
 
+;; ------- which-key -------
+(use-package which-key
+  :ensure t
+  :init
+  (which-key-mode)
+  :config
+  (which-key-setup-side-window-right-bottom)
+  (setq which-key-sort-order 'which-key-key-order-alpha
+        which-key-side-window-max-width 0.33
+        which-key-side-window-max-height 0.25
+        which-key-idle-delay 0.05))
 
 ;; ------- Dired -------
 (require 'dired )
