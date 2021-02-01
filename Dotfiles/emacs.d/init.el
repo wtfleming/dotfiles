@@ -4,7 +4,8 @@
 (if (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
 
 
-(add-to-list 'load-path "~/.emacs.d/custom")
+;; Load files from "~/.emacs.d/custom"
+(add-to-list 'load-path (expand-file-name "custom" user-emacs-directory))
 (load "00-functions.el")
 (load "01-common-setup.el")
 (load "03-org-mode.el")
