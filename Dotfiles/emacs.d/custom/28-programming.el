@@ -4,8 +4,11 @@
 ;; Enable rainbow-delimiters-mode when programming
 (add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
 
-;; Enable git-gutter globally
-(global-git-gutter-mode +1)
+;; ----- git-gutter -----
+(use-package git-gutter
+  :ensure t
+  :init
+  (global-git-gutter-mode +1))
 
 ;; Enable trailing whitespace in programming modes
 (dolist (hook '(prog-mode-hook))
@@ -17,10 +20,6 @@
 (add-hook 'go-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'elixir-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'rust-mode-hook (lambda () (subword-mode +1)))
-
-;; Use shader-mode for Unity shaders
-(add-to-list 'auto-mode-alist '("\\.shader\\'" . shader-mode))
-(add-to-list 'auto-mode-alist '("\\.hlsl\\'" . shader-mode))
 
 ;; ------- magit -------
 (use-package magit
@@ -111,6 +110,9 @@
 ;;               (flycheck-select-checker 'javascript-eslint))))
 
 ;; ------- C# -------
+;; (use-package csharp-mode
+;;   :ensure t)
+
 ;; (defun my-csharp-mode-setup ()
 ;;   (setq indent-tabs-mode nil)
 ;;   (setq c-syntactic-indentation t)
@@ -175,24 +177,38 @@
         web-mode-enable-current-element-highlight t))
 
 
+;; ------- shader-mode -------
+;; https://github.com/midnightSuyama/shader-mode
+(use-package shader-mode
+  :ensure t
+    :mode (("\\.shader\\'" . shader-mode)
+           ("\\.hlsl\\'" . shader-mode)))
+
+;; ------- yaml-mode -------
+(use-package yaml-mode
+  :ensure t
+  :mode (("\\.yml$" . yaml-mode)
+         ("\\.yaml$" . yaml-mode)))
+
+;; ------- lua-mode -------
+;; https://github.com/immerrr/lua-mode
+(use-package lua-mode
+  :ensure t)
+
+;; ------- hcl-mode -------
+;; Compatability with HCL and Terraform syntax
+(use-package hcl-mode
+  :ensure t
+  :mode (("\\.tpl\\'" . hcl-mode)
+         ("\\.tf\\'" . hcl-mode)))
+
+
 ;; ------- Misc -------
 (use-package dockerfile-mode
   :ensure t
   :mode
   (("Dockerfile\\'" . dockerfile-mode)))
 
-(use-package yaml-mode
-  :ensure t
-  :mode (("\\.yml$" . yaml-mode)
-         ("\\.yaml$" . yaml-mode)))
-
 ;; https://github.com/lassik/emacs-format-all-the-code
 (use-package format-all
   :ensure t)
-
-
-;; Compatability with HCL and Terraform syntax
-(use-package hcl-mode
-  :ensure t
-  :mode (("\\.tpl\\'" . hcl-mode)
-         ("\\.tf\\'" . hcl-mode)))
