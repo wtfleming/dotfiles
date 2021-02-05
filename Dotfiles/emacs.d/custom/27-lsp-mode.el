@@ -32,11 +32,6 @@
 (setq read-process-output-max (* 1024 1024)) ;; 1mb
 
 
-;; ---- Rust ----
-;; Run this command in a terminal to install the rust language server:
-;; rustup component add rls rust-analysis rust-src
-
-
 ;;  ---- Go----
 ;; go get golang.org/x/tools/gopls
 ;; GO111MODULE=on go get golang.org/x/tools/gopls@latest

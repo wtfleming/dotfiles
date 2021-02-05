@@ -28,8 +28,14 @@
 
 
 ;; ------- Rust -------
-;; Run this command in a terminal to install the rust language server
-;; rustup component add rls rust-analysis rust-src
+;; Install a language server. Run this command in a terminal
+;; $ rustup component add rust-src
+
+;; Next, install rust-analyzer, download a binary from https://github.com/rust-analyzer/rust-analyzer/releases
+;; Typically, you then need to rename the binary for your platform, e.g. rust-analyzer-mac if you’re on Mac OS, to rust-analyzer and make it executable in addition to moving it into a directory in your $PATH.
+;;
+;; $ curl -L https://github.com/rust-analyzer/rust-analyzer/releases/latest/download/rust-analyzer-mac -o ~/bin/rust-analyzer
+;; $ chmod +x ~/bin/rust-analyzer
 
 (use-package rust-mode
   :ensure t
@@ -38,26 +44,13 @@
   :config
   (add-hook 'rust-mode-hook
             (lambda () (setq indent-tabs-mode nil)))
-
-  (setq rust-format-on-save t)
-  (with-eval-after-load 'rust-mode
-    (add-hook 'flycheck-mode-hook #'flycheck-rust-setup))
-
-  (add-hook 'rust-mode-hook (lambda () (flycheck-mode +1))))
+  (setq lsp-rust-server 'rust-analyzer))
 
 (use-package cargo
   :ensure t
   :after rust-mode
   :config
   (add-hook 'rust-mode-hook 'cargo-minor-mode))
-
-(use-package flycheck-rust
-  :ensure t
-  :if (featurep 'flycheck)
-  :after (rust-mode flycheck)
-  :init
-  (add-hook 'rust-mode-hook 'flycheck-mode)
-  (add-hook 'flycheck-mode-hook 'flycheck-rust-setup))
 
 ;; ------- TypeScript -------
 (defun setup-tide-mode ()
