@@ -1,9 +1,12 @@
 (use-package lsp-mode
   :ensure t
   :commands (lsp lsp-deferred)
-  :hook (go-mode . lsp-deferred)
+  :hook (elixir-mode . lsp-deferred)
+        (go-mode . lsp-deferred)
         (rust-mode . lsp-deferred)
-        (scala-mode . lsp-deferred))
+        (scala-mode . lsp-deferred)
+  :init
+  (add-to-list 'exec-path "~/bin/elixir-ls"))
 
 (setq lsp-eldoc-render-all t)
 ;; (setq lsp-enable-snippet t)
@@ -251,29 +254,28 @@
 
 
 ;; ---- Elixir ----
-;; Clone https://github.com/elixir-lsp/elixir-ls
-;; cd elixir-ls (that you just cloned)
-;; mix deps.get
-;; mix elixir_ls.release -o ~/bin/elixir-ls
+;; Install a language server
+;; Download from https://github.com/elixir-lsp/elixir-ls/releases
+;; and unzip it into a directory
 ;;
-;; If using asdf and a recent macos (ie Catalina) you may need to use a more recent OTP to build
-;; change the .tool-versions to look something like this, then asdf install
-;; Then run asdf global for elixir and erlang
-;; elixir 1.10.3-otp-23
-;; erlang 23.0
-;; (add-to-list 'exec-path "~/bin/elixir-ls")
-;; (add-hook 'elixir-mode-hook #'lsp-deferred)
+;; curl -L https://github.com/elixir-lsp/elixir-ls/releases/latest/download/elixir-ls-1.11.zip --create-dirs -o ~/bin/elixir-ls/elixir-ls.zip
+;; cd ~/bin/elixir-ls && unzip elixir-ls.zip
 
-;; ;; Ignore these directories in elixir projects
-;; (push "[/\\\\]\\deps$" lsp-file-watch-ignored)
-;; (push "[/\\\\]\\.elixir_ls$" lsp-file-watch-ignored)
-;; (push "[/\\\\]_build$" lsp-file-watch-ignored)
+(use-package elixir-mode
+  :ensure t)
 
-;; (defvar lsp-elixir--config-options (make-hash-table))
-;; (add-hook 'lsp-after-initialize-hook
-;;           (lambda ()
-;;             (lsp--set-configuration `(:elixirLS, lsp-elixir--config-options))))
+;; Ignore these directories in Elixir projects
+(push "[/\\\\]\\deps$" lsp-file-watch-ignored)
+(push "[/\\\\]\\.elixir_ls$" lsp-file-watch-ignored)
+(push "[/\\\\]_build$" lsp-file-watch-ignored)
 
+(defvar lsp-elixir--config-options (make-hash-table))
+(add-hook 'lsp-after-initialize-hook
+          (lambda ()
+            (lsp--set-configuration `(:elixirLS, lsp-elixir--config-options))))
+
+(use-package exunit
+  :ensure t)
 
 ;; ---- Scala ----
 ;; (add-hook 'scala-mode-hook #'lsp-deferred)
