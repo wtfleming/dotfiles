@@ -278,7 +278,10 @@
   :ensure t)
 
 ;; ---- Scala ----
-;; (add-hook 'scala-mode-hook #'lsp-deferred)
+(use-package scala-mode
+  :ensure t)
+(use-package lsp-metals
+  :ensure t)
 
 
 ;; ---- C++ ----

@@ -25,7 +25,7 @@
    (or (package-installed-p package)
        (if (y-or-n-p (format "Package %s is missing. Install it? " package))
            (package-install package))))
- '(all-the-icons color-identifiers-mode doom-modeline flycheck-inline hydra js2-mode projectile rainbow-delimiters rainbow-mode scala-mode tern tide lsp-metals))
+ '(all-the-icons color-identifiers-mode doom-modeline flycheck-inline hydra js2-mode projectile rainbow-delimiters rainbow-mode tern tide))
 
 
 ;; Note that for all-the-icons to work you must manually install them by calling
