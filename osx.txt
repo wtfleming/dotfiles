@@ -24,7 +24,6 @@ brew install autoconf
 # For asdf to build Erlang with wxWidgets (start observer or debugger!)
 brew install wxmac
 
-
 # For exporting LaTex from emacs
 brew cask install mactex
 
