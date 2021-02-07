@@ -48,7 +48,7 @@ To have launchd start emacs now and restart at login:
 Or, if you don't want/need a background service you can just run:
   emacs
 
-emacs flyspell needs a spell checking tool, install one on os x
+Emacs flyspell needs a spell checking tool, install one on macOS
 
 brew install ispell
 # brew install ispell --with-lang-en
@@ -96,22 +96,10 @@ brew install elixir
 
 
 
-# Is this still needed?
-# Get copy/paste working in tmux again, add these to .tmux.conf
-
-set -g default-shell $SHELL 
-set -g default-command "reattach-to-user-namespace -l ${SHELL}"
-
-and run:
-brew install reattach-to-user-namespace
-
-Broke in Sierra, see https://github.com/tmux/tmux/issues/543
 
 
 
-
-
-
+# Scala language server
 
 # Make sure to use coursier v1.1.0-M9 or newer.
 curl -L -o coursier https://git.io/coursier-cli
@@ -124,10 +112,3 @@ chmod +x coursier
   -r bintray:scalacenter/releases \
   -r sonatype:snapshots \
   -o ~/bin/metals-emacs -f
-
-
-# SAM
-brew tap aws/tap
-brew install aws-sam-cli
-Verify the installation:
-sam --version
