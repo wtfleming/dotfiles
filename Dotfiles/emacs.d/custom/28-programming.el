@@ -1,3 +1,4 @@
+;; ------- Language Server -------
 (use-package lsp-mode
   :ensure t
   :commands (lsp lsp-deferred)
@@ -25,7 +26,7 @@
       lsp-ui-imenu-enable t
       lsp-ui-flycheck-enable t)
 
-;; ---- Performance ----
+;; ---- LSP Performance ----
 ;; https://emacs-lsp.github.io/lsp-mode/page/performance/
 
 ;; An alternative: follow the method recommended by Gnu Emacs Maintainer Eli Zaretskii: "My suggestion is to repeatedly multiply gc-cons-threshold by 2 until you stop seeing significant improvements in responsiveness, and in any case not to increase by a factor larger than 100 or somesuch. If even a 100-fold increase doesn't help, there's some deeper problem with the Lisp code which produces so much garbage, or maybe GC is not the reason for slowdown."
@@ -63,6 +64,31 @@
              :bind (("C-c m" . magit-status)))
 
 
+;; ---- Elixir ----
+;; Install a language server
+;; Download from https://github.com/elixir-lsp/elixir-ls/releases
+;; and unzip it into a directory
+;;
+;; curl -L https://github.com/elixir-lsp/elixir-ls/releases/latest/download/elixir-ls-1.11.zip --create-dirs -o ~/bin/elixir-ls/elixir-ls.zip
+;; cd ~/bin/elixir-ls && unzip elixir-ls.zip
+
+(use-package elixir-mode
+  :ensure t)
+
+;; Ignore these directories in Elixir projects
+(push "[/\\\\]\\deps$" lsp-file-watch-ignored)
+(push "[/\\\\]\\.elixir_ls$" lsp-file-watch-ignored)
+(push "[/\\\\]_build$" lsp-file-watch-ignored)
+
+(defvar lsp-elixir--config-options (make-hash-table))
+(add-hook 'lsp-after-initialize-hook
+          (lambda ()
+            (lsp--set-configuration `(:elixirLS, lsp-elixir--config-options))))
+
+(use-package exunit
+  :ensure t)
+
+
 ;; ------- Rust -------
 ;; Install a language server. Run this command in a terminal
 ;; $ rustup component add rust-src
@@ -89,6 +115,12 @@
   (add-hook 'rust-mode-hook 'cargo-minor-mode))
 
 ;; ------- TypeScript -------
+
+;; TypeScript Interactive Development Environment for Emacs
+;; https://github.com/ananthakumaran/tide
+(use-package tide
+  :ensure t)
+
 (defun setup-tide-mode ()
   (interactive)
   (tide-setup)
@@ -115,8 +147,11 @@
 
 (setq typescript-indent-level 2)
 
+
+
 ;; ------- JavaScript -------
-;; Javascript mode
+(use-package js2-mode
+  :ensure t)
 
 (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
 (add-to-list 'auto-mode-alist '("\\.json\\'" . js2-mode))
@@ -129,6 +164,11 @@
 ;;(add-hook 'js2-mode-hook (lambda () (flycheck-mode t)))
 
 
+;; Tern is a stand-alone, editor-independent JavaScript analyzer that can be used to improve the JavaScript integration of existing editors.
+;; https://github.com/ternjs/tern
+(use-package tern
+  :ensure t)
+
 ;; (eval-after-load 'company
 ;;   '(add-to-list 'company-backends 'company-tern))
 
@@ -138,37 +178,7 @@
 ;;             (when (executable-find "eslint")
 ;;               (flycheck-select-checker 'javascript-eslint))))
 
-;; ------- C# -------
-;; (use-package csharp-mode
-;;   :ensure t)
 
-;; (defun my-csharp-mode-setup ()
-;;   (setq indent-tabs-mode nil)
-;;   (setq c-syntactic-indentation t)
-;;   (c-set-style "k&r")
-;;   (setq c-basic-offset 2)
-;;   (setq truncate-lines t)
-;;   (setq tab-width 2)
-;;   (local-set-key (kbd "C-c r r") 'omnisharp-run-code-action-refactoring)
-;;   (local-set-key (kbd "C-c C-c") 'recompile))
-
-;; ;; csharp-mode README.md recommends this too
-;; ;; (electric-pair-mode 1)       ;; Emacs 24
-;; ;; (electric-pair-local-mode 1) ;; Emacs 25
-
-;; (add-hook 'csharp-mode-hook 'my-csharp-mode-setup t)
-
-;; (add-hook 'csharp-mode-hook 'flycheck-mode)
-;; (add-hook 'csharp-mode-hook 'omnisharp-mode)
-
-;; ;; Move cursor by camelCase
-;; (add-hook 'csharp-mode-hook (lambda () (subword-mode +1)))
-
-
-;; (eval-after-load 'company
-;;   '(add-to-list 'company-backends 'company-omnisharp))
-
-;; (add-hook 'csharp-mode-hook #'company-mode)
 
 ;; ------- Go -------
 (use-package go-mode
@@ -253,29 +263,6 @@
   :ensure t)
 
 
-;; ---- Elixir ----
-;; Install a language server
-;; Download from https://github.com/elixir-lsp/elixir-ls/releases
-;; and unzip it into a directory
-;;
-;; curl -L https://github.com/elixir-lsp/elixir-ls/releases/latest/download/elixir-ls-1.11.zip --create-dirs -o ~/bin/elixir-ls/elixir-ls.zip
-;; cd ~/bin/elixir-ls && unzip elixir-ls.zip
-
-(use-package elixir-mode
-  :ensure t)
-
-;; Ignore these directories in Elixir projects
-(push "[/\\\\]\\deps$" lsp-file-watch-ignored)
-(push "[/\\\\]\\.elixir_ls$" lsp-file-watch-ignored)
-(push "[/\\\\]_build$" lsp-file-watch-ignored)
-
-(defvar lsp-elixir--config-options (make-hash-table))
-(add-hook 'lsp-after-initialize-hook
-          (lambda ()
-            (lsp--set-configuration `(:elixirLS, lsp-elixir--config-options))))
-
-(use-package exunit
-  :ensure t)
 
 ;; ---- Scala ----
 (use-package scala-mode
@@ -293,3 +280,35 @@
 ;;          (lambda () (require 'ccls) (lsp))))
 
 ;; (add-hook 'c++-mode-hook #'lsp-deferred)
+
+;; ------- C# -------
+;; (use-package csharp-mode
+;;   :ensure t)
+
+;; (defun my-csharp-mode-setup ()
+;;   (setq indent-tabs-mode nil)
+;;   (setq c-syntactic-indentation t)
+;;   (c-set-style "k&r")
+;;   (setq c-basic-offset 2)
+;;   (setq truncate-lines t)
+;;   (setq tab-width 2)
+;;   (local-set-key (kbd "C-c r r") 'omnisharp-run-code-action-refactoring)
+;;   (local-set-key (kbd "C-c C-c") 'recompile))
+
+;; ;; csharp-mode README.md recommends this too
+;; ;; (electric-pair-mode 1)       ;; Emacs 24
+;; ;; (electric-pair-local-mode 1) ;; Emacs 25
+
+;; (add-hook 'csharp-mode-hook 'my-csharp-mode-setup t)
+
+;; (add-hook 'csharp-mode-hook 'flycheck-mode)
+;; (add-hook 'csharp-mode-hook 'omnisharp-mode)
+
+;; ;; Move cursor by camelCase
+;; (add-hook 'csharp-mode-hook (lambda () (subword-mode +1)))
+
+
+;; (eval-after-load 'company
+;;   '(add-to-list 'company-backends 'company-omnisharp))
+
+;; (add-hook 'csharp-mode-hook #'company-mode)
