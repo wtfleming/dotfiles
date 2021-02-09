@@ -36,15 +36,27 @@
 (setq read-process-output-max (* 1024 1024)) ;; 1mb
 
 ;; ----- Misc -----
+(use-package rainbow-delimiters
+  :ensure t
+  :config
+  (add-hook 'prog-mode-hook #'rainbow-delimiters-mode))
 
-;; Enable rainbow-delimiters-mode when programming
-(add-hook 'prog-mode-hook #'rainbow-delimiters-mode)
+(use-package color-identifiers-mode
+  :ensure t
+  :config
+  (add-hook 'after-init-hook 'global-color-identifiers-mode))
+
  ;; Enable trailing whitespace in programming modes
 (dolist (hook '(prog-mode-hook))
   (add-hook hook (lambda () (set-variable 'show-trailing-whitespace t))))
 
 ;; Disable emacs built in version control for faster startup
 (setq vc-handled-backends ())
+
+(use-package flycheck-inline
+  :ensure t)
+(with-eval-after-load 'flycheck
+  (add-hook 'flycheck-mode-hook #'flycheck-inline-mode))
 
 (add-hook 'go-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'elixir-mode-hook (lambda () (subword-mode +1)))

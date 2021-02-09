@@ -1,4 +1,9 @@
-; Config for https://github.com/abo-abo/hydra
+;; https://github.com/abo-abo/hydra
+(use-package hydra
+  :ensure t
+  :config
+  (setq my-default-hydra-delay 0.0))
+
 
 ;; (defhydra hydra-zoom (global-map "<f2>")
 ;;   "zoom"

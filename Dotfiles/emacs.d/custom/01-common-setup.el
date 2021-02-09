@@ -15,19 +15,11 @@
   (package-refresh-contents)
   (package-install 'use-package))
 
-;; Check if the packages are installed; if not, install them.
-;; The very first time you start Emacs you will need to run:
-;; M-x package-list-packages
-;; and then restart Emacs.
 
-(mapc
- (lambda (package)
-   (or (package-installed-p package)
-       (if (y-or-n-p (format "Package %s is missing. Install it? " package))
-           (package-install package))))
- '(all-the-icons color-identifiers-mode doom-modeline flycheck-inline hydra projectile rainbow-delimiters rainbow-mode))
 ;; Note that for all-the-icons to work you must manually install them by calling
 ;; M-x all-the-icons-install-fonts
+(use-package all-the-icons
+  :ensure t)
 
 ;; ------- Keybindings -------
 
@@ -114,6 +106,12 @@
 ;; Enable uppercasing and lowercasing on regions
 (put 'downcase-region 'disabled nil)
 (put 'upcase-region 'disabled nil)
+
+;; ------- rainbow-mode -------
+(use-package rainbow-mode
+  :ensure t
+  :config
+  (add-hook 'prog-mode-hook #'rainbow-mode))
 
 
 ;; ------- multiple-cursors -------
@@ -245,10 +243,14 @@
   (setq beacon-color "#666600"))
 
 ;; ------- projectile -------
-(projectile-mode +1)
-(define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
-(define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
-(add-to-list 'projectile-globally-ignored-directories "node_modules")
+(use-package projectile
+  :ensure t
+  :init
+  (projectile-mode +1)
+  (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
+  (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+  :config
+  (add-to-list 'projectile-globally-ignored-directories "node_modules"))
 
 
 ;; ----------- emacs shell ----------------------------
