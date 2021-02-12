@@ -7,7 +7,9 @@
         (rust-mode . lsp-deferred)
         (scala-mode . lsp-deferred)
   :init
-  (add-to-list 'exec-path "~/bin/elixir-ls"))
+  (add-to-list 'exec-path "~/bin/elixir-ls")
+  :bind (("M-j" . lsp-ui-imenu)
+         ("M-?" . lsp-find-references)))
 
 (setq lsp-eldoc-render-all t)
 ;; (setq lsp-enable-snippet t)
