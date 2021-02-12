@@ -124,18 +124,17 @@
 
 
 ;; -------yasnippet -------
-
 (use-package yasnippet
   :ensure t
-  :commands yas-minor-mode
-  :hook (go-mode . yas-minor-mode))
+  :config
+  (yas-reload-all)
+  (add-hook 'prog-mode-hook 'yas-minor-mode)
+  (add-hook 'text-mode-hook 'yas-minor-mode))
 
-(setq yas-snippet-dirs
-      '("~/.emacs.d/snippets"                 ;; personal snippets
-        "~/.emacs.d/yasnippet-snippets"       ;; https://github.com/AndreaCrotti/yasnippet-snippets
-        ))
-
-(yas-global-mode 1)
+;; The official collection of snippets for yasnippet.
+;; https://github.com/AndreaCrotti/yasnippet-snippets
+(use-package yasnippet-snippets
+  :ensure t)
 
 ;; ------- abbrev-mode -------
 ;; To add abbreviations type the word you want to use as expansion, and then
