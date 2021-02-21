@@ -213,7 +213,8 @@
 ;; By default, the ‘midnight-hook’ is configured to just run the CleanBufferList command.
 (use-package midnight
   :config
-  (midnight-delay-set 'midnight-delay "4:30am"))
+  (midnight-delay-set 'midnight-delay "4:30am")
+  (setq clean-buffer-list-delay-general 4))
 
 ;; ------- paren-mode -------
 (setq show-paren-delay 0) ; how long to wait?
