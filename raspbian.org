@@ -1,0 +1,75 @@
+* Emacs 27.1
+In order to get apt-get build-dep working, you will need to uncomment the line in /etc/apt/sources.list
+#deb-src http://archive.raspbian.org/raspbian/ buster main contrib non-free rpi
+
+
+
+
+sudo apt-get install build-essential libgnutls-28dev libncurses-dev
+cd ~/bin
+wget http://ftp.gnu.org/gnu/emacs/emacs-27.1.tar.gz
+tar xzvf emacs-27.1.tar.gz
+cd emacs-27.1
+./configure --with-xpm=no --with-gif=no --without-x
+make
+
+
+alias emacs='/home/pi/bin/emacs-27.1/src/emacs'
+
+cp -r ~/src/dotfiles/Dotfiles/emacs.d ~/.emacs.d/
+
+
+# TODO need to do this still?
+Link to it so .gitconfig can properly find it
+ln -s ~/bin/emacs-27.1/src/emacs ~/bin/emacs
+
+
+
+* asdf
+
+See https://asdf-vm.com/#/core-manage-asdf
+
+git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.8.0
+
+Add the following to ~/.bashrc:
+
+. $HOME/.asdf/asdf.sh
+
+Completions must be configured by adding the following to your .bashrc:
+
+. $HOME/.asdf/completions/asdf.bash
+
+
+* Erlang and Elixir
+
+sudo apt-get install libssl-dev automake autoconf libncurses5-dev
+
+
+asdf plugin add erlang
+asdf list all erlang
+asdf install erlang 23.2.5
+asdf global erlang 23.2.5
+
+
+asdf plugin add elixir
+asdf list all elixir
+asdf install elixir 1.11.3-otp-23
+asdf global elixir 1.11.3-otp-23
+
+
+
+Install hex
+mix local.hex
+
+
+For phoenix on ubuntu we need to
+sudo apt-get install inotify-tools
+
+
+
+
+# TODO need to do this?
+# Ensure C libraries needed for erlang crypto like bcrypt are installed
+sudo apt-get install erlang-dev
+sudo apt-get install libssl-dev ncurses-dev m4 unixodbc-dev
+
