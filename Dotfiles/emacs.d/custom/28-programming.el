@@ -9,7 +9,12 @@
   :init
   (add-to-list 'exec-path "~/bin/elixir-ls")
   :bind (("M-j" . lsp-ui-imenu)
-         ("M-?" . lsp-find-references)))
+         ("M-?" . lsp-find-references))
+  :config
+  (setq lsp-file-watch-threshold 2200))
+
+(push "[/\\\\]\\.vagrant$" lsp-file-watch-ignored)
+(push "[/\\\\]\\.circleci$" lsp-file-watch-ignored)
 
 (setq lsp-eldoc-render-all t)
 ;; (setq lsp-enable-snippet t)
