@@ -9,3 +9,9 @@
         user = wtfleming
 [init]
         defaultBranch = main
+
+# If npm install hangs, uncomment these lines
+#[url "ssh://git@github.com/"]
+#        insteadOf = https://github.com/
+#[url "git@github.com:"]
+#        insteadOf = https://github.com/
