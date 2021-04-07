@@ -65,3 +65,6 @@ setopt PROMPT_SUBST ; PS1='[%n@%m %c$(__git_ps1 " (%s)")]\$ '
 # This will make the Erlang docs available in Elixir's iex help functionality
 # For example `h :unicode.bom_to_encoding`
 export KERL_BUILD_DOCS="yes"
+
+# Enable shell history in iex and erl
+export ERL_AFLAGS="-kernel shell_history enabled -kernel shell_history_file_bytes 1024000"
