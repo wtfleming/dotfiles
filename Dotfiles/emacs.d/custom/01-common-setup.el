@@ -1,5 +1,9 @@
 (setq package-user-dir (format "~/.emacs.d/elpa-%d" emacs-major-version))
 
+;; Fix problem where emacs can not connect to melpa
+;; https://emacs.stackexchange.com/questions/51721/failed-to-download-gnu-archive
+(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+
 (require 'package)
 (setq package-enable-startup nil)
 (add-to-list 'package-archives
