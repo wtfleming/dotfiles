@@ -5,6 +5,7 @@
   :hook (elixir-mode . lsp-deferred)
         (go-mode . lsp-deferred)
         (rust-mode . lsp-deferred)
+        (csharp-mode . lsp-deferred)
         (scala-mode . lsp-deferred)
   :init
   (add-to-list 'exec-path "~/bin/elixir-ls")
@@ -68,6 +69,7 @@
 (add-hook 'go-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'elixir-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'rust-mode-hook (lambda () (subword-mode +1)))
+(add-hook 'csharp-mode-hook (lambda () (subword-mode +1)))
 
 
 ;; ----- git-gutter -----
@@ -301,8 +303,12 @@
 ;; (add-hook 'c++-mode-hook #'lsp-deferred)
 
 ;; ------- C# -------
-;; (use-package csharp-mode
-;;   :ensure t)
+(use-package csharp-mode
+  :ensure t)
+
+;; If the language server was installed manually, can set it here
+;;(setq lsp-csharp-server-path "/Users/wtf/bin/omnisharp-osx/run")
+
 
 ;; (defun my-csharp-mode-setup ()
 ;;   (setq indent-tabs-mode nil)
@@ -322,9 +328,6 @@
 
 ;; (add-hook 'csharp-mode-hook 'flycheck-mode)
 ;; (add-hook 'csharp-mode-hook 'omnisharp-mode)
-
-;; ;; Move cursor by camelCase
-;; (add-hook 'csharp-mode-hook (lambda () (subword-mode +1)))
 
 
 ;; (eval-after-load 'company
