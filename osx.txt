@@ -25,7 +25,7 @@ brew install autoconf
 brew install wxmac
 
 # For exporting LaTex from emacs
-brew cask install mactex
+brew install mactex
 
 Install dev tools - this is one way to prompt it:
 git --version
@@ -36,11 +36,7 @@ git config --global core.excludesfile ~/.gitexcludes
 
 # emacs https://www.emacswiki.org/emacs/EmacsForMacOS#toc14
 $ brew update
-$ brew cask install emacs
-
-# To update
-$ brew cask upgrade
-
+$ brew install emacs
 
 To have launchd start emacs now and restart at login:
   brew services start emacs
