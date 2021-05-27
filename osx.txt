@@ -48,12 +48,49 @@ Emacs flyspell needs a spell checking tool, install one on macOS
 brew install ispell
 # brew install ispell --with-lang-en
 
-
 disable mission control since I use those keyboard shortcuts in emacs
 Go to System Preferences > Keyboard > Keyboard Shortcuts > Mission Control and change the settings for "Move left a space" and "Move right a space" or disable them completely.
 http://apple.stackexchange.com/questions/18043/how-can-i-make-ctrlright-left-arrow-stop-changing-desktops-in-lion
 
-Install asdf
+# Install java
+
+$ brew install java11
+
+For the system Java wrappers to find this JDK, symlink it with
+  sudo ln -sfn /usr/local/opt/openjdk@11/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-11.jdk
+
+If you need to have openjdk@11 first in your PATH, run:
+  echo 'export PATH="/usr/local/opt/openjdk@11/bin:$PATH"' >> ~/.zshrc
+
+For compilers to find openjdk@11 you may need to set:
+  export CPPFLAGS="-I/usr/local/opt/openjdk@11/include"
+
+
+Verify installation
+  java -version
+
+# Install Clojure CLI tools
+$ brew install clojure/tools/clojure
+
+You can upgrade to the latest release with:
+  brew upgrade clojure/tools/clojure
+
+Verify installation
+
+$ clj
+user=> (+ 1 2)
+3
+
+# Install leiningen
+
+$ curl https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein > ~/bin/lein
+$ chmod a+x ~/bin/lein
+
+Verify installation
+$ lein version
+
+
+# Install asdf
 https://github.com/asdf-vm/asdf
 
 brew install asdf
