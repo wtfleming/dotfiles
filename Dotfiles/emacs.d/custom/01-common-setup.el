@@ -57,6 +57,9 @@
 ;; http://emacs.stackexchange.com/questions/2999/how-to-maximize-my-emacs-frame-on-start-up
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
 
+;; Alterntively, you can set the dimensions of the initial frame like this
+;;(setq initial-frame-alist '((top . 0) (left . 0) (width . 120) (height . 80)))
+
 ;; Highlight current line of characters
 (global-hl-line-mode t)
 
