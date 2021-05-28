@@ -94,7 +94,6 @@
 (use-package cider
   :ensure t)
 
-
 ;; ---- Elixir ----
 ;; Install a language server
 ;; Download from https://github.com/elixir-lsp/elixir-ls/releases
