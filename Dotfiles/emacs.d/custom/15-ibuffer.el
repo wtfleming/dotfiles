@@ -1,6 +1,7 @@
 (global-set-key (kbd "C-x C-b") 'ibuffer)
 (autoload 'ibuffer "ibuffer" "List buffers." t)
 
+(require 'ibuf-ext)
 ;; Hide helm buffers
 (add-to-list 'ibuffer-never-show-predicates "^\\*[Hh]elm")
 
