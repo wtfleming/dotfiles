@@ -19,6 +19,9 @@ brew install watchman
 brew install coreutils
 brew install p7zip
 
+# For Clojure static analysis
+brew install borkdude/brew/clj-kondo
+
 # For erlang installed with asdf
 brew install autoconf
 # For asdf to build Erlang with wxWidgets (start observer or debugger!)

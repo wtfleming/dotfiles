@@ -43,6 +43,13 @@
 ;; Increase the amount of data which Emacs reads from the process. Again the emacs default is too low 4k considering that the some of the language server responses are in 800k - 3M range.
 (setq read-process-output-max (* 1024 1024)) ;; 1mb
 
+;; ----- Flycheck -----
+;; I use lsp-mode for most programming modes, but still use flycheck for Clojure
+(use-package flycheck
+  :ensure t
+  :init
+  (add-hook 'clojure-mode-hook 'flycheck-mode))
+
 ;; ----- Misc -----
 (use-package rainbow-delimiters
   :ensure t
@@ -85,8 +92,13 @@
              :bind (("C-c m" . magit-status)))
 
 ;; ------- Clojure -------
-(use-package clojure-mode
+(use-package flycheck-clj-kondo
   :ensure t)
+
+(use-package clojure-mode
+  :ensure t
+  :config
+  (require 'flycheck-clj-kondo))
 
 ;; (use-package clojure-mode-extra-font-locking
 ;;   :ensure t)
