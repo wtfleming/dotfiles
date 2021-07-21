@@ -204,15 +204,15 @@
 
 
 (add-hook 'js2-mode-hook (lambda () (setq js2-basic-offset 2)))
-(add-hook 'js2-mode-hook (lambda () (tern-mode t)))
+;; (add-hook 'js2-mode-hook (lambda () (tern-mode t)))
 (add-hook 'js2-mode-hook (lambda () (subword-mode +1)))
 ;;(add-hook 'js2-mode-hook (lambda () (flycheck-mode t)))
 
 
 ;; Tern is a stand-alone, editor-independent JavaScript analyzer that can be used to improve the JavaScript integration of existing editors.
 ;; https://github.com/ternjs/tern
-(use-package tern
-  :ensure t)
+;; (use-package tern
+;;   :ensure t)
 
 ;; (eval-after-load 'company
 ;;   '(add-to-list 'company-backends 'company-tern))
