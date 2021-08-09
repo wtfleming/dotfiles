@@ -18,6 +18,7 @@ brew install htop
 brew install watchman
 brew install coreutils
 brew install p7zip
+brew install tree
 
 # For Clojure static analysis
 brew install borkdude/brew/clj-kondo
