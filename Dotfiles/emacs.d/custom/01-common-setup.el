@@ -132,18 +132,18 @@
          ("C-S-c C-S-c" . mc/edit-lines)))
 
 
-;; -------yasnippet -------
-(use-package yasnippet
-  :ensure t
-  :config
-  (yas-reload-all)
-  (add-hook 'prog-mode-hook 'yas-minor-mode)
-  (add-hook 'text-mode-hook 'yas-minor-mode))
+;; ;; -------yasnippet -------
+;; (use-package yasnippet
+;;   :ensure t
+;;   :config
+;;   (yas-reload-all)
+;;   (add-hook 'prog-mode-hook 'yas-minor-mode)
+;;   (add-hook 'text-mode-hook 'yas-minor-mode))
 
-;; The official collection of snippets for yasnippet.
-;; https://github.com/AndreaCrotti/yasnippet-snippets
-(use-package yasnippet-snippets
-  :ensure t)
+;; ;; The official collection of snippets for yasnippet.
+;; ;; https://github.com/AndreaCrotti/yasnippet-snippets
+;; (use-package yasnippet-snippets
+;;   :ensure t)
 
 ;; ------- abbrev-mode -------
 ;; To add abbreviations type the word you want to use as expansion, and then
