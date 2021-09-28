@@ -46,8 +46,11 @@
 
 ;; ------- Visual Settings -------
 
-;; Set font size to 12pt
-(set-face-attribute 'default nil :height 120)
+;; Use a larger font on bigger monitors
+;; https://stackoverflow.com/questions/2151449/can-i-detect-the-display-size-resolution-in-emacs
+(if (> (display-pixel-width) 1440)
+  (set-face-attribute 'default nil :height 160)
+  (set-face-attribute 'default nil :height 120))
 
 ;; Ensure line and column numbers are displayed on the mode line
 (setq line-number-mode t) ; Default is on for line, but set it anyways
