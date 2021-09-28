@@ -86,13 +86,14 @@ user=> (+ 1 2)
 3
 
 # Install leiningen
-
 $ curl https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein > ~/bin/lein
 $ chmod a+x ~/bin/lein
 
 Verify installation
 $ lein version
 
+# Install clj-kondo - https://github.com/clj-kondo/clj-kondo/blob/master/doc/install.md
+brew install borkdude/brew/clj-kondo
 
 # Install asdf
 https://github.com/asdf-vm/asdf
