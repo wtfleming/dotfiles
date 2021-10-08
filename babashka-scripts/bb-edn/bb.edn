@@ -1,0 +1,66 @@
+;; Example of working with the git CLI  in a bb.edn file from babashka
+;;
+;; Commands:
+;; $ bb verstion
+;; $ bb config
+
+{:min-bb-version "0.6.1"
+
+ :tasks
+ {:requires ([babashka.process :as proc]
+             [clojure.string :as str]
+             [clojure.pprint :as pprint])
+
+  ;; Helpers
+  :init     (do
+              (defn get-env [s]
+                (System/getenv s))
+
+              (defn pretty-print [x]
+                (binding [pprint/*print-right-margin* 130]
+                  (pprint/pprint x)))
+
+              (defn execute [command]
+                (-> (proc/process command) :out slurp str/trim-newline))
+
+              (defn release? [branch]
+                (= "main" branch))
+
+              (defn snapshot? [branch]
+                (not= "main" branch))
+
+              (defn deployable? [branch]
+                (contains? #{"main" "develop"} branch))
+
+              (def -zone-id (java.time.ZoneId/of "UTC"))
+              (def -datetime-formatter java.time.format.DateTimeFormatter/ISO_OFFSET_DATE_TIME)
+              (def -current-timestamp (java.time.ZonedDateTime/now -zone-id))
+              (def -build-timestamp (str (.format -current-timestamp -datetime-formatter)))
+              (def -build-number (execute ["git" "rev-list" "HEAD" "--count"]))
+              (def -git-url (execute ["git" "config" "--get" "remote.origin.url"]))
+              (def -git-branch (execute ["git" "rev-parse" "--abbrev-ref" "HEAD"]))
+              (def -git-sha (execute ["git" "rev-parse" "--short" "HEAD"]))
+
+              (def -version "TODO implement")
+
+              (def -config
+                {:build-number    -build-number
+                 :build-timestamp -build-timestamp
+                 :git-url         -git-url
+                 :git-branch      -git-branch
+                 :git-sha         -git-sha}))
+
+  :enter    (let [{:keys [doc print-doc?]
+                   :or   {print-doc? true}} (current-task)]
+              (when (and print-doc? doc)
+                (println (str "▸ " doc))))
+
+  ;; Tasks
+  config    {:doc "[project] Show config"
+             :print-doc? false
+             :task (pretty-print -config)}
+
+  version   {:doc "[project] Show version"
+             :print-doc? false
+             :task (print -version)}}
+ }

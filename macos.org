@@ -23,6 +23,9 @@ brew install tree
 # For Clojure static analysis
 brew install borkdude/brew/clj-kondo
 
+# babashka
+brew install borkdude/brew/babashka
+
 # For erlang installed with asdf
 brew install autoconf
 # For asdf to build Erlang with wxWidgets (start observer or debugger!)
