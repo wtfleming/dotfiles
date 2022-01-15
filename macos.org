@@ -59,10 +59,13 @@ disable mission control since I use those keyboard shortcuts in emacs
 Go to System Preferences > Keyboard > Keyboard Shortcuts > Mission Control and change the settings for "Move left a space" and "Move right a space" or disable them completely.
 http://apple.stackexchange.com/questions/18043/how-can-i-make-ctrlright-left-arrow-stop-changing-desktops-in-lion
 
-# Install java
+# Install java 17
 
-$ brew install java11
+$ brew install java
 
+export PATH="/usr/local/opt/openjdk/bin:$PATH"
+
+# Old info - for reference
 For the system Java wrappers to find this JDK, symlink it with
   sudo ln -sfn /usr/local/opt/openjdk@11/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-11.jdk
 
