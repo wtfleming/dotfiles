@@ -27,6 +27,21 @@
 (use-package all-the-icons
   :ensure t)
 
+
+;; Fonts
+(defun font-available-p (font-name)
+  (find-font (font-spec :name font-name)))
+
+;; (cond
+;;  ((font-available-p "Cascadia Code")
+;;   (set-frame-font "Cascadia Code-12"))
+;;  ((font-available-p "Menlo")
+;;   (set-frame-font "Menlo-12"))
+;;  ((font-available-p "DejaVu Sans Mono")
+;;   (set-frame-font "DejaVu Sans Mono-12"))
+;;  ((font-available-p "Inconsolata")
+;;   (set-frame-font "Inconsolata-12")))
+
 ;; ------- Keybindings -------
 
 ;; Override opening the buffer menu so it happens in the same window, rather than a new one.
