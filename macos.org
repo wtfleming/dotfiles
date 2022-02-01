@@ -43,12 +43,18 @@ git config --global core.excludesfile ~/.gitexcludes
 
 # emacs https://www.emacswiki.org/emacs/EmacsForMacOS#toc14
 $ brew update
-$ brew install emacs
+$ brew install --cask emacs
+
+# "emacs" no longer includes a GUI, use the cask version instead
+# $ brew install emacs
 
 To have launchd start emacs now and restart at login:
   brew services start emacs
 Or, if you don't want/need a background service you can just run:
   emacs
+
+# For my config currently need to run this command
+M-x all-the-icons-install-fonts
 
 Emacs flyspell needs a spell checking tool, install one on macOS
 
