@@ -11,5 +11,9 @@
 (setq ns-use-native-fullscreen nil)
 
 ;; ispell installed with homebrew
+;; TODO detect where homebrew installed ispell, it could be either of these two
+;; (if (system-type-is-darwin)
+;;   (setq ispell-program-name "/usr/local/bin/ispell"))
+
 (if (system-type-is-darwin)
-  (setq ispell-program-name "/usr/local/bin/ispell"))
+  (setq ispell-program-name "/opt/homebrew/bin/ispell"))
