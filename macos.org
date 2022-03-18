@@ -21,10 +21,9 @@ brew install p7zip
 brew install tree
 brew install ncdu
 
-# For Clojure static analysis
+# Clojure things
 brew install borkdude/brew/clj-kondo
-
-# babashka
+brew install clojure-lsp/brew/clojure-lsp-native
 brew install borkdude/brew/babashka
 
 # For erlang installed with asdf

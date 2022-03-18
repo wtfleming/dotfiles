@@ -2,17 +2,25 @@
 (use-package lsp-mode
   :ensure t
   :commands (lsp lsp-deferred)
-  :hook (elixir-mode . lsp-deferred)
+  :hook ((elixir-mode . lsp-deferred)
         (go-mode . lsp-deferred)
         (rust-mode . lsp-deferred)
         (csharp-mode . lsp-deferred)
         (scala-mode . lsp-deferred)
+        (clojure-mode . lsp)
+        (clojurec-mode . lsp)
+        (clojurescript-mode . lsp))
   :init
   (add-to-list 'exec-path "~/bin/elixir-ls")
   :bind (("M-j" . lsp-ui-imenu)
          ("M-?" . lsp-find-references))
   :config
-  (setq lsp-file-watch-threshold 2200))
+  (setq lsp-file-watch-threshold 2200)
+  (dolist (m '(clojure-mode
+               clojurec-mode
+               clojurescript-mode
+               clojurex-mode))
+     (add-to-list 'lsp-language-id-configuration `(,m . "clojure"))))
 
 (push "[/\\\\]\\.vagrant$" lsp-file-watch-ignored)
 (push "[/\\\\]\\.circleci$" lsp-file-watch-ignored)
@@ -92,6 +100,9 @@
              :bind (("C-c m" . magit-status)))
 
 ;; ------- Clojure -------
+;; Install a language server
+;; brew install clojure-lsp/brew/clojure-lsp-native
+
 (use-package flycheck-clj-kondo
   :ensure t)
 
