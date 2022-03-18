@@ -372,3 +372,7 @@
 ;;   '(add-to-list 'company-backends 'company-omnisharp))
 
 ;; (add-hook 'csharp-mode-hook #'company-mode)
+
+;; ------- Apache Thrift -------
+(use-package thrift
+  :ensure t)
