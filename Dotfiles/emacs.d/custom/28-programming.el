@@ -376,3 +376,7 @@
 ;; ------- Apache Thrift -------
 (use-package thrift
   :ensure t)
+
+;; ------- Jenkinsfile -------
+(use-package jenkinsfile-mode
+  :ensure t)
