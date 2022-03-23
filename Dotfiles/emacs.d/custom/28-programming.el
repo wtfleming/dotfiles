@@ -85,6 +85,7 @@
 (add-hook 'elixir-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'rust-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'csharp-mode-hook (lambda () (subword-mode +1)))
+(add-hook 'clojure-mode-hook (lambda () (subword-mode +1)))
 
 
 ;; ----- git-gutter -----
