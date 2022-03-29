@@ -62,6 +62,8 @@
   ;;:init
   ;;(add-hook 'clojure-mode-hook 'flycheck-mode))
 
+(setq flycheck-checker-error-threshold 1500)
+
 ;; ----- Misc -----
 (use-package rainbow-delimiters
   :ensure t
