@@ -20,6 +20,7 @@ brew install coreutils
 brew install p7zip
 brew install tree
 brew install ncdu
+brew install ripgrep
 
 # Clojure things
 brew install borkdude/brew/clj-kondo

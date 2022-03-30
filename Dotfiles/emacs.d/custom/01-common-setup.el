@@ -282,6 +282,12 @@
 ;;   :config
 ;;   (add-to-list 'projectile-globally-ignored-directories "node_modules"))
 
+;; ------- ripgrep -------
+;; install the binary with
+;; brew install ripgrep
+(use-package ripgrep
+  :ensure t)
+
 
 ;; ----------- emacs shell ----------------------------
 ; Dont echo passwords
