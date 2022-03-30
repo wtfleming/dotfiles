@@ -80,7 +80,7 @@
   (add-hook hook (lambda () (set-variable 'show-trailing-whitespace t))))
 
 ;; Disable emacs built in version control for faster startup
-(setq vc-handled-backends ())
+;; (setq vc-handled-backends ())
 
 (use-package flycheck-inline
   :ensure t)
