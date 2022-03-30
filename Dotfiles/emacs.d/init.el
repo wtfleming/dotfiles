@@ -15,3 +15,6 @@
 (load "23-hydra.el")
 (load "25-doom-modeline.el")
 (load "28-programming.el")
+
+(when (file-exists-p "~/.emacs.d/lisp/rama-mode.el")
+  (load "~/.emacs.d/lisp/rama-mode.el"))
