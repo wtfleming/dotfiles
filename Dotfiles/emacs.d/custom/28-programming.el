@@ -26,7 +26,7 @@
 (push "[/\\\\]\\.circleci$" lsp-file-watch-ignored)
 
 (setq lsp-eldoc-render-all t)
-;; (setq lsp-enable-snippet t)
+(setq lsp-enable-snippet nil)
 
 (use-package lsp-ui
   :ensure t
