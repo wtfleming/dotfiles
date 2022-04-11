@@ -93,7 +93,7 @@
 (add-hook 'rust-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'csharp-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'clojure-mode-hook (lambda () (subword-mode +1)))
-
+(add-hook 'java-mode-hook (lambda () (subword-mode +1)))
 
 ;; ----- git-gutter -----
 (use-package git-gutter
