@@ -288,6 +288,9 @@
 (use-package ripgrep
   :ensure t)
 
+;; ------- org-reveal -------
+(use-package ox-reveal
+  :ensure t)
 
 ;; ----------- emacs shell ----------------------------
 ; Dont echo passwords
