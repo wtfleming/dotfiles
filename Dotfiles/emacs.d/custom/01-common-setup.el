@@ -292,6 +292,10 @@
 (use-package ox-reveal
   :ensure t)
 
+;; Can be used for syntax highlighting in org-reveal
+(use-package htmlize
+  :ensure t)
+
 ;; ----------- emacs shell ----------------------------
 ; Dont echo passwords
 (add-hook 'comint-output-filter-functions
