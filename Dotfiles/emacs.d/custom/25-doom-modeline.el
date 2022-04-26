@@ -3,8 +3,12 @@
 ;; Note that for all-the-icons to work you must manually install them by calling
 ;; M-x all-the-icons-install-fonts
 
-(require 'doom-modeline)
-(doom-modeline-mode 1)
+(use-package doom-modeline
+  :ensure t
+  :init (doom-modeline-mode 1))
+
+;; (require 'doom-modeline)
+;; (doom-modeline-mode 1)
 
 ;; How tall the mode-line should be. It's only respected in GUI.
 ;; If the actual char height is larger, it respects the actual height.
