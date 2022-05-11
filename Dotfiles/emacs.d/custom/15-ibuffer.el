@@ -18,15 +18,17 @@
       (quote (("default"
                ("Programming"
                 (or
-                 (mode . pig-mode)
-                 (mode . go-mode)
                  (mode . clojure-mode)
-                 (mode . scala-mode)
-                 (mode . python-mode)
-                 (mode . emacs-lisp-mode)
-                 (mode . elixir-mode)
                  (mode . conf-toml-mode)
+                 (mode . elixir-mode)
+                 (mode . emacs-lisp-mode)
+                 (mode . java-mode)
+                 (mode . go-mode)
+                 (mode . pig-mode)
+                 (mode . python-mode)
                  (mode . rust-mode)
+                 (mode . scala-mode)
+                 (mode . thrift-mode)
                  (mode . web-mode)
                  ))
                ("org-mode" (mode . org-mode))
