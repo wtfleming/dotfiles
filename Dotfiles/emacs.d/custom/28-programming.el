@@ -26,7 +26,7 @@
 (push "[/\\\\]\\.vagrant$" lsp-file-watch-ignored)
 (push "[/\\\\]\\.circleci$" lsp-file-watch-ignored)
 
-(setq lsp-eldoc-render-all t)
+;; (setq lsp-eldoc-render-all t)
 ;; (setq lsp-enable-snippet t)
 
 (use-package lsp-ui
