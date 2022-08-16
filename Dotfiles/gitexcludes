@@ -89,3 +89,9 @@ metals.sbt
 
 ### AWS
 .aws-sam
+
+### Clojure
+.clj-kondo/
+
+### Language server
+.lsp/
