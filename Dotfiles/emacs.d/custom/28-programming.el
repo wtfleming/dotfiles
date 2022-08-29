@@ -349,6 +349,10 @@
 
 ;; (add-hook 'c++-mode-hook #'lsp-deferred)
 
+;; Company mode seems to be very slow in C++, so disable it
+;; See https://github.com/company-mode/company-mode/issues/592
+(add-hook 'c++-mode-hook (lambda () (company-mode -1)))
+
 ;; ------- C# -------
 (use-package csharp-mode
   :ensure t)
