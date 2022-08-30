@@ -347,7 +347,7 @@
 ;;     :hook ((c-mode c++-mode objc-mode cuda-mode) .
 ;;          (lambda () (require 'ccls) (lsp))))
 
-;; (add-hook 'c++-mode-hook #'lsp-deferred)
+(add-hook 'c++-mode-hook #'lsp-deferred)
 
 ;; Company mode seems to be very slow in C++, so disable it
 ;; See https://github.com/company-mode/company-mode/issues/592
