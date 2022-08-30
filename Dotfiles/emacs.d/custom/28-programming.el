@@ -340,18 +340,16 @@
 
 
 ;; ---- C++ ----
-;; To install the language server
-;; $ brew install ccls
-;; (use-package ccls
-;;     :ensure t
-;;     :hook ((c-mode c++-mode objc-mode cuda-mode) .
-;;          (lambda () (require 'ccls) (lsp))))
-
+;; To install the clangd language server
+;; $ brew install llvm
 (add-hook 'c++-mode-hook #'lsp-deferred)
 
-;; Company mode seems to be very slow in C++, so disable it
-;; See https://github.com/company-mode/company-mode/issues/592
-(add-hook 'c++-mode-hook (lambda () (company-mode -1)))
+;; Remove company-semantic from the backends to make autocompete work in C++
+;; Want to be using company-capf as the backend
+(defun my-c++-mode-hook ()
+  (setq-local company-backends (delete 'company-semantic company-backends)))
+
+(add-hook 'c++-mode-hook #'my-c++-mode-hook)
 
 ;; ------- C# -------
 ;; (use-package csharp-mode
