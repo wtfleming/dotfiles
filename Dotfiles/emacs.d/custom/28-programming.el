@@ -249,19 +249,19 @@
 
 
 ;; ------- Go -------
-(use-package go-mode
-  :defer t
-  :ensure t
-  :mode ("\\.go\\'" . go-mode))
+;; (use-package go-mode
+;;   :defer t
+;;   :ensure t
+;;   :mode ("\\.go\\'" . go-mode))
 
 
-;; go get golang.org/x/tools/gopls
-;; GO111MODULE=on go get golang.org/x/tools/gopls@latest
-(setq lsp-gopls-staticcheck t)
-(setq lsp-gopls-complete-unimported t)
-(lsp-register-custom-settings
- '(("gopls.completeUnimported" t t)
-   ("gopls.staticcheck" t t)))
+;; ;; go get golang.org/x/tools/gopls
+;; ;; GO111MODULE=on go get golang.org/x/tools/gopls@latest
+;; (setq lsp-gopls-staticcheck t)
+;; (setq lsp-gopls-complete-unimported t)
+;; (lsp-register-custom-settings
+;;  '(("gopls.completeUnimported" t t)
+;;    ("gopls.staticcheck" t t)))
 
 
 ;; ------- web-mode -------
@@ -354,8 +354,8 @@
 (add-hook 'c++-mode-hook (lambda () (company-mode -1)))
 
 ;; ------- C# -------
-(use-package csharp-mode
-  :ensure t)
+;; (use-package csharp-mode
+;;   :ensure t)
 
 ;; If the language server was installed manually, can set it here
 ;;(setq lsp-csharp-server-path "/Users/wtf/bin/omnisharp-osx/run")
@@ -388,12 +388,12 @@
 
 
 ;; ------- Apache Thrift -------
-(use-package thrift
-  :ensure t)
+;; (use-package thrift
+;;   :ensure t)
 
 ;; ------- Jenkinsfile -------
-(use-package jenkinsfile-mode
-  :ensure t)
+;; (use-package jenkinsfile-mode
+;;   :ensure t)
 
 ;; ------- Java -------
 ;; indent 2 spaces
