@@ -351,6 +351,11 @@
 
 (add-hook 'c++-mode-hook #'my-c++-mode-hook)
 
+;; ---- CMake ----
+(use-package cmake-mode
+  :ensure t)
+
+
 ;; ------- C# -------
 ;; (use-package csharp-mode
 ;;   :ensure t)
