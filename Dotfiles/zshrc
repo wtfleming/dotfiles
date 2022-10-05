@@ -70,3 +70,5 @@ export KERL_BUILD_DOCS="yes"
 
 # Enable shell history in iex and erl
 export ERL_AFLAGS="-kernel shell_history enabled -kernel shell_history_file_bytes 1024000"
+
+# export PATH="/opt/homebrew/opt/openjdk@17/bin:$PATH"
