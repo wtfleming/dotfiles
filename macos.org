@@ -79,11 +79,6 @@ If you need to have openjdk@17 first in your PATH, run:
 For compilers to find openjdk@17 you may need to set:
   export CPPFLAGS="-I/usr/local/opt/openjdk@17/include"
 
-  
-#$ brew install java
-
-export PATH="/usr/local/opt/openjdk/bin:$PATH"
-
 
 Verify installation
   java -version
@@ -91,10 +86,6 @@ Verify installation
 # Install Clojure CLI tools
 $ brew install clojure/tools/clojure
 
-You can upgrade to the latest release with:
-  brew upgrade clojure/tools/clojure
-
-Verify installation
 
 $ clj
 user=> (+ 1 2)
