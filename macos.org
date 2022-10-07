@@ -42,6 +42,30 @@ brew install git-lfs
 git lfs install
 git config --global core.excludesfile ~/.gitexcludes
 
+
+
+# emacs with native compilation
+
+https://github.com/jimeh/build-emacs-for-macos
+git clone git@github.com:jimeh/build-emacs-for-macos.git
+
+./build-emacs-for-macos emacs-28.2
+
+go run ./cmd/emacs-builder package --help
+
+cp -r builds/Emacs.2022-09-12.739b5d0.emacs-28-2.macOS-12.arm64/Emacs.app .
+
+$ codesign --force --deep -s - Emacs.app
+
+
+if [ -d "/Applications/Emacs.app/Contents/MacOS/bin" ]; then
+  export PATH="/Applications/Emacs.app/Contents/MacOS/bin:$PATH"
+  alias emacs="emacs -nw" # Always launch "emacs" in terminal mode.
+fi
+
+
+
+
 # emacs https://www.emacswiki.org/emacs/EmacsForMacOS#toc14
 $ brew update
 $ brew install --cask emacs
