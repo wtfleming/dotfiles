@@ -407,6 +407,10 @@
 (use-package graphql-mode
   :ensure t)
 
+;; needed by graphql-mode
+(use-package request
+  :ensure t)
+
 ;; ------- just https://github.com/casey/just  -------
 (use-package just-mode
   :ensure t)
