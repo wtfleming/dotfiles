@@ -395,10 +395,18 @@
 ;; (use-package thrift
 ;;   :ensure t)
 
-;; ------- Jenkinsfile -------
-;; (use-package jenkinsfile-mode
-;;   :ensure t)
+------- Jenkinsfile -------
+(use-package jenkinsfile-mode
+  :ensure t)
 
 ;; ------- Java -------
 ;; indent 2 spaces
 (add-hook 'java-mode-hook (lambda () (setq c-basic-offset 2)))
+
+;; ------- GraphQL -------
+(use-package graphql-mode
+  :ensure t)
+
+;; ------- just https://github.com/casey/just  -------
+(use-package just-mode
+  :ensure t)
