@@ -395,7 +395,7 @@
 ;; (use-package thrift
 ;;   :ensure t)
 
-------- Jenkinsfile -------
+;; ------- Jenkinsfile -------
 (use-package jenkinsfile-mode
   :ensure t)
 
