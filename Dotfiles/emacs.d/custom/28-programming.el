@@ -336,8 +336,8 @@
 ;; ---- Scala ----
 (use-package scala-mode
   :ensure t)
-(use-package lsp-metals
-  :ensure t)
+;; (use-package lsp-metals
+;;   :ensure t)
 
 
 ;; ---- C++ ----
