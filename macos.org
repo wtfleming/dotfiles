@@ -12,15 +12,7 @@ compaudit | xargs chmod g-w
 Install dotfiles
 https://github.com/wtfleming/dotfiles
 
-brew install tmux
-brew install wget
-brew install htop
-brew install watchman
-brew install coreutils
-brew install p7zip
-brew install tree
-brew install ncdu
-brew install ripgrep
+brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake
 
 # Clojure things
 brew install borkdude/brew/clj-kondo
@@ -122,9 +114,6 @@ $ chmod a+x ~/bin/lein
 Verify installation
 $ lein version
 
-# Install clj-kondo - https://github.com/clj-kondo/clj-kondo/blob/master/doc/install.md
-brew install borkdude/brew/clj-kondo
-
 # Install asdf
 https://github.com/asdf-vm/asdf
 
@@ -133,11 +122,6 @@ brew install asdf
 If change made to zsh config:
 echo -e '\n. $HOME/.asdf/asdf.sh' >> ~/.zshrc
 
-
-
-# Install Yarn
-# Since we are using nvm don't install homebrew node
-brew install yarn --without-node
 
 
 Install Docker
@@ -157,25 +141,3 @@ $ aws configure
 
 
 brew install elixir
-
-
-
-
-
-
-
-
-
-# Scala language server
-
-# Make sure to use coursier v1.1.0-M9 or newer.
-curl -L -o coursier https://git.io/coursier-cli
-chmod +x coursier
-./coursier bootstrap \
-  --java-opt -Xss4m \
-  --java-opt -Xms100m \
-  --java-opt -Dmetals.client=emacs \
-  org.scalameta:metals_2.12:0.8.1 \
-  -r bintray:scalacenter/releases \
-  -r sonatype:snapshots \
-  -o ~/bin/metals-emacs -f
