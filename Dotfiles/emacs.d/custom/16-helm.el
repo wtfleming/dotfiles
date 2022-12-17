@@ -7,7 +7,6 @@
          ("C-c C-h SPC" . helm-all-mark-rings))
   :config
   (progn
-    (require 'helm-config)
     (setq helm-split-window-in-side-p           t ; open helm buffer inside current window, not occupy whole other window
           helm-move-to-line-cycle-in-source     t ; move to end or beginning of source when reaching top or bottom of source.
           helm-ff-search-library-in-sexp        t ; search for library in `require' and `declare-function' sexp.
