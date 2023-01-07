@@ -16,6 +16,7 @@
 
 (add-to-list 'package-pinned-packages '(magit . "melpa-stable") t)
 (add-to-list 'package-pinned-packages '(cider . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(helm . "melpa-stable") t)
 
 (package-initialize)
 (unless (package-installed-p 'use-package)
