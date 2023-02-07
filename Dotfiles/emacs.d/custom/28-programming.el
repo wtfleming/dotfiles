@@ -95,6 +95,7 @@
 (add-hook 'clojure-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'java-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'c++-mode-hook (lambda () (subword-mode +1)))
+(add-hook 'yaml-mode-hook (lambda () (subword-mode +1)))
 
 ;; ----- git-gutter -----
 (use-package git-gutter
