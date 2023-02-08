@@ -88,13 +88,14 @@
 (with-eval-after-load 'flycheck
   (add-hook 'flycheck-mode-hook #'flycheck-inline-mode))
 
-(add-hook 'go-mode-hook (lambda () (subword-mode +1)))
-(add-hook 'elixir-mode-hook (lambda () (subword-mode +1)))
-(add-hook 'rust-mode-hook (lambda () (subword-mode +1)))
-(add-hook 'csharp-mode-hook (lambda () (subword-mode +1)))
-(add-hook 'clojure-mode-hook (lambda () (subword-mode +1)))
-(add-hook 'java-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'c++-mode-hook (lambda () (subword-mode +1)))
+(add-hook 'clojure-mode-hook (lambda () (subword-mode +1)))
+(add-hook 'csharp-mode-hook (lambda () (subword-mode +1)))
+(add-hook 'elixir-mode-hook (lambda () (subword-mode +1)))
+(add-hook 'go-mode-hook (lambda () (subword-mode +1)))
+(add-hook 'java-mode-hook (lambda () (subword-mode +1)))
+(add-hook 'just-mode-hook (lambda () (subword-mode +1)))
+(add-hook 'rust-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'yaml-mode-hook (lambda () (subword-mode +1)))
 
 ;; ----- git-gutter -----
