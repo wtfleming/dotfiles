@@ -19,6 +19,9 @@ brew install borkdude/brew/clj-kondo
 brew install clojure-lsp/brew/clojure-lsp-native
 brew install borkdude/brew/babashka
 
+# YAML language server
+brew install yaml-language-server
+
 # For erlang installed with asdf
 brew install autoconf
 # For asdf to build Erlang with wxWidgets (start observer or debugger!)

@@ -10,6 +10,7 @@
          (clojure-mode . lsp)
          (clojurec-mode . lsp)
          (clojurescript-mode . lsp)
+         (yaml-mode . lsp)
         )
   :init
   (add-to-list 'exec-path "~/bin/elixir-ls")
