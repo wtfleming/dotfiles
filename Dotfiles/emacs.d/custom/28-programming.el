@@ -414,6 +414,10 @@
 (use-package request
   :ensure t)
 
-;; ------- just https://github.com/casey/just  -------
+;; ------- https://github.com/casey/just -------
 (use-package just-mode
+  :ensure t)
+
+;; ------- https://github.com/psibi/justl.el -------
+(use-package justl
   :ensure t)
