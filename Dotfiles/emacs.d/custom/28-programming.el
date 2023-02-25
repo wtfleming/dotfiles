@@ -168,7 +168,10 @@
 ;; Next, install rust-analyzer, download a binary from https://github.com/rust-analyzer/rust-analyzer/releases
 ;; Typically, you then need to rename the binary for your platform, e.g. rust-analyzer-mac if you’re on Mac OS, to rust-analyzer and make it executable in addition to moving it into a directory in your $PATH.
 ;;
-;; $ curl -L https://github.com/rust-analyzer/rust-analyzer/releases/latest/download/rust-analyzer-mac -o ~/bin/rust-analyzer
+;; $ curl -L https://github.com/rust-lang/rust-analyzer/releases/latest/download/rust-analyzer-x86_64-apple-darwin.gz | gunzip -c - > ~/bin/rust-analyzer
+;; or
+;; $ curl -L https://github.com/rust-lang/rust-analyzer/releases/latest/download/rust-analyzer-aarch64-apple-darwin.gz | gunzip -c - > ~/bin/rust-analyzer
+
 ;; $ chmod +x ~/bin/rust-analyzer
 
 (use-package rust-mode
