@@ -98,6 +98,7 @@
 (add-hook 'just-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'rust-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'yaml-mode-hook (lambda () (subword-mode +1)))
+(add-hook 'terraform-mode-hook (lambda () (subword-mode +1)))
 
 ;; ----- git-gutter -----
 (use-package git-gutter
