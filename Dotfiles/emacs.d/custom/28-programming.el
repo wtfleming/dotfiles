@@ -11,6 +11,7 @@
          (clojurec-mode . lsp)
          (clojurescript-mode . lsp)
          (yaml-mode . lsp)
+         (terraform-mode . lsp-deferred)
         )
   :init
   (add-to-list 'exec-path "~/bin/elixir-ls")
@@ -322,9 +323,17 @@
 ;; ------- hcl-mode -------
 ;; Compatability with HCL and Terraform syntax
 (use-package hcl-mode
+  :ensure t)
+
+;; ------- terraform-mode -------
+(use-package terraform-mode
   :ensure t
-  :mode (("\\.tpl\\'" . hcl-mode)
-         ("\\.tf\\'" . hcl-mode)))
+  :mode (("\\.tpl\\'" . terraform-mode)
+         ("\\.tf\\'" . terraform-mode))
+
+  ;; Currently lsp-mode supports two terraform language servers.
+  ;; If you would want to go with the official Hashicorp's language server, set this:
+  :config (setq lsp-disabled-clients '(tfls)))
 
 
 ;; ------- Misc -------
