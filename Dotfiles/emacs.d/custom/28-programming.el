@@ -5,7 +5,6 @@
   :hook ((elixir-mode . lsp-deferred)
          (go-mode . lsp-deferred)
          (rust-mode . lsp-deferred)
-         (csharp-mode . lsp-deferred)
          (scala-mode . lsp-deferred)
          (clojure-mode . lsp)
          (clojurec-mode . lsp)
@@ -346,8 +345,6 @@
 (use-package format-all
   :ensure t)
 
-
-
 ;; ---- Scala ----
 (use-package scala-mode
   :ensure t)
@@ -370,41 +367,6 @@
 ;; ---- CMake ----
 (use-package cmake-mode
   :ensure t)
-
-
-;; ------- C# -------
-;; (use-package csharp-mode
-;;   :ensure t)
-
-;; If the language server was installed manually, can set it here
-;;(setq lsp-csharp-server-path "/Users/wtf/bin/omnisharp-osx/run")
-
-
-;; (defun my-csharp-mode-setup ()
-;;   (setq indent-tabs-mode nil)
-;;   (setq c-syntactic-indentation t)
-;;   (c-set-style "k&r")
-;;   (setq c-basic-offset 2)
-;;   (setq truncate-lines t)
-;;   (setq tab-width 2)
-;;   (local-set-key (kbd "C-c r r") 'omnisharp-run-code-action-refactoring)
-;;   (local-set-key (kbd "C-c C-c") 'recompile))
-
-;; ;; csharp-mode README.md recommends this too
-;; ;; (electric-pair-mode 1)       ;; Emacs 24
-;; ;; (electric-pair-local-mode 1) ;; Emacs 25
-
-;; (add-hook 'csharp-mode-hook 'my-csharp-mode-setup t)
-
-;; (add-hook 'csharp-mode-hook 'flycheck-mode)
-;; (add-hook 'csharp-mode-hook 'omnisharp-mode)
-
-
-;; (eval-after-load 'company
-;;   '(add-to-list 'company-backends 'company-omnisharp))
-
-;; (add-hook 'csharp-mode-hook #'company-mode)
-
 
 ;; ------- Apache Thrift -------
 ;; (use-package thrift
