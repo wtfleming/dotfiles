@@ -22,6 +22,9 @@ brew install borkdude/brew/babashka
 # YAML language server
 brew install yaml-language-server
 
+# Terraform language server
+brew install hashicorp/tap/terraform-ls
+
 # For erlang installed with asdf
 brew install autoconf
 # For asdf to build Erlang with wxWidgets (start observer or debugger!)
