@@ -182,7 +182,8 @@
   :config
   (add-hook 'rust-mode-hook
             (lambda () (setq indent-tabs-mode nil)))
-  (setq lsp-rust-server 'rust-analyzer))
+  (setq lsp-rust-server 'rust-analyzer)
+  (setq-default lsp-rust-analyzer-proc-macro-enable t))
 
 (use-package cargo
   :ensure t
