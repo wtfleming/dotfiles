@@ -14,6 +14,19 @@ https://github.com/wtfleming/dotfiles
 
 brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake
 
+# Build emacs on an ARM Mac from source
+brew install gcc
+brew install libgccjit
+...
+./configure --with-native-compilation
+
+Run 'gmake' to build Emacs, then run 'src/emacs' to test it.
+Run 'gmake install' in order to build an application bundle.
+The application will go to nextstep/Emacs.app and can be run or moved
+from there.
+The application will be fully self-contained.
+
+
 # Clojure things
 brew install borkdude/brew/clj-kondo
 brew install clojure-lsp/brew/clojure-lsp-native
