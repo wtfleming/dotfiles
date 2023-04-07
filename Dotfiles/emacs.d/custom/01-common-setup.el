@@ -23,6 +23,11 @@
   (package-refresh-contents)
   (package-install 'use-package))
 
+;; Helm appears to be using ffap internally which can cause
+;; network requests if you M-x while the cursor is on a URL
+;; causing emacs to lock up for up to a few seconds, disable this.
+;; See https://github.com/emacs-helm/helm/issues/648
+(setq ffap-machine-p-known 'reject)
 
 ;; Note that for all-the-icons to work you must manually install them by calling
 ;; M-x all-the-icons-install-fonts
