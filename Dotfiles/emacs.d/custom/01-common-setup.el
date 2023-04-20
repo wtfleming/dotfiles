@@ -18,6 +18,11 @@
 (add-to-list 'package-pinned-packages '(cider . "melpa-stable") t)
 (add-to-list 'package-pinned-packages '(helm . "melpa-stable") t)
 
+;; Workaround for https://github.com/Alexander-Miller/treemacs/issues/1017
+;; should be fixed in treemacs soon, otherwise, should work in emacs 29
+;; and can be removed then
+(add-to-list 'image-types 'svg)
+
 (package-initialize)
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
