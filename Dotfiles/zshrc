@@ -55,7 +55,7 @@ export PATH="/usr/local/opt/openjdk/bin:$PATH"
 # j8
 
 # https://github.com/asdf-vm/asdf
-. $(brew --prefix asdf)/asdf.sh
+. "$HOME/.asdf/asdf.sh"
 
 # If ruby installed via homebrew add it to the path
 # export PATH="/usr/local/opt/ruby/bin:$PATH"

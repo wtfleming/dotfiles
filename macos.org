@@ -133,15 +133,6 @@ $ chmod a+x ~/bin/lein
 Verify installation
 $ lein version
 
-# Install asdf
-https://github.com/asdf-vm/asdf
-
-brew install asdf
-
-If change made to zsh config:
-echo -e '\n. $HOME/.asdf/asdf.sh' >> ~/.zshrc
-
-
 
 Install Docker
 https://hub.docker.com/editions/community/docker-ce-desktop-mac
@@ -150,13 +141,58 @@ $ docker login
 Username is not the default email displayed, look it up by logging into https://hub.docker.com
 
 
-# Tern (for javascript)
-npm install -g tern
-
-
 
 brew install awscli
 $ aws configure
 
 
-brew install elixir
+
+# asdf
+See https://asdf-vm.com/guide/getting-started.html
+
+brew install coreutils curl git
+
+
+git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.11.3
+
+
+Add the following to ~/.zshrc:
+
+. "$HOME/.asdf/asdf.sh"
+
+Completions are configured by either a ZSH Framework asdf plugin or by adding the following to your .zshrc:
+
+# append completions to fpath
+fpath=(${ASDF_DIR}/completions $fpath)
+# initialise completions with ZSH's compinit
+autoload -Uz compinit && compinit
+
+if you are using a custom compinit setup, ensure compinit is below your sourcing of asdf.sh
+if you are using a custom compinit setup with a ZSH Framework, ensure compinit is below your sourcing of the framework
+
+# Erlang/Elixir
+
+asdf plugin-add erlang
+asdf plugin-add elixir
+
+asdf list all elixir
+asdf list all erlang
+
+
+asdf install erlang 25.3.2
+asdf global erlang 25.3.2
+asdf install elixir 1.14.4-otp-25
+asdf global elixir 1.14.4-otp-25
+
+
+
+# For building with wxWidgets (start observer or debugger!)
+brew install wxmac
+
+You can test that it worked with
+iex> :observer.start()
+
+mix local.rebar --if-missing --force
+mix local.hex --if-missing --force
+
+mix archive.install hex phx_new
