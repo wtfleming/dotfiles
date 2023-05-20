@@ -145,6 +145,8 @@
 ;; curl -L https://github.com/elixir-lsp/elixir-ls/releases/latest/download/elixir-ls-1.11.zip --create-dirs -o ~/bin/elixir-ls/elixir-ls.zip
 ;; cd ~/bin/elixir-ls && unzip elixir-ls.zip
 
+;;(setq lsp-elixir-ls-download-url "https://github.com/elixir-lsp/elixir-ls/releases/download/v0.14.6/elixir-ls.zip")
+
 (use-package elixir-mode
   :ensure t)
 
