@@ -154,6 +154,7 @@
 (push "[/\\\\]\\deps$" lsp-file-watch-ignored)
 (push "[/\\\\]\\.elixir_ls$" lsp-file-watch-ignored)
 (push "[/\\\\]_build$" lsp-file-watch-ignored)
+(push "[/\\\\]postgres-data$" lsp-file-watch-ignored)
 
 (defvar lsp-elixir--config-options (make-hash-table))
 (add-hook 'lsp-after-initialize-hook
