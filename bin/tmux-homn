@@ -1,0 +1,36 @@
+tmux has-session -t homn-dev
+
+if [ "$?" -eq 1 ]; then
+    tmux new-session -s homn-dev -n homn -d
+
+    # C-m sends a Carriage Return sequence
+    tmux new-window -n docker -t homn-dev
+    tmux send-keys -t homn-dev:1 'cd ~/src/homn' C-m
+    tmux send-keys -t homn-dev:1 C-l
+    tmux send-keys -t homn-dev:1 'docker-compose up'
+
+
+    tmux send-keys -t homn-dev 'cd ~/src/homn' C-m
+    tmux send-keys -t homn-dev:2 C-l
+    tmux send-keys -t homn-dev:2 'iex -S mix phx.server'
+
+    # Create a new pane in the window
+    # tmux split-window -v -t homn-dev
+
+    tmux select-layout -t homn-dev even-vertical
+
+    # Send a command to session homn-dev, window 1, pane 2
+    # tmux send-keys -t homn-dev:1.2 'cd ~/src/homn' C-m
+
+
+    tmux new-window -n psql -t homn-dev
+    tmux send-keys -t homn-dev:3 'cd ~/src/homn' C-m
+    tmux send-keys -t homn-dev:3 C-l
+    tmux send-keys -t homn-dev:3 'psql -h localhost -p 5432 -U postgres homn_dev'
+
+    # When we start our session we want our first window to be displayed
+    tmux select-window -t homn-dev:1
+    tmux select-pane -t homn-dev:.1
+fi
+
+tmux attach -t homn-dev
