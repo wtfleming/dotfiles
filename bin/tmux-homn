@@ -1,10 +1,10 @@
 tmux has-session -t homn-dev
 
 if [ "$?" -eq 1 ]; then
-    tmux new-session -s homn-dev -n homn -d
+    tmux new-session -s homn-dev -n docker -d
 
     # C-m sends a Carriage Return sequence
-    tmux new-window -n docker -t homn-dev
+    tmux new-window -n homn -t homn-dev
     tmux send-keys -t homn-dev:1 'cd ~/src/homn' C-m
     tmux send-keys -t homn-dev:1 C-l
     tmux send-keys -t homn-dev:1 'docker-compose up'
