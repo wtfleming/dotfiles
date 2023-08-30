@@ -196,3 +196,9 @@ mix local.rebar --if-missing --force
 mix local.hex --if-missing --force
 
 mix archive.install hex phx_new
+
+# Japanese keyboard
+System Settings->Keyboard->Text input
+  Add Japanese - Romaji source
+  Enable "Use Caps Lock key to switch to and from U.S."
+
