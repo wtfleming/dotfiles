@@ -1,0 +1,2 @@
+{:linters      {;; See https://clojure-lsp.io/settings/#clojure-lspunused-public-var
+                :clojure-lsp/unused-public-var {:level :off}}}
