@@ -32,6 +32,9 @@ brew install borkdude/brew/clj-kondo
 brew install clojure-lsp/brew/clojure-lsp-native
 brew install borkdude/brew/babashka
 
+# Shell scripts linter
+brew install shellcheck
+
 # YAML language server
 brew install yaml-language-server
 
