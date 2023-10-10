@@ -259,21 +259,19 @@
 ;;               (flycheck-select-checker 'javascript-eslint))))
 
 
-
 ;; ------- Go -------
-;; (use-package go-mode
-;;   :defer t
-;;   :ensure t
-;;   :mode ("\\.go\\'" . go-mode))
+(use-package go-mode
+  :defer t
+  :ensure t
+  :mode ("\\.go\\'" . go-mode))
 
-
-;; ;; go get golang.org/x/tools/gopls
-;; ;; GO111MODULE=on go get golang.org/x/tools/gopls@latest
-;; (setq lsp-gopls-staticcheck t)
-;; (setq lsp-gopls-complete-unimported t)
-;; (lsp-register-custom-settings
-;;  '(("gopls.completeUnimported" t t)
-;;    ("gopls.staticcheck" t t)))
+;; go install golang.org/x/tools/gopls@latest
+;; and ensure $HOME/go/bin is in the shell's path
+(setq lsp-gopls-staticcheck t)
+(setq lsp-gopls-complete-unimported t)
+(lsp-register-custom-settings
+ '(("gopls.completeUnimported" t t)
+   ("gopls.staticcheck" t t)))
 
 
 ;; ------- web-mode -------
