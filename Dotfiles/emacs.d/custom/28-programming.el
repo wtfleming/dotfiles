@@ -9,6 +9,7 @@
          (clojure-mode . lsp)
          (clojurec-mode . lsp)
          (clojurescript-mode . lsp)
+         (sh-mode . lsp-deferred)
          (yaml-mode . lsp)
          (terraform-mode . lsp-deferred)
         )
