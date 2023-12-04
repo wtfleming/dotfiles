@@ -40,8 +40,8 @@
 (setq lsp-lens-enable t
       lsp-semantic-tokens-enable t
       lsp-ui-doc-enable nil
-      lsp-ui-doc-position 'bottom
-      lsp-ui-doc-delay 1.0
+      ;; lsp-ui-doc-position 'bottom
+      ;; lsp-ui-doc-delay 1.0
       lsp-ui-peek-enable t
       lsp-ui-sideline-enable t
       lsp-ui-imenu-enable t
