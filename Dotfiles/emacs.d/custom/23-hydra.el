@@ -261,8 +261,8 @@ T - tag prefix
 ;;   ("q"   nil "Cancel" :color blue))
 
 
-(define-key projectile-mode-map (kbd "C-c p") 'hydra-projectile/body)
-(define-key projectile-mode-map (kbd "s-p") 'hydra-projectile/body)
+;; (define-key projectile-mode-map (kbd "C-c p") 'hydra-projectile/body)
+;; (define-key projectile-mode-map (kbd "s-p") 'hydra-projectile/body)
 
 
 ;; (defhydra hydra-flycheck(
