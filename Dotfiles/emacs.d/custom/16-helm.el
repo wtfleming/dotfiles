@@ -22,9 +22,6 @@
 ;;(global-set-key (kbd "C-c h g") 'helm-google-suggest)
 
 
-(use-package helm-lsp
-  :ensure t)
-
 ;; The default "C-x c" is quite close to "C-x C-c", which quits Emacs.
 ;; Changed to "C-c h". Note: We must set "C-c h" globally, because we
 ;; cannot change `helm-command-prefix-key' once `helm-config' is loaded.

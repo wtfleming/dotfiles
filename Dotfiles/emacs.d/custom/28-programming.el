@@ -25,6 +25,12 @@
                clojurex-mode))
      (add-to-list 'lsp-language-id-configuration `(,m . "clojure"))))
 
+;; This require is needed to prevent a warning at startup
+;; "Symbol's value as variable is void: lsp-file-watch-ignored"
+;; TODO look into why it is needed
+(require 'lsp-mode)
+
+
 (push "[/\\\\]\\.vagrant$" lsp-file-watch-ignored)
 (push "[/\\\\]\\.circleci$" lsp-file-watch-ignored)
 
