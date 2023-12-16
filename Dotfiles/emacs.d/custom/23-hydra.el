@@ -240,25 +240,25 @@ T - tag prefix
 (define-key dired-mode-map "." 'hydra-dired/body)
 
 
-(defhydra hydra-projectile (:color teal
-			    :columns 4)
-  "Projectile"
-  ("f"   helm-projectile-find-file           "Find File")
-  ("F"   helm-projectile-find-file-dwim      "Find File dwim")
-  ("g"   helm-projectile-grep                "grep")
-  ("r"   helm-projectile-recentf             "Recent Files")
+;; (defhydra hydra-projectile (:color teal
+;; 			    :columns 4)
+;;   "Projectile"
+;;   ("f"   helm-projectile-find-file           "Find File")
+;;   ("F"   helm-projectile-find-file-dwim      "Find File dwim")
+;;   ("g"   helm-projectile-grep                "grep")
+;;   ("r"   helm-projectile-recentf             "Recent Files")
 
-  ("z"   projectile-cache-current-file       "Cache Current File")
-  ("d"   helm-projectile-find-dir            "Find Directory")
-  ("b"   helm-projectile-switch-to-buffer    "Switch to Buffer")
-  ("c"   projectile-invalidate-cache         "Clear Cache")
+;;   ("z"   projectile-cache-current-file       "Cache Current File")
+;;   ("d"   helm-projectile-find-dir            "Find Directory")
+;;   ("b"   helm-projectile-switch-to-buffer    "Switch to Buffer")
+;;   ("c"   projectile-invalidate-cache         "Clear Cache")
 
-  ("X"   projectile-cleanup-known-projects   "Cleanup Known Projects")
-  ("o"   projectile-multi-occur              "Multi Occur")
-  ("s"   helm-projectile-switch-project      "Switch Project")
-  ("k"   projectile-kill-buffers             "Kill Buffers")
+;;   ("X"   projectile-cleanup-known-projects   "Cleanup Known Projects")
+;;   ("o"   projectile-multi-occur              "Multi Occur")
+;;   ("s"   helm-projectile-switch-project      "Switch Project")
+;;   ("k"   projectile-kill-buffers             "Kill Buffers")
 
-  ("q"   nil "Cancel" :color blue))
+;;   ("q"   nil "Cancel" :color blue))
 
 
 (define-key projectile-mode-map (kbd "C-c p") 'hydra-projectile/body)
