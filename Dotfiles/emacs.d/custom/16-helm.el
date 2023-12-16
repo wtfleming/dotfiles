@@ -17,20 +17,12 @@
           helm-recentf-fuzzy-match              t)
     (helm-mode 1)))
 
-;; Currently bound to a hydra
-;;(global-set-key (kbd "C-c p h") 'helm-projectile)
-
 ;;(global-set-key (kbd "C-c h o") 'helm-occur)
 ;;(global-set-key (kbd "C-c h x") 'helm-register)
 ;;(global-set-key (kbd "C-c h g") 'helm-google-suggest)
-;;(global-set-key (kbd "C-c p h") 'helm-projectile)
-
 
 
 (use-package helm-lsp
-  :ensure t)
-
-(use-package helm-projectile
   :ensure t)
 
 ;; The default "C-x c" is quite close to "C-x C-c", which quits Emacs.
