@@ -366,6 +366,7 @@
 ;; To install the clangd language server
 ;; $ brew install llvm
 (add-hook 'c++-mode-hook #'lsp-deferred)
+(add-hook 'c++-mode-hook (semantic-mode -1))
 
 ;; Remove company-semantic from the backends to make autocompete work in C++
 ;; Want to be using company-capf as the backend
