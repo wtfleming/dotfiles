@@ -1,0 +1,36 @@
+tmux has-session -t onecc-dev
+
+if [ "$?" -eq 1 ]; then
+    tmux new-session -s one_c_c-dev -n docker -d
+
+    # C-m sends a Carriage Return sequence
+    tmux new-window -n one_c_c -t one_c_c-dev
+    tmux send-keys -t one_c_c-dev:1 'cd ~/src/one_c_c' C-m
+    tmux send-keys -t one_c_c-dev:1 C-l
+    tmux send-keys -t one_c_c-dev:1 'docker-compose up'
+
+
+    tmux send-keys -t one_c_c-dev 'cd ~/src/one_c_c' C-m
+    tmux send-keys -t one_c_c-dev:2 C-l
+    tmux send-keys -t one_c_c-dev:2 'iex -S mix phx.server'
+
+    # Create a new pane in the window
+    # tmux split-window -v -t one_c_c-dev
+
+    tmux select-layout -t one_c_c-dev even-vertical
+
+    # Send a command to session one_c_c-dev, window 1, pane 2
+    # tmux send-keys -t one_c_c-dev:1.2 'cd ~/src/one_c_c' C-m
+
+
+    tmux new-window -n psql -t one_c_c-dev
+    tmux send-keys -t one_c_c-dev:3 'cd ~/src/one_c_c' C-m
+    tmux send-keys -t one_c_c-dev:3 C-l
+    tmux send-keys -t one_c_c-dev:3 'psql -h localhost -p 5432 -U postgres one_c_c_dev'
+
+    # When we start our session we want our first window to be displayed
+    tmux select-window -t one_c_c-dev:1
+    tmux select-pane -t one_c_c-dev:.1
+fi
+
+tmux attach -t one_c_c-dev

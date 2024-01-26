@@ -154,6 +154,13 @@
 
 ;;(setq lsp-elixir-ls-download-url "https://github.com/elixir-lsp/elixir-ls/releases/download/v0.14.6/elixir-ls.zip")
 
+;; https://github.com/elixir-tools/credo-language-server
+;; Instructions say to install with this, but it seems to hang downloading from github?
+;; for now just download it manually and install to ~/bin (or somewhere else on the shell's path)
+;; M-x lsp-install-server credo-language-server
+;; (custom-set-variables '(lsp-credo-version "0.3.0"))
+
+
 (use-package elixir-mode
   :ensure t)
 
