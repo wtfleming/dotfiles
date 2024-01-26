@@ -57,12 +57,13 @@
 ;; https://emacs-lsp.github.io/lsp-mode/page/performance/
 
 ;; An alternative: follow the method recommended by Gnu Emacs Maintainer Eli Zaretskii: "My suggestion is to repeatedly multiply gc-cons-threshold by 2 until you stop seeing significant improvements in responsiveness, and in any case not to increase by a factor larger than 100 or somesuch. If even a 100-fold increase doesn't help, there's some deeper problem with the Lisp code which produces so much garbage, or maybe GC is not the reason for slowdown."
-(setq gc-cons-threshold (* 800 1024 1024)) ;; 800mb
+;;(setq gc-cons-threshold (* 800 1024 1024)) ;; 800mb
+(setq gc-cons-threshold (* 16 1024 1024)) ;; 16mb
 
 ;;(run-with-idle-timer 2 t (lambda () (garbage-collect)))
 
 ;; Increase the amount of data which Emacs reads from the process. Again the emacs default is too low 4k considering that the some of the language server responses are in 800k - 3M range.
-(setq read-process-output-max (* 5 1024 1024)) ;; 3mb
+(setq read-process-output-max (* 3 1024 1024)) ;; 3mb
 
 ;; ----- Flycheck -----
 ;; I use lsp-mode for most programming modes, but still use flycheck for Clojure
