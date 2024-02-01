@@ -146,6 +146,10 @@
 (add-to-list 'interpreter-mode-alist '("bb" . clojure-mode))
 
 ;; ---- Elixir ----
+
+;;(setq lsp-elixir-ls-version "v0.19.0")
+;; run M-x lsp-install-server
+
 ;; Install a language server
 ;; Download from https://github.com/elixir-lsp/elixir-ls/releases
 ;; and unzip it into a directory
