@@ -48,17 +48,17 @@
       lsp-ui-doc-enable nil
       ;; lsp-ui-doc-position 'bottom
       ;; lsp-ui-doc-delay 1.0
-      lsp-ui-peek-enable t
+      ;; lsp-ui-peek-enable t
       lsp-ui-sideline-enable t
       lsp-ui-imenu-enable t
+      lsp-idle-delay 0.500
       lsp-ui-flycheck-enable t)
 
 ;; ---- LSP Performance ----
 ;; https://emacs-lsp.github.io/lsp-mode/page/performance/
 
 ;; An alternative: follow the method recommended by Gnu Emacs Maintainer Eli Zaretskii: "My suggestion is to repeatedly multiply gc-cons-threshold by 2 until you stop seeing significant improvements in responsiveness, and in any case not to increase by a factor larger than 100 or somesuch. If even a 100-fold increase doesn't help, there's some deeper problem with the Lisp code which produces so much garbage, or maybe GC is not the reason for slowdown."
-;;(setq gc-cons-threshold (* 800 1024 1024)) ;; 800mb
-(setq gc-cons-threshold (* 16 1024 1024)) ;; 16mb
+(setq gc-cons-threshold (* 100 1024 1024)) ;; 100mb
 
 ;;(run-with-idle-timer 2 t (lambda () (garbage-collect)))
 
