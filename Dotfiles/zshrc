@@ -13,7 +13,7 @@ path+=("$HOME/bin/apache-maven-3.6.3/bin")
 path+=("$HOME/.cargo/bin")
 path+=("$HOME/anaconda3/bin")
 path+=("$HOME/bin/spark/bin")
-path+=("$HOME/go/bin")
+path+=("/usr/local/opt/postgresql@16/bin")
 
 # export to sub-processes (make it inherited by child processes)
 export PATH
