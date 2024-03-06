@@ -104,19 +104,21 @@ disable mission control since I use those keyboard shortcuts in emacs
 Go to System Preferences > Keyboard > Keyboard Shortcuts > Mission Control and change the settings for "Move left a space" and "Move right a space" or disable them completely.
 http://apple.stackexchange.com/questions/18043/how-can-i-make-ctrlright-left-arrow-stop-changing-desktops-in-lion
 
-# Install java 17
+# Install java 21
 
-$ brew install openjdk@17
-
+$ brew install openjdk@21
 For the system Java wrappers to find this JDK, symlink it with
-  sudo ln -sfn /usr/local/opt/openjdk@17/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-17.jdk
+  sudo ln -sfn /opt/homebrew/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk
 
-If you need to have openjdk@17 first in your PATH, run:
-  echo 'export PATH="/usr/local/opt/openjdk@17/bin:$PATH"' >> ~/.zshrc
+openjdk is keg-only, which means it was not symlinked into /opt/homebrew,
+because macOS provides similar software and installing this software in
+parallel can cause all kinds of trouble.
 
-For compilers to find openjdk@17 you may need to set:
-  export CPPFLAGS="-I/usr/local/opt/openjdk@17/include"
+If you need to have openjdk first in your PATH, run:
+  echo 'export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"' >> ~/.zshrc
 
+For compilers to find openjdk you may need to set:
+  export CPPFLAGS="-I/opt/homebrew/opt/openjdk/include"
 
 Verify installation
   java -version
