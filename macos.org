@@ -17,7 +17,11 @@ brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake
 # Build emacs on an ARM Mac from source
 brew install gcc
 brew install libgccjit
+brew install make
+brew install texinfo gnutl
+brew install pkg-config
 ...
+./autogen.sh
 ./configure --with-native-compilation
 
 Run 'gmake' to build Emacs, then run 'src/emacs' to test it.
