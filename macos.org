@@ -172,9 +172,7 @@ See https://asdf-vm.com/guide/getting-started.html
 
 brew install coreutils curl git
 
-
-git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.11.3
-
+git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.14.0
 
 Add the following to ~/.zshrc:
 
@@ -213,7 +211,7 @@ asdf global elixir 1.14.4-otp-25
 
 
 # For building with wxWidgets (start observer or debugger!)
-brew install wxmac
+brew install wxwidgets
 
 You can test that it worked with
 iex> :observer.start()
