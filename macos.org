@@ -20,7 +20,9 @@ brew install libgccjit
 brew install make
 brew install texinfo gnutl
 brew install pkg-config
-...
+
+Download src from https://github.com/emacs-mirror/emacs/tags
+
 ./autogen.sh
 ./configure --with-native-compilation
 
