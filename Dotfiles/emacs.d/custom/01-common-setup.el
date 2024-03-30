@@ -4,6 +4,31 @@
 ;; https://emacs.stackexchange.com/questions/51721/failed-to-download-gnu-archive
 (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
 
+
+;; ---- Emacs garbage collection ----
+;; see https://akrl.sdf.org/#orgc15a10d
+
+(defmacro k-time (&rest body)
+  "Measure and return the time it takes evaluating BODY."
+  `(let ((time (current-time)))
+     ,@body
+     (float-time (time-since time))))
+
+
+;; Set garbage collection threshold
+;; (setq gc-cons-threshold #x40000000) ;; 1GB
+(setq gc-cons-threshold (* 800 1024 1024)) ;; 800mb
+
+
+;; When idle for 15sec run the GC no matter what.
+(defvar k-gc-timer
+  (run-with-idle-timer 15 t
+                       (lambda ()
+                         (message "Garbage Collector has run for %.06fsec"
+                                  (k-time (garbage-collect))))))
+
+;; ---- package management ----
+
 (require 'package)
 (setq package-enable-startup nil)
 (add-to-list 'package-archives
