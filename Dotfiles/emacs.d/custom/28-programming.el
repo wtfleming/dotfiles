@@ -30,7 +30,6 @@
 ;; TODO look into why it is needed
 (require 'lsp-mode)
 
-
 (push "[/\\\\]\\.vagrant$" lsp-file-watch-ignored)
 (push "[/\\\\]\\.circleci$" lsp-file-watch-ignored)
 
@@ -46,9 +45,9 @@
 (setq lsp-lens-enable t
       lsp-semantic-tokens-enable t
       lsp-ui-doc-enable nil
-      ;; lsp-ui-doc-position 'bottom
-      ;; lsp-ui-doc-delay 1.0
-      ;; lsp-ui-peek-enable t
+      ;;lsp-ui-doc-position 'bottom
+      ;;lsp-ui-doc-delay 1.0
+      ;;lsp-ui-peek-enable t
       lsp-ui-sideline-enable t
       lsp-ui-imenu-enable t
       lsp-idle-delay 0.500
@@ -56,11 +55,6 @@
 
 ;; ---- LSP Performance ----
 ;; https://emacs-lsp.github.io/lsp-mode/page/performance/
-
-;; An alternative: follow the method recommended by Gnu Emacs Maintainer Eli Zaretskii: "My suggestion is to repeatedly multiply gc-cons-threshold by 2 until you stop seeing significant improvements in responsiveness, and in any case not to increase by a factor larger than 100 or somesuch. If even a 100-fold increase doesn't help, there's some deeper problem with the Lisp code which produces so much garbage, or maybe GC is not the reason for slowdown."
-(setq gc-cons-threshold (* 100 1024 1024)) ;; 100mb
-
-;;(run-with-idle-timer 2 t (lambda () (garbage-collect)))
 
 ;; Increase the amount of data which Emacs reads from the process. Again the emacs default is too low 4k considering that the some of the language server responses are in 800k - 3M range.
 (setq read-process-output-max (* 3 1024 1024)) ;; 3mb
@@ -146,10 +140,6 @@
 (add-to-list 'interpreter-mode-alist '("bb" . clojure-mode))
 
 ;; ---- Elixir ----
-
-;;(setq lsp-elixir-ls-version "v0.19.0")
-;; run M-x lsp-install-server
-
 ;; Install a language server
 ;; Download from https://github.com/elixir-lsp/elixir-ls/releases
 ;; and unzip it into a directory
@@ -164,7 +154,6 @@
 ;; for now just download it manually and install to ~/bin (or somewhere else on the shell's path)
 ;; M-x lsp-install-server credo-language-server
 ;; (custom-set-variables '(lsp-credo-version "0.3.0"))
-
 
 (use-package elixir-mode
   :ensure t)
