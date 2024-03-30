@@ -17,14 +17,34 @@ brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake
 # Build emacs on an ARM Mac from source
 brew install gcc
 brew install libgccjit
-...
+brew install make
+brew install texinfo gnutl
+brew install pkg-config
+
+Download src from https://github.com/emacs-mirror/emacs/tags
+
+./autogen.sh
 ./configure --with-native-compilation
 
-Run 'gmake' to build Emacs, then run 'src/emacs' to test it.
+Run 'make' to build Emacs, then run 'src/emacs' to test it.
+# Run 'gmake' to build Emacs, then run 'src/emacs' to test it.
+
+Run 'make install'
+
+Move the entire emacs src directory to ~/bin and make sure that
+something like
+path+=("$HOME/bin/emacs-emacs-29.3/src")
+is in .zshrc
+
+For some reason Emacs.app won't start for me when it is built?
+Leaving info below to investigate it later
+Maybe run something like this?
+$ codesign --force --deep -s - Emacs.app
+
 Run 'gmake install' in order to build an application bundle.
 The application will go to nextstep/Emacs.app and can be run or moved
-from there.
-The application will be fully self-contained.
+from there. The application will be fully self-contained.
+
 
 
 # Clojure things
@@ -104,19 +124,21 @@ disable mission control since I use those keyboard shortcuts in emacs
 Go to System Preferences > Keyboard > Keyboard Shortcuts > Mission Control and change the settings for "Move left a space" and "Move right a space" or disable them completely.
 http://apple.stackexchange.com/questions/18043/how-can-i-make-ctrlright-left-arrow-stop-changing-desktops-in-lion
 
-# Install java 17
+# Install java 21
 
-$ brew install openjdk@17
-
+$ brew install openjdk@21
 For the system Java wrappers to find this JDK, symlink it with
-  sudo ln -sfn /usr/local/opt/openjdk@17/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk-17.jdk
+  sudo ln -sfn /opt/homebrew/opt/openjdk/libexec/openjdk.jdk /Library/Java/JavaVirtualMachines/openjdk.jdk
 
-If you need to have openjdk@17 first in your PATH, run:
-  echo 'export PATH="/usr/local/opt/openjdk@17/bin:$PATH"' >> ~/.zshrc
+openjdk is keg-only, which means it was not symlinked into /opt/homebrew,
+because macOS provides similar software and installing this software in
+parallel can cause all kinds of trouble.
 
-For compilers to find openjdk@17 you may need to set:
-  export CPPFLAGS="-I/usr/local/opt/openjdk@17/include"
+If you need to have openjdk first in your PATH, run:
+  echo 'export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"' >> ~/.zshrc
 
+For compilers to find openjdk you may need to set:
+  export CPPFLAGS="-I/opt/homebrew/opt/openjdk/include"
 
 Verify installation
   java -version
@@ -155,9 +177,7 @@ See https://asdf-vm.com/guide/getting-started.html
 
 brew install coreutils curl git
 
-
-git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.11.3
-
+git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.14.0
 
 Add the following to ~/.zshrc:
 
@@ -196,7 +216,7 @@ asdf global elixir 1.14.4-otp-25
 
 
 # For building with wxWidgets (start observer or debugger!)
-brew install wxmac
+brew install wxwidgets
 
 You can test that it worked with
 iex> :observer.start()

@@ -15,6 +15,10 @@ path+=("$HOME/anaconda3/bin")
 path+=("$HOME/bin/spark/bin")
 path+=("/usr/local/opt/postgresql@16/bin")
 
+# ran into issues with building Emacs.app
+# so for now just run the binary instead of the app
+path+=("$HOME/bin/emacs-emacs-29.3/src")
+
 # export to sub-processes (make it inherited by child processes)
 export PATH
 
