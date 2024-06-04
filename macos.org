@@ -231,3 +231,7 @@ System Settings->Keyboard->Text input
   Add Japanese - Romaji source
   Enable "Use Caps Lock key to switch to and from U.S."
 
+# Rust
+https://rustup.rs/
+https://github.com/rust-lang/rust-analyzer
+$ brew install rust-analyzer
