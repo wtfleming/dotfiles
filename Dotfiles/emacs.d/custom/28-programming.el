@@ -190,11 +190,11 @@
   (setq lsp-rust-server 'rust-analyzer)
   (setq-default lsp-rust-analyzer-proc-macro-enable t))
 
-(use-package cargo
-  :ensure t
-  :after rust-mode
-  :config
-  (add-hook 'rust-mode-hook 'cargo-minor-mode))
+;; (use-package cargo
+;;   :ensure t
+;;   :after rust-mode
+;;   :config
+;;   (add-hook 'rust-mode-hook 'cargo-minor-mode))
 
 ;; ------- TypeScript -------
 
