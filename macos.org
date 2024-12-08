@@ -18,8 +18,8 @@ brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake
 brew install gcc
 brew install libgccjit
 brew install make
-# TODO should instead be gnutls ?
-brew install texinfo gnutl autoconf
+brew install gnutls
+brew install texinfo autoconf
 brew install pkg-config
 
 Download src from https://github.com/emacs-mirror/emacs/tags
