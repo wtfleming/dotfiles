@@ -34,7 +34,7 @@ Run 'make install'
 
 Move the entire emacs src directory to ~/bin and make sure that
 something like
-path+=("$HOME/bin/emacs-emacs-29.3/src")
+path+=("$HOME/bin/emacs-emacs-29.4/src")
 is in .zshrc
 
 For some reason Emacs.app won't start for me when it is built?
