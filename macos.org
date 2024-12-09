@@ -15,14 +15,9 @@ https://github.com/wtfleming/dotfiles
 brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake
 
 # Build emacs on an ARM Mac from source
-brew install gcc
-brew install libgccjit
-brew install make
-brew install gnutls
-brew install texinfo autoconf
-brew install pkg-config
+brew install gcc libgccjit make gnutls texinfo autoconf pkg-config tree-sitter
 
-Download src from https://github.com/emacs-mirror/emacs/tags
+Download emacs src from https://github.com/emacs-mirror/emacs/tags
 
 Move the entire emacs src directory to ~/bin and make sure that
 something like
@@ -31,7 +26,7 @@ is in .zshrc
 
 
 ./autogen.sh
-./configure --with-native-compilation
+./configure --with-native-compilation --with-tree-sitter
 
 Run 'make' to build Emacs, then run 'src/emacs' to test it.
 # Run 'gmake' to build Emacs, then run 'src/emacs' to test it.
