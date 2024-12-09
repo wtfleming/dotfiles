@@ -1,7 +1,3 @@
-Install Chrome
-Make default browser
-System Preferences -> General -> Default web browser
-
 Install homebrew
 https://brew.sh/
 
@@ -14,8 +10,12 @@ https://github.com/wtfleming/dotfiles
 
 brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake
 
-# Build emacs on an ARM Mac from source
+
+# ---------- Build emacs on an ARM Mac from source
 brew install gcc libgccjit make gnutls texinfo autoconf pkg-config tree-sitter jansson
+
+# Emacs flyspell needs a spell checking tool, install one on macOS
+brew install ispell
 
 Download emacs src from https://github.com/emacs-mirror/emacs/tags
 
@@ -35,16 +35,10 @@ Run 'make' to build Emacs, then run 'src/emacs' to test it.
 Run 'make install'
 
 
-# TODO
-For some reason Emacs.app won't start for me when it is built?
-Leaving info below to investigate it later
-Maybe run something like this?
-$ codesign --force --deep -s - Emacs.app
+# For my config currently need to run this command
+M-x all-the-icons-install-fonts
 
-Run 'gmake install' in order to build an application bundle.
-The application will go to nextstep/Emacs.app and can be run or moved
-from there. The application will be fully self-contained.
-# END TODO
+# ---------------
 
 
 # Clojure things
@@ -77,27 +71,6 @@ git lfs install
 git config --global core.excludesfile ~/.gitexcludes
 
 
-
-
-
-# emacs https://www.emacswiki.org/emacs/EmacsForMacOS#toc14
-$ brew update
-$ brew install --cask emacs
-
-# "emacs" no longer includes a GUI, use the cask version instead
-# $ brew install emacs
-
-To have launchd start emacs now and restart at login:
-  brew services start emacs
-Or, if you don't want/need a background service you can just run:
-  emacs
-
-# For my config currently need to run this command
-M-x all-the-icons-install-fonts
-
-Emacs flyspell needs a spell checking tool, install one on macOS
-
-brew install ispell
 
 
 disable mission control since I use those keyboard shortcuts in emacs
@@ -174,12 +147,13 @@ if you are using a custom compinit setup, ensure compinit is below your sourcing
 if you are using a custom compinit setup with a ZSH Framework, ensure compinit is below your sourcing of the framework
 
 # Erlang/Elixir
-On an intel mac modal popups from the OS will flash on the screen often.
+On an INTEL mac modal popups from the OS will flash on the screen often.
 If you’re using asdf, you can workaround this issue by disabling jit by adding:
 export KERL_CONFIGURE_OPTIONS="--disable-jit"
 to your .bashrc/.zshrc before installing erlang.
 
-This doesn't effect ARM macs, and a workaround will probably be in erlang/OTP 27
+This doesn't affect ARM macs, and a workaround will probably be in erlang/OTP 27
+
 
 asdf plugin-add erlang
 asdf plugin-add elixir
