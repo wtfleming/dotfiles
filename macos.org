@@ -15,7 +15,7 @@ https://github.com/wtfleming/dotfiles
 brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake
 
 # Build emacs on an ARM Mac from source
-brew install gcc libgccjit make gnutls texinfo autoconf pkg-config tree-sitter
+brew install gcc libgccjit make gnutls texinfo autoconf pkg-config tree-sitter jansson
 
 Download emacs src from https://github.com/emacs-mirror/emacs/tags
 
@@ -25,8 +25,9 @@ path+=("$HOME/bin/emacs-emacs-29.4/src")
 is in .zshrc
 
 
+# To see configure options run ./configure --help
 ./autogen.sh
-./configure --with-native-compilation --with-tree-sitter
+./configure --with-native-compilation --with-tree-sitter --with-json --without-compress-install
 
 Run 'make' to build Emacs, then run 'src/emacs' to test it.
 # Run 'gmake' to build Emacs, then run 'src/emacs' to test it.
@@ -77,26 +78,6 @@ git config --global core.excludesfile ~/.gitexcludes
 
 
 
-# emacs with native compilation
-
-https://github.com/jimeh/build-emacs-for-macos
-git clone git@github.com:jimeh/build-emacs-for-macos.git
-
-./build-emacs-for-macos emacs-28.2
-
-go run ./cmd/emacs-builder package --help
-
-cp -r builds/Emacs.2022-09-12.739b5d0.emacs-28-2.macOS-12.arm64/Emacs.app .
-
-$ codesign --force --deep -s - Emacs.app
-
-
-if [ -d "/Applications/Emacs.app/Contents/MacOS/bin" ]; then
-  export PATH="/Applications/Emacs.app/Contents/MacOS/bin:$PATH"
-  alias emacs="emacs -nw" # Always launch "emacs" in terminal mode.
-fi
-
-
 
 
 # emacs https://www.emacswiki.org/emacs/EmacsForMacOS#toc14
@@ -117,7 +98,7 @@ M-x all-the-icons-install-fonts
 Emacs flyspell needs a spell checking tool, install one on macOS
 
 brew install ispell
-# brew install ispell --with-lang-en
+
 
 disable mission control since I use those keyboard shortcuts in emacs
 Go to System Preferences > Keyboard > Keyboard Shortcuts > Mission Control and change the settings for "Move left a space" and "Move right a space" or disable them completely.
