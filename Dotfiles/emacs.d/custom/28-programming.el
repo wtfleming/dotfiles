@@ -11,6 +11,7 @@
          (clojurescript-mode . lsp)
          (sh-mode . lsp-deferred)
          (yaml-mode . lsp)
+         (typescript-ts-mode . lsp-deferred)
          (terraform-mode . lsp-deferred)
         )
   :init
