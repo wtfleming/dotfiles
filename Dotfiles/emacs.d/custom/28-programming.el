@@ -75,7 +75,7 @@
 
 (use-package treesit
       :mode (;;("\\.tsx\\'" . tsx-ts-mode)
-             ;;("\\.js\\'"  . typescript-ts-mode)
+             ("\\.js\\'"  . typescript-ts-mode)
              ;;("\\.mjs\\'" . typescript-ts-mode)
              ;;("\\.mts\\'" . typescript-ts-mode)
              ;;("\\.cjs\\'" . typescript-ts-mode)
@@ -126,8 +126,8 @@
                '(;;(python-mode . python-ts-mode)
                  ;;(css-mode . css-ts-mode)
                  (typescript-mode . typescript-ts-mode)
-                 ;;(js-mode . typescript-ts-mode)
-                 ;;(js2-mode . typescript-ts-mode)
+                 (js-mode . typescript-ts-mode)
+                 (js2-mode . typescript-ts-mode)
                  ;;(c-mode . c-ts-mode)
                  ;;(c++-mode . c++-ts-mode)
                  ;;(c-or-c++-mode . c-or-c++-ts-mode)
