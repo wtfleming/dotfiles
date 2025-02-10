@@ -387,3 +387,6 @@
 ;; ------- tramp -------
 (setq tramp-default-method "ssh")
 
+;; ------- gptel -------
+(use-package gptel
+  :ensure t)
