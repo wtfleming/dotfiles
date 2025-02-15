@@ -26,13 +26,14 @@
                clojurex-mode))
      (add-to-list 'lsp-language-id-configuration `(,m . "clojure"))))
 
-;; This require is needed to prevent a warning at startup
-;; "Symbol's value as variable is void: lsp-file-watch-ignored"
-;; TODO look into why it is needed
-(require 'lsp-mode)
-
-(push "[/\\\\]\\.vagrant$" lsp-file-watch-ignored)
-(push "[/\\\\]\\.circleci$" lsp-file-watch-ignored)
+;; TODO this could/should be in an :after in the use-package expression above?
+(with-eval-after-load 'lsp-mode
+  (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.vagrant\\'")
+  (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.circleci\\'")
+  (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\deps$") ;; Elixir
+  (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]_build$") ;; Elixir
+  (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]postgres-data$")
+  (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.vagrant\\'"))
 
 ;; (setq lsp-eldoc-render-all t)
 ;; (setq lsp-enable-snippet t)
@@ -61,7 +62,9 @@
 (setq read-process-output-max (* 3 1024 1024)) ;; 3mb
 
 ;; ----- Flycheck -----
-;; I use lsp-mode for most programming modes, but still use flycheck for Clojure
+;; TODO look into if I still need flycheck, am I actually using it
+;;   or is lsp-mode doing enough?
+;;   ie see https://github.com/emacs-lsp/lsp-mode/issues/318
 (use-package flycheck
   :ensure t)
   ;; :init
@@ -165,6 +168,9 @@
 (with-eval-after-load 'flycheck
   (add-hook 'flycheck-mode-hook #'flycheck-inline-mode))
 
+
+;; TODO also need to do this for anything using tree siter
+;;   for example typescript-ts-mode
 (add-hook 'c++-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'clojure-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'csharp-mode-hook (lambda () (subword-mode +1)))
@@ -176,6 +182,8 @@
 (add-hook 'yaml-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'terraform-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'typescript-mode-hook (lambda () (subword-mode +1)))
+(add-hook 'js2-mode-hook (lambda () (subword-mode +1)))
+
 
 ;; ----- git-gutter -----
 (use-package git-gutter
@@ -200,9 +208,6 @@
   :ensure t
   :config
   (require 'flycheck-clj-kondo))
-
-;; (use-package clojure-mode-extra-font-locking
-;;   :ensure t)
 
 (use-package cider
   :ensure t)
@@ -233,20 +238,10 @@
 (use-package elixir-mode
   :ensure t)
 
-;; Ignore these directories in Elixir projects
-(push "[/\\\\]\\deps$" lsp-file-watch-ignored)
-(push "[/\\\\]\\.elixir_ls$" lsp-file-watch-ignored)
-(push "[/\\\\]_build$" lsp-file-watch-ignored)
-(push "[/\\\\]postgres-data$" lsp-file-watch-ignored)
-
 (defvar lsp-elixir--config-options (make-hash-table))
 (add-hook 'lsp-after-initialize-hook
           (lambda ()
             (lsp--set-configuration `(:elixirLS, lsp-elixir--config-options))))
-
-(use-package exunit
-  :ensure t)
-
 
 ;; ------- Rust -------
 ;; Install a language server. Run this command in a terminal
@@ -272,32 +267,9 @@
 ;;   (add-hook 'rust-mode-hook 'cargo-minor-mode))
 
 ;; ------- TypeScript -------
-
-;; ADDED TODAY - can remove?
-;;(add-to-list 'auto-mode-alist '("\\.ts\\'" . js2-mode))
-
 ;; See
 ;; https://www.ovistoica.com/blog/2024-7-05-modern-emacs-typescript-web-tsx-config
 ;; https://vxlabs.com/2022/06/12/typescript-development-with-emacs-tree-sitter-and-lsp-in-2022/
-
-
-;; ;; TypeScript Interactive Development Environment for Emacs
-;; ;; https://github.com/ananthakumaran/tide
-;; (use-package tide
-;;   :ensure t)
-
-;; (defun setup-tide-mode ()
-;;   (interactive)
-;;   (tide-setup)
-;;   (flycheck-mode +1)
-;;   ; (flycheck-select-checker 'typescript-tslint)
-;;   (setq flycheck-check-syntax-automatically '(save mode-enabled))
-;;   (eldoc-mode +1)
-;;   (tide-hl-identifier-mode +1)
-;;   ;; company is an optional dependency. You have to
-;;   ;; install it separately via package-install
-;;   ;; `M-x package-install [ret] company`
-;;   (company-mode +1))
 
 
 ;; aligns annotation to the right hand side
@@ -308,42 +280,17 @@
 
 ;; (add-hook 'typescript-mode-hook #'setup-tide-mode)
 
-;; Move cursor by camelCase
-;;(add-hook 'typescript-mode-hook (lambda () (subword-mode +1)))
-
-;; TODO this was for tide dev env and can be removed
-(setq typescript-indent-level 2)
-
 
 
 ;; ------- JavaScript -------
+;; TODO do I still need this package?
 (use-package js2-mode
   :ensure t)
 
 (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
 (add-to-list 'auto-mode-alist '("\\.json\\'" . js2-mode))
 ; (add-to-list 'auto-mode-alist '("\\.jsx$" . js2-mode))
-
-
 (add-hook 'js2-mode-hook (lambda () (setq js2-basic-offset 2)))
-;; (add-hook 'js2-mode-hook (lambda () (tern-mode t)))
-(add-hook 'js2-mode-hook (lambda () (subword-mode +1)))
-;;(add-hook 'js2-mode-hook (lambda () (flycheck-mode t)))
-
-
-;; Tern is a stand-alone, editor-independent JavaScript analyzer that can be used to improve the JavaScript integration of existing editors.
-;; https://github.com/ternjs/tern
-;; (use-package tern
-;;   :ensure t)
-
-;; (eval-after-load 'company
-;;   '(add-to-list 'company-backends 'company-tern))
-
-;; (add-hook 'js2-mode-hook
-;;           (defun my-js2-mode-setup ()
-;;             (flycheck-mode t)
-;;             (when (executable-find "eslint")
-;;               (flycheck-select-checker 'javascript-eslint))))
 
 
 ;; ------- Go -------
@@ -406,8 +353,8 @@
 
 ;; ------- lua-mode -------
 ;; https://github.com/immerrr/lua-mode
-(use-package lua-mode
-  :ensure t)
+;; (use-package lua-mode
+;;   :ensure t)
 
 ;; ------- hcl-mode -------
 ;; Compatability with HCL and Terraform syntax
@@ -432,14 +379,10 @@
   (("Dockerfile\\'" . dockerfile-mode)))
 
 ;; https://github.com/lassik/emacs-format-all-the-code
+;; TODO is this still useful, or do I just use this now?
+;;   M-x lsp-format-buffer
 (use-package format-all
   :ensure t)
-
-;; ---- Scala ----
-(use-package scala-mode
-  :ensure t)
-;; (use-package lsp-metals
-;;   :ensure t)
 
 
 ;; ---- C++ ----
@@ -464,8 +407,8 @@
 ;;   :ensure t)
 
 ;; ------- Jenkinsfile -------
-(use-package jenkinsfile-mode
-  :ensure t)
+;; (use-package jenkinsfile-mode
+;;   :ensure t)
 
 ;; ------- Java -------
 ;; indent 2 spaces
@@ -480,12 +423,12 @@
   :ensure t)
 
 ;; ------- https://github.com/casey/just -------
-(use-package just-mode
-  :ensure t)
+;; (use-package just-mode
+;;   :ensure t)
 
 ;; ------- https://github.com/psibi/justl.el -------
-(use-package justl
-  :ensure t)
+;; (use-package justl
+;;   :ensure t)
 
 ;; ------- https://github.com/abrochard/mermaid-mode -------
 ;; mermaid-js charts

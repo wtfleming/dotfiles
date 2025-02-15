@@ -1,24 +1,25 @@
+;; Store downloaded packages in a directory corresponding to the emacs version we are running
+;; Make upgrading emacs to a new version easier/safer
 (setq package-user-dir (format "~/.emacs.d/elpa-%d" emacs-major-version))
 
 ;; Fix problem where emacs can not connect to melpa
 ;; https://emacs.stackexchange.com/questions/51721/failed-to-download-gnu-archive
+;; TODO 2/15/25 - is this still a problem?
 (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
 
 
 ;; ---- Emacs garbage collection ----
+;; Show how long we are spending doing GC
 ;; see https://akrl.sdf.org/#orgc15a10d
-
 (defmacro k-time (&rest body)
   "Measure and return the time it takes evaluating BODY."
   `(let ((time (current-time)))
      ,@body
      (float-time (time-since time))))
 
-
 ;; Set garbage collection threshold
 ;; (setq gc-cons-threshold #x40000000) ;; 1GB
 (setq gc-cons-threshold (* 800 1024 1024)) ;; 800mb
-
 
 ;; When idle for 15sec run the GC no matter what.
 (defvar k-gc-timer
@@ -40,13 +41,8 @@
 
 
 (add-to-list 'package-pinned-packages '(magit . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(cider . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(gptel . "melpa-stable") t)
 (add-to-list 'package-pinned-packages '(helm . "melpa-stable") t)
-
-;; Workaround for https://github.com/Alexander-Miller/treemacs/issues/1017
-;; should be fixed in treemacs soon, otherwise, should work in emacs 29
-;; and can be removed then
-(add-to-list 'image-types 'svg)
 
 (package-initialize)
 (unless (package-installed-p 'use-package)
@@ -99,7 +95,6 @@
 ;; ------- Visual Settings -------
 
 ;; Use a larger font on bigger monitors
-;; https://stackoverflow.com/questions/2151449/can-i-detect-the-display-size-resolution-in-emacs
 (if (> (display-pixel-width) 1440)
   (set-face-attribute 'default nil :height 180)
   (set-face-attribute 'default nil :height 120))
@@ -121,7 +116,7 @@
 (global-hl-line-mode t)
 
 
-;; ------- misc -------
+;; ------- Misc -------
 
 ;; Don't show the splash screen
 (setq inhibit-startup-screen t)
@@ -132,6 +127,7 @@
 (setq default-directory "~/")
 
 ;; Enable semantic-mode
+;; TODO do I still want this enabled now that I mostly use lsp-mode?
 (semantic-mode 1)
 
 ;; Set default major mode to text-mode
@@ -172,6 +168,8 @@
 (put 'upcase-region 'disabled nil)
 
 ;; ------- rainbow-mode -------
+;; Colorize color names in buffers
+;; For example: white or black or #000000
 (use-package rainbow-mode
   :ensure t
   :config
@@ -223,6 +221,9 @@
 ;;(add-hook hook (lambda () (abbrev-mode 1))))
 
 ;; ------- which-key -------
+;; TODO this is built into emacs 30
+;; when I get to that version can remove which-key
+;; https://github.com/justbur/emacs-which-kye
 (use-package which-key
   :ensure t
   :init
@@ -251,6 +252,8 @@
 ;;   :commands company-lsp)
 
 ;; ------- restclient -------
+;; TODO this package is now archived https://github.com/pashky/restclient.el
+;; look at alternatives like https://github.com/federicotdn/verb
 (use-package restclient
   :ensure t
   :mode ("\\.http\\'" . restclient-mode))
@@ -326,6 +329,9 @@
   :ensure t)
 
 ;; ------- org-reveal -------
+;; https://github.com/hexmode/ox-reveal
+;; Reveal.js is a tool for creating good-looking HTML presentations.
+;; Org-Reveal exports your Org documents to reveal.js presentations.
 (use-package ox-reveal
   :ensure t)
 
@@ -336,7 +342,7 @@
 ;; ----------- emacs shell ----------------------------
 ; Dont echo passwords
 (add-hook 'comint-output-filter-functions
-      'comint-watch-for-password-prompt)
+          'comint-watch-for-password-prompt)
 
 ;; Clear shell buffer with C-c l (like C-l in a terminal)
 (defun my-clear ()
