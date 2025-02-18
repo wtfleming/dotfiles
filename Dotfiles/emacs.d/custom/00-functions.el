@@ -56,3 +56,44 @@
     See `sort-regexp-fields'."
   (interactive "*P\nr")
   (sort-regexp-fields reverse "[a-zA-Z0-9_\-]+" "\\&" beg end))
+
+(defvar wtf-gptel-define-word-prompt
+  "Please give a short definition of this word or phrase. Then, provide 3 usage examples, synonyms and antyonyms"
+  "The ChatGPT style prompt used define a word.")
+
+
+(defun wtf-gptel-stash-response (buffer prompt response)
+  "Store a response in a well known buffer we can look at if we want"
+  (let ((buffer (get-buffer-create buffer)))
+    (with-current-buffer buffer
+      (erase-buffer)
+      (insert prompt)
+      (insert "\n\n-->\n\n")
+      (insert response))))
+
+(defun wtf-gptel-define-word (start end)
+  "Use ChatGPT to define the current word of the region."
+  (interactive "r")
+  (unless (region-active-p)
+    (error "you must have a region set"))
+  (let ((input (buffer-substring-no-properties (region-beginning) (region-end))))
+    (gptel-request nil
+      :callback (lambda (response info)
+                  (wtf-gptel-stash-response "*Last Definition*" (plist-get info :context) response)
+                  (message response))
+      :system wtf-gptel-define-word-prompt
+      :context input)))
+
+(defun wtf-url-decode-region (start end)
+  "Replace a region with the same contents, only URL decoded."
+  (interactive "r")
+  (let ((text (url-unhex-string (buffer-substring start end))))
+    (delete-region start end)
+    (insert text)))
+
+(defun wtf-url-encode-region (start end)
+  "Replace a region with the same contents, only URL encoded."
+  (interactive "r")
+  (let ((text (url-hexify-string (buffer-substring start end))))
+    (delete-region start end)
+    (insert text)))
