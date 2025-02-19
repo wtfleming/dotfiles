@@ -394,5 +394,12 @@
 (setq tramp-default-method "ssh")
 
 ;; ------- gptel -------
+;; For Ollama, You should have at least 8 GB of RAM available to run the 7B models,
+;; 16 GB to run the 13B models, and 32 GB to run the 33B models.
 (use-package gptel
-  :ensure t)
+  :ensure t
+  :config
+  (gptel-make-ollama "Ollama"                   ; Any name of your choosing
+    :host "localhost:11434"                     ; Where it's running
+    :stream t                                   ; Stream responses
+    :models '(deepseek-r1:7b deepseek-r1:14b))) ; List of models
