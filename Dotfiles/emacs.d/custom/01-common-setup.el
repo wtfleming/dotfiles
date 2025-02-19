@@ -399,7 +399,7 @@
 (use-package gptel
   :ensure t
   :config
-  (gptel-make-ollama "Ollama"                   ; Any name of your choosing
-    :host "localhost:11434"                     ; Where it's running
-    :stream t                                   ; Stream responses
-    :models '(deepseek-r1:7b deepseek-r1:14b))) ; List of models
+  (gptel-make-ollama "Ollama" ; Can be any name of your choosing
+    :host "localhost:11434"
+    :stream t
+    :models '(deepseek-r1:7b deepseek-r1:14b qwen2.5-coder:14b-instruct-q6_K)))
