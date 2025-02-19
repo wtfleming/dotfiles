@@ -77,13 +77,13 @@
 ;; TODO look at https://www.masteringemacs.org/article/how-to-get-started-tree-sitter
 
 (use-package treesit
-      :mode (;;("\\.tsx\\'" . tsx-ts-mode)
+      :mode (("\\.tsx\\'" . tsx-ts-mode)
              ("\\.js\\'"  . typescript-ts-mode)
              ;;("\\.mjs\\'" . typescript-ts-mode)
              ;;("\\.mts\\'" . typescript-ts-mode)
              ;;("\\.cjs\\'" . typescript-ts-mode)
              ("\\.ts\\'"  . typescript-ts-mode)
-             ;;("\\.jsx\\'" . tsx-ts-mode)
+             ("\\.jsx\\'" . tsx-ts-mode)
              ;;("\\.json\\'" .  json-ts-mode)
              ;;("\\.Dockerfile\\'" . dockerfile-ts-mode)
              ;;("\\.prisma\\'" . prisma-ts-mode)
