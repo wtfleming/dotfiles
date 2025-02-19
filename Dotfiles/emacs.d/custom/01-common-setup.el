@@ -96,7 +96,7 @@
 
 ;; Use a larger font on bigger monitors
 (if (> (display-pixel-width) 1440)
-  (set-face-attribute 'default nil :height 180)
+  (set-face-attribute 'default nil :height 200)
   (set-face-attribute 'default nil :height 120))
 
 ;; Ensure line and column numbers are displayed on the mode line
