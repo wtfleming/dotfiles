@@ -1,0 +1,7 @@
+#!/bin/bash
+
+MODEL=gemma2
+
+echo "Summarizing clipboard content..."
+# pbpaste | ollama run ${MODEL} "provide a concise and comprehensive summary of the given text:" | glow -
+pbpaste | ollama run ${MODEL} "provide a concise and comprehensive summary of the given text:"
