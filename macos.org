@@ -52,6 +52,9 @@ brew install shellcheck
 # YAML language server
 brew install yaml-language-server
 
+# Glow is a terminal based markdown reader
+brew install glow
+
 # Terraform language server
 brew install hashicorp/tap/terraform-ls
 
