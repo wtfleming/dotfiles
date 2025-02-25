@@ -28,6 +28,7 @@ is in .zshrc
 
 # To see configure options run ./configure --help
 ./autogen.sh
+# TODO can remove --with-json as of emacs 30?
 ./configure --with-native-compilation --with-tree-sitter --with-json --without-compress-install
 
 Run 'make' to build Emacs, then run 'src/emacs' to test it.
