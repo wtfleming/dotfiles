@@ -31,10 +31,10 @@ is in .zshrc
 # TODO can remove --with-json as of emacs 30?
 ./configure --with-native-compilation --with-tree-sitter --with-json --without-compress-install
 
-Run 'make' to build Emacs, then run 'src/emacs' to test it.
-# Run 'gmake' to build Emacs, then run 'src/emacs' to test it.
+# Run 'make' to build Emacs, then run 'src/emacs' to test it.
+Run 'gmake' to build Emacs, then run 'src/emacs' to test it.
 
-Run 'make install'
+Run 'gmake install'
 
 
 # For my config currently need to run this command
