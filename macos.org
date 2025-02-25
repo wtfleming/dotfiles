@@ -12,6 +12,7 @@ brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake
 
 
 # ---------- Build emacs on an ARM Mac from source
+# TODO I think we don't need jansson anymore as of emacs 30?
 brew install gcc libgccjit make gnutls texinfo autoconf pkg-config tree-sitter jansson
 
 # Emacs flyspell needs a spell checking tool, install one on macOS

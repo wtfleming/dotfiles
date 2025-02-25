@@ -14,9 +14,6 @@ path+=("$HOME/.cargo/bin")
 path+=("$HOME/anaconda3/bin")
 path+=("$HOME/bin/spark/bin")
 path+=("/usr/local/opt/postgresql@16/bin")
-
-# ran into issues with building Emacs.app
-# so for now just run the binary instead of the app
 path+=("$HOME/bin/emacs-emacs-29.4/src")
 path+=("$HOME/bin/emacs-emacs-30.1/src")
 
