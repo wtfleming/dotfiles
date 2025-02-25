@@ -42,6 +42,11 @@ M-x all-the-icons-install-fonts
 
 # ---------------
 
+# LLMs with gptel
+in ~/.authinfo have the following lines
+machine api.openai.com login apikey password <api key goes here>
+machine api.anthropic.com login apikey password <api key goes here>
+
 
 # Clojure things
 brew install borkdude/brew/clj-kondo
