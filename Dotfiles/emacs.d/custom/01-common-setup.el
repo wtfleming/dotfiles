@@ -402,4 +402,7 @@
   (gptel-make-ollama "Ollama" ; Can be any name of your choosing
     :host "localhost:11434"
     :stream t
-    :models '(deepseek-r1:7b deepseek-r1:14b qwen2.5-coder:14b-instruct-q6_K gemma2 llava)))
+    :models '(deepseek-r1:7b deepseek-r1:14b qwen2.5-coder:14b-instruct-q6_K gemma2 llava))
+  (gptel-make-anthropic "Claude"
+    :stream t
+    :key gptel-api-key)) ; Fetches key from ~/.authinfo
