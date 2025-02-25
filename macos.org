@@ -12,7 +12,7 @@ brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake
 
 
 # ---------- Build emacs on an ARM Mac from source
-# TODO I think we don't need jansson anymore as of emacs 30?
+# Note: if building for emacs 29 need to brew install jansson
 brew install gcc libgccjit make gnutls texinfo autoconf pkg-config tree-sitter jansson
 
 # Emacs flyspell needs a spell checking tool, install one on macOS
@@ -28,8 +28,8 @@ is in .zshrc
 
 # To see configure options run ./configure --help
 ./autogen.sh
-# TODO can remove --with-json as of emacs 30?
-./configure --with-native-compilation --with-tree-sitter --with-json --without-compress-install
+#  Note that emacs 29 requires --with-json but we do not from emacs 30 on
+./configure --with-native-compilation --with-tree-sitter --without-compress-install
 
 # Run 'make' to build Emacs, then run 'src/emacs' to test it.
 Run 'gmake' to build Emacs, then run 'src/emacs' to test it.
