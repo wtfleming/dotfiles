@@ -58,7 +58,7 @@
   (sort-regexp-fields reverse "[a-zA-Z0-9_\-]+" "\\&" beg end))
 
 (defvar wtf-gptel-define-word-prompt
-  "Please give a short definition of this word or phrase. Then, provide 3 usage examples, synonyms and antyonyms"
+  "Please give a short definition of this word or phrase. Then, provide 3 usage examples, synonyms and antonyms"
   "The ChatGPT style prompt used define a word.")
 
 
