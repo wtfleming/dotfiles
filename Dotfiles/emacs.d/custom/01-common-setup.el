@@ -223,7 +223,7 @@
 ;; ------- which-key -------
 ;; TODO this is built into emacs 30
 ;; when I get to that version can remove which-key
-;; https://github.com/justbur/emacs-which-kye
+;; https://github.com/justbur/emacs-which-key
 (use-package which-key
   :ensure t
   :init
