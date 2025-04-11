@@ -40,11 +40,6 @@
     (browse-url
      (concat "http://maps.google.com/?q=" lat))))
 
-(defun wtf-json-pretty-print ()
-  "JSON pretty print the selected region."
-  (interactive)
-  (save-excursion
-    (shell-command-on-region (mark) (point) "python -m json.tool" (buffer-name) t)))
 
 (defun sort-words (reverse beg end)
   "Sort words in region alphabetically, in REVERSE if negative.
@@ -62,6 +57,7 @@
   "The ChatGPT style prompt used define a word.")
 
 
+;; ------- gptel functions -------
 (defun wtf-gptel-stash-response (buffer prompt response)
   "Store a response in a well known buffer we can look at if we want"
   (let ((buffer (get-buffer-create buffer)))
@@ -84,6 +80,7 @@
       :system wtf-gptel-define-word-prompt
       :context input)))
 
+;; ------- misc -------
 (defun wtf-url-decode-region (start end)
   "Replace a region with the same contents, only URL decoded."
   (interactive "r")
@@ -97,3 +94,9 @@
   (let ((text (url-hexify-string (buffer-substring start end))))
     (delete-region start end)
     (insert text)))
+
+(defun wtf-display-utc-time ()
+  "Display the current UTC time in the minibuffer."
+  (interactive)
+  (let ((utc-time (format-time-string "%Y-%m-%d %H:%M:%S" (current-time) t)))
+    (message "Current UTC time: %s" utc-time)))
