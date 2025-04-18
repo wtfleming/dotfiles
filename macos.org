@@ -93,6 +93,8 @@ Also if install a japanese keyboard need to disable control space since I use th
 Go to System Preferences > Keyboard > Keyboard Shortcuts > Input Sources
   Disable the 2 select an input source shortcuts
 
+Go to System Preferences > Keyboard > Dictation > Shortcut
+  And change it to not be pressing control twice
 
 # Install java 21
 
