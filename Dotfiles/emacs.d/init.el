@@ -1,3 +1,8 @@
+;; Have emacs write any customized variable to a specific file
+;; instead of this file
+(setopt custom-file "~/.emacs.d/custom.el")
+(load custom-file)
+
 ;; Turn off mouse interface early in startup to avoid momentary display
 ;(if (fboundp 'menu-bar-mode) (menu-bar-mode -1))
 (if (fboundp 'tool-bar-mode) (tool-bar-mode -1))
