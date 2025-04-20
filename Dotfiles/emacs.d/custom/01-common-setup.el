@@ -432,6 +432,18 @@ Can be used with the `gptel-post-response-functions' hook."
     :host "localhost:11434"
     :stream t
     :models '(deepseek-r1:7b deepseek-r1:14b qwen2.5-coder:14b-instruct-q6_K gemma2 llava))
+
+  ;; Fetches key from ~/.authinfo
+  ;; The line should look like this:
+  ;; machine api.anthropic.com login apikey password <api-key>
   (gptel-make-anthropic "Claude"
     :stream t
-    :key gptel-api-key)) ; Fetches key from ~/.authinfo
+    :key gptel-api-key)
+
+  ;; Override default system message to remove the bit about living in
+  ;; emacs as sometimes an LLM gets confused and thinks questions are
+  ;; about emacs when they are not
+  (let ((my-gptel-system-msg "You are a large language model and a helpful assistant. Respond concisely."))
+    (setopt gptel-directives (assoc-delete-all 'default gptel-directives))
+    (add-to-list 'gptel-directives `(default . ,my-gptel-system-msg) )
+    (setopt gptel--system-message my-gptel-system-msg)))
