@@ -3,12 +3,12 @@
   :ensure t
   :commands (lsp lsp-deferred)
   :hook ((elixir-mode . lsp-deferred)
-         (go-mode . lsp-deferred)
+         ;; (go-mode . lsp-deferred)
          (rust-mode . lsp-deferred)
-         (scala-mode . lsp-deferred)
-         (clojure-mode . lsp)
-         (clojurec-mode . lsp)
-         (clojurescript-mode . lsp)
+         ;; (scala-mode . lsp-deferred)
+         ;; (clojure-mode . lsp)
+         ;; (clojurec-mode . lsp)
+         ;; (clojurescript-mode . lsp)
          (sh-mode . lsp-deferred)
          (yaml-mode . lsp)
          (typescript-ts-mode . lsp-deferred)
@@ -19,16 +19,15 @@
   :bind (("M-j" . lsp-ui-imenu)
          ("M-?" . lsp-find-references))
   :config
-  (setq lsp-file-watch-threshold 2200)
-  (dolist (m '(clojure-mode
-               clojurec-mode
-               clojurescript-mode
-               clojurex-mode))
-     (add-to-list 'lsp-language-id-configuration `(,m . "clojure"))))
+  ;; (dolist (m '(clojure-mode
+  ;;              clojurec-mode
+  ;;              clojurescript-mode
+  ;;              clojurex-mode))
+  ;;   (add-to-list 'lsp-language-id-configuration `(,m . "clojure")))
+  (setq lsp-file-watch-threshold 2200))
 
 ;; TODO this could/should be in an :after in the use-package expression above?
 (with-eval-after-load 'lsp-mode
-  (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.vagrant\\'")
   (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.circleci\\'")
   (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\deps$") ;; Elixir
   (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]_build$") ;; Elixir
@@ -201,23 +200,23 @@
 ;; Install a language server
 ;; brew install clojure-lsp/brew/clojure-lsp-native
 
-(use-package flycheck-clj-kondo
-  :ensure t)
+;; (use-package flycheck-clj-kondo
+;;   :ensure t)
 
-(use-package clojure-mode
-  :ensure t
-  :config
-  (require 'flycheck-clj-kondo))
+;; (use-package clojure-mode
+;;   :ensure t
+;;   :config
+;;   (require 'flycheck-clj-kondo))
 
-(use-package cider
-  :ensure t)
+;; (use-package cider
+;;   :ensure t)
 
-(add-hook 'cider-repl-mode-hook #'cider-company-enable-fuzzy-completion)
-(add-hook 'cider-mode-hook #'cider-company-enable-fuzzy-completion)
-(setq cider-test-show-report-on-success t)
+;; (add-hook 'cider-repl-mode-hook #'cider-company-enable-fuzzy-completion)
+;; (add-hook 'cider-mode-hook #'cider-company-enable-fuzzy-completion)
+;; (setq cider-test-show-report-on-success t)
 
-;; Syntax highlighting for babashka files
-(add-to-list 'interpreter-mode-alist '("bb" . clojure-mode))
+;; ;; Syntax highlighting for babashka files
+;; (add-to-list 'interpreter-mode-alist '("bb" . clojure-mode))
 
 ;; ---- Elixir ----
 ;; Install a language server
@@ -294,18 +293,18 @@
 
 
 ;; ------- Go -------
-(use-package go-mode
-  :defer t
-  :ensure t
-  :mode ("\\.go\\'" . go-mode))
+;; (use-package go-mode
+;;   :defer t
+;;   :ensure t
+;;   :mode ("\\.go\\'" . go-mode))
 
-;; go install golang.org/x/tools/gopls@latest
-;; and ensure $HOME/go/bin is in the shell's path
-(setq lsp-gopls-staticcheck t)
-(setq lsp-gopls-complete-unimported t)
-;; (lsp-register-custom-settings
-;;  '(("gopls.completeUnimported" t t)
-;;    ("gopls.staticcheck" t t)))
+;; ;; go install golang.org/x/tools/gopls@latest
+;; ;; and ensure $HOME/go/bin is in the shell's path
+;; (setq lsp-gopls-staticcheck t)
+;; (setq lsp-gopls-complete-unimported t)
+;; ;; (lsp-register-custom-settings
+;; ;;  '(("gopls.completeUnimported" t t)
+;; ;;    ("gopls.staticcheck" t t)))
 
 
 ;; ------- web-mode -------
@@ -339,11 +338,11 @@
 
 
 ;; ------- shader-mode -------
-;; https://github.com/midnightSuyama/shader-mode
-(use-package shader-mode
-  :ensure t
-    :mode (("\\.shader\\'" . shader-mode)
-           ("\\.hlsl\\'" . shader-mode)))
+;; ;; https://github.com/midnightSuyama/shader-mode
+;; (use-package shader-mode
+;;   :ensure t
+;;     :mode (("\\.shader\\'" . shader-mode)
+;;            ("\\.hlsl\\'" . shader-mode)))
 
 ;; ------- yaml-mode -------
 (use-package yaml-mode
@@ -357,19 +356,19 @@
 ;;   :ensure t)
 
 ;; ------- hcl-mode -------
-;; Compatability with HCL and Terraform syntax
-(use-package hcl-mode
-  :ensure t)
+;; ;; Compatability with HCL and Terraform syntax
+;; (use-package hcl-mode
+;;   :ensure t)
 
 ;; ------- terraform-mode -------
-(use-package terraform-mode
-  :ensure t
-  :mode (("\\.tpl\\'" . terraform-mode)
-         ("\\.tf\\'" . terraform-mode))
+;; (use-package terraform-mode
+;;   :ensure t
+;;   :mode (("\\.tpl\\'" . terraform-mode)
+;;          ("\\.tf\\'" . terraform-mode))
 
-  ;; Currently lsp-mode supports two terraform language servers.
-  ;; If you would want to go with the official Hashicorp's language server, set this:
-  :config (setq lsp-disabled-clients '(tfls)))
+;;   ;; Currently lsp-mode supports two terraform language servers.
+;;   ;; If you would want to go with the official Hashicorp's language server, set this:
+;;   :config (setq lsp-disabled-clients '(tfls)))
 
 
 ;; ------- Misc -------
@@ -377,12 +376,6 @@
   :ensure t
   :mode
   (("Dockerfile\\'" . dockerfile-mode)))
-
-;; https://github.com/lassik/emacs-format-all-the-code
-;; TODO is this still useful, or do I just use this now?
-;;   M-x lsp-format-buffer
-(use-package format-all
-  :ensure t)
 
 
 ;; ---- C++ ----
@@ -399,8 +392,8 @@
 (add-hook 'c++-mode-hook #'my-c++-mode-hook)
 
 ;; ---- CMake ----
-(use-package cmake-mode
-  :ensure t)
+;; (use-package cmake-mode
+;;   :ensure t)
 
 ;; ------- Apache Thrift -------
 ;; (use-package thrift
