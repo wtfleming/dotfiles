@@ -20,6 +20,8 @@
 (load "06-hydra.el")
 (load "07-doom-modeline.el")
 (load "08-programming.el")
+(load "09-gptel.el")
+(load "10-transient.el")
 
 (when (file-exists-p "~/.emacs.d/lisp/rama-mode.el")
   (load "~/.emacs.d/lisp/rama-mode.el"))
