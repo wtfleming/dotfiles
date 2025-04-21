@@ -43,6 +43,7 @@
 (add-to-list 'package-pinned-packages '(magit . "melpa-stable") t)
 (add-to-list 'package-pinned-packages '(gptel . "melpa-stable") t)
 (add-to-list 'package-pinned-packages '(helm . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(transient . "melpa-stable") t)
 
 (package-initialize)
 (unless (package-installed-p 'use-package)
