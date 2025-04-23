@@ -18,13 +18,14 @@
   (add-to-list 'exec-path "~/bin/elixir-ls")
   :bind (("M-j" . lsp-ui-imenu)
          ("M-?" . lsp-find-references))
-  :config
+  ;; :config
   ;; (dolist (m '(clojure-mode
   ;;              clojurec-mode
   ;;              clojurescript-mode
   ;;              clojurex-mode))
   ;;   (add-to-list 'lsp-language-id-configuration `(,m . "clojure")))
-  (setq lsp-file-watch-threshold 2200))
+  :custom
+  (lsp-file-watch-threshold 2200))
 
 ;; TODO this could/should be in an :after in the use-package expression above?
 (with-eval-after-load 'lsp-mode
@@ -34,8 +35,8 @@
   (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]postgres-data$")
   (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.vagrant\\'"))
 
-;; (setq lsp-eldoc-render-all t)
-;; (setq lsp-enable-snippet t)
+;; (setopt lsp-eldoc-render-all t)
+;; (setopt lsp-enable-snippet t)
 
 (use-package lsp-ui
   :ensure t
@@ -43,7 +44,7 @@
   :init
 )
 
-(setq lsp-lens-enable t
+(setopt lsp-lens-enable t
       lsp-semantic-tokens-enable t
       lsp-ui-doc-enable nil
       ;;lsp-ui-doc-position 'bottom
@@ -58,7 +59,7 @@
 ;; https://emacs-lsp.github.io/lsp-mode/page/performance/
 
 ;; Increase the amount of data which Emacs reads from the process. Again the emacs default is too low 4k considering that the some of the language server responses are in 800k - 3M range.
-(setq read-process-output-max (* 3 1024 1024)) ;; 3mb
+(setopt read-process-output-max (* 3 1024 1024)) ;; 3mb
 
 ;; ----- Flycheck -----
 ;; TODO look into if I still need flycheck, am I actually using it
@@ -69,7 +70,7 @@
   ;; :init
   ;; (add-hook 'clojure-mode-hook 'flycheck-mode))
 
-(setq flycheck-checker-error-threshold 1500)
+(setopt flycheck-checker-error-threshold 1500)
 
 
 ;; ----- tree-sitter -----
@@ -160,7 +161,7 @@
   (add-hook hook (lambda () (set-variable 'show-trailing-whitespace t))))
 
 ;; Disable emacs built in version control for faster startup
-;; (setq vc-handled-backends ())
+;; (setopt vc-handled-backends ())
 
 (use-package flycheck-inline
   :ensure t)
@@ -213,7 +214,7 @@
 
 ;; (add-hook 'cider-repl-mode-hook #'cider-company-enable-fuzzy-completion)
 ;; (add-hook 'cider-mode-hook #'cider-company-enable-fuzzy-completion)
-;; (setq cider-test-show-report-on-success t)
+;; (setopt cider-test-show-report-on-success t)
 
 ;; ;; Syntax highlighting for babashka files
 ;; (add-to-list 'interpreter-mode-alist '("bb" . clojure-mode))
@@ -226,7 +227,7 @@
 ;; curl -L https://github.com/elixir-lsp/elixir-ls/releases/latest/download/elixir-ls-1.11.zip --create-dirs -o ~/bin/elixir-ls/elixir-ls.zip
 ;; cd ~/bin/elixir-ls && unzip elixir-ls.zip
 
-;;(setq lsp-elixir-ls-download-url "https://github.com/elixir-lsp/elixir-ls/releases/download/v0.14.6/elixir-ls.zip")
+;;(setopt lsp-elixir-ls-download-url "https://github.com/elixir-lsp/elixir-ls/releases/download/v0.14.6/elixir-ls.zip")
 
 ;; https://github.com/elixir-tools/credo-language-server
 ;; Instructions say to install with this, but it seems to hang downloading from github?
@@ -255,8 +256,8 @@
   :commands (rust-mode)
   :config
   (add-hook 'rust-mode-hook
-            (lambda () (setq indent-tabs-mode nil)))
-  (setq lsp-rust-server 'rust-analyzer)
+            (lambda () (setopt indent-tabs-mode nil)))
+  (setopt lsp-rust-server 'rust-analyzer)
   (setq-default lsp-rust-analyzer-proc-macro-enable t))
 
 ;; (use-package cargo
@@ -272,7 +273,7 @@
 
 
 ;; aligns annotation to the right hand side
-(setq company-tooltip-align-annotations t)
+(setopt company-tooltip-align-annotations t)
 
 ;; ;; formats the buffer before saving
 ;; ;; (add-hook 'before-save-hook 'tide-format-before-save)
@@ -289,7 +290,7 @@
 (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
 (add-to-list 'auto-mode-alist '("\\.json\\'" . js2-mode))
 ; (add-to-list 'auto-mode-alist '("\\.jsx$" . js2-mode))
-(add-hook 'js2-mode-hook (lambda () (setq js2-basic-offset 2)))
+(add-hook 'js2-mode-hook (lambda () (setopt js2-basic-offset 2)))
 
 
 ;; ------- Go -------
@@ -300,8 +301,8 @@
 
 ;; ;; go install golang.org/x/tools/gopls@latest
 ;; ;; and ensure $HOME/go/bin is in the shell's path
-;; (setq lsp-gopls-staticcheck t)
-;; (setq lsp-gopls-complete-unimported t)
+;; (setopt lsp-gopls-staticcheck t)
+;; (setopt lsp-gopls-complete-unimported t)
 ;; ;; (lsp-register-custom-settings
 ;; ;;  '(("gopls.completeUnimported" t t)
 ;; ;;    ("gopls.staticcheck" t t)))
@@ -324,17 +325,16 @@
   ("\\.tsx$" . web-mode)
   ("\\.eex\\'" . web-mode)
   ("\\.leex\\'" . web-mode))
-  :config
-  (setq web-mode-markup-indent-offset 2
-        web-mode-css-indent-offset 2
-        web-mode-code-indent-offset 2
-        web-mode-block-padding 2
-        web-mode-comment-style 2
-
-        web-mode-enable-css-colorization t
-        web-mode-enable-auto-pairing t
-        web-mode-enable-comment-keywords t
-        web-mode-enable-current-element-highlight t))
+  :custom
+  (web-mode-markup-indent-offset 2)
+  (web-mode-css-indent-offset 2)
+  (web-mode-code-indent-offset 2)
+  (web-mode-block-padding 2)
+  (web-mode-comment-style 2)
+  (web-mode-enable-css-colorization t)
+  (web-mode-enable-auto-pairing t)
+  (web-mode-enable-comment-keywords t)
+  (web-mode-enable-current-element-highlight t))
 
 
 ;; ------- shader-mode -------
@@ -368,7 +368,7 @@
 
 ;;   ;; Currently lsp-mode supports two terraform language servers.
 ;;   ;; If you would want to go with the official Hashicorp's language server, set this:
-;;   :config (setq lsp-disabled-clients '(tfls)))
+;;   :config (setopt lsp-disabled-clients '(tfls)))
 
 
 ;; ------- Misc -------
@@ -405,7 +405,7 @@
 
 ;; ------- Java -------
 ;; indent 2 spaces
-(add-hook 'java-mode-hook (lambda () (setq c-basic-offset 2)))
+(add-hook 'java-mode-hook (lambda () (setopt c-basic-offset 2)))
 
 ;; ------- GraphQL -------
 (use-package graphql-mode

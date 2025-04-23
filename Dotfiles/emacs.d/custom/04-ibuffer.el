@@ -14,7 +14,7 @@
                  (mapcar 'file-truename (org-agenda-files))))))
 
 ;; Show groups
-(setq ibuffer-saved-filter-groups
+(setopt ibuffer-saved-filter-groups
       (quote (("default"
                ("Programming"
                 (or
@@ -29,6 +29,8 @@
                  (mode . rust-mode)
                  (mode . scala-mode)
                  (mode . thrift-mode)
+                 (mode . typescript-mode)
+                 (mode . typescript-ts-mode) ; ts is short for tree-sitter
                  (mode . web-mode)
                  ))
                ("org-mode" (mode . org-mode))
@@ -54,7 +56,7 @@
 
 
 ;; Don't show filter groups if there are no buffers in that group
-(setq ibuffer-show-empty-filter-groups nil)
+(setopt ibuffer-show-empty-filter-groups nil)
 
 (add-hook 'ibuffer-mode-hook
           (lambda ()
@@ -74,7 +76,7 @@
    (t (format "%8d" (buffer-size)))))
 
 ;; Modify the default ibuffer-formats
-(setq ibuffer-formats
+(setopt ibuffer-formats
       '((mark modified read-only " "
               (name 34 34 :left :elide)
               " "
@@ -94,7 +96,7 @@
   (ad-activate 'ibuffer)
 
 ;; Hide the summary at the bottom of the buffer
-(setq ibuffer-display-summary nil)
+(setopt ibuffer-display-summary nil)
 
 ;; With this, when you press 'up' or 'down' to the top/bottom of IBuffer,
 ;; the cursor wraps around to the bottom/top, so you can continue from there.
