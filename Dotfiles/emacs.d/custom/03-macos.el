@@ -4,16 +4,11 @@
   (x-focus-frame nil))
 
 ;; Use command as meta on OS X
-(setq mac-option-modifier 'super)
-(setq mac-command-modifier 'meta)
+(setopt mac-option-modifier 'super)
+(setopt mac-command-modifier 'meta)
 
 ;; Let M-x toggle-frame-fullscreen work correctly on OS X
-(setq ns-use-native-fullscreen nil)
-
-;; ispell installed with homebrew
-;; TODO detect where homebrew installed ispell, it could be either of these two
-;; (if (system-type-is-darwin)
-;;   (setq ispell-program-name "/usr/local/bin/ispell"))
+(setopt ns-use-native-fullscreen nil)
 
 (if (system-type-is-darwin)
-  (setq ispell-program-name "/opt/homebrew/bin/ispell"))
+  (setopt ispell-program-name "/opt/homebrew/bin/ispell"))

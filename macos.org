@@ -37,8 +37,9 @@ Run 'gmake' to build Emacs, then run 'src/emacs' to test it.
 Run 'gmake install'
 
 
-# For my config currently need to run this command
+# For my config currently need to run these commands
 M-x all-the-icons-install-fonts
+M-x nerd-icons-install-fonts
 
 # ---------------
 

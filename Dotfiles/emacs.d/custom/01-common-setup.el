@@ -1,11 +1,11 @@
 ;; Store downloaded packages in a directory corresponding to the emacs version we are running
 ;; Make upgrading emacs to a new version easier/safer
-(setq package-user-dir (format "~/.emacs.d/elpa-%d" emacs-major-version))
+(setopt package-user-dir (format "~/.emacs.d/elpa-%d" emacs-major-version))
 
 ;; Fix problem where emacs can not connect to melpa
 ;; https://emacs.stackexchange.com/questions/51721/failed-to-download-gnu-archive
 ;; TODO 2/15/25 - is this still a problem?
-(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+(setopt gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
 
 
 ;; ---- Emacs garbage collection ----
@@ -18,8 +18,8 @@
      (float-time (time-since time))))
 
 ;; Set garbage collection threshold
-;; (setq gc-cons-threshold #x40000000) ;; 1GB
-(setq gc-cons-threshold (* 800 1024 1024)) ;; 800mb
+;; (setopt gc-cons-threshold #x40000000) ;; 1GB
+(setopt gc-cons-threshold (* 800 1024 1024)) ;; 800mb
 
 ;; When idle for 15sec run the GC no matter what.
 (defvar k-gc-timer
@@ -31,7 +31,7 @@
 ;; ---- package management ----
 
 (require 'package)
-(setq package-enable-startup nil)
+(setopt package-enable-startup nil)
 (add-to-list 'package-archives
              '("nongnu" . "https://elpa.nongnu.org/nongnu/") t)
 (add-to-list 'package-archives
@@ -54,7 +54,7 @@
 ;; network requests if you M-x while the cursor is on a URL
 ;; causing emacs to lock up for up to a few seconds, disable this.
 ;; See https://github.com/emacs-helm/helm/issues/648
-(setq ffap-machine-p-known 'reject)
+(setopt ffap-machine-p-known 'reject)
 
 ;; Note that for all-the-icons to work you must manually install them by calling
 ;; M-x all-the-icons-install-fonts
@@ -101,17 +101,17 @@
   (set-face-attribute 'default nil :height 120))
 
 ;; Ensure line and column numbers are displayed on the mode line
-(setq line-number-mode t) ; Default is on for line, but set it anyways
-(setq column-number-mode t)
+(setopt line-number-mode t) ; Default is on for line, but set it anyways
+(setopt column-number-mode t)
 
-(setq visible-bell t)
+(setopt visible-bell t)
 
 ;; Maximize Emacs frame on startup
 ;; http://emacs.stackexchange.com/questions/2999/how-to-maximize-my-emacs-frame-on-start-up
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
 
 ;; Alterntively, you can set the dimensions of the initial frame like this
-;;(setq initial-frame-alist '((top . 0) (left . 0) (width . 120) (height . 80)))
+;;(setopt initial-frame-alist '((top . 0) (left . 0) (width . 120) (height . 80)))
 
 ;; Highlight current line of characters
 (global-hl-line-mode t)
@@ -120,22 +120,22 @@
 ;; ------- Misc -------
 
 ;; Don't show the splash screen
-(setq inhibit-startup-screen t)
+(setopt inhibit-startup-screen t)
 
 ;; Don't include a message in the *scratch* buffer
-(setq initial-scratch-message "")
+(setopt initial-scratch-message "")
 
-(setq default-directory "~/")
+(setopt default-directory "~/")
 
 ;; Enable semantic-mode
 ;; TODO do I still want this enabled now that I mostly use lsp-mode?
 (semantic-mode 1)
 
 ;; Set default major mode to text-mode
-(setq default-major-mode 'text-mode)
+(setopt default-major-mode 'text-mode)
 
 ;; Set *scratch* buffer to use text-mode instead of lisp-interaction-mode
-(setq initial-major-mode 'text-mode)
+(setopt initial-major-mode 'text-mode)
 
 
 ;; Enable flyspell in text-mode
@@ -150,7 +150,7 @@
 
 ;; Use Emacs terminfo, not system terminfo
 ;; http://stackoverflow.com/questions/8918910/weird-character-zsh-in-emacs-terminal
-(setq system-uses-terminfo nil)
+(setopt system-uses-terminfo nil)
 
 ;; Prefer utf-8 encoding
 (prefer-coding-system 'utf-8)
@@ -162,7 +162,7 @@
 (setq-default indent-tabs-mode nil)
 
 ;; Ask before exiting emacs
-(setq confirm-kill-emacs #'y-or-n-p)
+(setopt confirm-kill-emacs #'y-or-n-p)
 
 ;; Enable uppercasing and lowercasing on regions
 (put 'downcase-region 'disabled nil)
@@ -203,10 +203,10 @@
 ;; To add abbreviations type the word you want to use as expansion, and then
 ;; type 'C-x a g' and the abbreviation for it.
 
-(setq abbrev-file-name             ;; tell emacs where to read abbrev
+(setopt abbrev-file-name             ;; tell emacs where to read abbrev
   "~/.emacs.d/custom/abbrev-defs") ;; definitions from
 
-(setq save-abbrevs t)              ;; save abbrevs when files are saved
+(setopt save-abbrevs t)              ;; save abbrevs when files are saved
                                    ;; you will be asked before the abbreviations are saved
 
 (setq-default abbrev-mode t)       ;; Turn on abbrev mode globally
@@ -231,10 +231,11 @@
   (which-key-mode)
   :config
   (which-key-setup-side-window-right-bottom)
-  (setq which-key-sort-order 'which-key-key-order-alpha
-        which-key-side-window-max-width 0.33
-        which-key-side-window-max-height 0.25
-        which-key-idle-delay 0.05))
+  :custom
+  (which-key-sort-order 'which-key-description-order)
+  (which-key-side-window-max-width 0.33)
+  (which-key-side-window-max-height 0.25)
+  (which-key-idle-delay 0.05))
 
 ;; ------- Dired -------
 (require 'dired )
@@ -244,9 +245,10 @@
 (use-package company
   :ensure t
   :config
-  (setq company-idle-delay 0)
-  (setq company-minimum-prefix-length 1)
-  (add-hook 'after-init-hook 'global-company-mode))
+  (add-hook 'after-init-hook 'global-company-mode)
+  :custom
+  (company-idle-delay 0)
+  (company-minimum-prefix-length 1))
 
 ;; (use-package company-lsp
 ;;   :ensure t
@@ -268,8 +270,8 @@
 ;; ------- uniquify -------
 (use-package uniquify
   :ensure nil
-  :config
-  (setq uniquify-buffer-name-style 'post-forward-angle-brackets))
+  :custom
+  (uniquify-buffer-name-style 'post-forward-angle-brackets))
 
 ;; ------- expand-region -------
 (use-package expand-region
@@ -282,10 +284,11 @@
 (use-package midnight
   :config
   (midnight-delay-set 'midnight-delay "4:30am")
-  (setq clean-buffer-list-delay-general 4))
+  :custom
+  (clean-buffer-list-delay-general 4))
 
 ;; ------- paren-mode -------
-(setq show-paren-delay 0) ; how long to wait?
+(setopt show-paren-delay 0) ; how long to wait?
 (show-paren-mode t) ; turn paren-mode on
 
 ;; ------- neotree -------
@@ -296,8 +299,8 @@
   (require 'neotree)
   (global-set-key [f8] 'neotree-toggle)
   :config
-  (setq neo-theme (if (display-graphic-p) 'icons 'arrow))
-  (setq neo-smart-open t))
+  (setopt neo-theme (if (display-graphic-p) 'icons 'arrow))
+  (setopt neo-smart-open t))
 
 ;; ------- beacon -------
 ;; Beacon — Never lose your cursor again
@@ -306,9 +309,9 @@
   :ensure t
   :init
   (beacon-mode 1)
-  :config
-  (setq beacon-push-mark 35)
-  (setq beacon-color "#666600"))
+  :custom
+  (beacon-push-mark 35)
+  (beacon-color "#666600"))
 
 ;; ------- projectile -------
 (use-package projectile
@@ -358,11 +361,11 @@
 
 ;; ------- Backup files -------
 ;; Disable backup files
-(setq backup-inhibited t)
+(setopt backup-inhibited t)
 ;; Disable auto save files
-(setq auto-save-default nil)
+(setopt auto-save-default nil)
 ;; Disable lock files - temp symlinks that start with .#
-(setq create-lockfiles nil)
+(setopt create-lockfiles nil)
 
 ;; (setq
 ;;    backup-by-copying t      ; don't clobber symlinks
@@ -376,20 +379,21 @@
 
 
 ;; ------- Save Place -------
-(setq save-place-file "~/.emacs.d/saveplace") ;; keep my ~/ clean
+(setopt save-place-file "~/.emacs.d/saveplace") ;; keep my ~/ clean
 (save-place-mode 1)
 
 ;; ------- recentf -------
 (use-package recentf
   :config
-  (setq recentf-save-file "~/.emacs.d/.recentf"
-        recentf-max-saved-items 500
-        recentf-max-menu-items 25
+  (recentf-mode +1)
+  :custom
+  (recentf-save-file "~/.emacs.d/.recentf")
+        (recentf-max-saved-items 500)
+        (recentf-max-menu-items 25)
         ;; disable recentf-cleanup on Emacs start, because it can cause problems with remote files
-        recentf-auto-cleanup 'never)
-  (recentf-mode +1))
+        (recentf-auto-cleanup 'never))
 
 (global-set-key "\C-x\ \C-r" 'recentf-open-files)
 
 ;; ------- tramp -------
-(setq tramp-default-method "ssh")
+(setopt tramp-default-method "ssh")
