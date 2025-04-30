@@ -135,8 +135,7 @@
 (setopt default-major-mode 'text-mode)
 
 ;; Set *scratch* buffer to use text-mode instead of lisp-interaction-mode
-(setopt initial-major-mode 'text-mode)
-
+;; (setopt initial-major-mode 'text-mode)
 
 ;; Enable flyspell in text-mode
 (dolist (hook '(text-mode-hook))
@@ -169,7 +168,7 @@
 (put 'upcase-region 'disabled nil)
 
 ;; ------- rainbow-mode -------
-;; Colorize color names in buffers
+;; Colorize color names in programming buffers
 ;; For example: white or black or #000000
 (use-package rainbow-mode
   :ensure t
@@ -203,10 +202,10 @@
 ;; To add abbreviations type the word you want to use as expansion, and then
 ;; type 'C-x a g' and the abbreviation for it.
 
-(setopt abbrev-file-name             ;; tell emacs where to read abbrev
+(setopt abbrev-file-name           ;; tell emacs where to read abbrev
   "~/.emacs.d/custom/abbrev-defs") ;; definitions from
 
-(setopt save-abbrevs t)              ;; save abbrevs when files are saved
+(setopt save-abbrevs t)            ;; save abbrevs when files are saved
                                    ;; you will be asked before the abbreviations are saved
 
 (setq-default abbrev-mode t)       ;; Turn on abbrev mode globally
