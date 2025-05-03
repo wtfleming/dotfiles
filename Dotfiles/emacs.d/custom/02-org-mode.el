@@ -1,3 +1,17 @@
+;; ------- org-reveal -------
+;; https://github.com/hexmode/ox-reveal
+;; Reveal.js is a tool for creating good-looking HTML presentations.
+;; Org-Reveal exports your Org documents to reveal.js presentations.
+(use-package ox-reveal
+  :defer 3
+  :after org
+  :ensure t)
+
+;; Can be used for syntax highlighting in org-reveal
+(use-package htmlize
+  :ensure t)
+
+
 ;; Org-mode settings
 (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
 (global-set-key "\C-cl" 'org-store-link)
