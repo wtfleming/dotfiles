@@ -130,7 +130,7 @@
                  ;;(css-mode . css-ts-mode)
                  (typescript-mode . typescript-ts-mode)
                  (js-mode . typescript-ts-mode)
-                 (js2-mode . typescript-ts-mode)
+                 ;;(js2-mode . typescript-ts-mode)
                  ;;(c-mode . c-ts-mode)
                  ;;(c++-mode . c++-ts-mode)
                  ;;(c-or-c++-mode . c-or-c++-ts-mode)
@@ -182,7 +182,7 @@
 (add-hook 'yaml-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'terraform-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'typescript-mode-hook (lambda () (subword-mode +1)))
-(add-hook 'js2-mode-hook (lambda () (subword-mode +1)))
+;;(add-hook 'js2-mode-hook (lambda () (subword-mode +1)))
 
 
 ;; ----- git-gutter -----
@@ -284,13 +284,13 @@
 
 ;; ------- JavaScript -------
 ;; TODO do I still need this package?
-(use-package js2-mode
-  :ensure t)
+;; (use-package js2-mode
+;;   :ensure t)
 
-(add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
-(add-to-list 'auto-mode-alist '("\\.json\\'" . js2-mode))
-; (add-to-list 'auto-mode-alist '("\\.jsx$" . js2-mode))
-(add-hook 'js2-mode-hook (lambda () (setopt js2-basic-offset 2)))
+;; (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+;; (add-to-list 'auto-mode-alist '("\\.json\\'" . js2-mode))
+;; ; (add-to-list 'auto-mode-alist '("\\.jsx$" . js2-mode))
+;; (add-hook 'js2-mode-hook (lambda () (setopt js2-basic-offset 2)))
 
 
 ;; ------- Go -------

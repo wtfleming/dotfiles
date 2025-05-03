@@ -296,6 +296,7 @@
 ;; https://www.emacswiki.org/emacs/MidnightMode
 ;; By default, the ‘midnight-hook’ is configured to just run the CleanBufferList command.
 (use-package midnight
+  :defer 10
   :config
   (midnight-delay-set 'midnight-delay "4:30am")
   :custom
