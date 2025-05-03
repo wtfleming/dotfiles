@@ -9,6 +9,11 @@
 
 
 ;; ---- Emacs garbage collection ----
+;;
+;; Set garbage collection threshold
+;; (setopt gc-cons-threshold #x40000000) ;; 1GB
+(setopt gc-cons-threshold (* 800 1024 1024)) ;; 800mb
+
 ;; Show how long we are spending doing GC
 ;; see https://akrl.sdf.org/#orgc15a10d
 (defmacro k-time (&rest body)
@@ -17,13 +22,9 @@
      ,@body
      (float-time (time-since time))))
 
-;; Set garbage collection threshold
-;; (setopt gc-cons-threshold #x40000000) ;; 1GB
-(setopt gc-cons-threshold (* 800 1024 1024)) ;; 800mb
-
-;; When idle for 15sec run the GC no matter what.
+;; When idle for 60 seconds run the GC no matter what.
 (defvar k-gc-timer
-  (run-with-idle-timer 15 t
+  (run-with-idle-timer 60 t
                        (lambda ()
                          (message "Garbage Collector has run for %.06fsec"
                                   (k-time (garbage-collect))))))
@@ -31,6 +32,19 @@
 ;; ---- package management ----
 
 (require 'package)
+;; If you want to see how long packages take to load
+;; when emacs starts, uncomment the next line
+;; (setopt use-package-compute-statistics t)
+;; then evaluate this function
+;; (use-package-report)
+;;
+;; Output will look like this, and helps identify slow loading
+;; packages that could potentially have their loading deferred
+;; ox-reveal                 Configured    11:43:16.207041         0.77
+;; treesit                   Configured    11:43:16.604111         0.34
+;; js2-mode                  Configured    11:43:16.790564         0.29
+
+
 (setopt package-enable-startup nil)
 (add-to-list 'package-archives
              '("nongnu" . "https://elpa.nongnu.org/nongnu/") t)
@@ -59,7 +73,8 @@
 ;; Note that for all-the-icons to work you must manually install them by calling
 ;; M-x all-the-icons-install-fonts
 (use-package all-the-icons
-  :ensure t)
+  :ensure t
+  :if (display-graphic-p))
 
 
 ;; Fonts
@@ -329,17 +344,6 @@
 ;; install the binary with
 ;; brew install ripgrep
 (use-package ripgrep
-  :ensure t)
-
-;; ------- org-reveal -------
-;; https://github.com/hexmode/ox-reveal
-;; Reveal.js is a tool for creating good-looking HTML presentations.
-;; Org-Reveal exports your Org documents to reveal.js presentations.
-(use-package ox-reveal
-  :ensure t)
-
-;; Can be used for syntax highlighting in org-reveal
-(use-package htmlize
   :ensure t)
 
 ;; ----------- emacs shell ----------------------------
