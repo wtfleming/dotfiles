@@ -1,5 +1,5 @@
 ;; Store downloaded packages in a directory corresponding to the emacs version we are running
-;; Make upgrading emacs to a new version easier/safer
+;; Make upgrading emacs to a new major version easier/safer
 (setopt package-user-dir (format "~/.emacs.d/elpa-%d" emacs-major-version))
 
 ;; Fix problem where emacs can not connect to melpa
@@ -8,10 +8,10 @@
 (setopt gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
 
 
-;; ---- Emacs garbage collection ----
+;; ---- Garbage collection ----
 ;;
 ;; Set garbage collection threshold
-;; (setopt gc-cons-threshold #x40000000) ;; 1GB
+;; (setopt gc-cons-threshold #x40000000)     ;; 1GB
 (setopt gc-cons-threshold (* 800 1024 1024)) ;; 800mb
 
 ;; Show how long we are spending doing GC
@@ -30,7 +30,6 @@
                                   (k-time (garbage-collect))))))
 
 ;; ---- package management ----
-
 (require 'package)
 ;; If you want to see how long packages take to load
 ;; when emacs starts, uncomment the next line
@@ -125,7 +124,7 @@
 ;; http://emacs.stackexchange.com/questions/2999/how-to-maximize-my-emacs-frame-on-start-up
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
 
-;; Alterntively, you can set the dimensions of the initial frame like this
+;; Alternatively, you can set the dimensions of the initial frame like this
 ;;(setopt initial-frame-alist '((top . 0) (left . 0) (width . 120) (height . 80)))
 
 ;; Highlight current line of characters
@@ -293,8 +292,9 @@
   :bind (("C-=" . er/expand-region)))
 
 ;; ------- midnight -------
+;; At 4:30 in the morning kill any buffers that have not been used in 4 days
 ;; https://www.emacswiki.org/emacs/MidnightMode
-;; By default, the ‘midnight-hook’ is configured to just run the CleanBufferList command.
+;; By default the ‘midnight-hook’ is configured to just run the CleanBufferList command
 (use-package midnight
   :defer 10
   :config
