@@ -425,5 +425,5 @@
 
 ;; ------- https://github.com/abrochard/mermaid-mode -------
 ;; mermaid-js charts
-(use-package mermaid-mode
-  :ensure t)
+;; (use-package mermaid-mode
+;;   :ensure t)
