@@ -38,12 +38,15 @@ Can be used with the `gptel-post-response-functions' hook."
     :stream t
     :models '(deepseek-r1:7b deepseek-r1:14b qwen2.5-coder:14b-instruct-q6_K gemma2 llava))
 
+  ;; Use Claude as the default model
   ;; Fetches key from ~/.authinfo
   ;; The line should look like this:
   ;; machine api.anthropic.com login apikey password <api-key>
-  (gptel-make-anthropic "Claude"
-    :stream t
-    :key gptel-api-key)
+  (setopt
+   gptel-model 'claude-3-7-sonnet-20250219
+   gptel-backend (gptel-make-anthropic "Claude"
+                 :stream t
+                 :key gptel-api-key))
 
   ;; Override default system message to remove the bit about living in
   ;; emacs as sometimes an LLM gets confused and thinks questions are
