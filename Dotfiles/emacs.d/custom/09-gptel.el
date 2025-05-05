@@ -55,3 +55,46 @@ Can be used with the `gptel-post-response-functions' hook."
     (setopt gptel-directives (assoc-delete-all 'default gptel-directives))
     (add-to-list 'gptel-directives `(default . ,my-gptel-system-msg) )
     (setopt gptel--system-message my-gptel-system-msg)))
+
+;; ------- gptel tools -------
+(gptel-make-tool
+ :name "read_buffer"                    ; snake_case name
+ :function (lambda (buffer)             ; the function that will run
+             (unless (buffer-live-p (get-buffer buffer))
+               (error "error: buffer %s is not live." buffer))
+             (with-current-buffer  buffer
+               (buffer-substring-no-properties (point-min) (point-max))))
+ :description "return the contents of an emacs buffer"
+ :args (list '(:name "buffer"
+               :type string             ; :type value must be a symbol
+               :description "the name of the buffer whose contents are to be retrieved"))
+ :category "emacs")                     ; An arbitrary label for grouping
+
+
+
+;; ------- gptel functions -------
+(defun wtf-gptel-stash-response (buffer prompt response)
+  "Store a response in a well known buffer we can look at if we want"
+  (let ((buffer (get-buffer-create buffer)))
+    (with-current-buffer buffer
+      (erase-buffer)
+      (insert prompt)
+      (insert "\n\n-->\n\n")
+      (insert response))))
+
+(defvar wtf-gptel-define-word-prompt
+  "Please give a short definition of this word or phrase. Then, provide 3 usage examples, synonyms and antonyms"
+  "The ChatGPT style prompt used to define a word.")
+
+(defun wtf-gptel-define-word (start end)
+  "Use ChatGPT to define the current word of the region."
+  (interactive "r")
+  (unless (region-active-p)
+    (error "you must have a region set"))
+  (let ((input (buffer-substring-no-properties (region-beginning) (region-end))))
+    (gptel-request nil
+      :callback (lambda (response info)
+                  (wtf-gptel-stash-response "*Last Definition*" (plist-get info :context) response)
+                  (message response))
+      :system wtf-gptel-define-word-prompt
+      :context input)))
