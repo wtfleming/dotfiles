@@ -1,6 +1,5 @@
-;; Have emacs write any customized variable to a specific file
-;; instead of this file
-(setopt custom-file "~/.emacs.d/custom.el")
+;; Write any customized variables to a specific file instead of this file
+(setopt custom-file "~/.emacs.d/my-customized.el")
 (load custom-file)
 
 ;; Turn off mouse interface early in startup to avoid momentary display
