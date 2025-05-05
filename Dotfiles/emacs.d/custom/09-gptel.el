@@ -71,8 +71,7 @@ Can be used with the `gptel-post-response-functions' hook."
  :category "emacs")                     ; An arbitrary label for grouping
 
 
-
-;; ------- gptel functions -------
+;; ------- common gptel functions -------
 (defun wtf-gptel-stash-response (buffer prompt response)
   "Store a response in a well known buffer we can look at if we want"
   (let ((buffer (get-buffer-create buffer)))
@@ -82,19 +81,17 @@ Can be used with the `gptel-post-response-functions' hook."
       (insert "\n\n-->\n\n")
       (insert response))))
 
-(defvar wtf-gptel-define-word-prompt
-  "Please give a short definition of this word or phrase. Then, provide 3 usage examples, synonyms and antonyms"
-  "The ChatGPT style prompt used to define a word.")
-
+;; ------- Define a word -------
 (defun wtf-gptel-define-word (start end)
   "Use ChatGPT to define the current word of the region."
   (interactive "r")
   (unless (region-active-p)
     (error "you must have a region set"))
   (let ((input (buffer-substring-no-properties (region-beginning) (region-end))))
+    (message "Fetching definition")
     (gptel-request nil
       :callback (lambda (response info)
                   (wtf-gptel-stash-response "*Last Definition*" (plist-get info :context) response)
                   (message response))
-      :system wtf-gptel-define-word-prompt
+      :system "Please give a short definition of this word or phrase. Then, provide 3 usage examples, synonyms and antonyms"
       :context input)))
