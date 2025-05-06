@@ -2,6 +2,8 @@
 ;; https://github.com/hexmode/ox-reveal
 ;; Reveal.js is a tool for creating good-looking HTML presentations.
 ;; Org-Reveal exports your Org documents to reveal.js presentations.
+;; Wait 3 seconds to load as this package is somewhat
+;; slow to load, and this helps with emacs startup speed
 (use-package ox-reveal
   :defer 3
   :after org
@@ -11,8 +13,7 @@
 (use-package htmlize
   :ensure t)
 
-
-;; Org-mode settings
+;; ------- Org-mode settings -------
 (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
 (global-set-key "\C-cl" 'org-store-link)
 (global-set-key "\C-ca" 'org-agenda)
@@ -20,10 +21,19 @@
 (setopt org-return-follows-link t)
 (setopt org-startup-indented t)
 
+(setopt org-tag-alist
+        '(;; Places
+          ("@work" . ?w)
+          ("@home" . ?h)
+          ("laptop" . ?l)
+
+          ;; Activities
+          ("@email" . ?e)))
+
 (setopt org-todo-keywords
   '((sequence "TODO" "IN-PROGRESS" "WAITING" "DONE")))
 
-;; Org Capture
+;; ------- Org Capture -------
 (setopt org-directory "~/org-mode/")
 (global-set-key "\C-cc" 'org-capture)
 (setopt org-default-notes-file (concat org-directory "/notes.org"))
@@ -33,7 +43,7 @@
      ("l" "Link" plain (file (concat org-directory "/links.org"))
        "- %?\n %x\n")))
 
-;; Org agenda
+;; ------- Org agenda-------
 ; Store list of agenda files in org folder so we can easily use
 ; git to keep it synced
 (setopt org-agenda-files (concat org-directory ".agenda-files"))
@@ -44,7 +54,7 @@
 ; Show two weeks in the agenda view
 (setopt org-agenda-span 14)
 
-;; Misc
+;; ------- Misc -------
 ; Don't close windows on exit
 (setopt org-agenda-window-setup 'current-window)
 
