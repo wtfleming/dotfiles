@@ -75,7 +75,7 @@
 ;; :hook (after-init . projectile-mode)
 ;; but with use-package-hook-name-suffix set to nil it would be:
 ;; :hook (after-init-hook . projectile-mode)
-(setopt use-package-hook-name-suffix nil)
+;; (setopt use-package-hook-name-suffix nil)
 
 ;; Helm appears to be using ffap internally which can cause
 ;; network requests if you M-x while the cursor is on a URL
