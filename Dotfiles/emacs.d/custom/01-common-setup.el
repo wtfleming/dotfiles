@@ -11,8 +11,9 @@
 ;; ---- Garbage collection ----
 ;;
 ;; Set garbage collection threshold
-;; (setopt gc-cons-threshold #x40000000)     ;; 1GB
-(setopt gc-cons-threshold (* 800 1024 1024)) ;; 800mb
+;; (setopt gc-cons-threshold #x40000000)        ;; 1GB
+;; (setopt gc-cons-threshold (* 800 1024 1024)) ;; 800mb
+(setopt gc-cons-threshold (* 100 1024 1024))    ;; 100mb
 
 ;; Show how long we are spending doing GC
 ;; see https://akrl.sdf.org/#orgc15a10d
