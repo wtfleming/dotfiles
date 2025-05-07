@@ -13,10 +13,23 @@
 (use-package htmlize
   :ensure t)
 
-;; ------- Org-mode settings -------
+;; ------- org-babel settings -------
+;; Supported languages at https://orgmode.org/worg/org-contrib/babel/languages/index.html
+(with-eval-after-load 'org
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '(
+     (emacs-lisp . t)
+     (js . t)
+     ;; (http . t) ;; see https://github.com/zweifisch/ob-http
+     (python . t)
+     (shell . t))))
+
+;; ------- org-mode settings -------
 (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
 (global-set-key "\C-cl" 'org-store-link)
 (global-set-key "\C-ca" 'org-agenda)
+;;(global-set-key (kbd "C-c o a") 'org-agenda)
 (global-set-key "\C-cb" 'org-switchb)
 (setopt org-return-follows-link t)
 (setopt org-startup-indented t)
