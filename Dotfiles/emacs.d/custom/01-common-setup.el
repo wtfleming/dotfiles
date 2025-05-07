@@ -63,6 +63,19 @@
   (package-refresh-contents)
   (package-install 'use-package))
 
+;; use-package-hook-name-suffix is a variable defined in ‘use-package-core.el’.
+;; Its default value is "-hook"
+;; Text append to the name of hooks mentioned by :hook.
+;; Set to nil if you don’t want this to happen; it’s only a convenience.
+;;
+;; Or to put another way the way use-package works by default is to add
+;; the value of this variable to the name of the hook.
+;; So the default way to add a hook would look like:
+;; :hook (after-init . projectile-mode)
+;; but with use-package-hook-name-suffix set to nil it would be:
+;; :hook (after-init-hook . projectile-mode)
+(setopt use-package-hook-name-suffix nil)
+
 ;; Helm appears to be using ffap internally which can cause
 ;; network requests if you M-x while the cursor is on a URL
 ;; causing emacs to lock up for up to a few seconds, disable this.
