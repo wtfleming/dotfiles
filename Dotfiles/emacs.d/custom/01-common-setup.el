@@ -11,9 +11,9 @@
 ;; ---- Garbage collection ----
 ;;
 ;; Set garbage collection threshold
-;; (setopt gc-cons-threshold #x40000000)        ;; 1GB
-;; (setopt gc-cons-threshold (* 800 1024 1024)) ;; 800mb
-(setopt gc-cons-threshold (* 100 1024 1024))    ;; 100mb
+;; (setopt gc-cons-threshold #x40000000)     ;; 1GB
+ (setopt gc-cons-threshold (* 800 1024 1024)) ;; 800mb
+;;(setopt gc-cons-threshold (* 100 1024 1024)) ;; 100mb
 
 ;; Show how long we are spending doing GC
 ;; see https://akrl.sdf.org/#orgc15a10d
@@ -76,6 +76,7 @@
 ;; but with use-package-hook-name-suffix set to nil it would be:
 ;; :hook (after-init-hook . projectile-mode)
 ;; (setopt use-package-hook-name-suffix nil)
+
 
 ;; Helm appears to be using ffap internally which can cause
 ;; network requests if you M-x while the cursor is on a URL
@@ -144,6 +145,13 @@
 ;; Highlight current line of characters
 (global-hl-line-mode t)
 
+;; ------- flyspell -------
+;; Enable flyspell in text-mode
+(add-hook 'text-mode-hook 'flyspell-mode)
+
+;; When programming, enable Flyspell mode for comments and strings only.
+(add-hook 'prog-mode-hook 'flyspell-prog-mode)
+
 
 ;; ------- Misc -------
 
@@ -162,12 +170,7 @@
 ;; Set default major mode to text-mode
 (setopt default-major-mode 'text-mode)
 
-;; Set *scratch* buffer to use text-mode instead of lisp-interaction-mode
-;; (setopt initial-major-mode 'text-mode)
 
-;; Enable flyspell in text-mode
-(dolist (hook '(text-mode-hook))
-      (add-hook hook (lambda () (flyspell-mode 1))))
 
 ;; Use y or n for emacs yes or no questions
 (defalias 'yes-or-no-p 'y-or-n-p)
