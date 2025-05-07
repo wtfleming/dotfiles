@@ -23,6 +23,7 @@
                  (mode . elixir-mode)
                  (mode . emacs-lisp-mode)
                  (mode . java-mode)
+                 (mode . json-ts-mode)
                  (mode . go-mode)
                  (mode . pig-mode)
                  (mode . python-mode)
