@@ -53,16 +53,24 @@
 (add-to-list 'package-archives
              '("melpa-stable" . "https://stable.melpa.org/packages/") t)
 
-(add-to-list 'package-pinned-packages '(magit . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(gptel . "melpa-stable") t)
+
 (add-to-list 'package-pinned-packages '(company . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(doom-modeline . "melpa-stable") t)
 (add-to-list 'package-pinned-packages '(flycheck . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(git-gutter . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(gptel . "melpa-stable") t)
 (add-to-list 'package-pinned-packages '(helm . "melpa-stable") t)
 (add-to-list 'package-pinned-packages '(helm-core . "melpa-stable") t)
 (add-to-list 'package-pinned-packages '(lsp-mode . "melpa-stable") t)
 (add-to-list 'package-pinned-packages '(lsp-ui . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(magit . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(magit-section . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(markdown-mode . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(projectile . "melpa-stable") t)
 ;; is this needed now that transient is built in to emacs?
 (add-to-list 'package-pinned-packages '(transient . "melpa-stable") t)
+;; with-editor is a magit dependency
+(add-to-list 'package-pinned-packages '(with-editor . "melpa-stable") t)
 
 (package-initialize)
 (unless (package-installed-p 'use-package)
@@ -202,6 +210,14 @@
 ;; Enable uppercasing and lowercasing on regions
 (put 'downcase-region 'disabled nil)
 (put 'upcase-region 'disabled nil)
+
+;; ------- markdown-mode -------
+(use-package markdown-mode
+  :ensure t
+  :mode ("README\\.md\\'" . gfm-mode) ;; github flavored markdown
+  :init (setq markdown-command "multimarkdown")
+  :bind (:map markdown-mode-map
+         ("C-c C-e" . markdown-do)))
 
 ;; ------- rainbow-mode -------
 ;; Colorize color names in programming buffers
