@@ -72,6 +72,11 @@
 
 (setopt flycheck-checker-error-threshold 1500)
 
+(use-package flycheck-inline
+  :ensure t)
+(with-eval-after-load 'flycheck
+  (add-hook 'flycheck-mode-hook #'flycheck-inline-mode))
+
 
 ;; ----- tree-sitter -----
 ;; TODO look at https://www.masteringemacs.org/article/how-to-get-started-tree-sitter
@@ -162,11 +167,6 @@
 
 ;; Disable emacs built in version control for faster startup
 ;; (setopt vc-handled-backends ())
-
-(use-package flycheck-inline
-  :ensure t)
-(with-eval-after-load 'flycheck
-  (add-hook 'flycheck-mode-hook #'flycheck-inline-mode))
 
 
 ;; TODO also need to do this for anything using tree siter
