@@ -53,10 +53,13 @@
 (add-to-list 'package-archives
              '("melpa-stable" . "https://stable.melpa.org/packages/") t)
 
-
 (add-to-list 'package-pinned-packages '(magit . "melpa-stable") t)
 (add-to-list 'package-pinned-packages '(gptel . "melpa-stable") t)
 (add-to-list 'package-pinned-packages '(helm . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(helm-core . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(lsp-mode . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(lsp-ui . "melpa-stable") t)
+;; is this needed now that transient is built in to emacs?
 (add-to-list 'package-pinned-packages '(transient . "melpa-stable") t)
 
 (package-initialize)
