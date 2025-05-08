@@ -55,6 +55,8 @@
 
 (add-to-list 'package-pinned-packages '(magit . "melpa-stable") t)
 (add-to-list 'package-pinned-packages '(gptel . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(company . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(flycheck . "melpa-stable") t)
 (add-to-list 'package-pinned-packages '(helm . "melpa-stable") t)
 (add-to-list 'package-pinned-packages '(helm-core . "melpa-stable") t)
 (add-to-list 'package-pinned-packages '(lsp-mode . "melpa-stable") t)
