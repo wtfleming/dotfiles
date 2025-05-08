@@ -27,13 +27,32 @@
 
 ;; ------- org-mode settings -------
 (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
-(global-set-key "\C-cl" 'org-store-link)
-(global-set-key "\C-ca" 'org-agenda)
-;;(global-set-key (kbd "C-c o a") 'org-agenda)
-(global-set-key "\C-cb" 'org-switchb)
+(setopt org-directory "~/org-mode/")
 (setopt org-return-follows-link t)
 (setopt org-startup-indented t)
 
+
+;; ------- key bindings -------
+(defvar-keymap wtf-prefix-org-mode-map
+  :doc "Prefix key map for org-mode functions I often call."
+  "a" #'org-agenda
+  "b" #'org-switchb
+  "c" #'org-capture
+  "l" #'org-store-link)
+
+(defvar-keymap wtf-prefix-map
+  :doc "My prefix key map."
+  "o" wtf-prefix-org-mode-map)
+
+;; Bind the prefix key map to a key.
+;; Notice the absence of a quote for the map's symbol.
+(keymap-set global-map "C-c" wtf-prefix-map)
+
+;; Define how the nested keymaps are labelled in `which-key-mode'.
+(which-key-add-keymap-based-replacements wtf-prefix-map
+  "o" `("org-mode" . ,wtf-prefix-org-mode-map))
+
+;; ------- tags -------
 (setopt org-tag-alist
         '(;; Places
           ("@work" . ?w)
@@ -47,8 +66,6 @@
   '((sequence "TODO" "IN-PROGRESS" "WAITING" "DONE")))
 
 ;; ------- Org Capture -------
-(setopt org-directory "~/org-mode/")
-(global-set-key "\C-cc" 'org-capture)
 (setopt org-default-notes-file (concat org-directory "/notes.org"))
 (setopt org-capture-templates
   '(("t" "Todo" entry (file+headline (concat org-directory "/gtd.org") "Tasks")
