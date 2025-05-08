@@ -18,6 +18,9 @@ brew install gcc libgccjit make gnutls texinfo autoconf pkg-config tree-sitter
 # Emacs flyspell needs a spell checking tool, install one on macOS
 brew install ispell
 
+# Emacs markdown-mode uses this to preview markdown
+brew install pandoc
+
 Download emacs src from https://github.com/emacs-mirror/emacs/tags
 
 Move the entire emacs src directory to ~/bin and make sure that
