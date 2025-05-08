@@ -3,8 +3,7 @@
   :bind (("C-x b" . helm-mini)
          ("M-x" . helm-M-x)
          ("M-y" . helm-show-kill-ring)
-         ("C-x C-f" . helm-find-files)
-         ("C-c C-h SPC" . helm-all-mark-rings))
+         ("C-x C-f" . helm-find-files))
   :config
   (progn
     (setq helm-split-window-in-side-p           t ; open helm buffer inside current window, not occupy whole other window
