@@ -273,9 +273,7 @@
 ;;(add-hook hook (lambda () (abbrev-mode 1))))
 
 ;; ------- which-key -------
-;; TODO this is built into emacs 30
-;; when I get to that version can remove which-key
-;; https://github.com/justbur/emacs-which-key
+;; This package is a built-in as of emacs 30
 (use-package which-key
   :ensure t
   :init
@@ -348,10 +346,6 @@
   :custom
   (company-idle-delay 0)
   (company-minimum-prefix-length 1))
-
-;; (use-package company-lsp
-;;   :ensure t
-;;   :commands company-lsp)
 
 ;; ------- restclient -------
 ;; TODO this package is now archived https://github.com/pashky/restclient.el

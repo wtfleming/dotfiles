@@ -27,6 +27,20 @@
   :custom
   (lsp-file-watch-threshold 2200))
 
+(use-package lsp-ui
+  :ensure t
+  :commands lsp-ui-mode)
+
+;; ;; if you are helm user
+;; (use-package helm-lsp :commands helm-lsp-workspace-symbol)
+;; ;; if you are ivy user
+;; (use-package lsp-ivy :commands lsp-ivy-workspace-symbol)
+;; (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
+;; ;; optionally if you want to use debugger
+;; (use-package dap-mode)
+;; ;; (use-package dap-LANGUAGE) to load the dap adapter for your language
+
+
 ;; TODO this could/should be in an :after in the use-package expression above?
 (with-eval-after-load 'lsp-mode
   (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.circleci\\'")
@@ -38,11 +52,6 @@
 ;; (setopt lsp-eldoc-render-all t)
 ;; (setopt lsp-enable-snippet t)
 
-(use-package lsp-ui
-  :ensure t
-  :commands lsp-ui-mode
-  :init
-)
 
 (setopt lsp-lens-enable t
       lsp-semantic-tokens-enable t
