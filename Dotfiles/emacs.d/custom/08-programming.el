@@ -244,9 +244,6 @@
 ;; M-x lsp-install-server credo-language-server
 ;; (custom-set-variables '(lsp-credo-version "0.3.0"))
 
-(use-package elixir-mode
-  :ensure t)
-
 (defvar lsp-elixir--config-options (make-hash-table))
 (add-hook 'lsp-after-initialize-hook
           (lambda ()
