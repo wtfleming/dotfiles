@@ -333,7 +333,7 @@ _h_   _l_   _o_k        _y_ank
 (global-set-key (kbd "C-x SPC") 'hydra-rectangle/body)
 
 
-
+;; TODO make something similar, but for emojis
 (defun my/insert-unicode (unicode-name)
   "Same as C-x 8 enter UNICODE-NAME."
   (insert-char (gethash unicode-name (ucs-names))))
