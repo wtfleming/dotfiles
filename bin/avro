@@ -1,2 +1,0 @@
-# Download from http://www.us.apache.org/dist/avro/avro-1.7.4/java/avro-tools-1.7.5.jar
-java -jar `dirname $0`/avro-tools-1.7.5.jar "$@"
