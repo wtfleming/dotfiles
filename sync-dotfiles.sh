@@ -26,6 +26,7 @@ cp ~/src/dotfiles/Dotfiles/git-prompt.sh ~/.git-prompt.sh
 cp ~/src/dotfiles/Dotfiles/gitexcludes ~/.gitexcludes
 # TODO on a work computer I likely have my email address in .gitconfig set to
 # my work email, don't want to copy over if that is the case?
+# Find a better way of handling this
 cp ~/src/dotfiles/Dotfiles/gitconfig ~/.gitconfig
 
 # tmux
@@ -58,42 +59,5 @@ touch ~/src/dotfiles/Dotfiles/emacs.d/my-customized.el
 
 cp ~/src/dotfiles/Dotfiles/emacs.d/custom/abbrev-defs ~/.emacs.d/custom/.
 
-echo "Successfully synced dotfiles"
-
-
-# write a bash script to copy every file except one names sync-dotfiles.sh to ~/tmp
-
-# *** (Claude claude-3-7-sonnet-20250219)
-# ```bash
-# #!/bin/bash
-
-# # Create ~/tmp directory if it doesn't exist
-# mkdir -p ~/tmp
-
-# # Copy all files except sync-dotfiles.sh to ~/tmp
-# for file in *; do
-#     if [ "$file" != "sync-dotfiles.sh" ] && [ -f "$file" ]; then
-#         cp "$file" ~/tmp/
-#     fi
-# done
-
-# echo "Files copied to ~/tmp (excluding sync-dotfiles.sh)"
-# ```
-
-
-# write a bash script to copy every file in ~foo except one names sync-dotfiles.sh to ~/tmp
-
-# *** (Claude claude-3-7-sonnet-20250219)
-# ```bash
-# #!/bin/bash
-
-# # Create ~/tmp directory if it doesn't exist
-# mkdir -p ~/tmp
-
-# # Copy all files from ~foo to ~/tmp except sync-dotfiles.sh
-# for file in ~foo/*; do
-#   if [ "$(basename "$file")" != "sync-dotfiles.sh" ]; then
-#     cp -a "$file" ~/tmp/
-#   fi
-# done
-# ```
+echo "Successfully synced dotfiles."
+echo "If this is a work computer ensure that the correct email is being used in .gitconfig"
