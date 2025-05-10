@@ -16,6 +16,8 @@ if [ ! -d ~/src/dotfiles ]; then
 fi
 
 # Shell scripts
+# TODO probably don't want to copy this sync-dotfiles.sh file over
+# and just put the one in ~/src/dotfiles/bin/ on the path in my zshrc instead?
 cp ~/src/dotfiles/bin/* ~/bin/.
 
 # Git
