@@ -1,0 +1,2043 @@
+#+title: GNU Emacs Configuration
+#+property: header-args :tangle "init.el"
+#+options: ':t toc:nil num:t author:nil
+#+startup: content indent
+#+macro: last-export-date (eval (format-time-string "%F %T %z"))
+#+macro: word-count (eval (count-words (point-min) (point-max)))
+
+*Last exported on {{{last-export-date}}} with a word count of {{{word-count}}}*
+
+This is my literate Emacs configuration file.
+
+Generate the configuration files with:
+M-x org-babel-tangle
+
+* Early init
+#+begin_src emacs-lisp :tangle "early-init.el"
+  ;; lsp-mode performance optimization
+  ;; see https://emacs-lsp.github.io/lsp-mode/page/performance/#use-plists-for-deserialization
+  (setenv "LSP_USE_PLISTS" "true")
+#+end_src
+
+* Initial Setup
+
+TODO (when (< emacs-major-version 30)
+  Do something to crash and don't start emacs?
+
+
+#+begin_src emacs-lisp
+;; Write any customized variables to a specific file instead of this file
+(setopt custom-file "~/.emacs.d/my-customized.el")
+(load custom-file)
+
+;; Turn off mouse interface early in startup to avoid momentary display
+;(if (fboundp 'menu-bar-mode) (menu-bar-mode -1))
+(if (fboundp 'tool-bar-mode) (tool-bar-mode -1))
+(if (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
+
+
+;; Load files from "~/.emacs.d/custom"
+(add-to-list 'load-path (expand-file-name "custom" user-emacs-directory))
+;; (load "00-functions.el")
+;; (load "01-common-setup.el")
+;; (load "02-org-mode.el")
+;; (load "03-macos.el")
+;; (load "04-ibuffer.el")
+;; (load "05-helm.el")
+;; (load "06-hydra.el")
+;; (load "07-doom-modeline.el")
+;; (load "08-programming.el")
+;; (load "09-gptel.el")
+;; (load "10-transient.el")
+
+(when (file-exists-p "~/.emacs.d/lisp/rama-mode.el")
+  (load "~/.emacs.d/lisp/rama-mode.el"))
+
+#+end_src
+
+* Functions
+#+begin_src emacs-lisp
+  ;;; Functions
+
+  ;; Get current system type
+  (defun insert-system-type()
+    (interactive)
+    "Get current system type"
+    (insert (format "%s" system-type)))
+
+  ;; Check if system is Darwin/Mac OS X
+  (defun system-type-is-darwin ()
+    (interactive)
+    "Return true if system is darwin-based (Mac OS X)"
+    (string-equal system-type "darwin"))
+
+  ;; Check if system is GNU/Linux
+  (defun system-type-is-gnu ()
+    (interactive)
+    "Return true if system is GNU/Linux-based"
+    (string-equal system-type "gnu/linux"))
+
+
+  (defun google ()
+    "Google the selected region if any, display a query prompt otherwise."
+    (interactive)
+    (browse-url
+     (concat
+      "http://www.google.com/search?ie=utf-8&oe=utf-8&q="
+      (url-hexify-string (if mark-active
+           (buffer-substring (region-beginning) (region-end))
+         (read-string "Google: "))))))
+
+  (defun wtf-googlemaps-lat-lon ()
+    "Open in google maps the selected region if any, otherwise display a query prompt. Expects lat/lon pair to be whitespace separated"
+    (interactive)
+    (let* ((lat-lon-string (url-hexify-string (if mark-active
+           (buffer-substring (region-beginning) (region-end))
+           (read-string "Googlemaps lat/lon: "))))
+           (lat-lon-list (split-string lat-lon-string))
+           (lat (nth 0 lat-lon-list))
+           (lon (nth 1 lat-lon-list))
+           (url-params (concat lat "%2C" lon)))
+      (browse-url
+       (concat "http://maps.google.com/?q=" lat))))
+
+
+  (defun sort-words (reverse beg end)
+    "Sort words in region alphabetically, in REVERSE if negative.
+      Prefixed with negative \\[universal-argument], sorts in reverse.
+
+      The variable `sort-fold-case' determines whether alphabetic case
+      affects the sort order.
+
+      See `sort-regexp-fields'."
+    (interactive "*P\nr")
+    (sort-regexp-fields reverse "[a-zA-Z0-9_\-]+" "\\&" beg end))
+
+  ;; ------- misc -------
+  (defun wtf-url-decode-region (start end)
+    "Replace a region with the same contents, only URL decoded."
+    (interactive "r")
+    (let ((text (url-unhex-string (buffer-substring start end))))
+      (delete-region start end)
+      (insert text)))
+
+  (defun wtf-url-encode-region (start end)
+    "Replace a region with the same contents, only URL encoded."
+    (interactive "r")
+    (let ((text (url-hexify-string (buffer-substring start end))))
+      (delete-region start end)
+      (insert text)))
+
+  (defun wtf-display-utc-time ()
+    "Display the current UTC time in the minibuffer."
+    (interactive)
+    (let ((utc-time (format-time-string "%Y-%m-%d %H:%M:%S" (current-time) t)))
+      (message "Current UTC time: %s" utc-time)))
+#+end_src
+
+
+* Common Setup
+#+begin_src emacs-lisp
+
+  ;; Store downloaded packages in a directory corresponding to the emacs version we are running
+  ;; Make upgrading emacs to a new major version easier/safer
+  (setopt package-user-dir (format "~/.emacs.d/elpa-%d" emacs-major-version))
+
+  ;; Fix problem where emacs can not connect to melpa
+  ;; https://emacs.stackexchange.com/questions/51721/failed-to-download-gnu-archive
+  ;; TODO 2/15/25 - is this still a problem?
+  (setopt gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+
+
+  ;; ---- Garbage collection ----
+  ;;
+  ;; Set garbage collection threshold
+  ;; (setopt gc-cons-threshold #x40000000)     ;; 1GB
+   (setopt gc-cons-threshold (* 800 1024 1024)) ;; 800mb
+  ;;(setopt gc-cons-threshold (* 100 1024 1024)) ;; 100mb
+
+  ;; Show how long we are spending doing GC
+  ;; see https://akrl.sdf.org/#orgc15a10d
+  (defmacro k-time (&rest body)
+    "Measure and return the time it takes evaluating BODY."
+    `(let ((time (current-time)))
+       ,@body
+       (float-time (time-since time))))
+
+  ;; When idle for 60 seconds run the GC no matter what.
+  (defvar k-gc-timer
+    (run-with-idle-timer 60 t
+                         (lambda ()
+                           (message "Garbage Collector has run for %.06fsec"
+                                    (k-time (garbage-collect))))))
+
+  ;; ---- package management ----
+  (require 'package)
+  ;; If you want to see how long packages take to load
+  ;; when emacs starts, uncomment the next line
+  ;; (setopt use-package-compute-statistics t)
+  ;; then evaluate this function
+  ;; (use-package-report)
+  ;;
+  ;; Output will look like this, and helps identify slow loading
+  ;; packages that could potentially have their loading deferred
+  ;; ox-reveal                 Configured    11:43:16.207041         0.77
+  ;; treesit                   Configured    11:43:16.604111         0.34
+  ;; js2-mode                  Configured    11:43:16.790564         0.29
+
+
+  (setopt package-enable-startup nil)
+  (add-to-list 'package-archives
+               '("nongnu" . "https://elpa.nongnu.org/nongnu/") t)
+  (add-to-list 'package-archives
+               '("melpa" . "https://melpa.org/packages/") t)
+  (add-to-list 'package-archives
+               '("melpa-stable" . "https://stable.melpa.org/packages/") t)
+
+
+  (add-to-list 'package-pinned-packages '(company . "melpa-stable") t)
+  (add-to-list 'package-pinned-packages '(doom-modeline . "melpa-stable") t)
+  (add-to-list 'package-pinned-packages '(flycheck . "melpa-stable") t)
+  (add-to-list 'package-pinned-packages '(git-gutter . "melpa-stable") t)
+  (add-to-list 'package-pinned-packages '(gptel . "melpa-stable") t)
+  (add-to-list 'package-pinned-packages '(helm . "melpa-stable") t)
+  (add-to-list 'package-pinned-packages '(helm-core . "melpa-stable") t)
+  (add-to-list 'package-pinned-packages '(lsp-mode . "melpa-stable") t)
+  (add-to-list 'package-pinned-packages '(lsp-ui . "melpa-stable") t)
+  (add-to-list 'package-pinned-packages '(magit . "melpa-stable") t)
+  (add-to-list 'package-pinned-packages '(magit-section . "melpa-stable") t)
+  (add-to-list 'package-pinned-packages '(markdown-mode . "melpa-stable") t)
+  (add-to-list 'package-pinned-packages '(projectile . "melpa-stable") t)
+  ;; is this needed now that transient is built in to emacs?
+  (add-to-list 'package-pinned-packages '(transient . "melpa-stable") t)
+  ;; with-editor is a magit dependency
+  (add-to-list 'package-pinned-packages '(with-editor . "melpa-stable") t)
+
+  (package-initialize)
+  (unless (package-installed-p 'use-package)
+    (package-refresh-contents)
+    (package-install 'use-package))
+
+  ;; use-package-hook-name-suffix is a variable defined in ‘use-package-core.el’.
+  ;; Its default value is "-hook"
+  ;; Text append to the name of hooks mentioned by :hook.
+  ;; Set to nil if you don’t want this to happen; it’s only a convenience.
+  ;;
+  ;; Or to put another way the way use-package works by default is to add
+  ;; the value of this variable to the name of the hook.
+  ;; So the default way to add a hook would look like:
+  ;; :hook (after-init . projectile-mode)
+  ;; but with use-package-hook-name-suffix set to nil it would be:
+  ;; :hook (after-init-hook . projectile-mode)
+  ;; (setopt use-package-hook-name-suffix nil)
+
+
+  ;; Helm appears to be using ffap internally which can cause
+  ;; network requests if you M-x while the cursor is on a URL
+  ;; causing emacs to lock up for up to a few seconds, disable this.
+  ;; See https://github.com/emacs-helm/helm/issues/648
+  (setopt ffap-machine-p-known 'reject)
+
+  ;; Note that for all-the-icons to work you must manually install them by calling
+  ;; M-x all-the-icons-install-fonts
+  (use-package all-the-icons
+    :ensure t
+    :if (display-graphic-p))
+
+
+  ;; Fonts
+  (defun font-available-p (font-name)
+    (find-font (font-spec :name font-name)))
+
+  ;; (cond
+  ;;  ((font-available-p "Cascadia Code")
+  ;;   (set-frame-font "Cascadia Code-12"))
+  ;;  ((font-available-p "Menlo")
+  ;;   (set-frame-font "Menlo-12"))
+  ;;  ((font-available-p "DejaVu Sans Mono")
+  ;;   (set-frame-font "DejaVu Sans Mono-12"))
+  ;;  ((font-available-p "Inconsolata")
+  ;;   (set-frame-font "Inconsolata-12")))
+
+  ;; ------- Keybindings -------
+
+  ;; Override opening the buffer menu so it happens in the same window, rather than a new one.
+  (global-set-key (kbd "C-x C-b") 'buffer-menu)
+
+  ;; Map C-x C-u to undo
+  (define-key global-map "\C-x\C-u" 'undo)
+
+  ;; Don't bind (suspend-emacs)
+  (global-unset-key (kbd "C-z"))
+
+  ;; Wind Move
+  ;; Move point from window to window using meta and the arrow keys,
+  ;; rather than having to use C-x o
+  (windmove-default-keybindings 'meta)
+
+
+  ;; ------- Visual Settings -------
+
+  ;; Use a larger font on bigger monitors
+  (if (> (display-pixel-width) 1440)
+    (set-face-attribute 'default nil :height 200)
+    (set-face-attribute 'default nil :height 120))
+
+  ;; Ensure line and column numbers are displayed on the mode line
+  (setopt line-number-mode t) ; Default is on for line, but set it anyways
+  (setopt column-number-mode t)
+
+  (setopt visible-bell t)
+
+  ;; Maximize Emacs frame on startup
+  ;; http://emacs.stackexchange.com/questions/2999/how-to-maximize-my-emacs-frame-on-start-up
+  (add-to-list 'default-frame-alist '(fullscreen . maximized))
+
+  ;; Alternatively, you can set the dimensions of the initial frame like this
+  ;;(setopt initial-frame-alist '((top . 0) (left . 0) (width . 120) (height . 80)))
+
+  ;; Highlight current line of characters
+  (global-hl-line-mode t)
+
+  ;; ------- flyspell -------
+  ;; Enable flyspell in text-mode
+  (add-hook 'text-mode-hook 'flyspell-mode)
+
+  ;; When programming, enable Flyspell mode for comments and strings only.
+  (add-hook 'prog-mode-hook 'flyspell-prog-mode)
+
+
+  ;; ------- Misc -------
+
+  ;; Allow typing TAB to show/hide headings in outline-minor-mode
+  (setopt outline-minor-mode-cycle t)
+
+  ;; Don't show the splash screen
+  (setopt inhibit-startup-screen t)
+
+  ;; Don't include a message in the *scratch* buffer
+  (setopt initial-scratch-message "")
+
+  (setopt default-directory "~/")
+
+  ;; Enable semantic-mode
+  ;; TODO do I still want this enabled now that I mostly use lsp-mode?
+  (semantic-mode 1)
+
+  ;; Set default major mode to text-mode
+  (setopt default-major-mode 'text-mode)
+
+
+
+  ;; Use y or n for emacs yes or no questions
+  (defalias 'yes-or-no-p 'y-or-n-p)
+
+  ;; Open .gz, etc files for editing
+  (auto-compression-mode 1)
+
+  ;; Use Emacs terminfo, not system terminfo
+  ;; http://stackoverflow.com/questions/8918910/weird-character-zsh-in-emacs-terminal
+  (setopt system-uses-terminfo nil)
+
+  ;; Prefer utf-8 encoding
+  (prefer-coding-system 'utf-8)
+
+  ;; Pasting over something kills it
+  (delete-selection-mode 1)
+
+  ;; No tabs in indentation
+  (setq-default indent-tabs-mode nil)
+
+  ;; Ask before exiting emacs
+  (setopt confirm-kill-emacs #'y-or-n-p)
+
+  ;; Enable uppercasing and lowercasing on regions
+  (put 'downcase-region 'disabled nil)
+  (put 'upcase-region 'disabled nil)
+
+  ;; ------- markdown-mode -------
+  (use-package markdown-mode
+    :ensure t
+    :mode ("README\\.md\\'" . gfm-mode) ;; github flavored markdown
+    :init (setq markdown-command "pandoc")
+    :bind (:map markdown-mode-map
+           ("C-c C-e" . markdown-do)))
+
+  ;; ------- rainbow-mode -------
+  ;; Colorize color names in programming buffers
+  ;; For example: white or black or #000000
+  (use-package rainbow-mode
+    :ensure t
+    :config
+    (add-hook 'prog-mode-hook #'rainbow-mode))
+
+
+  ;; ------- multiple-cursors -------
+  (use-package multiple-cursors
+    :ensure t
+    :bind (("C->" . mc/mark-next-like-this)
+           ("C-<" . mc/mark-previous-like-this)
+           ("C-c C-<" . mc/mark-all-like-this)
+           ("C-S-c C-S-c" . mc/edit-lines)))
+
+
+  ;; ;; -------yasnippet -------
+  ;; (use-package yasnippet
+  ;;   :ensure t
+  ;;   :config
+  ;;   (yas-reload-all)
+  ;;   (add-hook 'prog-mode-hook 'yas-minor-mode)
+  ;;   (add-hook 'text-mode-hook 'yas-minor-mode))
+
+  ;; ;; The official collection of snippets for yasnippet.
+  ;; ;; https://github.com/AndreaCrotti/yasnippet-snippets
+  ;; (use-package yasnippet-snippets
+  ;;   :ensure t)
+
+  ;; ------- abbrev-mode -------
+  ;; To add abbreviations type the word you want to use as expansion, and then
+  ;; type 'C-x a g' and the abbreviation for it.
+
+  (setopt abbrev-file-name           ;; tell emacs where to read abbrev
+    "~/.emacs.d/custom/abbrev-defs") ;; definitions from
+
+  (setopt save-abbrevs t)            ;; save abbrevs when files are saved
+                                     ;; you will be asked before the abbreviations are saved
+
+  (setq-default abbrev-mode t)       ;; Turn on abbrev mode globally
+
+
+  ;; If you only want it on in text and derived modes, you could do something like this:
+  ;;(add-hook 'text-mode-hook (lambda () (abbrev-mode 1)))
+
+  ;; For multiple modes, use something like the following:
+  ;;(dolist (hook '(erc-mode-hook
+  ;;emacs-lisp-mode-hook
+  ;;text-mode-hook))
+  ;;(add-hook hook (lambda () (abbrev-mode 1))))
+
+  ;; ------- which-key -------
+  ;; This package is a built-in as of emacs 30
+  (use-package which-key
+    :ensure t
+    :init
+    (which-key-mode)
+    :config
+    (which-key-setup-side-window-right-bottom)
+    :custom
+    (which-key-sort-order 'which-key-description-order)
+    (which-key-side-window-max-width 0.33)
+    (which-key-side-window-max-height 0.25)
+    (which-key-idle-delay 0.05))
+
+  ;; By default, Which-key doesn't give much help for prefix-keys.  It
+  ;; either shows the generic description, "+prefix", or the name of a
+  ;; prefix-command, which usually isn't as descriptive as we'd like.
+  ;;
+  ;; Here are some descriptions for the default bindings in `global-map'
+  ;; and `org-mode-map'.
+  (which-key-add-key-based-replacements
+    "<f1> 4"        "help-other-win"
+    "<f1>"          "help"
+    "<f2>"          "2-column"
+    "C-c"           "mode-and-user"
+    "C-c @"         "outline-minor-mode"
+    "C-h 4"         "help-other-win"
+    "C-h"           "help"
+    "C-x 4"         "other-window"
+    "C-x 5"         "other-frame"
+    "C-x 6"         "2-column"
+    "C-x 8 e"       "insert-emoji"
+    "C-x 8"         "insert-special"
+    "C-x C-k C-q"   "kmacro-counters"
+    "C-x C-k C-r a" "kmacro-add"
+    "C-x C-k C-r"   "kmacro-register"
+    "C-x C-k"       "keyboard-macros"
+    "C-x RET"       "encoding/input"
+    "C-x a i"       "abbrevs-inverse-add"
+    "C-x a"         "abbrevs"
+    "C-x n"         "narrowing"
+    "C-x p"         "projects"
+    "C-x r"         "reg/rect/bkmks"
+    "C-x t ^"       "tab-bar-detach"
+    "C-x t"         "tab-bar"
+    "C-x v M"       "vc-mergebase"
+    "C-x v b"       "vc-branch"
+    "C-x v"         "version-control"
+    "C-x w ^"       "window-detach"
+    "C-x w"         "window-extras"
+    "C-x x"         "buffer-extras"
+    "C-x"           "extra-commands"
+    "M-g"           "goto-map"
+    "M-s h"         "search-highlight"
+    "M-s"           "search-map")
+
+  ;; Org-mode provides some additional prefix-keys in `org-mode-map'.
+  (with-eval-after-load 'org
+    (which-key-add-keymap-based-replacements org-mode-map
+      "C-c \""      "org-plot"
+      "C-c C-v"     "org-babel"
+      "C-c C-x"     "org-extra-commands"))
+
+  ;; ------- Dired -------
+  (require 'dired )
+  (setq dired-listing-switches "-lh")
+
+  ;; ------- Company -------
+  (use-package company
+    :ensure t
+    :config
+    (add-hook 'after-init-hook 'global-company-mode)
+    :custom
+    (company-idle-delay 0)
+    (company-minimum-prefix-length 1))
+
+  ;; ------- restclient -------
+  ;; TODO this package is now archived https://github.com/pashky/restclient.el
+  ;; look at alternatives like https://github.com/federicotdn/verb
+  (use-package restclient
+    :ensure t
+    :mode ("\\.http\\'" . restclient-mode))
+
+  ;; ------- zenburn-theme -------
+  (use-package zenburn-theme
+    :ensure t
+    :config
+    (load-theme 'zenburn t))
+
+  ;; ------- uniquify -------
+  (use-package uniquify
+    :ensure nil
+    :custom
+    (uniquify-buffer-name-style 'post-forward-angle-brackets))
+
+  ;; ------- expand-region -------
+  (use-package expand-region
+    :ensure t
+    :bind (("C-=" . er/expand-region)))
+
+  ;; ------- midnight -------
+  ;; At 4:30 in the morning kill any buffers that have not been used in 4 days
+  ;; https://www.emacswiki.org/emacs/MidnightMode
+  ;; By default the ‘midnight-hook’ is configured to just run the CleanBufferList command
+  (use-package midnight
+    :defer 10
+    :config
+    (midnight-delay-set 'midnight-delay "4:30am")
+    :custom
+    (clean-buffer-list-delay-general 4))
+
+  ;; ------- paren-mode -------
+  (setopt show-paren-delay 0) ; how long to wait?
+  (show-paren-mode t) ; turn paren-mode on
+
+  ;; ------- neotree -------
+  ;; https://github.com/jaypei/emacs-neotree
+  (use-package neotree
+    :ensure t
+    :init
+    (require 'neotree)
+    (global-set-key [f8] 'neotree-toggle)
+    :config
+    (setopt neo-theme (if (display-graphic-p) 'icons 'arrow))
+    (setopt neo-smart-open t))
+
+  ;; ------- beacon -------
+  ;; Beacon — Never lose your cursor again
+  ;; https://github.com/Malabarba/beacon
+  (use-package beacon
+    :ensure t
+    :init
+    (beacon-mode 1)
+    :custom
+    (beacon-push-mark 35)
+    (beacon-color "#666600"))
+
+  ;; ------- projectile -------
+  (use-package projectile
+    :ensure t)
+
+  ;; (use-package projectile
+  ;;   :ensure t
+  ;;   :init
+  ;;   (projectile-mode +1)
+  ;;   (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map)
+  ;;   (define-key projectile-mode-map (kbd "C-c p") 'projectile-command-map)
+  ;;   :config
+  ;;   (add-to-list 'projectile-globally-ignored-directories "node_modules"))
+
+  ;; ------- ripgrep -------
+  ;; install the binary with
+  ;; brew install ripgrep
+  (use-package ripgrep
+    :ensure t)
+
+  ;; ----------- emacs shell ----------------------------
+  ; Dont echo passwords
+  (add-hook 'comint-output-filter-functions
+            'comint-watch-for-password-prompt)
+
+  ;; Clear shell buffer with C-c l (like C-l in a terminal)
+  (defun my-clear ()
+    (interactive)
+    (let ((comint-buffer-maximum-size 0))
+      (comint-truncate-buffer)))
+
+  (defun my-shell-hook ()
+    (local-set-key "\C-cl" 'my-clear))
+
+  (add-hook 'shell-mode-hook 'my-shell-hook)
+
+  ;; ------- Backup files -------
+  ;; Disable backup files
+  (setopt backup-inhibited t)
+  ;; Disable auto save files
+  (setopt auto-save-default nil)
+  ;; Disable lock files - temp symlinks that start with .#
+  (setopt create-lockfiles nil)
+
+  ;; (setq
+  ;;    backup-by-copying t      ; don't clobber symlinks
+  ;;    backup-directory-alist
+  ;;    '(("." . "~/.saves"))    ; don't litter my fs tree
+  ;;    delete-old-versions t
+  ;;    kept-new-versions 6
+  ;;    kept-old-versions 2
+  ;;    version-control t)       ; use versioned backups
+
+
+
+  ;; ------- Save Place -------
+  (setopt save-place-file "~/.emacs.d/saveplace") ;; keep my ~/ clean
+  (save-place-mode 1)
+
+  ;; ------- recentf -------
+  (use-package recentf
+    :config
+    (recentf-mode +1)
+    :custom
+    (recentf-save-file "~/.emacs.d/.recentf")
+          (recentf-max-saved-items 500)
+          (recentf-max-menu-items 25)
+          ;; disable recentf-cleanup on Emacs start, because it can cause problems with remote files
+          (recentf-auto-cleanup 'never))
+
+  (global-set-key "\C-x\ \C-r" 'recentf-open-files)
+
+  ;; ------- tramp -------
+  (setopt tramp-default-method "ssh")  
+#+end_src
+
+* org-mode
+#+begin_src emacs-lisp
+    ;;; org-mode
+  ;; ------- org-reveal -------
+  ;; https://github.com/hexmode/ox-reveal
+  ;; Reveal.js is a tool for creating good-looking HTML presentations.
+  ;; Org-Reveal exports your Org documents to reveal.js presentations.
+  ;; Wait 3 seconds to load as this package is somewhat
+  ;; slow to load, and this helps with emacs startup speed
+  (use-package ox-reveal
+    :defer 3
+    :after org
+    :ensure t)
+
+  ;; Can be used for syntax highlighting in org-reveal
+  (use-package htmlize
+    :ensure t)
+
+  ;; ------- org-babel settings -------
+  ;; Supported languages at https://orgmode.org/worg/org-contrib/babel/languages/index.html
+  (with-eval-after-load 'org
+    (org-babel-do-load-languages
+     'org-babel-load-languages
+     '(
+       (emacs-lisp . t)
+       (js . t)
+       ;; (http . t) ;; see https://github.com/zweifisch/ob-http
+       (python . t)
+       (shell . t))))
+
+  ;; ------- org-mode settings -------
+  (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
+  (setopt org-directory "~/org-mode/")
+  (setopt org-return-follows-link t)
+  (setopt org-startup-indented t)
+
+
+  ;; ------- key bindings -------
+  (defvar-keymap wtf-prefix-org-mode-map
+    :doc "Prefix key map for org-mode functions I often call."
+    "a" #'org-agenda
+    "b" #'org-switchb
+    "c" #'org-capture
+    "l" #'org-store-link)
+
+  (defvar-keymap wtf-prefix-map
+    :doc "My prefix key map."
+    "o" wtf-prefix-org-mode-map)
+
+  ;; Bind the prefix key map to a key.
+  ;; Notice the absence of a quote for the map's symbol.
+  (keymap-set global-map "C-c" wtf-prefix-map)
+
+  ;; Define how the nested keymaps are labelled in `which-key-mode'.
+  (which-key-add-keymap-based-replacements wtf-prefix-map
+    "o" `("org-mode" . ,wtf-prefix-org-mode-map))
+
+  ;; ------- tags -------
+  (setopt org-tag-alist
+          '(;; Places
+            ("@work" . ?w)
+            ("@home" . ?h)
+            ("laptop" . ?l)
+
+            ;; Activities
+            ("@email" . ?e)))
+
+  (setopt org-todo-keywords
+    '((sequence "TODO" "IN-PROGRESS" "WAITING" "DONE")))
+
+  ;; ------- Org Capture -------
+  (setopt org-default-notes-file (concat org-directory "/notes.org"))
+  (setopt org-capture-templates
+    '(("t" "Todo" entry (file+headline (concat org-directory "/gtd.org") "Tasks")
+        "* TODO %?\n %i\n")
+       ("l" "Link" plain (file (concat org-directory "/links.org"))
+         "- %?\n %x\n")))
+
+  ;; ------- Org agenda-------
+  ; Store list of agenda files in org folder so we can easily use
+  ; git to keep it synced
+  (setopt org-agenda-files (concat org-directory ".agenda-files"))
+
+  ; Start the agenda on today instead of the monday of this week
+  (setopt org-agenda-start-on-weekday nil)
+
+  ; Show two weeks in the agenda view
+  (setopt org-agenda-span 14)
+
+  ;; ------- Misc -------
+  ; Don't close windows on exit
+  (setopt org-agenda-window-setup 'current-window)
+
+  ; Use solarized CSS for export  http://thomasf.github.io/solarized-css/
+  (setopt org-export-html-style-include-scripts nil
+        org-export-html-style-include-default nil)
+  (setopt org-export-html-style
+        (concat "<link rel=\"stylesheet\" type=\"text/css\" href=\"" (expand-file-name org-directory) "css/solarized-light.min.css\" />"))
+
+
+  ;; Use unicode symbol to display org-mode checkboxes
+  ;; https://blog.jft.rocks/emacs/unicode-for-orgmode-checkboxes.html
+  (add-hook 'org-mode-hook (lambda ()
+    "Beautify Org Checkbox Symbol"
+    (push '("[ ]" . "☐") prettify-symbols-alist)
+    (push '("[X]" . "☑") prettify-symbols-alist)
+    (push '("[-]" . "❍") prettify-symbols-alist)
+    (prettify-symbols-mode)))
+
+  (defface org-checkbox-done-text
+    '((t (:foreground "#71696A" :strike-through t)))
+    "Face for the text part of a checked org-mode checkbox.")
+
+  (font-lock-add-keywords
+   'org-mode
+   `(("^[ \t]*\\(?:[-+*]\\|[0-9]+[).]\\)[ \t]+\\(\\(?:\\[@\\(?:start:\\)?[0-9]+\\][ \t]*\\)?\\[\\(?:X\\|\\([0-9]+\\)/\\2\\)\\][^\n]*\n\\)"
+      1 'org-checkbox-done-text prepend))
+   'append)
+
+#+end_src
+
+* macOS
+#+begin_src emacs-lisp
+  ;;; macOS
+  ;; Open emacs in front of the terminal window on OS X instead of behind
+  ;; http://stackoverflow.com/questions/10171280/how-to-launch-gui-emacs-from-command-line-in-osx
+  (if (system-type-is-darwin)
+    (x-focus-frame nil))
+
+  ;; Use command as meta on OS X
+  (setopt mac-option-modifier 'super)
+  (setopt mac-command-modifier 'meta)
+
+  ;; Let M-x toggle-frame-fullscreen work correctly on OS X
+  (setopt ns-use-native-fullscreen nil)
+
+  (if (system-type-is-darwin)
+    (setopt ispell-program-name "/opt/homebrew/bin/ispell"))
+  
+#+end_src
+
+* ibuffer
+#+begin_src emacs-lisp
+  ;;; ibuffer
+  (global-set-key (kbd "C-x C-b") 'ibuffer)
+  (autoload 'ibuffer "ibuffer" "List buffers." t)
+
+  (require 'ibuf-ext)
+  ;; Hide helm buffers
+  (add-to-list 'ibuffer-never-show-predicates "^\\*[Hh]elm")
+
+  ;; Show org-agenda files in own group
+  ;; http://emacs.stackexchange.com/questions/2087/predicates-in-ibuffer-saved-filter-groups
+  (defun my-org-agenda-filter ()
+    (let ((fname (buffer-file-name)))
+      (and fname
+           (member (file-truename fname)
+                   (mapcar 'file-truename (org-agenda-files))))))
+
+  ;; Show groups
+  (setopt ibuffer-saved-filter-groups
+        (quote (("default"
+                 ("Programming"
+                  (or
+                   (mode . clojure-mode)
+                   (mode . conf-toml-mode)
+                   (mode . elixir-mode)
+                   (mode . emacs-lisp-mode)
+                   (mode . java-mode)
+                   (mode . json-ts-mode)
+                   (mode . go-mode)
+                   (mode . pig-mode)
+                   (mode . python-mode)
+                   (mode . rust-mode)
+                   (mode . scala-mode)
+                   (mode . thrift-mode)
+                   (mode . typescript-mode)
+                   (mode . typescript-ts-mode) ; ts is short for tree-sitter
+                   (mode . web-mode)
+                   ))
+                 ("org-mode" (mode . org-mode))
+                 ;; ("org-agenda" (or
+                 ;;                (mode . org-agenda-mode)
+                 ;;                (predicate . (my-org-agenda-filter))))
+                 ("Dired" (mode . dired-mode))
+                 ("erc" (mode . erc-mode))
+                 ("Markdown" (mode . markdown-mode))
+  ;               ("helm" (or
+  ;                        (name . "^\\*helm")
+  ;                        (name . "^\\*Helm")))
+
+                 ("Emacs" (or
+                           (mode . package-menu-mode)
+                           (name . "^\\*scratch\\*$")
+                           (name . "^\\*Completions\\*$")
+                           (name . "^\\*Messages\\*$")))
+                 ("Magit" (or
+                           (name . "^magit-")
+                           (mode . magit-status-mode)))
+                 ))))
+
+
+  ;; Don't show filter groups if there are no buffers in that group
+  (setopt ibuffer-show-empty-filter-groups nil)
+
+  (add-hook 'ibuffer-mode-hook
+            (lambda ()
+              (ibuffer-switch-to-saved-filter-groups "default")))
+
+
+
+
+  ;; ---------- display --------------------------------
+  ;; Display human readable buffer sizes
+  (define-ibuffer-column size-h
+    (:name "Size")
+    (cond
+     ((> (buffer-size) 1000000) (format "%7.1fM" (/ (buffer-size) 1000000.0)))
+     ((> (buffer-size) 100000) (format "%7.0fk" (/ (buffer-size) 1000.0)))
+     ((> (buffer-size) 1000) (format "%7.1fk" (/ (buffer-size) 1000.0)))
+     (t (format "%8d" (buffer-size)))))
+
+  ;; Modify the default ibuffer-formats
+  (setopt ibuffer-formats
+        '((mark modified read-only " "
+                (name 34 34 :left :elide)
+                " "
+                (size-h 9 -1 :right)
+                " "
+                filename-and-process)))
+
+  ;; --------------------------------------
+
+
+  ;; Switching to ibuffer puts the cursor on the most recent buffer
+    (defadvice ibuffer (around ibuffer-point-to-most-recent) ()
+      "Open ibuffer with cursor pointed to most recent buffer name"
+      (let ((recent-buffer-name (buffer-name)))
+        ad-do-it
+        (ibuffer-jump-to-buffer recent-buffer-name)))
+    (ad-activate 'ibuffer)
+
+  ;; Hide the summary at the bottom of the buffer
+  (setopt ibuffer-display-summary nil)
+
+  ;; With this, when you press 'up' or 'down' to the top/bottom of IBuffer,
+  ;; the cursor wraps around to the bottom/top, so you can continue from there.
+  (defun ibuffer-previous-line ()
+    (interactive) (previous-line)
+    (if (<= (line-number-at-pos) 2)
+        (goto-line (count-lines (point-min) (point-max)))))
+  (defun ibuffer-next-line ()
+    (interactive) (next-line)
+    (if (>= (line-number-at-pos) (+ (count-lines (point-min) (point-max)) 1))
+        (goto-line 3)))
+  (define-key ibuffer-mode-map (kbd "<up>") 'ibuffer-previous-line)
+  (define-key ibuffer-mode-map (kbd "<down>") 'ibuffer-next-line)
+#+end_src
+
+* helm
+#+begin_src emacs-lisp
+
+  ;;; helm
+  (use-package helm
+    :ensure t
+    :bind (("C-x b" . helm-mini)
+           ("M-x" . helm-M-x)
+           ("M-y" . helm-show-kill-ring)
+           ("C-x C-f" . helm-find-files))
+    :config
+    (progn
+      (setq helm-split-window-in-side-p           t ; open helm buffer inside current window, not occupy whole other window
+            helm-move-to-line-cycle-in-source     t ; move to end or beginning of source when reaching top or bottom of source.
+            helm-ff-search-library-in-sexp        t ; search for library in `require' and `declare-function' sexp.
+            helm-scroll-amount                    8 ; scroll 8 lines other window using M-<next>/M-<prior>
+            helm-ff-file-name-history-use-recentf t
+            helm-M-x-fuzzy-match                  t
+            helm-buffers-fuzzy-matching           t
+            helm-recentf-fuzzy-match              t)
+      (helm-mode 1)))
+
+  ;;(global-set-key (kbd "C-c h o") 'helm-occur)
+  ;;(global-set-key (kbd "C-c h x") 'helm-register)
+  ;;(global-set-key (kbd "C-c h g") 'helm-google-suggest)
+
+
+  ;; The default "C-x c" is quite close to "C-x C-c", which quits Emacs.
+  ;; Changed to "C-c h". Note: We must set "C-c h" globally, because we
+  ;; cannot change `helm-command-prefix-key' once `helm-config' is loaded.
+  (global-set-key (kbd "C-c h") 'helm-command-prefix)
+  (global-unset-key (kbd "C-x c"))
+
+
+  ;; Allow arrow keys to once again change directories in helm-find-files
+  ;; See https://github.com/emacs-helm/helm/wiki/FAQ#arrow-keys-behavior-have-changed
+  (customize-set-variable 'helm-ff-lynx-style-map t)  
+#+end_src
+
+* hydra
+#+begin_src emacs-lisp
+  ;;; hydra
+  ;; https://github.com/abo-abo/hydra
+  (use-package hydra
+    :ensure t
+    :config
+    (setq my-default-hydra-delay 0.0))
+
+
+  ;; (defhydra hydra-zoom (global-map "<f2>")
+  ;;   "zoom"
+  ;;   ("g" text-scale-increase "in")
+  ;;   ("l" text-scale-decrease "out"))
+
+
+  ;; (defhydra hydra-yank-pop ()
+  ;;   "yank"
+  ;;   ("C-y" yank nil)
+  ;;   ("M-y" yank-pop nil)
+  ;;   ("y" (yank-pop 1) "next")
+  ;;   ("Y" (yank-pop -1) "prev")
+  ;;   ("l" helm-show-kill-ring "list" :color blue))   ; or browse-kill-ring
+  ;; (global-set-key (kbd "M-y") #'hydra-yank-pop/yank-pop)
+  ;; (global-set-key (kbd "C-y") #'hydra-yank-pop/yank)
+
+
+  ; TODO there are two helps defined here, choose one to keep
+
+  ; Help
+  (setq my-default-hydra-delay 0.0)
+
+  (defhydra hydra-metahelp-menu (:hint nil :exit t :idle my-default-hydra-delay :foreign-keys warn)
+    "
+  Describe                           ^^^^^^                             Goto         ^^ View
+  -----------------------------------------------------------------------------------------------------
+  _b_indings             _k_ey                   _s_ymbol               _e_:*Messages*  _a_propos
+  _c_:key-briefly        _K_ey (info)            _S_ymbol (info)        _i_nfo manual   _l_ossage
+  _C_oding system        _L_anguage environment  _C-s_yntax table ^     _._:local help
+  _d_ocumentation        _m_ode                  _v_ariable
+  _E_macs...             _p_ackage (by topic)
+  _f_unction             _P_ackage (by name)     _w_hereis (func->keys)
+  _F_unction (info)      _C-p_: external package
+  _I_:key input method                                           ^^^^^^                 _q_uit
+  "
+    ("?" counsel-hydra-heads)
+    ("a"   apropos-command)
+    ("b"   describe-bindings)
+    ("c"   describe-key-briefly)
+    ("C"   describe-coding-system)
+    ("d"   apropos-documentation)
+    ("e"   view-echo-area-messages)
+    ("E"   hydra-metahelp-emacs-menu/body)
+    ("f"   describe-function)
+    ("F"   Info-goto-emacs-command-node)
+    ("i"   info)
+    ("I"   describe-input-method)
+    ("k"   describe-key)
+    ("K"   Info-goto-emacs-key-command-node)
+    ("l"   view-lossage)
+    ("L"   describe-language-environment)
+    ("m"   describe-mode)
+    ("p"   finder-by-keyword)
+    ("P"   describe-package)
+    ("C-p" view-external-packages)
+    ("q"   nil nil)
+    ("s"   describe-symbol)
+    ("S"   info-lookup-symbol)
+    ("C-s" describe-syntax)
+    ("v"   describe-variable)
+    ("w"   where-is)
+    ("."   display-local-help))
+
+  (defhydra hydra-metahelp-emacs-menu (:hint nil :exit t :idle my-default-hydra-delay :foreign-keys warn)
+    "
+  Emacs
+  ----------------------------------------------------------------------------------------
+  _a_bout Emacs  _D_istribution  _h_ello file     _n_ews            _T_odo          _q_uit
+  _c_opying      _F_AQ           _i_nfo manual    known _p_roblems  no _w_arranty
+  _d_ebuging     _G_NU           order _m_anuals  _t_utorial
+  "
+    ("?" counsel-hydra-heads)
+    ("a" about-emacs)
+    ("c" describe-copying)
+    ("d" view-emacs-debugging)
+    ("D" describe-distribution)
+    ("F" view-emacs-FAQ)
+    ("G" describe-gnu-project)
+    ("h" view-hello-file)
+    ("i" info-manual)
+    ("n" view-emacs-news)
+    ("q" nil nil)
+    ("t" help-with-tutorial)
+    ("m" view-order-manuals)
+    ("p" view-emacs-problems)
+    ("T" view-emacs-todo)
+    ("w" describe-no-warranty))
+
+
+  (global-set-key (kbd "C-h") #'hydra-metahelp-menu/body)
+
+
+
+  ; Help
+  (defhydra hydra-help (:exit t)
+      ;; Better to exit after any command because otherwise helm gets in a
+      ;; mess, set hint to nil: written out manually.
+
+      "
+    Describe        ^^Keys                    ^^Search                    ^^Documentation
+    ---------------------------------------------------------------------------------------
+    _f_unction        _k_eybinding              _a_propros                  _i_nfo
+    _p_ackage         _w_here-is                _d_oc strings               _n_: man
+    _m_ode            _b_: show all bindings    _s_: info by symbol         
+    _v_ariable
+
+    "
+      ;; Boring help commands...
+      ("e" view-echo-area-messages "messages")
+      ("l" view-lossage "lossage")
+      ("C" describe-coding-system "coding-system")
+      ("I" describe-input-method "input-method")
+
+
+      ;; Documentation
+      ("i" info nil)
+      ("n" helm-man-woman nil)
+
+      ;; Keybinds
+      ("b" describe-bindings nil)
+      ("c" describe-key-briefly nil)
+      ("k" describe-key nil)
+      ("w" where-is nil)
+
+      ;; Search
+      ("a" apropos-command nil)
+      ("d" apropos-documentation nil)
+      ("s" info-lookup-symbol nil)
+
+      ;; Describe
+      ("f" describe-function nil)
+      ("p" describe-package nil)
+      ("m" describe-mode nil)
+      ("v" describe-variable nil)
+      ("y" describe-syntax nil)
+
+      ;; quit
+      ("q" help-quit "quit"))
+    (global-set-key (kbd "<f1>") #'hydra-help/body)
+
+
+
+  ;; ; Movement
+  ;; (global-set-key
+  ;;  (kbd "C-n")
+  ;;  (defhydra hydra-move
+  ;;    (:body-pre (next-line))
+  ;;    "move"
+  ;;    ("n" next-line)
+  ;;    ("p" previous-line)
+  ;;    ("f" forward-char)
+  ;;    ("b" backward-char)
+  ;;    ("a" beginning-of-line)
+  ;;    ("e" move-end-of-line)
+  ;;    ("v" scroll-up-command)
+  ;;    ;; Converting M-v to V here by analogy.
+  ;;    ("V" scroll-down-command)
+  ;;    ("l" recenter-top-bottom)))
+
+
+  ;; ; Transpose
+  ;; (global-set-key (kbd "C-c m")
+  ;;                 (defhydra hydra-transpose (:color red)
+  ;;                   "Transpose"
+  ;;                   ("c" transpose-chars "characters")
+  ;;                   ("w" transpose-words "words")
+  ;;                   ("o" org-transpose-words "Org mode words")
+  ;;                   ("l" transpose-lines "lines")
+  ;;                   ("s" transpose-sentences "sentences")
+  ;;                   ("e" org-transpose-elements "Org mode elements")
+  ;;                   ("p" transpose-paragraphs "paragraphs")
+  ;;                   ("t" org-table-transpose-table-at-point "Org mode table")
+  ;;                   ("q" nil "cancel" :color blue)))
+
+
+
+
+
+
+
+  ; Dired
+  (defhydra hydra-dired (:hint nil :color pink)
+    "
+  _+_ mkdir          _v_iew           _m_ark             _(_ details        _i_nsert-subdir    wdired
+  _C_opy             _O_ view other   _U_nmark all       _)_ omit-mode      _$_ hide-subdir    C-x C-q : edit
+  _D_elete           _o_pen other     _u_nmark           _l_ redisplay      _w_ kill-subdir    C-c C-c : commit
+  _R_ename           _M_ chmod        _t_oggle           _g_ revert buf     _e_ ediff          C-c ESC : abort
+  _Y_ rel symlink    _G_ chgrp        _E_xtension mark   _s_ort             _=_ pdiff
+  _S_ymlink          ^ ^              _F_ind marked      _._ toggle hydra   \\ flyspell
+  _r_sync            ^ ^              ^ ^                ^ ^                _?_ summary
+  _z_ compress-file  _A_ find regexp
+  _Z_ compress       _Q_ repl regexp
+
+  T - tag prefix
+  "
+    ("\\" dired-do-ispell)
+    ("(" dired-hide-details-mode)
+    (")" dired-omit-mode)
+    ("+" dired-create-directory)
+    ("=" diredp-ediff)         ;; smart diff
+    ("?" dired-summary)
+    ("$" diredp-hide-subdir-nomove)
+    ("A" dired-do-find-regexp)
+    ("C" dired-do-copy)        ;; Copy all marked files
+    ("D" dired-do-delete)
+    ("E" dired-mark-extension)
+    ("e" dired-ediff-files)
+    ("F" dired-do-find-marked-files)
+    ("G" dired-do-chgrp)
+    ("g" revert-buffer)        ;; read all directories again (refresh)
+    ("i" dired-maybe-insert-subdir)
+    ("l" dired-do-redisplay)   ;; relist the marked or singel directory
+    ("M" dired-do-chmod)
+    ("m" dired-mark)
+    ("O" dired-display-file)
+    ("o" dired-find-file-other-window)
+    ("Q" dired-do-find-regexp-and-replace)
+    ("R" dired-do-rename)
+    ("r" dired-do-rsynch)
+    ("S" dired-do-symlink)
+    ("s" dired-sort-toggle-or-edit)
+    ("t" dired-toggle-marks)
+    ("U" dired-unmark-all-marks)
+    ("u" dired-unmark)
+    ("v" dired-view-file)      ;; q to exit, s to search, = gets line #
+    ("w" dired-kill-subdir)
+    ("Y" dired-do-relsymlink)
+    ("z" diredp-compress-this-file)
+    ("Z" dired-do-compress)
+    ("q" nil)
+    ("." nil :color blue))
+
+  (define-key dired-mode-map "." 'hydra-dired/body)
+
+
+  ;; (defhydra hydra-projectile (:color teal
+  ;; 			    :columns 4)
+  ;;   "Projectile"
+  ;;   ("f"   helm-projectile-find-file           "Find File")
+  ;;   ("F"   helm-projectile-find-file-dwim      "Find File dwim")
+  ;;   ("g"   helm-projectile-grep                "grep")
+  ;;   ("r"   helm-projectile-recentf             "Recent Files")
+
+  ;;   ("z"   projectile-cache-current-file       "Cache Current File")
+  ;;   ("d"   helm-projectile-find-dir            "Find Directory")
+  ;;   ("b"   helm-projectile-switch-to-buffer    "Switch to Buffer")
+  ;;   ("c"   projectile-invalidate-cache         "Clear Cache")
+
+  ;;   ("X"   projectile-cleanup-known-projects   "Cleanup Known Projects")
+  ;;   ("o"   projectile-multi-occur              "Multi Occur")
+  ;;   ("s"   helm-projectile-switch-project      "Switch Project")
+  ;;   ("k"   projectile-kill-buffers             "Kill Buffers")
+
+  ;;   ("q"   nil "Cancel" :color blue))
+
+
+  ;; (define-key projectile-mode-map (kbd "C-c p") 'hydra-projectile/body)
+  ;; (define-key projectile-mode-map (kbd "s-p") 'hydra-projectile/body)
+
+
+  ;; (defhydra hydra-flycheck(
+  ;;                          ;;:pre (progn (setq hydra-lv t) (flycheck-list-errors))
+  ;;                          :pre (flycheck-list-errors)
+  ;;                               :post (quit-windows-on "*Flycheck errors*")
+  ;;                                         ;:post (progn (setq hydra-lv nil) (quit-windows-on "*Flycheck errors*"))
+  ;;                                         ;:hint nil
+  ;;                               :color teal)
+  ;;   "Errors"
+  ;;   ("f"  flycheck-error-list-set-filter                            "Filter")
+  ;;   ("j"  flycheck-next-error                                       "Next")
+  ;;   ("k"  flycheck-previous-error                                   "Previous")
+  ;;   ("gg" flycheck-first-error                                      "First")
+  ;;   ("G"  (progn (goto-char (point-max)) (flycheck-previous-error)) "Last")
+  ;;   ("q"  nil "Cancel" :color blue))
+
+  ;; (global-set-key (kbd "C-c e") #'hydra-flycheck/body)
+
+
+  ;; For jumping between code errors with C-x `
+  (defhydra hydra-next-error
+      (global-map "C-x")
+      "
+  Compilation errors:
+  _j_: next error        _h_: first error    _q_uit
+  _k_: previous error    _l_: last error
+  "
+      ("`" next-error     nil)
+      ("j" next-error     nil :bind nil)
+      ("k" previous-error nil :bind nil)
+      ("h" first-error    nil :bind nil)
+      ("l" (condition-case err
+               (while t
+                 (next-error))
+             (user-error nil))
+       nil :bind nil)
+      ("q" nil            nil :color blue))
+
+
+
+  (defhydra hydra-rectangle (:body-pre (rectangle-mark-mode 1)
+                             :color pink
+                             :post (deactivate-mark))
+    "
+    ^_k_^     _d_elete    _s_tring
+  _h_   _l_   _o_k        _y_ank
+
+    ^_j_^     _n_ew-copy  _r_eset
+  ^^^^        _e_xchange  _u_ndo
+  ^^^^        ^ ^         _p_aste
+  "
+    ("h" backward-char nil)
+    ("l" forward-char nil)
+    ("k" previous-line nil)
+    ("j" next-line nil)
+    ("e" exchange-point-and-mark nil)
+    ("n" copy-rectangle-as-kill nil)
+    ("d" delete-rectangle nil)
+    ("r" (if (region-active-p)
+             (deactivate-mark)
+           (rectangle-mark-mode 1)) nil)
+    ("y" yank-rectangle nil)
+    ("u" undo nil)
+    ("s" string-rectangle nil)
+    ("p" kill-rectangle nil)
+    ("o" nil nil))
+  (global-set-key (kbd "C-x SPC") 'hydra-rectangle/body)
+
+
+  ;; TODO make something similar, but for emojis
+  (defun my/insert-unicode (unicode-name)
+    "Same as C-x 8 enter UNICODE-NAME."
+    (insert-char (gethash unicode-name (ucs-names))))
+
+  (global-set-key
+   (kbd "C-x 9")
+   (defhydra hydra-unicode (:hint nil)
+     "
+          Unicode  _e_ €  _s_ ZERO WIDTH SPACE
+                   _f_ ♀  _o_ °   _m_ µ
+                   _r_ ♂  _a_ →
+          "
+     ("e" (my/insert-unicode "EURO SIGN"))
+     ("r" (my/insert-unicode "MALE SIGN"))
+     ("f" (my/insert-unicode "FEMALE SIGN"))
+     ("s" (my/insert-unicode "ZERO WIDTH SPACE"))
+     ("o" (my/insert-unicode "DEGREE SIGN"))
+     ("a" (my/insert-unicode "RIGHTWARDS ARROW"))
+     ("m" (my/insert-unicode "MICRO SIGN"))))
+
+  ;; TODO bind this to a key
+  (defhydra hydra-multiple-cursors (:hint nil)
+    "
+   Up^^             Down^^           Miscellaneous           % 2(mc/num-cursors) cursor%s(if (> (mc/num-cursors) 1) \"s\" \"\")
+  ------------------------------------------------------------------
+   [_p_]   Next     [_n_]   Next     [_l_] Edit lines  [_0_] Insert numbers
+   [_P_]   Skip     [_N_]   Skip     [_a_] Mark all    [_A_] Insert letters
+   [_M-p_] Unmark   [_M-n_] Unmark   [_s_] Search
+   [Click] Cursor at point       [_q_] Quit"
+    ("l" mc/edit-lines :exit t)
+    ("a" mc/mark-all-like-this :exit t)
+    ("n" mc/mark-next-like-this)
+    ("N" mc/skip-to-next-like-this)
+    ("M-n" mc/unmark-next-like-this)
+    ("p" mc/mark-previous-like-this)
+    ("P" mc/skip-to-previous-like-this)
+    ("M-p" mc/unmark-previous-like-this)
+    ("s" mc/mark-all-in-region-regexp :exit t)
+    ("0" mc/insert-numbers :exit t)
+    ("A" mc/insert-letters :exit t)
+    ("<mouse-1>" mc/add-cursor-on-click)
+    ;; Help with click recognition in this hydra
+    ("<down-mouse-1>" ignore)
+    ("<drag-mouse-1>" ignore)
+    ("q" nil))
+
+  (defhydra hydra-windows-nav (:color red)
+    ("s" shrink-window-horizontally "shrink horizontally" :column "Sizing")
+    ("e" enlarge-window-horizontally "enlarge horizontally")
+    ("b" balance-windows "balance window height")
+    ("m" maximize-window "maximize current window")
+    ("M" minimize-window "minimize current window")
+
+    ("h" split-window-below "split horizontally" :column "Split management")
+    ("v" split-window-right "split vertically")
+    ("d" delete-window "delete current window")
+    ("x" delete-other-windows "delete-other-windows")
+
+
+    ("z" ace-window "ace window" :color blue :column "Navigation")
+    ("h" windmove-left "← window")
+    ("j" windmove-down "↓ window")
+    ("k" windmove-up "↑ window")
+    ("l" windmove-right "→ window")
+    ("r" toggle-window-split "rotate windows") ; Located in utility functions
+    ("q" nil "quit menu" :color blue :column nil))
+  (global-set-key (kbd "M-n") 'hydra-windows-nav/body)
+
+
+
+  (defhydra hydra-git-gutter (:body-pre (git-gutter-mode 1)
+                                        :hint nil)
+    ("n" git-gutter:next-hunk "next hunk")
+    ("p" git-gutter:previous-hunk "previous hunk")
+    ("h" (progn (goto-char (point-min)) (git-gutter:next-hunk 1)) "first hunk")
+    ("l" (progn (goto-char (point-min)) (git-gutter:previous-hunk 1)) "last hunk")
+    ("<SPC>" git-gutter:popup-hunk "popup hunk")
+    ("s" git-gutter:stage-hunk "stage hunk")
+    ("r" git-gutter:revert-hunk "revert hunk")
+    ("q" nil "quit"))  
+#+end_src
+
+* doom-modeline
+#+begin_src emacs-lisp
+  ;;; doom-modeline
+  ;; https://github.com/seagle0128/doom-modeline
+
+  ;; Note that for all-the-icons to work you must manually install them by calling
+  ;; M-x all-the-icons-install-fonts
+
+  (use-package doom-modeline
+    :ensure t
+    :init (doom-modeline-mode 1))
+
+  ;; (require 'doom-modeline)
+  ;; (doom-modeline-mode 1)
+
+  ;; How tall the mode-line should be. It's only respected in GUI.
+  ;; If the actual char height is larger, it respects the actual height.
+  (setopt doom-modeline-height 25)
+
+  ;; How wide the mode-line bar should be. It's only respected in GUI.
+  (setopt doom-modeline-bar-width 3)
+
+  ;; Determines the style used by `doom-modeline-buffer-file-name'.
+  ;;
+  ;; Given ~/Projects/FOSS/emacs/lisp/comint.el
+  ;;   truncate-upto-project => ~/P/F/emacs/lisp/comint.el
+  ;;   truncate-from-project => ~/Projects/FOSS/emacs/l/comint.el
+  ;;   truncate-with-project => emacs/l/comint.el
+  ;;   truncate-except-project => ~/P/F/emacs/l/comint.el
+  ;;   truncate-upto-root => ~/P/F/e/lisp/comint.el
+  ;;   truncate-all => ~/P/F/e/l/comint.el
+  ;;   relative-from-project => emacs/lisp/comint.el
+  ;;   relative-to-project => lisp/comint.el
+  ;;   file-name => comint.el
+  ;;   buffer-name => comint.el<2> (uniquify buffer name)
+  ;;
+  ;; If you are expereicing the laggy issue, especially while editing remote files
+  ;; with tramp, please try `file-name' style.
+  ;; Please refer to https://github.com/bbatsov/projectile/issues/657.
+  (setopt doom-modeline-buffer-file-name-style 'truncate-upto-project)
+
+  ;; Whether display icons in mode-line or not.
+  (setopt doom-modeline-icon t)
+
+  ;; Whether display the icon for major mode. It respects `doom-modeline-icon'.
+  (setopt doom-modeline-major-mode-icon t)
+
+  ;; Whether display color icons for `major-mode'. It respects
+  ;; `doom-modeline-icon' and `all-the-icons-color-icons'.
+  (setopt doom-modeline-major-mode-color-icon t)
+
+  ;; Whether display icons for buffer states. It respects `doom-modeline-icon'.
+  (setopt doom-modeline-buffer-state-icon t)
+
+  ;; Whether display buffer modification icon. It respects `doom-modeline-icon'
+  ;; and `doom-modeline-buffer-state-icon'.
+  (setopt doom-modeline-buffer-modification-icon t)
+
+  ;; Whether display minor modes in mode-line or not.
+  (setopt doom-modeline-minor-modes nil)
+
+
+  ;; If non-nil, a word count will be added to the selection-info modeline segment.
+  (setopt doom-modeline-enable-word-count nil)
+
+  ;; Whether display buffer encoding.
+  (setopt doom-modeline-buffer-encoding t)
+
+  ;; Whether display indentation information.
+  (setopt doom-modeline-indent-info nil)
+
+  ;; If non-nil, only display one number for checker information if applicable.
+  (setopt doom-modeline-checker-simple-format t)
+
+  ;; The maximum displayed length of the branch name of version control.
+  (setopt doom-modeline-vcs-max-length 12)
+
+  ;; Whether display perspective name or not. Non-nil to display in mode-line.
+  (setopt doom-modeline-persp-name t)
+
+  ;; Whether display `lsp' state or not. Non-nil to display in mode-line.
+  (setopt doom-modeline-lsp t)
+
+  ;; Whether display github notifications or not. Requires `ghub` package.
+  (setopt doom-modeline-github nil)
+
+  ;; The interval of checking github.
+  (setopt doom-modeline-github-interval (* 30 60))
+
+  ;; Whether display environment version or not
+  (setopt doom-modeline-env-version t)
+  ;; Or for individual languages
+  (setopt doom-modeline-env-enable-python t)
+  (setopt doom-modeline-env-enable-ruby t)
+  (setopt doom-modeline-env-enable-perl t)
+  (setopt doom-modeline-env-enable-go t)
+  (setopt doom-modeline-env-enable-elixir t)
+  (setopt doom-modeline-env-enable-rust t)
+
+  ;; Change the executables to use for the language version string
+  (setopt doom-modeline-env-python-executable "python")
+  (setopt doom-modeline-env-ruby-executable "ruby")
+  (setopt doom-modeline-env-perl-executable "perl")
+  (setopt doom-modeline-env-go-executable "go")
+  (setopt doom-modeline-env-elixir-executable "iex")
+  (setopt doom-modeline-env-rust-executable "rustc")
+
+  ;; Whether display mu4e notifications or not. Requires `mu4e-alert' package.
+  (setopt doom-modeline-mu4e t)
+
+  ;; Whether display irc notifications or not. Requires `circe' package.
+  (setopt doom-modeline-irc t)
+
+  ;; Function to stylize the irc buffer names.
+  (setopt doom-modeline-irc-stylize 'identity)  
+#+end_src
+
+* Programming
+#+begin_src emacs-lisp
+  ;;; Programming
+  ;; ------- Language Server -------
+  (use-package lsp-mode
+    :ensure t
+    :commands (lsp lsp-deferred)
+    :hook ((elixir-mode . lsp-deferred)
+           ;; (go-mode . lsp-deferred)
+           (rust-mode . lsp-deferred)
+           ;; (scala-mode . lsp-deferred)
+           ;; (clojure-mode . lsp)
+           ;; (clojurec-mode . lsp)
+           ;; (clojurescript-mode . lsp)
+           (sh-mode . lsp-deferred)
+           (yaml-mode . lsp)
+           (typescript-ts-mode . lsp-deferred)
+           (terraform-mode . lsp-deferred)
+          )
+    :init
+    (add-to-list 'exec-path "~/bin/elixir-ls")
+    :bind (("M-j" . lsp-ui-imenu)
+           ("M-?" . lsp-find-references))
+    ;; :config
+    ;; (dolist (m '(clojure-mode
+    ;;              clojurec-mode
+    ;;              clojurescript-mode
+    ;;              clojurex-mode))
+    ;;   (add-to-list 'lsp-language-id-configuration `(,m . "clojure")))
+    :custom
+    (lsp-file-watch-threshold 2200))
+
+  (use-package lsp-ui
+    :ensure t
+    :commands lsp-ui-mode)
+
+  ;; ;; if you are helm user
+  ;; (use-package helm-lsp :commands helm-lsp-workspace-symbol)
+  ;; ;; if you are ivy user
+  ;; (use-package lsp-ivy :commands lsp-ivy-workspace-symbol)
+  ;; (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
+  ;; ;; optionally if you want to use debugger
+  ;; (use-package dap-mode)
+  ;; ;; (use-package dap-LANGUAGE) to load the dap adapter for your language
+
+
+  ;; TODO this could/should be in an :after in the use-package expression above?
+  (with-eval-after-load 'lsp-mode
+    (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.circleci\\'")
+    (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\deps$") ;; Elixir
+    (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]_build$") ;; Elixir
+    (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]postgres-data$")
+    (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.vagrant\\'"))
+
+  ;; (setopt lsp-eldoc-render-all t)
+  ;; (setopt lsp-enable-snippet t)
+
+
+  (setopt lsp-lens-enable t
+        lsp-semantic-tokens-enable t
+        lsp-ui-doc-enable nil
+        ;;lsp-ui-doc-position 'bottom
+        ;;lsp-ui-doc-delay 1.0
+        ;;lsp-ui-peek-enable t
+        lsp-ui-sideline-enable t
+        lsp-ui-imenu-enable t
+        lsp-idle-delay 0.500
+        lsp-ui-flycheck-enable t)
+
+  ;; ---- LSP Performance ----
+  ;; https://emacs-lsp.github.io/lsp-mode/page/performance/
+
+  ;; Increase the amount of data which Emacs reads from the process. Again the emacs default is too low 4k considering that the some of the language server responses are in 800k - 3M range.
+  (setopt read-process-output-max (* 3 1024 1024)) ;; 3mb
+
+  ;; ----- Flycheck -----
+  ;; TODO look into if I still need flycheck, am I actually using it
+  ;;   or is lsp-mode doing enough?
+  ;;   ie see https://github.com/emacs-lsp/lsp-mode/issues/318
+  (use-package flycheck
+    :ensure t)
+    ;; :init
+    ;; (add-hook 'clojure-mode-hook 'flycheck-mode))
+
+  (setopt flycheck-checker-error-threshold 1500)
+
+  (use-package flycheck-inline
+    :ensure t)
+  (with-eval-after-load 'flycheck
+    (add-hook 'flycheck-mode-hook #'flycheck-inline-mode))
+
+
+  ;; ----- tree-sitter -----
+  ;; TODO look at https://www.masteringemacs.org/article/how-to-get-started-tree-sitter
+
+  (use-package treesit
+        :mode (("\\.tsx\\'" . tsx-ts-mode)
+               ("\\.js\\'"  . typescript-ts-mode)
+               ;;("\\.mjs\\'" . typescript-ts-mode)
+               ;;("\\.mts\\'" . typescript-ts-mode)
+               ;;("\\.cjs\\'" . typescript-ts-mode)
+               ("\\.ts\\'"  . typescript-ts-mode)
+               ("\\.jsx\\'" . tsx-ts-mode)
+               ;;("\\.json\\'" .  json-ts-mode)
+               ;;("\\.Dockerfile\\'" . dockerfile-ts-mode)
+               ;;("\\.prisma\\'" . prisma-ts-mode)
+               ;; More modes defined here...
+               )
+        :preface
+        (defun os/setup-install-grammars ()
+          "Install Tree-sitter grammars if they are absent."
+          (interactive)
+          (dolist (grammar
+                   '((css . ("https://github.com/tree-sitter/tree-sitter-css" "v0.20.0"))
+                     (bash "https://github.com/tree-sitter/tree-sitter-bash")
+                     (html . ("https://github.com/tree-sitter/tree-sitter-html" "v0.20.1"))
+                     (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript" "v0.21.2" "src"))
+                     (json . ("https://github.com/tree-sitter/tree-sitter-json" "v0.24.8"))
+                     (python . ("https://github.com/tree-sitter/tree-sitter-python" "v0.20.4"))
+                     (go "https://github.com/tree-sitter/tree-sitter-go" "v0.20.0")
+                     (markdown "https://github.com/ikatyang/tree-sitter-markdown")
+                     (make "https://github.com/alemuller/tree-sitter-make")
+                     (elisp "https://github.com/Wilfred/tree-sitter-elisp")
+                     (cmake "https://github.com/uyha/tree-sitter-cmake")
+                     (c "https://github.com/tree-sitter/tree-sitter-c")
+                     (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
+                     (toml "https://github.com/tree-sitter/tree-sitter-toml")
+                     (tsx . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.23.2" "tsx/src"))
+                     (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.23.2" "typescript/src"))
+                     (yaml . ("https://github.com/ikatyang/tree-sitter-yaml" "v0.5.0"))
+                     (prisma "https://github.com/victorhqc/tree-sitter-prisma")))
+            (add-to-list 'treesit-language-source-alist grammar)
+            ;; Only install `grammar' if we don't already have it
+            ;; installed. However, if you want to *update* a grammar then
+            ;; this obviously prevents that from happening.
+            (unless (treesit-language-available-p (car grammar))
+              (treesit-install-language-grammar (car grammar)))))
+
+        ;; Optional, but recommended. Tree-sitter enabled major modes are
+        ;; distinct from their ordinary counterparts.
+        ;;
+        ;; You can remap major modes with `major-mode-remap-alist'. Note
+        ;; that this does *not* extend to hooks! Make sure you migrate them
+        ;; also
+        (dolist (mapping
+                 '(;;(python-mode . python-ts-mode)
+                   ;;(css-mode . css-ts-mode)
+                   (typescript-mode . typescript-ts-mode)
+                   (js-mode . typescript-ts-mode)
+                   ;;(js2-mode . typescript-ts-mode)
+                   ;;(c-mode . c-ts-mode)
+                   ;;(c++-mode . c++-ts-mode)
+                   ;;(c-or-c++-mode . c-or-c++-ts-mode)
+                   ;;(bash-mode . bash-ts-mode)
+                   ;;(css-mode . css-ts-mode)
+                   (json-mode . json-ts-mode)
+                   (js-json-mode . json-ts-mode)
+                   ;;(sh-mode . bash-ts-mode)
+                   ;;(sh-base-mode . bash-ts-mode)
+                   ))
+          (add-to-list 'major-mode-remap-alist mapping))
+        :config
+        (os/setup-install-grammars))
+
+  ;; ----- Misc -----
+  (use-package rainbow-delimiters
+    :ensure t
+    :config
+    (add-hook 'prog-mode-hook #'rainbow-delimiters-mode))
+
+  (use-package color-identifiers-mode
+    :ensure t
+    :config
+    (add-hook 'after-init-hook 'global-color-identifiers-mode))
+
+   ;; Enable trailing whitespace in programming modes
+  (dolist (hook '(prog-mode-hook))
+    (add-hook hook (lambda () (set-variable 'show-trailing-whitespace t))))
+
+  ;; Disable emacs built in version control for faster startup
+  ;; (setopt vc-handled-backends ())
+
+
+  ;; TODO also need to do this for anything using tree siter
+  ;;   for example typescript-ts-mode
+  (add-hook 'c++-mode-hook (lambda () (subword-mode +1)))
+  (add-hook 'clojure-mode-hook (lambda () (subword-mode +1)))
+  (add-hook 'csharp-mode-hook (lambda () (subword-mode +1)))
+  (add-hook 'elixir-mode-hook (lambda () (subword-mode +1)))
+  (add-hook 'go-mode-hook (lambda () (subword-mode +1)))
+  (add-hook 'java-mode-hook (lambda () (subword-mode +1)))
+  (add-hook 'just-mode-hook (lambda () (subword-mode +1)))
+  (add-hook 'rust-mode-hook (lambda () (subword-mode +1)))
+  (add-hook 'yaml-mode-hook (lambda () (subword-mode +1)))
+  (add-hook 'terraform-mode-hook (lambda () (subword-mode +1)))
+  (add-hook 'typescript-mode-hook (lambda () (subword-mode +1)))
+  ;;(add-hook 'js2-mode-hook (lambda () (subword-mode +1)))
+
+
+  ;; ----- git-gutter -----
+  (use-package git-gutter
+    :ensure t
+    :init
+    (global-git-gutter-mode +1))
+
+
+  ;; ------- magit -------
+  (use-package magit
+               :ensure t
+               :bind (("C-c m" . magit-status)))
+
+  ;; ------- Clojure -------
+  ;; Install a language server
+  ;; brew install clojure-lsp/brew/clojure-lsp-native
+
+  ;; (use-package flycheck-clj-kondo
+  ;;   :ensure t)
+
+  ;; (use-package clojure-mode
+  ;;   :ensure t
+  ;;   :config
+  ;;   (require 'flycheck-clj-kondo))
+
+  ;; (use-package cider
+  ;;   :ensure t)
+
+  ;; (add-hook 'cider-repl-mode-hook #'cider-company-enable-fuzzy-completion)
+  ;; (add-hook 'cider-mode-hook #'cider-company-enable-fuzzy-completion)
+  ;; (setopt cider-test-show-report-on-success t)
+
+  ;; ;; Syntax highlighting for babashka files
+  ;; (add-to-list 'interpreter-mode-alist '("bb" . clojure-mode))
+
+  ;; ---- Elixir ----
+  ;; Install a language server
+  ;; Download from https://github.com/elixir-lsp/elixir-ls/releases
+  ;; and unzip it into a directory
+  ;;
+  ;; curl -L https://github.com/elixir-lsp/elixir-ls/releases/latest/download/elixir-ls-1.11.zip --create-dirs -o ~/bin/elixir-ls/elixir-ls.zip
+  ;; cd ~/bin/elixir-ls && unzip elixir-ls.zip
+
+  ;;(setopt lsp-elixir-ls-download-url "https://github.com/elixir-lsp/elixir-ls/releases/download/v0.14.6/elixir-ls.zip")
+
+  ;; https://github.com/elixir-tools/credo-language-server
+  ;; Instructions say to install with this, but it seems to hang downloading from github?
+  ;; for now just download it manually and install to ~/bin (or somewhere else on the shell's path)
+  ;; M-x lsp-install-server credo-language-server
+  ;; (custom-set-variables '(lsp-credo-version "0.3.0"))
+
+  (defvar lsp-elixir--config-options (make-hash-table))
+  (add-hook 'lsp-after-initialize-hook
+            (lambda ()
+              (lsp--set-configuration `(:elixirLS, lsp-elixir--config-options))))
+
+  ;; ------- Rust -------
+  ;; Install a language server. Run this command in a terminal
+  ;; $ rustup component add rust-src
+
+  ;; Next, install rust-analyzer, download a binary from https://github.com/rust-analyzer/rust-analyzer/releases
+  ;; brew install rust-analyzer
+
+  (use-package rust-mode
+    :ensure t
+    :mode ("\\.rust$" . rust-mode)
+    :commands (rust-mode)
+    :config
+    (add-hook 'rust-mode-hook
+              (lambda () (setopt indent-tabs-mode nil)))
+    (setopt lsp-rust-server 'rust-analyzer)
+    (setq-default lsp-rust-analyzer-proc-macro-enable t))
+
+  ;; (use-package cargo
+  ;;   :ensure t
+  ;;   :after rust-mode
+  ;;   :config
+  ;;   (add-hook 'rust-mode-hook 'cargo-minor-mode))
+
+  ;; ------- TypeScript -------
+  ;; See
+  ;; https://www.ovistoica.com/blog/2024-7-05-modern-emacs-typescript-web-tsx-config
+  ;; https://vxlabs.com/2022/06/12/typescript-development-with-emacs-tree-sitter-and-lsp-in-2022/
+
+
+  ;; aligns annotation to the right hand side
+  (setopt company-tooltip-align-annotations t)
+
+  ;; ;; formats the buffer before saving
+  ;; ;; (add-hook 'before-save-hook 'tide-format-before-save)
+
+  ;; (add-hook 'typescript-mode-hook #'setup-tide-mode)
+
+
+
+  ;; ------- JavaScript -------
+  ;; TODO do I still need this package?
+  ;; (use-package js2-mode
+  ;;   :ensure t)
+
+  ;; (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+  ;; (add-to-list 'auto-mode-alist '("\\.json\\'" . js2-mode))
+  ;; ; (add-to-list 'auto-mode-alist '("\\.jsx$" . js2-mode))
+  ;; (add-hook 'js2-mode-hook (lambda () (setopt js2-basic-offset 2)))
+
+
+  ;; ------- Go -------
+  ;; (use-package go-mode
+  ;;   :defer t
+  ;;   :ensure t
+  ;;   :mode ("\\.go\\'" . go-mode))
+
+  ;; ;; go install golang.org/x/tools/gopls@latest
+  ;; ;; and ensure $HOME/go/bin is in the shell's path
+  ;; (setopt lsp-gopls-staticcheck t)
+  ;; (setopt lsp-gopls-complete-unimported t)
+  ;; ;; (lsp-register-custom-settings
+  ;; ;;  '(("gopls.completeUnimported" t t)
+  ;; ;;    ("gopls.staticcheck" t t)))
+
+
+  ;; ------- web-mode -------
+  (use-package web-mode
+    :ensure t
+    :mode
+    (("\\.phtml\\'" . web-mode)
+    ("\\.tpl\\.php\\'" . web-mode)
+    ("\\.jsp\\'" . web-mode)
+    ("\\.as[cp]x\\'" . web-mode)
+    ("\\.erb\\'" . web-mode)
+    ("\\.mustache\\'" . web-mode)
+    ("\\.djhtml\\'" . web-mode)
+    ("\\.jst.ejs\\'" . web-mode)
+    ("\\.html?\\'" . web-mode)
+    ("\\.jsx$" . web-mode)
+    ("\\.tsx$" . web-mode)
+    ("\\.eex\\'" . web-mode)
+    ("\\.leex\\'" . web-mode))
+    :custom
+    (web-mode-markup-indent-offset 2)
+    (web-mode-css-indent-offset 2)
+    (web-mode-code-indent-offset 2)
+    (web-mode-block-padding 2)
+    (web-mode-comment-style 2)
+    (web-mode-enable-css-colorization t)
+    (web-mode-enable-auto-pairing t)
+    (web-mode-enable-comment-keywords t)
+    (web-mode-enable-current-element-highlight t))
+
+
+  ;; ------- shader-mode -------
+  ;; ;; https://github.com/midnightSuyama/shader-mode
+  ;; (use-package shader-mode
+  ;;   :ensure t
+  ;;     :mode (("\\.shader\\'" . shader-mode)
+  ;;            ("\\.hlsl\\'" . shader-mode)))
+
+  ;; ------- yaml-mode -------
+  (use-package yaml-mode
+    :ensure t
+    :mode (("\\.yml$" . yaml-mode)
+           ("\\.yaml$" . yaml-mode)))
+
+  ;; ------- lua-mode -------
+  ;; https://github.com/immerrr/lua-mode
+  ;; (use-package lua-mode
+  ;;   :ensure t)
+
+  ;; ------- hcl-mode -------
+  ;; ;; Compatability with HCL and Terraform syntax
+  ;; (use-package hcl-mode
+  ;;   :ensure t)
+
+  ;; ------- terraform-mode -------
+  ;; (use-package terraform-mode
+  ;;   :ensure t
+  ;;   :mode (("\\.tpl\\'" . terraform-mode)
+  ;;          ("\\.tf\\'" . terraform-mode))
+
+  ;;   ;; Currently lsp-mode supports two terraform language servers.
+  ;;   ;; If you would want to go with the official Hashicorp's language server, set this:
+  ;;   :config (setopt lsp-disabled-clients '(tfls)))
+
+
+  ;; ------- Misc -------
+  (use-package dockerfile-mode
+    :ensure t
+    :mode
+    (("Dockerfile\\'" . dockerfile-mode)))
+
+
+  ;; ---- C++ ----
+  ;; To install the clangd language server
+  ;; $ brew install llvm
+  (add-hook 'c++-mode-hook #'lsp-deferred)
+  ;;(add-hook 'c++-mode-hook (semantic-mode -1))
+
+  ;; Remove company-semantic from the backends to make autocompete work in C++
+  ;; Want to be using company-capf as the backend
+  (defun my-c++-mode-hook ()
+    (setq-local company-backends (delete 'company-semantic company-backends)))
+
+  (add-hook 'c++-mode-hook #'my-c++-mode-hook)
+
+  ;; ---- CMake ----
+  ;; (use-package cmake-mode
+  ;;   :ensure t)
+
+  ;; ------- Apache Thrift -------
+  ;; (use-package thrift
+  ;;   :ensure t)
+
+  ;; ------- Jenkinsfile -------
+  ;; (use-package jenkinsfile-mode
+  ;;   :ensure t)
+
+  ;; ------- Java -------
+  ;; indent 2 spaces
+  (add-hook 'java-mode-hook (lambda () (setopt c-basic-offset 2)))
+
+  ;; ------- GraphQL -------
+  (use-package graphql-mode
+    :ensure t)
+
+  ;; needed by graphql-mode
+  (use-package request
+    :ensure t)
+
+  ;; ------- https://github.com/casey/just -------
+  ;; (use-package just-mode
+  ;;   :ensure t)
+
+  ;; ------- https://github.com/psibi/justl.el -------
+  ;; (use-package justl
+  ;;   :ensure t)
+
+  ;; ------- https://github.com/abrochard/mermaid-mode -------
+  ;; mermaid-js charts
+  ;; (use-package mermaid-mode
+  ;;   :ensure t)
+  #+end_src
+
+* gptel
+#+begin_src emacs-lisp
+  ;;; gptel
+  ;; ------- gptel -------
+  ;; Functions to include the gptel backend and model in responses from an LLM
+  (defun wtf-gptel-backend-and-model ()
+    "Return gptel backend and model"
+    (let ((backend (if (boundp 'gptel-backend) (aref gptel-backend 1)))
+          (model (if (boundp 'gptel-model) gptel-model)))
+      (format "(%s %s)" backend model)))
+
+  ;; (defun wtf-gptel-insert-model-in-non-gptel-buffers ()
+  ;;   "This function will add the backend and model in the \"dynamic\" buffers, not in dedicated chat buffers.
+  ;; To be used in `gptel-pre-response-hook'."
+  ;;   (unless (member 'gptel-mode local-minor-modes)
+  ;;     (goto-char (point-max))
+  ;;     (insert (format "\n%s: " (wtf-gptel-backend-and-model)))
+  ;;     (goto-char (point-max))))
+
+  (defun wtf-gptel-insert-model-in-chat-buffers (response-begin-pos response-end-pos)
+    "This function adds the backend and model in dedicated chat buffers.
+  Can be used with the `gptel-post-response-functions' hook."
+    (let* ((gptel-org-prefix (alist-get 'org-mode gptel-prompt-prefix-alist))
+           (inserted-string (format "%s %s\n"
+                                    (substring gptel-org-prefix 0 (string-match " " gptel-org-prefix))
+                                    (wtf-gptel-backend-and-model)))
+           (len-inserted (length inserted-string )))
+      (goto-char response-begin-pos)
+      (insert inserted-string)
+      (goto-char (+ response-end-pos len-inserted))))
+
+  ;; For Ollama, You should have at least 8 GB of RAM available to run the 7B models,
+  ;; 16 GB to run the 13B models, and 32 GB to run the 33B models.
+  (use-package gptel
+    :ensure t
+    :config
+    ;; (add-hook 'gptel-pre-response-hook 'wtf-gptel-insert-model-in-non-gptel-buffers)
+    (add-hook 'gptel-post-response-functions 'wtf-gptel-insert-model-in-chat-buffers)
+    (gptel-make-ollama "Ollama" ; Can be any name of your choosing
+      :host "localhost:11434"
+      :stream t
+      :models '(deepseek-r1:7b deepseek-r1:14b qwen2.5-coder:14b-instruct-q6_K gemma2 llava))
+
+    ;; Use Claude as the default model
+    ;; Fetches key from ~/.authinfo
+    ;; The line should look like this:
+    ;; machine api.anthropic.com login apikey password <api-key>
+    (setopt
+     gptel-model 'claude-3-7-sonnet-20250219
+     gptel-backend (gptel-make-anthropic "Claude"
+                   :stream t
+                   :key gptel-api-key))
+
+    ;; Override default system message to remove the bit about living in
+    ;; emacs as sometimes an LLM gets confused and thinks questions are
+    ;; about emacs when they are not
+    (let ((my-gptel-system-msg "You are a large language model and a helpful assistant. Respond concisely."))
+      (setopt gptel-directives (assoc-delete-all 'default gptel-directives))
+      (add-to-list 'gptel-directives `(default . ,my-gptel-system-msg) )
+      (setopt gptel--system-message my-gptel-system-msg)))
+
+  ;; ------- gptel tools -------
+  (gptel-make-tool
+   :name "read_buffer"                    ; snake_case name
+   :function (lambda (buffer)             ; the function that will run
+               (unless (buffer-live-p (get-buffer buffer))
+                 (error "error: buffer %s is not live." buffer))
+               (with-current-buffer  buffer
+                 (buffer-substring-no-properties (point-min) (point-max))))
+   :description "return the contents of an emacs buffer"
+   :args (list '(:name "buffer"
+                 :type string             ; :type value must be a symbol
+                 :description "the name of the buffer whose contents are to be retrieved"))
+   :category "emacs")                     ; An arbitrary label for grouping
+
+
+  ;; ------- common gptel functions -------
+  (defun wtf-gptel-stash-response (buffer prompt response)
+    "Store a response in a well known buffer we can look at if we want"
+    (let ((buffer (get-buffer-create buffer)))
+      (with-current-buffer buffer
+        (erase-buffer)
+        (insert prompt)
+        (insert "\n\n-->\n\n")
+        (insert response))))
+
+  ;; ------- Define a word -------
+  (defun wtf-gptel-define-word (start end)
+    "Use ChatGPT to define the current word of the region."
+    (interactive "r")
+    (unless (region-active-p)
+      (error "you must have a region set"))
+    (let ((input (buffer-substring-no-properties (region-beginning) (region-end))))
+      (message "Fetching definition")
+      (gptel-request nil
+        :callback (lambda (response info)
+                    (wtf-gptel-stash-response "*Last Definition*" (plist-get info :context) response)
+                    (message response))
+        :system "Please give a short definition of this word or phrase. Then, provide 3 usage examples, synonyms and antonyms"
+        :context input)))  
+#+end_src
+
+* transient
+#+begin_src emacs-lisp
+  ;;; transient
+
+  (use-package transient
+    :ensure t)
+
+  (transient-define-prefix wtf-links ()
+    "Common links"
+    ["Not defined yet"
+      ("w" "Wikipedia random page" (lambda () (interactive) (browse-url "https://en.wikipedia.org/wiki/Special:Random")))]
+    [("q" "Quit"           transient-quit-one)])
+
+
+
+  ;; (transient-define-prefix  tutorial-transient ()
+  ;;   "Some Emacs magic"
+  ;;   :info-manual "Surf system-test transient"
+  ;;   ["Not defined yet"
+  ;;     ("p" "print message"      tutorial-print-message)]
+  ;;   [("q" "Quit"           transient-quit-one)])
+
+  ;; (defun tutorial-print-message (&optional args)
+  ;;   (interactive)
+  ;;   (print "hello world"))
+
+
+  ;; (transient-define-prefix tsc-hello ()
+  ;;   "Prefix that is minimal and uses an anonymous command suffix."
+  ;;   [("s" "call suffix"
+  ;;     (lambda ()
+  ;;       (interactive)
+  ;;       (message "Called a suffix")))])
+  
+#+end_src
