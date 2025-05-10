@@ -1,4 +1,6 @@
-;;; Foo
+;; Do not manually edit this file, if you need to make changes it is generated
+;; from a org-bablel literate configuration available here:
+;; https://github.com/wtfleming/dotfiles/blob/master/Dotfiles/emacs.d/init.org
 
 ;; Write any customized variables to a specific file instead of this file
 (setopt custom-file "~/.emacs.d/my-customized.el")
@@ -26,7 +28,6 @@
 
 (when (file-exists-p "~/.emacs.d/lisp/rama-mode.el")
   (load "~/.emacs.d/lisp/rama-mode.el"))
-
 
 ;;; Functions
 
@@ -104,9 +105,6 @@
   (interactive)
   (let ((utc-time (format-time-string "%Y-%m-%d %H:%M:%S" (current-time) t)))
     (message "Current UTC time: %s" utc-time)))
-
-
-;;; Common Setup
 
 ;; Store downloaded packages in a directory corresponding to the emacs version we are running
 ;; Make upgrading emacs to a new major version easier/safer
@@ -713,7 +711,6 @@
     1 'org-checkbox-done-text prepend))
  'append)
 
-
 ;;; macOS
 ;; Open emacs in front of the terminal window on OS X instead of behind
 ;; http://stackoverflow.com/questions/10171280/how-to-launch-gui-emacs-from-command-line-in-osx
@@ -729,7 +726,6 @@
 
 (if (system-type-is-darwin)
   (setopt ispell-program-name "/opt/homebrew/bin/ispell"))
-
 
 ;;; ibuffer
 (global-set-key (kbd "C-x C-b") 'ibuffer)
@@ -847,7 +843,6 @@
 (define-key ibuffer-mode-map (kbd "<down>") 'ibuffer-next-line)
 
 ;;; helm
-
 (use-package helm
   :ensure t
   :bind (("C-x b" . helm-mini)
@@ -1414,7 +1409,6 @@ _h_   _l_   _o_k        _y_ank
 ;; Function to stylize the irc buffer names.
 (setopt doom-modeline-irc-stylize 'identity)
 
-
 ;;; Programming
 ;; ------- Language Server -------
 (use-package lsp-mode
@@ -1852,7 +1846,6 @@ _h_   _l_   _o_k        _y_ank
 ;; (use-package mermaid-mode
 ;;   :ensure t)
 
-
 ;;; gptel
 ;; ------- gptel -------
 ;; Functions to include the gptel backend and model in responses from an LLM
@@ -1951,7 +1944,6 @@ Can be used with the `gptel-post-response-functions' hook."
                   (message response))
       :system "Please give a short definition of this word or phrase. Then, provide 3 usage examples, synonyms and antonyms"
       :context input)))
-
 
 ;;; transient
 
