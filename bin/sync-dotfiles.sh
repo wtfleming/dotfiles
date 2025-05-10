@@ -48,7 +48,11 @@ fi
 
 cp ~/src/dotfiles/Dotfiles/emacs.d/early-init.el ~/.emacs.d/.
 cp ~/src/dotfiles/Dotfiles/emacs.d/init.el ~/.emacs.d/.
-cp ~/src/dotfiles/Dotfiles/emacs.d/my-customized.el ~/.emacs.d/.
+
+# This file will always be empty in git, but might have local changes that
+# we do not want to overwrite
+touch ~/src/dotfiles/Dotfiles/emacs.d/my-customized.el
+
 cp ~/src/dotfiles/Dotfiles/emacs.d/custom/abbrev-defs ~/.emacs.d/custom/.
 
 echo "Successfully synced dotfiles"
