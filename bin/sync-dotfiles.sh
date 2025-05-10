@@ -15,6 +15,7 @@ if [ ! -d ~/src/dotfiles ]; then
     exit 1
 fi
 
+# Shell scripts
 cp ~/src/dotfiles/bin/* ~/bin/.
 
 # Git
