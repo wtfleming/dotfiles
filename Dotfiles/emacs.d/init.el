@@ -278,6 +278,9 @@
 
 ;; ------- Misc -------
 
+;; Allow typing TAB to show/hide headings in outline-minor-mode
+(setopt outline-minor-mode-cycle t)
+
 ;; Don't show the splash screen
 (setopt inhibit-startup-screen t)
 
