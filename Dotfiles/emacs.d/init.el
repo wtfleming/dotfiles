@@ -1945,7 +1945,7 @@ Can be used with the `gptel-post-response-functions' hook."
 (defun wtf-gptel-find-code-issues-in-current-buffer ()
   "Use an LLM to find potential source code issues in the current buffer."
   (interactive)
-  (let ((system "You are a senior developer. Your job is to review this code, and write out the top issues that you see with the code. It could be bugs, design choices, or code cleanliness issues. You should be specific, and be very good. Do Not Hallucinate. Think quietly to yourself, then act - write the issues. The issues will be given to a developer to executed on, so they should be in a format that is compatible with github issues"))
+  (let ((system "You are a senior developer. Your job is to review this code, and write out the top issues that you see with the code. It could be bugs, design choices, or code cleanliness issues. You should be specific, and be very good. Do Not Hallucinate. Think quietly to yourself, then act - write the issues. The issues will be given to a developer to executed on, so they should be in a format that is compatible with github issues. Show at most 10 issues."))
     (message "Finding code issues")
     (gptel-request nil
       :callback (lambda (response info)
