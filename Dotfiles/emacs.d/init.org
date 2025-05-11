@@ -2007,7 +2007,7 @@ Do something to crash and don't start emacs?
 
   ;; ------- Define a word -------
   (defun wtf-gptel-define-word (start end)
-    "Use ChatGPT to define the current word of the region."
+    "Use an LLM to define the current word of the region."
     (interactive "r")
     (unless (region-active-p)
       (error "you must have a region set"))
@@ -2022,6 +2022,7 @@ Do something to crash and don't start emacs?
   ;; ------- Find potential issues in source code -------
   ;; TODO look at the current mode, if it is typescript, include that info in the system message (and same for other languages)
   (defun wtf-gptel-find-code-issues-in-current-buffer ()
+    "Use an LLM to find potential source code issues in the current buffer."
     (interactive)
     (let ((system "You are a senior developer. Your job is to review this code, and write out the top issues that you see with the code. It could be bugs, design choices, or code cleanliness issues. You should be specific, and be very good. Do Not Hallucinate. Think quietly to yourself, then act - write the issues. The issues will be given to a developer to executed on, so they should be in a format that is compatible with github issues"))
       (message "Finding code issues")
