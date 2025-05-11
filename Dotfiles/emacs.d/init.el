@@ -1941,6 +1941,7 @@ Can be used with the `gptel-post-response-functions' hook."
       :context input)))
 
 ;; ------- Find potential issues in source code -------
+;; TODO look at the current mode, if it is typescript, include that info in the system message (and same for other languages)
 (defun wtf-gptel-find-code-issues-in-current-buffer ()
   (interactive)
   (let ((system "You are a senior developer. Your job is to review this code, and write out the top issues that you see with the code. It could be bugs, design choices, or code cleanliness issues. You should be specific, and be very good. Do Not Hallucinate. Think quietly to yourself, then act - write the issues. The issues will be given to a developer to executed on, so they should be in a format that is compatible with github issues"))

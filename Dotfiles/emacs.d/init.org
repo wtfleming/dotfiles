@@ -1970,7 +1970,7 @@ Do something to crash and don't start emacs?
    :category "emacs")                     ; An arbitrary label for grouping
 #+end_src
 
-** Functions
+** Non-interactive functions
 #+begin_src emacs-lisp
 
   ;; ------- common gptel functions -------
@@ -2000,6 +2000,10 @@ Do something to crash and don't start emacs?
   ;;       (insert prompt)
   ;;       (insert "\n\n-->\n\n")
   ;;       (insert response))))
+#+end_src
+
+** Interactive functions
+#+begin_src emacs-lisp
 
   ;; ------- Define a word -------
   (defun wtf-gptel-define-word (start end)
@@ -2016,6 +2020,7 @@ Do something to crash and don't start emacs?
         :context input)))
 
   ;; ------- Find potential issues in source code -------
+  ;; TODO look at the current mode, if it is typescript, include that info in the system message (and same for other languages)
   (defun wtf-gptel-find-code-issues-in-current-buffer ()
     (interactive)
     (let ((system "You are a senior developer. Your job is to review this code, and write out the top issues that you see with the code. It could be bugs, design choices, or code cleanliness issues. You should be specific, and be very good. Do Not Hallucinate. Think quietly to yourself, then act - write the issues. The issues will be given to a developer to executed on, so they should be in a format that is compatible with github issues"))
@@ -2027,7 +2032,6 @@ Do something to crash and don't start emacs?
         :context (buffer-string)
         )
       ))
-
 #+end_src
 
 * transient
