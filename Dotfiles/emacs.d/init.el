@@ -227,15 +227,10 @@
 ;;   (set-frame-font "Inconsolata-12")))
 
 ;; ------- Keybindings -------
-
-;; Override opening the buffer menu so it happens in the same window, rather than a new one.
-(global-set-key (kbd "C-x C-b") 'buffer-menu)
-
-;; Map C-x C-u to undo
-(define-key global-map "\C-x\C-u" 'undo)
+(keymap-global-set "C-x C-u" 'undo)
 
 ;; Don't bind (suspend-emacs)
-(global-unset-key (kbd "C-z"))
+(keymap-global-unset "C-z")
 
 ;; Wind Move
 ;; Move point from window to window using meta and the arrow keys,
@@ -483,7 +478,7 @@
   :ensure t
   :init
   (require 'neotree)
-  (global-set-key [f8] 'neotree-toggle)
+  (keymap-global-set "<f8>" 'neotree-toggle)
   :config
   (setopt neo-theme (if (display-graphic-p) 'icons 'arrow))
   (setopt neo-smart-open t))
@@ -568,7 +563,8 @@
   ;; disable recentf-cleanup on Emacs start, because it can cause problems with remote files
   (recentf-auto-cleanup 'never))
 
-(global-set-key "\C-x\ \C-r" 'recentf-open-files)
+(keymap-global-set  "C-x C-r" 'recentf-open-files)
+
 
 ;; ------- tramp -------
 (setopt tramp-default-method "ssh")
@@ -707,7 +703,7 @@
     (setopt ispell-program-name "/opt/homebrew/bin/ispell"))
 
 ;;; ibuffer
-(global-set-key (kbd "C-x C-b") 'ibuffer)
+(keymap-global-set  "C-x C-b" 'ibuffer)
 (autoload 'ibuffer "ibuffer" "List buffers." t)
 
 (require 'ibuf-ext)
@@ -810,16 +806,17 @@
 
 ;; With this, when you press 'up' or 'down' to the top/bottom of IBuffer,
 ;; the cursor wraps around to the bottom/top, so you can continue from there.
-(defun ibuffer-previous-line ()
+(defun wtf--ibuffer-previous-line ()
   (interactive) (previous-line)
   (if (<= (line-number-at-pos) 2)
       (goto-line (count-lines (point-min) (point-max)))))
-(defun ibuffer-next-line ()
+(defun wtf--ibuffer-next-line ()
   (interactive) (next-line)
   (if (>= (line-number-at-pos) (+ (count-lines (point-min) (point-max)) 1))
       (goto-line 3)))
-(define-key ibuffer-mode-map (kbd "<up>") 'ibuffer-previous-line)
-(define-key ibuffer-mode-map (kbd "<down>") 'ibuffer-next-line)
+
+(keymap-set ibuffer-mode-map "<up>" 'wtf--ibuffer-previous-line)
+(keymap-set ibuffer-mode-map "<down>" 'wtf--ibuffer-next-line)
 
 ;;; helm
 (use-package helm
@@ -1009,7 +1006,8 @@
     ("q" nil)
     ("." nil :color blue))
 
-  (define-key dired-mode-map "." 'hydra-dired/body)
+(keymap-set dired-mode-map "." 'hydra-dired/body)
+
 
 
   ;; (defhydra hydra-projectile (:color teal
