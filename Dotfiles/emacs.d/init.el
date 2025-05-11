@@ -886,46 +886,46 @@
                                         ; Help
 (setq my-default-hydra-delay 0.0)
 
-(defhydra hydra-metahelp-menu (:hint nil :exit t :idle my-default-hydra-delay :foreign-keys warn)
-  "
-Describe                           ^^^^^^                             Goto         ^^ View
------------------------------------------------------------------------------------------------------
-_b_indings             _k_ey                   _s_ymbol               _e_:*Messages*  _a_propos
-_c_:key-briefly        _K_ey (info)            _S_ymbol (info)        _i_nfo manual   _l_ossage
-_C_oding system        _L_anguage environment  _C-s_yntax table ^     _._:local help
-_d_ocumentation        _m_ode                  _v_ariable
-_E_macs...             _p_ackage (by topic)
-_f_unction             _P_ackage (by name)     _w_hereis (func->keys)
-_F_unction (info)      _C-p_: external package
-_I_:key input method                                           ^^^^^^                 _q_uit
-"
-  ("?" counsel-hydra-heads)
-  ("a"   apropos-command)
-  ("b"   describe-bindings)
-  ("c"   describe-key-briefly)
-  ("C"   describe-coding-system)
-  ("d"   apropos-documentation)
-  ("e"   view-echo-area-messages)
-  ("E"   hydra-metahelp-emacs-menu/body)
-  ("f"   describe-function)
-  ("F"   Info-goto-emacs-command-node)
-  ("i"   info)
-  ("I"   describe-input-method)
-  ("k"   describe-key)
-  ("K"   Info-goto-emacs-key-command-node)
-  ("l"   view-lossage)
-  ("L"   describe-language-environment)
-  ("m"   describe-mode)
-  ("p"   finder-by-keyword)
-  ("P"   describe-package)
-  ("C-p" view-external-packages)
-  ("q"   nil nil)
-  ("s"   describe-symbol)
-  ("S"   info-lookup-symbol)
-  ("C-s" describe-syntax)
-  ("v"   describe-variable)
-  ("w"   where-is)
-  ("."   display-local-help))
+;; (defhydra hydra-metahelp-menu (:hint nil :exit t :idle my-default-hydra-delay :foreign-keys warn)
+;;   "
+;; Describe                           ^^^^^^                             Goto         ^^ View
+;; -----------------------------------------------------------------------------------------------------
+;; _b_indings             _k_ey                   _s_ymbol               _e_:*Messages*  _a_propos
+;; _c_:key-briefly        _K_ey (info)            _S_ymbol (info)        _i_nfo manual   _l_ossage
+;; _C_oding system        _L_anguage environment  _C-s_yntax table ^     _._:local help
+;; _d_ocumentation        _m_ode                  _v_ariable
+;; _E_macs...             _p_ackage (by topic)
+;; _f_unction             _P_ackage (by name)     _w_hereis (func->keys)
+;; _F_unction (info)      _C-p_: external package
+;; _I_:key input method                                           ^^^^^^                 _q_uit
+;; "
+;;   ("?" counsel-hydra-heads)
+;;   ("a"   apropos-command)
+;;   ("b"   describe-bindings)
+;;   ("c"   describe-key-briefly)
+;;   ("C"   describe-coding-system)
+;;   ("d"   apropos-documentation)
+;;   ("e"   view-echo-area-messages)
+;;   ("E"   hydra-metahelp-emacs-menu/body)
+;;   ("f"   describe-function)
+;;   ("F"   Info-goto-emacs-command-node)
+;;   ("i"   info)
+;;   ("I"   describe-input-method)
+;;   ("k"   describe-key)
+;;   ("K"   Info-goto-emacs-key-command-node)
+;;   ("l"   view-lossage)
+;;   ("L"   describe-language-environment)
+;;   ("m"   describe-mode)
+;;   ("p"   finder-by-keyword)
+;;   ("P"   describe-package)
+;;   ("C-p" view-external-packages)
+;;   ("q"   nil nil)
+;;   ("s"   describe-symbol)
+;;   ("S"   info-lookup-symbol)
+;;   ("C-s" describe-syntax)
+;;   ("v"   describe-variable)
+;;   ("w"   where-is)
+;;   ("."   display-local-help))
 
 (defhydra hydra-metahelp-emacs-menu (:hint nil :exit t :idle my-default-hydra-delay :foreign-keys warn)
   "
@@ -951,94 +951,7 @@ _d_ebuging     _G_NU           order _m_anuals  _t_utorial
   ("p" view-emacs-problems)
   ("T" view-emacs-todo)
   ("w" describe-no-warranty))
-
-
-(global-set-key (kbd "C-h") #'hydra-metahelp-menu/body)
-
-
-
-                                        ; Help
-(defhydra hydra-help (:exit t)
-  ;; Better to exit after any command because otherwise helm gets in a
-  ;; mess, set hint to nil: written out manually.
-
-  "
-  Describe        ^^Keys                    ^^Search                    ^^Documentation
-  ---------------------------------------------------------------------------------------
-  _f_unction        _k_eybinding              _a_propros                  _i_nfo
-  _p_ackage         _w_here-is                _d_oc strings               _n_: man
-  _m_ode            _b_: show all bindings    _s_: info by symbol         
-  _v_ariable
-
-  "
-  ;; Boring help commands...
-  ("e" view-echo-area-messages "messages")
-  ("l" view-lossage "lossage")
-  ("C" describe-coding-system "coding-system")
-  ("I" describe-input-method "input-method")
-
-
-  ;; Documentation
-  ("i" info nil)
-  ("n" helm-man-woman nil)
-
-  ;; Keybinds
-  ("b" describe-bindings nil)
-  ("c" describe-key-briefly nil)
-  ("k" describe-key nil)
-  ("w" where-is nil)
-
-  ;; Search
-  ("a" apropos-command nil)
-  ("d" apropos-documentation nil)
-  ("s" info-lookup-symbol nil)
-
-  ;; Describe
-  ("f" describe-function nil)
-  ("p" describe-package nil)
-  ("m" describe-mode nil)
-  ("v" describe-variable nil)
-  ("y" describe-syntax nil)
-
-  ;; quit
-  ("q" help-quit "quit"))
-(global-set-key (kbd "<f1>") #'hydra-help/body)
-
-
-
-;; ; Movement
-;; (global-set-key
-;;  (kbd "C-n")
-;;  (defhydra hydra-move
-;;    (:body-pre (next-line))
-;;    "move"
-;;    ("n" next-line)
-;;    ("p" previous-line)
-;;    ("f" forward-char)
-;;    ("b" backward-char)
-;;    ("a" beginning-of-line)
-;;    ("e" move-end-of-line)
-;;    ("v" scroll-up-command)
-;;    ;; Converting M-v to V here by analogy.
-;;    ("V" scroll-down-command)
-;;    ("l" recenter-top-bottom)))
-
-
-;; ; Transpose
-;; (global-set-key (kbd "C-c m")
-;;                 (defhydra hydra-transpose (:color red)
-;;                   "Transpose"
-;;                   ("c" transpose-chars "characters")
-;;                   ("w" transpose-words "words")
-;;                   ("o" org-transpose-words "Org mode words")
-;;                   ("l" transpose-lines "lines")
-;;                   ("s" transpose-sentences "sentences")
-;;                   ("e" org-transpose-elements "Org mode elements")
-;;                   ("p" transpose-paragraphs "paragraphs")
-;;                   ("t" org-table-transpose-table-at-point "Org mode table")
-;;                   ("q" nil "cancel" :color blue)))
-
-
+;; (global-set-key (kbd "C-h") #'hydra-metahelp-menu/body)
 
 
 
@@ -1142,54 +1055,25 @@ T - tag prefix
 ;; (global-set-key (kbd "C-c e") #'hydra-flycheck/body)
 
 
-;; For jumping between code errors with C-x `
-(defhydra hydra-next-error
-  (global-map "C-x")
-  "
-Compilation errors:
-_j_: next error        _h_: first error    _q_uit
-_k_: previous error    _l_: last error
-"
-  ("`" next-error     nil)
-  ("j" next-error     nil :bind nil)
-  ("k" previous-error nil :bind nil)
-  ("h" first-error    nil :bind nil)
-  ("l" (condition-case err
-           (while t
-             (next-error))
-         (user-error nil))
-   nil :bind nil)
-  ("q" nil            nil :color blue))
+;; ;; For jumping between code errors with C-x `
+;; (defhydra hydra-next-error
+;;   (global-map "C-x")
+;;   "
+;; Compilation errors:
+;; _j_: next error        _h_: first error    _q_uit
+;; _k_: previous error    _l_: last error
+;; "
+;;   ("`" next-error     nil)
+;;   ("j" next-error     nil :bind nil)
+;;   ("k" previous-error nil :bind nil)
+;;   ("h" first-error    nil :bind nil)
+;;   ("l" (condition-case err
+;;            (while t
+;;              (next-error))
+;;          (user-error nil))
+;;    nil :bind nil)
+;;   ("q" nil            nil :color blue))
 
-
-
-(defhydra hydra-rectangle (:body-pre (rectangle-mark-mode 1)
-                                     :color pink
-                                     :post (deactivate-mark))
-  "
-  ^_k_^     _d_elete    _s_tring
-_h_   _l_   _o_k        _y_ank
-
-  ^_j_^     _n_ew-copy  _r_eset
-^^^^        _e_xchange  _u_ndo
-^^^^        ^ ^         _p_aste
-"
-  ("h" backward-char nil)
-  ("l" forward-char nil)
-  ("k" previous-line nil)
-  ("j" next-line nil)
-  ("e" exchange-point-and-mark nil)
-  ("n" copy-rectangle-as-kill nil)
-  ("d" delete-rectangle nil)
-  ("r" (if (region-active-p)
-           (deactivate-mark)
-         (rectangle-mark-mode 1)) nil)
-  ("y" yank-rectangle nil)
-  ("u" undo nil)
-  ("s" string-rectangle nil)
-  ("p" kill-rectangle nil)
-  ("o" nil nil))
-(global-set-key (kbd "C-x SPC") 'hydra-rectangle/body)
 
 
 ;; TODO make something similar, but for emojis
@@ -1239,40 +1123,27 @@ _h_   _l_   _o_k        _y_ank
   ("<drag-mouse-1>" ignore)
   ("q" nil))
 
-(defhydra hydra-windows-nav (:color red)
-  ("s" shrink-window-horizontally "shrink horizontally" :column "Sizing")
-  ("e" enlarge-window-horizontally "enlarge horizontally")
-  ("b" balance-windows "balance window height")
-  ("m" maximize-window "maximize current window")
-  ("M" minimize-window "minimize current window")
+;; (defhydra hydra-windows-nav (:color red)
+;;   ("s" shrink-window-horizontally "shrink horizontally" :column "Sizing")
+;;   ("e" enlarge-window-horizontally "enlarge horizontally")
+;;   ("b" balance-windows "balance window height")
+;;   ("m" maximize-window "maximize current window")
+;;   ("M" minimize-window "minimize current window")
 
-  ("h" split-window-below "split horizontally" :column "Split management")
-  ("v" split-window-right "split vertically")
-  ("d" delete-window "delete current window")
-  ("x" delete-other-windows "delete-other-windows")
-
-
-  ("z" ace-window "ace window" :color blue :column "Navigation")
-  ("h" windmove-left "← window")
-  ("j" windmove-down "↓ window")
-  ("k" windmove-up "↑ window")
-  ("l" windmove-right "→ window")
-  ("r" toggle-window-split "rotate windows") ; Located in utility functions
-  ("q" nil "quit menu" :color blue :column nil))
-(global-set-key (kbd "M-n") 'hydra-windows-nav/body)
+;;   ("h" split-window-below "split horizontally" :column "Split management")
+;;   ("v" split-window-right "split vertically")
+;;   ("d" delete-window "delete current window")
+;;   ("x" delete-other-windows "delete-other-windows")
 
 
-
-(defhydra hydra-git-gutter (:body-pre (git-gutter-mode 1)
-                                      :hint nil)
-  ("n" git-gutter:next-hunk "next hunk")
-  ("p" git-gutter:previous-hunk "previous hunk")
-  ("h" (progn (goto-char (point-min)) (git-gutter:next-hunk 1)) "first hunk")
-  ("l" (progn (goto-char (point-min)) (git-gutter:previous-hunk 1)) "last hunk")
-  ("<SPC>" git-gutter:popup-hunk "popup hunk")
-  ("s" git-gutter:stage-hunk "stage hunk")
-  ("r" git-gutter:revert-hunk "revert hunk")
-  ("q" nil "quit"))
+;;   ("z" ace-window "ace window" :color blue :column "Navigation")
+;;   ("h" windmove-left "← window")
+;;   ("j" windmove-down "↓ window")
+;;   ("k" windmove-up "↑ window")
+;;   ("l" windmove-right "→ window")
+;;   ("r" toggle-window-split "rotate windows") ; Located in utility functions
+;;   ("q" nil "quit menu" :color blue :column nil))
+;; (global-set-key (kbd "M-n") 'hydra-windows-nav/body)
 
 ;;; doom-modeline
 ;; https://github.com/seagle0128/doom-modeline
@@ -1986,3 +1857,40 @@ Can be used with the `gptel-post-response-functions' hook."
 ;;     (lambda ()
 ;;       (interactive)
 ;;       (message "Called a suffix")))])
+
+
+(transient-define-prefix wtf-transient-metahelp-menu ()
+  "Help"
+  ["Describe"
+   ("b" "bindings" describe-bindings)
+   ("c" "key-briefly" describe-key-briefly)
+   ("d" "documentation" apropos-documentation)
+   ("E" "emacs"  hydra-metahelp-emacs-menu/body)
+   ("f" "function" describe-function)
+   ("F" "function (info)" Info-goto-emacs-command-node)
+   ("I" "key input method"  describe-input-method)
+   ("k" "key"  describe-key)
+   ("K" "key (info)"  Info-goto-emacs-key-command-node)
+   ("L" "language environment"  describe-language-environment)
+   ("m" "mode"  describe-mode)
+
+   ("p" "package (by topic)"  finder-by-keyword)
+   ("P" "package (by name)"  describe-package)
+   ("s" "symbol"  describe-symbol)
+   ("S" "symbol (info)"  info-lookup-symbol)
+   ("C-s" "syntax table" describe-syntax)
+   ("v" "variable"  describe-variable)
+   ("w" "where is"  where-is)
+   ]
+  ["Goto"
+   ("e" "*Messages*" view-echo-area-messages)
+   ("i" "info" info)
+   ("." "local help"  display-local-help)
+   ]
+  ["View"
+   ("a" "apropos" apropos-command)
+   ("l" "lossage" view-lossage)
+   ]
+  [("q" "Quit"           transient-quit-one)])
+
+(keymap-global-set "C-h" 'wtf-transient-metahelp-menu)
