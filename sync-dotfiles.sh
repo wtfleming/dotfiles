@@ -27,6 +27,8 @@ cp ~/src/dotfiles/Dotfiles/gitexcludes ~/.gitexcludes
 # TODO on a work computer I likely have my email address in .gitconfig set to
 # my work email, don't want to copy over if that is the case?
 # Find a better way of handling this
+#  one thing I could do is cd /path/to/repo && git config --local github.email EMAIL
+#  for work repos
 cp ~/src/dotfiles/Dotfiles/gitconfig ~/.gitconfig
 
 # tmux
