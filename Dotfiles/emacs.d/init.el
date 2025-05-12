@@ -878,81 +878,6 @@
   ;; (global-set-key (kbd "C-y") #'hydra-yank-pop/yank)
 
 
-                                          ; TODO there are two helps defined here, choose one to keep
-
-                                          ; Help
-  (setq my-default-hydra-delay 0.0)
-
-  ;; (defhydra hydra-metahelp-menu (:hint nil :exit t :idle my-default-hydra-delay :foreign-keys warn)
-  ;;   "
-  ;; Describe                           ^^^^^^                             Goto         ^^ View
-  ;; -----------------------------------------------------------------------------------------------------
-  ;; _b_indings             _k_ey                   _s_ymbol               _e_:*Messages*  _a_propos
-  ;; _c_:key-briefly        _K_ey (info)            _S_ymbol (info)        _i_nfo manual   _l_ossage
-  ;; _C_oding system        _L_anguage environment  _C-s_yntax table ^     _._:local help
-  ;; _d_ocumentation        _m_ode                  _v_ariable
-  ;; _E_macs...             _p_ackage (by topic)
-  ;; _f_unction             _P_ackage (by name)     _w_hereis (func->keys)
-  ;; _F_unction (info)      _C-p_: external package
-  ;; _I_:key input method                                           ^^^^^^                 _q_uit
-  ;; "
-  ;;   ("?" counsel-hydra-heads)
-  ;;   ("a"   apropos-command)
-  ;;   ("b"   describe-bindings)
-  ;;   ("c"   describe-key-briefly)
-  ;;   ("C"   describe-coding-system)
-  ;;   ("d"   apropos-documentation)
-  ;;   ("e"   view-echo-area-messages)
-  ;;   ("E"   hydra-metahelp-emacs-menu/body)
-  ;;   ("f"   describe-function)
-  ;;   ("F"   Info-goto-emacs-command-node)
-  ;;   ("i"   info)
-  ;;   ("I"   describe-input-method)
-  ;;   ("k"   describe-key)
-  ;;   ("K"   Info-goto-emacs-key-command-node)
-  ;;   ("l"   view-lossage)
-  ;;   ("L"   describe-language-environment)
-  ;;   ("m"   describe-mode)
-  ;;   ("p"   finder-by-keyword)
-  ;;   ("P"   describe-package)
-  ;;   ("C-p" view-external-packages)
-  ;;   ("q"   nil nil)
-  ;;   ("s"   describe-symbol)
-  ;;   ("S"   info-lookup-symbol)
-  ;;   ("C-s" describe-syntax)
-  ;;   ("v"   describe-variable)
-  ;;   ("w"   where-is)
-  ;;   ("."   display-local-help))
-
-  (defhydra hydra-metahelp-emacs-menu (:hint nil :exit t :idle my-default-hydra-delay :foreign-keys warn)
-    "
-  Emacs
-  ----------------------------------------------------------------------------------------
-  _a_bout Emacs  _D_istribution  _h_ello file     _n_ews            _T_odo          _q_uit
-  _c_opying      _F_AQ           _i_nfo manual    known _p_roblems  no _w_arranty
-  _d_ebuging     _G_NU           order _m_anuals  _t_utorial
-  "
-    ("?" counsel-hydra-heads)
-    ("a" about-emacs)
-    ("c" describe-copying)
-    ("d" view-emacs-debugging)
-    ("D" describe-distribution)
-    ("F" view-emacs-FAQ)
-    ("G" describe-gnu-project)
-    ("h" view-hello-file)
-    ("i" info-manual)
-    ("n" view-emacs-news)
-    ("q" nil nil)
-    ("t" help-with-tutorial)
-    ("m" view-order-manuals)
-    ("p" view-emacs-problems)
-    ("T" view-emacs-todo)
-    ("w" describe-no-warranty))
-  ;; (global-set-key (kbd "C-h") #'hydra-metahelp-menu/body)
-
-
-
-
 
                                           ; Dired
   (defhydra hydra-dired (:hint nil :color pink)
@@ -1074,28 +999,6 @@
 
 
 
-  ;; TODO make something similar, but for emojis
-;;  (defun my/insert-unicode (unicode-name)
-;;    "Same as C-x 8 enter UNICODE-NAME."
-;;    (insert-char (gethash unicode-name (ucs-names))))
-;;
-;;  (global-set-key
-;;   (kbd "C-x 9")
-;;   (defhydra hydra-unicode (:hint nil)
-;;     "
-;;          Unicode  _e_ €  _s_ ZERO WIDTH SPACE
-;;                   _f_ ♀  _o_ °   _m_ µ
-;;                   _r_ ♂  _a_ →
-;;          "
-;;     ("e" (my/insert-unicode "EURO SIGN"))
-;;     ("r" (my/insert-unicode "MALE SIGN"))
-;;     ("f" (my/insert-unicode "FEMALE SIGN"))
-;;     ("s" (my/insert-unicode "ZERO WIDTH SPACE"))
-;;     ("o" (my/insert-unicode "DEGREE SIGN"))
-;;     ("a" (my/insert-unicode "RIGHTWARDS ARROW"))
-;;     ("m" (my/insert-unicode "MICRO SIGN"))))
-
-
 ;;  (defhydra hydra-multiple-cursors (:hint nil)
 ;;    "
 ;;   Up^^             Down^^           Miscellaneous           % 2(mc/num-cursors) cursor%s(if (> (mc/num-cursors) 1) \"s\" \"\")
@@ -1132,7 +1035,6 @@
   ;;   ("v" split-window-right "split vertically")
   ;;   ("d" delete-window "delete current window")
   ;;   ("x" delete-other-windows "delete-other-windows")
-
 
   ;;   ("z" ace-window "ace window" :color blue :column "Navigation")
   ;;   ("h" windmove-left "← window")
@@ -1859,32 +1761,30 @@ Can be used with the `gptel-post-response-functions' hook."
   (insert-char (gethash unicode-name (ucs-names))))
 
 (transient-define-prefix wtf-transient-insert-unicode ()
-  ""
-  [
-   ("u" "€" (lambda () (interactive) (wtf-insert-unicode "EURO SIGN")))
+  "Insert unicode"
+  [("u" "€" (lambda () (interactive) (wtf-insert-unicode "EURO SIGN")))
    ("r" "♀" (lambda () (interactive) (wtf-insert-unicode "MALE SIGN")))
    ("f" "♂" (lambda () (interactive) (wtf-insert-unicode "FEMALE SIGN")))
    ("s" "ZERO WIDTH SPACE" (lambda () (interactive) (wtf-insert-unicode "ZERO WIDTH SPACE")))
    ("o" "°" (lambda () (interactive) (wtf-insert-unicode "DEGREEN SIGN")))
    ("a" "→" (lambda () (interactive) (wtf-insert-unicode "RIGHTWARDS ARROW")))
-   ("m" "µ" (lambda () (interactive) (wtf-insert-unicode "MICRO SIGN")))
-   ]
-  )
-
+   ("m" "µ" (lambda () (interactive) (wtf-insert-unicode "MICRO SIGN")))])
 (keymap-global-set "C-c u" 'wtf-transient-insert-unicode)
 
 (transient-define-prefix wtf-transient-insert-emoji ()
-  ""
-  [
-   ("i" "Emoji insert" emoji-insert)
-   ("s" "Emoji search" emoji-search)
-   ]
-  )
-
+  "Insert emoji"
+  [("i" "Emoji insert" emoji-insert)
+   ("s" "Emoji search" emoji-search)])
 (keymap-global-set "C-c e" 'wtf-transient-insert-emoji)
 
 
-
+(transient-define-prefix wtf-transient-emacs-metahelp-menu ()
+  ""
+  [("d" "Debugging" view-emacs-debugging)
+   ("F" "FAQ" view-emacs-FAQ)
+   ("n" "News" view-emacs-news)
+   ("p" "Known problems" view-emacs-problems)
+   ("T" "Todo" view-emacs-todo)])
 
 (transient-define-prefix wtf-transient-metahelp-menu ()
   "Help"
@@ -1892,7 +1792,7 @@ Can be used with the `gptel-post-response-functions' hook."
    ("b" "bindings" describe-bindings)
    ("c" "key-briefly" describe-key-briefly)
    ("d" "documentation" apropos-documentation)
-   ("E" "emacs" hydra-metahelp-emacs-menu/body)
+   ("E" "emacs" wtf-transient-emacs-metahelp-menu)
    ("f" "function" describe-function)
    ("F" "function (info)" Info-goto-emacs-command-node)
    ("I" "key input method" describe-input-method)
