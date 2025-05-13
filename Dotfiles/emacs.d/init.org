@@ -1903,6 +1903,17 @@ Do something to crash and don't start emacs?
     [("q" "Quit" transient-quit-one)])
 
   (keymap-global-set "C-h" 'wtf-transient-metahelp-menu)
+#+end_src
+** org-agenda-mode
+#+begin_src emacs-lisp
 
+  (transient-define-prefix wtf-transient-org-agenda-mode-menu ()
+    ""
+    [("t" "Cycle TODO state of line" org-agenda-todo)]
+    [("q" "Quit" transient-quit-one)])
 
+  (add-hook
+   'org-agenda-mode-hook
+   (lambda ()
+     (define-key org-agenda-mode-map "." 'wtf-transient-org-agenda-mode-menu)))
 #+end_src

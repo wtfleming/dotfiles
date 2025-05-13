@@ -867,18 +867,6 @@
   ;;   ("l" text-scale-decrease "out"))
 
 
-  ;; (defhydra hydra-yank-pop ()
-  ;;   "yank"
-  ;;   ("C-y" yank nil)
-  ;;   ("M-y" yank-pop nil)
-  ;;   ("y" (yank-pop 1) "next")
-  ;;   ("Y" (yank-pop -1) "prev")
-  ;;   ("l" helm-show-kill-ring "list" :color blue))   ; or browse-kill-ring
-  ;; (global-set-key (kbd "M-y") #'hydra-yank-pop/yank-pop)
-  ;; (global-set-key (kbd "C-y") #'hydra-yank-pop/yank)
-
-
-
                                           ; Dired
   (defhydra hydra-dired (:hint nil :color pink)
     "
@@ -955,7 +943,6 @@
 
   ;;   ("q"   nil "Cancel" :color blue))
 
-
   ;; (define-key projectile-mode-map (kbd "C-c p") 'hydra-projectile/body)
   ;; (define-key projectile-mode-map (kbd "s-p") 'hydra-projectile/body)
 
@@ -1023,6 +1010,7 @@
 ;;    ("<down-mouse-1>" ignore)
 ;;    ("<drag-mouse-1>" ignore)
 ;;    ("q" nil))
+
 
   ;; (defhydra hydra-windows-nav (:color red)
   ;;   ("s" shrink-window-horizontally "shrink horizontally" :column "Sizing")
@@ -1206,13 +1194,13 @@
 ;; TODO this could/should be in an :after in the use-package expression above?
 (with-eval-after-load 'lsp-mode
   ;; This doesn't seem to work, not seeing lens in ts or js code
-   (lsp-register-custom-settings
-    '(("typescript.referencesCodeLens.enabled" t t)
-      ("javascript.referencesCodeLens.enabled" t t)
-      ("typescript.implementationsCodeLens.enabled" t t)
-      ("javascript.implementationsCodeLens.enabled" t t)
-      ("typescript.referencesCodeLens.showOnAllFunctions" t t)
-      ("javascript.referencesCodeLens.showOnAllFunctions" t t)))
+  ;; (lsp-register-custom-settings
+  ;;  '(("typescript.referencesCodeLens.enabled" t t)
+  ;;    ("javascript.referencesCodeLens.enabled" t t)
+  ;;    ("typescript.implementationsCodeLens.enabled" t t)
+  ;;    ("javascript.implementationsCodeLens.enabled" t t)
+  ;;    ("typescript.referencesCodeLens.showOnAllFunctions" t t)
+  ;;    ("javascript.referencesCodeLens.showOnAllFunctions" t t)))
   (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.circleci\\'")
   (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\deps$") ;; Elixir
   (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]_build$") ;; Elixir
@@ -1735,97 +1723,111 @@ Can be used with the `gptel-post-response-functions' hook."
     ))
 
 (use-package transient
-  :ensure t)
+    :ensure t)
 
-(transient-define-prefix wtf-links ()
-  "Common links"
-  ["Not defined yet"
-   ("w" "Wikipedia random page" (lambda () (interactive) (browse-url "https://en.wikipedia.org/wiki/Special:Random")))]
-  [("q" "Quit"           transient-quit-one)])
-
-
-
-;; (transient-define-prefix  tutorial-transient ()
-;;   "Some Emacs magic"
-;;   :info-manual "Surf system-test transient"
-;;   ["Not defined yet"
-;;     ("p" "print message"      tutorial-print-message)]
-;;   [("q" "Quit"           transient-quit-one)])
-
-;; (defun tutorial-print-message (&optional args)
-;;   (interactive)
-;;   (print "hello world"))
+  (transient-define-prefix wtf-links ()
+    "Common links"
+    ["Not defined yet"
+     ("w" "Wikipedia random page" (lambda () (interactive) (browse-url "https://en.wikipedia.org/wiki/Special:Random")))]
+    [("q" "Quit"           transient-quit-one)])
 
 
-;; (transient-define-prefix tsc-hello ()
-;;   "Prefix that is minimal and uses an anonymous command suffix."
-;;   [("s" "call suffix"
-;;     (lambda ()
-;;       (interactive)
-;;       (message "Called a suffix")))])
 
-(defun wtf-insert-unicode (unicode-name)
-  "Same as C-x 8 enter UNICODE-NAME."
-  (insert-char (gethash unicode-name (ucs-names))))
+  ;; (transient-define-prefix  tutorial-transient ()
+  ;;   "Some Emacs magic"
+  ;;   :info-manual "Surf system-test transient"
+  ;;   ["Not defined yet"
+  ;;     ("p" "print message"      tutorial-print-message)]
+  ;;   [("q" "Quit"           transient-quit-one)])
 
-(transient-define-prefix wtf-transient-insert-unicode ()
-  "Insert unicode"
-  [("u" "€" (lambda () (interactive) (wtf-insert-unicode "EURO SIGN")))
-   ("r" "♀" (lambda () (interactive) (wtf-insert-unicode "MALE SIGN")))
-   ("f" "♂" (lambda () (interactive) (wtf-insert-unicode "FEMALE SIGN")))
-   ("s" "ZERO WIDTH SPACE" (lambda () (interactive) (wtf-insert-unicode "ZERO WIDTH SPACE")))
-   ("o" "°" (lambda () (interactive) (wtf-insert-unicode "DEGREEN SIGN")))
-   ("a" "→" (lambda () (interactive) (wtf-insert-unicode "RIGHTWARDS ARROW")))
-   ("m" "µ" (lambda () (interactive) (wtf-insert-unicode "MICRO SIGN")))])
-(keymap-global-set "C-c u" 'wtf-transient-insert-unicode)
-
-(transient-define-prefix wtf-transient-insert-emoji ()
-  "Insert emoji"
-  [("i" "Emoji insert" emoji-insert)
-   ("s" "Emoji search" emoji-search)])
-(keymap-global-set "C-c e" 'wtf-transient-insert-emoji)
+  ;; (defun tutorial-print-message (&optional args)
+  ;;   (interactive)
+  ;;   (print "hello world"))
 
 
-(transient-define-prefix wtf-transient-emacs-metahelp-menu ()
-  ""
-  [("d" "Debugging" view-emacs-debugging)
-   ("F" "FAQ" view-emacs-FAQ)
-   ("n" "News" view-emacs-news)
-   ("p" "Known problems" view-emacs-problems)
-   ("T" "Todo" view-emacs-todo)])
+  ;; (transient-define-prefix tsc-hello ()
+  ;;   "Prefix that is minimal and uses an anonymous command suffix."
+  ;;   [("s" "call suffix"
+  ;;     (lambda ()
+  ;;       (interactive)
+  ;;       (message "Called a suffix")))])
 
-(transient-define-prefix wtf-transient-metahelp-menu ()
-  "Help"
-  ["Describe"
-   ("b" "bindings" describe-bindings)
-   ("c" "key-briefly" describe-key-briefly)
-   ("d" "documentation" apropos-documentation)
-   ("E" "emacs" wtf-transient-emacs-metahelp-menu)
-   ("f" "function" describe-function)
-   ("F" "function (info)" Info-goto-emacs-command-node)
-   ("I" "key input method" describe-input-method)
-   ("k" "key"  describe-key)
-   ("K" "key (info)" Info-goto-emacs-key-command-node)
-   ("L" "language environment" describe-language-environment)
-   ("m" "mode"  describe-mode)
+  (defun wtf-insert-unicode (unicode-name)
+    "Same as C-x 8 enter UNICODE-NAME."
+    (insert-char (gethash unicode-name (ucs-names))))
 
-   ("p" "package (by topic)" finder-by-keyword)
-   ("P" "package (by name)" describe-package)
-   ("s" "symbol" describe-symbol)
-   ("S" "symbol (info)" info-lookup-symbol)
-   ("C-s" "syntax table" describe-syntax)
-   ("v" "variable" describe-variable)
-   ("w" "where is" where-is)
-   ]
-  ["Goto"
-   ("e" "*Messages*" view-echo-area-messages)
-   ("i" "info" info)
-   ("." "local help" display-local-help)
-   ]
-  ["View"
-   ("a" "apropos" apropos-command)
-   ("l" "lossage" view-lossage)
-   ]
-  [("q" "Quit" transient-quit-one)])
+  (transient-define-prefix wtf-transient-insert-unicode ()
+    "Insert unicode"
+    [("u" "€" (lambda () (interactive) (wtf-insert-unicode "EURO SIGN")))
+     ("r" "♀" (lambda () (interactive) (wtf-insert-unicode "MALE SIGN")))
+     ("f" "♂" (lambda () (interactive) (wtf-insert-unicode "FEMALE SIGN")))
+     ("s" "ZERO WIDTH SPACE" (lambda () (interactive) (wtf-insert-unicode "ZERO WIDTH SPACE")))
+     ("o" "°" (lambda () (interactive) (wtf-insert-unicode "DEGREEN SIGN")))
+     ("a" "→" (lambda () (interactive) (wtf-insert-unicode "RIGHTWARDS ARROW")))
+     ("m" "µ" (lambda () (interactive) (wtf-insert-unicode "MICRO SIGN")))])
+  (keymap-global-set "C-c u" 'wtf-transient-insert-unicode)
 
-(keymap-global-set "C-h" 'wtf-transient-metahelp-menu)
+  (transient-define-prefix wtf-transient-insert-emoji ()
+    "Insert emoji"
+    [("i" "Emoji insert" emoji-insert)
+     ("s" "Emoji search" emoji-search)])
+  (keymap-global-set "C-c e" 'wtf-transient-insert-emoji)
+
+
+  (transient-define-prefix wtf-transient-emacs-metahelp-menu ()
+    ""
+    [("d" "Debugging" view-emacs-debugging)
+     ("F" "FAQ" view-emacs-FAQ)
+     ("n" "News" view-emacs-news)
+     ("p" "Known problems" view-emacs-problems)
+     ("T" "Todo" view-emacs-todo)])
+
+  (transient-define-prefix wtf-transient-metahelp-menu ()
+    "Help"
+    ["Describe"
+     ("b" "bindings" describe-bindings)
+     ("c" "key-briefly" describe-key-briefly)
+     ("d" "documentation" apropos-documentation)
+     ("E" "emacs" wtf-transient-emacs-metahelp-menu)
+     ("f" "function" describe-function)
+     ("F" "function (info)" Info-goto-emacs-command-node)
+     ("I" "key input method" describe-input-method)
+     ("k" "key"  describe-key)
+     ("K" "key (info)" Info-goto-emacs-key-command-node)
+     ("L" "language environment" describe-language-environment)
+     ("m" "mode"  describe-mode)
+
+     ("p" "package (by topic)" finder-by-keyword)
+     ("P" "package (by name)" describe-package)
+     ("s" "symbol" describe-symbol)
+     ("S" "symbol (info)" info-lookup-symbol)
+     ("C-s" "syntax table" describe-syntax)
+     ("v" "variable" describe-variable)
+     ("w" "where is" where-is)
+     ]
+    ["Goto"
+     ("e" "*Messages*" view-echo-area-messages)
+     ("i" "info" info)
+     ("." "local help" display-local-help)
+     ]
+    ["View"
+     ("a" "apropos" apropos-command)
+     ("l" "lossage" view-lossage)
+     ]
+    [("q" "Quit" transient-quit-one)])
+
+  (keymap-global-set "C-h" 'wtf-transient-metahelp-menu)
+
+
+  (transient-define-prefix wtf-transient-org-agenda-mode-menu ()
+    ""
+    [("t" "Cycle TODO state of line" org-agenda-todo)]
+    [("q" "Quit" transient-quit-one)])
+
+;;  (defun foowtf () (interactive) (message "AAAAA"))
+  (add-hook
+   'org-agenda-mode-hook
+   (lambda ()
+     (define-key org-agenda-mode-map "." 'wtf-transient-org-agenda-mode-menu)))
+;; Change TODO state of the item
+;; Cycle TODO state of line
