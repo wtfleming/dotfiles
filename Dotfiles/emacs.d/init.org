@@ -924,18 +924,6 @@ Do something to crash and don't start emacs?
     ;;   ("l" text-scale-decrease "out"))
 
 
-    ;; (defhydra hydra-yank-pop ()
-    ;;   "yank"
-    ;;   ("C-y" yank nil)
-    ;;   ("M-y" yank-pop nil)
-    ;;   ("y" (yank-pop 1) "next")
-    ;;   ("Y" (yank-pop -1) "prev")
-    ;;   ("l" helm-show-kill-ring "list" :color blue))   ; or browse-kill-ring
-    ;; (global-set-key (kbd "M-y") #'hydra-yank-pop/yank-pop)
-    ;; (global-set-key (kbd "C-y") #'hydra-yank-pop/yank)
-
-
-
                                             ; Dired
     (defhydra hydra-dired (:hint nil :color pink)
       "
@@ -1012,7 +1000,6 @@ Do something to crash and don't start emacs?
 
     ;;   ("q"   nil "Cancel" :color blue))
 
-
     ;; (define-key projectile-mode-map (kbd "C-c p") 'hydra-projectile/body)
     ;; (define-key projectile-mode-map (kbd "s-p") 'hydra-projectile/body)
 
@@ -1081,6 +1068,7 @@ Do something to crash and don't start emacs?
   ;;    ("<drag-mouse-1>" ignore)
   ;;    ("q" nil))
 
+  
     ;; (defhydra hydra-windows-nav (:color red)
     ;;   ("s" shrink-window-horizontally "shrink horizontally" :column "Sizing")
     ;;   ("e" enlarge-window-horizontally "enlarge horizontally")
