@@ -1205,6 +1205,14 @@
 
 ;; TODO this could/should be in an :after in the use-package expression above?
 (with-eval-after-load 'lsp-mode
+  ;; This doesn't seem to work, not seeing lens in ts or js code
+   (lsp-register-custom-settings
+    '(("typescript.referencesCodeLens.enabled" t t)
+      ("javascript.referencesCodeLens.enabled" t t)
+      ("typescript.implementationsCodeLens.enabled" t t)
+      ("javascript.implementationsCodeLens.enabled" t t)
+      ("typescript.referencesCodeLens.showOnAllFunctions" t t)
+      ("javascript.referencesCodeLens.showOnAllFunctions" t t)))
   (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.circleci\\'")
   (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\deps$") ;; Elixir
   (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]_build$") ;; Elixir
