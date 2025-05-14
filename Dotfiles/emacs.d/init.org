@@ -1904,6 +1904,8 @@ Do something to crash and don't start emacs?
 
   (keymap-global-set "C-h" 'wtf-transient-metahelp-menu)
 #+end_src
+
+** TODO lsp-mode
 ** org-agenda-mode
 #+begin_src emacs-lisp
 
