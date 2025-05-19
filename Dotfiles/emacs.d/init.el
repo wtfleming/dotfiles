@@ -1152,9 +1152,7 @@
   :ensure t
   :commands (lsp lsp-deferred)
   :hook ((elixir-mode . lsp-deferred)
-         ;; (go-mode . lsp-deferred)
          (rust-mode . lsp-deferred)
-         ;; (scala-mode . lsp-deferred)
          ;; (clojure-mode . lsp)
          ;; (clojurec-mode . lsp)
          ;; (clojurescript-mode . lsp)
@@ -1174,25 +1172,13 @@
   ;;              clojurex-mode))
   ;;   (add-to-list 'lsp-language-id-configuration `(,m . "clojure")))
   :custom
-  (lsp-file-watch-threshold 2200))
-
-(use-package lsp-ui
-  :ensure t
-  :commands lsp-ui-mode)
-
-;; ;; if you are helm user
-;; (use-package helm-lsp :commands helm-lsp-workspace-symbol)
-;; ;; if you are ivy user
-;; (use-package lsp-ivy :commands lsp-ivy-workspace-symbol)
-;; (use-package lsp-treemacs :commands lsp-treemacs-errors-list)
-;; ;; optionally if you want to use debugger
-;; (use-package dap-mode)
-;; ;; (use-package dap-LANGUAGE) to load the dap adapter for your language
+  (lsp-file-watch-threshold 2200)
+  (lsp-semantic-tokens-enable t))
 
 
-;; TODO this could/should be in an :after in the use-package expression above?
+;; TODO this should be in an :after in the use-package expression above?
 (with-eval-after-load 'lsp-mode
-  ;; This doesn't seem to work, not seeing lens in ts or js code
+  ;; This doesn't seem to work, not seeing lens in ts or js code?
   ;; (lsp-register-custom-settings
   ;;  '(("typescript.referencesCodeLens.enabled" t t)
   ;;    ("javascript.referencesCodeLens.enabled" t t)
@@ -1206,25 +1192,24 @@
   (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]postgres-data$")
   (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.vagrant\\'"))
 
-;; (setopt lsp-eldoc-render-all t)
-;; (setopt lsp-enable-snippet t)
-
-
-(setopt lsp-lens-enable t
-        lsp-semantic-tokens-enable t
-        lsp-ui-doc-enable nil
-        ;;lsp-ui-doc-position 'bottom
-        ;;lsp-ui-doc-delay 1.0
-        ;;lsp-ui-peek-enable t
-        lsp-ui-sideline-enable t
-        lsp-ui-imenu-enable t
-        lsp-idle-delay 0.500
-        lsp-ui-flycheck-enable t)
+(use-package lsp-ui
+  :ensure t
+  :custom
+  (lsp-ui-sideline-show-hover nil)
+  (lsp-ui-sideline-show-diagnostics nil "hide errors from sideline")
+  (lsp-ui-doc-show-with-cursor nil)
+  (lsp-ui-doc-show-with-mouse t)
+  (lsp-ui-doc-position 'at-point) ;; TODO may want to show with mouse instead and be 'at-point
+  (lsp-ui-imenu-enable t)
+  (lsp-ui-sideline-show-code-actions nil) ;; TODO look into enabling this?
+  (lsp-ui-sideline-delay 0.2))
 
 ;; ---- LSP Performance ----
 ;; https://emacs-lsp.github.io/lsp-mode/page/performance/
 
-;; Increase the amount of data which Emacs reads from the process. Again the emacs default is too low 4k considering that the some of the language server responses are in 800k - 3M range.
+;; Increase the amount of data which Emacs reads from the process.
+;; Again the emacs default is too low 4k considering that the some of the
+;; language server responses are in 800k - 3M range.
 (setopt read-process-output-max (* 3 1024 1024)) ;; 3mb
 
 ;; ----- Flycheck -----
@@ -1337,19 +1322,18 @@
 
 ;; TODO also need to do this for anything using tree siter
 ;;   for example typescript-ts-mode
-(add-hook 'c++-mode-hook (lambda () (subword-mode +1)))
-(add-hook 'clojure-mode-hook (lambda () (subword-mode +1)))
-(add-hook 'csharp-mode-hook (lambda () (subword-mode +1)))
+;; (add-hook 'c++-mode-hook (lambda () (subword-mode +1)))
+;; (add-hook 'clojure-mode-hook (lambda () (subword-mode +1)))
+;; (add-hook 'csharp-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'elixir-mode-hook (lambda () (subword-mode +1)))
-(add-hook 'go-mode-hook (lambda () (subword-mode +1)))
-(add-hook 'java-mode-hook (lambda () (subword-mode +1)))
+;; (add-hook 'go-mode-hook (lambda () (subword-mode +1)))
+;; (add-hook 'java-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'just-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'rust-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'yaml-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'terraform-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'typescript-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'typescript-ts-mode-hook (lambda () (subword-mode +1)))
-;;(add-hook 'js2-mode-hook (lambda () (subword-mode +1)))
 
 
 ;; ----- git-gutter -----
