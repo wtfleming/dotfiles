@@ -1147,7 +1147,6 @@
 ;; Function to stylize the irc buffer names.
 (setopt doom-modeline-irc-stylize 'identity)
 
-;;; Programming
 ;; ------- Language Server -------
 (use-package lsp-mode
   :ensure t

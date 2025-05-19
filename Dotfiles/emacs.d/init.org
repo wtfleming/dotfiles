@@ -1212,9 +1212,8 @@ Do something to crash and don't start emacs?
 
 * Programming
 
-** TODO add subheadings here
+** lsp-mode
 #+begin_src emacs-lisp
-  ;;; Programming
   ;; ------- Language Server -------
   (use-package lsp-mode
     :ensure t
@@ -1294,7 +1293,11 @@ Do something to crash and don't start emacs?
 
   ;; Increase the amount of data which Emacs reads from the process. Again the emacs default is too low 4k considering that the some of the language server responses are in 800k - 3M range.
   (setopt read-process-output-max (* 3 1024 1024)) ;; 3mb
+#+end_src
 
+** TODO add subheadings here
+
+#+begin_src emacs-lisp
   ;; ----- Flycheck -----
   ;; TODO look into if I still need flycheck, am I actually using it
   ;;   or is lsp-mode doing enough?
