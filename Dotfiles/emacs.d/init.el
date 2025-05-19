@@ -1348,6 +1348,7 @@
 (add-hook 'yaml-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'terraform-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'typescript-mode-hook (lambda () (subword-mode +1)))
+(add-hook 'typescript-ts-mode-hook (lambda () (subword-mode +1)))
 ;;(add-hook 'js2-mode-hook (lambda () (subword-mode +1)))
 
 
