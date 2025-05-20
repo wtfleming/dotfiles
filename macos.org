@@ -8,6 +8,10 @@ compaudit | xargs chmod g-w
 Install dotfiles
 https://github.com/wtfleming/dotfiles
 
+Install Fira code
+https://github.com/tonsky/FiraCode/wiki/Installing
+
+
 brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake
 
 
