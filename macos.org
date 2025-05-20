@@ -44,6 +44,9 @@ Run 'gmake install'
 M-x all-the-icons-install-fonts
 M-x nerd-icons-install-fonts
 
+# Can see what features emacs was built with
+look at variable system-configuration-features
+
 # ---------------
 
 # LLMs with gptel
