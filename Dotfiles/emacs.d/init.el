@@ -420,7 +420,7 @@
   "M-s h"         "search-highlight"
   "M-s"           "search-map")
 
-;; Org-mode provides some additional prefix-keys in `org-mode-map'.
+;; org-mode provides some additional prefix-keys in `org-mode-map'.
 (with-eval-after-load 'org
   (which-key-add-keymap-based-replacements org-mode-map
     "C-c \""      "org-plot"
@@ -609,6 +609,7 @@
 ;; ------- key bindings -------
 (defvar-keymap wtf-prefix-org-mode-map
   :doc "Prefix key map for org-mode functions I often call."
+  "," #'org-insert-structure-template
   "a" #'org-agenda
   "b" #'org-switchb
   "c" #'org-capture
@@ -1150,59 +1151,89 @@
 (setopt doom-modeline-irc-stylize 'identity)
 
 ;; ------- Language Server -------
-(use-package lsp-mode
-  :ensure t
-  :commands (lsp lsp-deferred)
-  :hook ((elixir-mode . lsp-deferred)
-         (rust-mode . lsp-deferred)
-         ;; (clojure-mode . lsp)
-         ;; (clojurec-mode . lsp)
-         ;; (clojurescript-mode . lsp)
-         (sh-mode . lsp-deferred)
-         (yaml-mode . lsp)
-         (typescript-ts-mode . lsp-deferred)
-         (terraform-mode . lsp-deferred)
-         )
-  :init
-  (add-to-list 'exec-path "~/bin/elixir-ls")
-  :bind (("M-j" . lsp-ui-imenu)
-         ("M-?" . lsp-find-references))
-  ;; :config
-  ;; (dolist (m '(clojure-mode
-  ;;              clojurec-mode
-  ;;              clojurescript-mode
-  ;;              clojurex-mode))
-  ;;   (add-to-list 'lsp-language-id-configuration `(,m . "clojure")))
-  :custom
-  (lsp-file-watch-threshold 2200)
-  (lsp-semantic-tokens-enable t))
+  (use-package lsp-mode
+    :ensure t
+    :commands (lsp lsp-deferred)
+    :hook ((elixir-mode . lsp-deferred)
+           (rust-mode . lsp-deferred)
+           ;; (clojure-mode . lsp)
+           ;; (clojurec-mode . lsp)
+           ;; (clojurescript-mode . lsp)
+           (sh-mode . lsp-deferred)
+           (yaml-mode . lsp)
+           (typescript-ts-mode . lsp-deferred)
+           (terraform-mode . lsp-deferred)
+           )
+    :init
+    (add-to-list 'exec-path "~/bin/elixir-ls")
+    :bind (("M-j" . lsp-ui-imenu)
+           ("M-?" . lsp-find-references))
+    ;; :config
+    ;; (dolist (m '(clojure-mode
+    ;;              clojurec-mode
+    ;;              clojurescript-mode
+    ;;              clojurex-mode))
+    ;;   (add-to-list 'lsp-language-id-configuration `(,m . "clojure")))
+    :custom
+    (lsp-file-watch-threshold 2200)
+    (lsp-semantic-tokens-enable t))
+
+  (with-eval-after-load 'lsp-mode
+    (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.circleci\\'")
+    (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\deps$") ;; Elixir
+    (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]_build$") ;; Elixir
+    (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]postgres-data$")
+    (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.vagrant\\'"))
+
+  ;; ------- key bindings -------
+  (defvar-keymap wtf-prefix-lsp-mode-map
+    :doc "Prefix key map for lsp-mode functions I often call."
+    "a" #'lsp-execute-code-action
+    "d" #'lsp-find-declaration
+    "g" #'lsp-ui-doc-glance
+    "h" #'lsp-find-definition
+    "i" #'lsp-find-implementation
+    "n" #'lsp-rename
+    "p" #'lsp-describe-thing-at-point
+    "r" #'lsp-find-references
+    "t" #'lsp-find-type-definition)
+
+  (defvar-keymap wtf-lsp-mode-prefix-map
+    :doc "My prefix key map."
+    "l" wtf-prefix-lsp-mode-map)
+
+  ;; TODO should this only be for lsp-mode, not the global map? lsp-mode-map
+  ;; Bind the prefix key map to a key.
+  ;; Notice the absence of a quote for the map's symbol.
+  (with-eval-after-load 'lsp-mode
+    (keymap-set lsp-mode-map "C-c" wtf-lsp-mode-prefix-map))
+
+  ;; Define how the nested keymaps are labelled in `which-key-mode'.
+  (which-key-add-keymap-based-replacements wtf-lsp-mode-prefix-map
+    "l" `("lsp-mode" . ,wtf-prefix-lsp-mode-map))
 
 (with-eval-after-load 'lsp-mode
-  (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.circleci\\'")
-  (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\deps$") ;; Elixir
-  (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]_build$") ;; Elixir
-  (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]postgres-data$")
-  (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.vagrant\\'"))
+  (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration))
 
-(use-package lsp-ui
-  :ensure t
-  :custom
-  (lsp-ui-sideline-show-hover nil)
-  (lsp-ui-sideline-show-diagnostics nil "hide errors from sideline")
-  (lsp-ui-doc-show-with-cursor nil)
-  (lsp-ui-doc-show-with-mouse t)
-  (lsp-ui-doc-position 'at-point) ;; TODO may want to show with mouse instead and be 'at-point
-  (lsp-ui-imenu-enable t)
-  (lsp-ui-sideline-show-code-actions nil) ;; TODO look into enabling this?
-  (lsp-ui-sideline-delay 0.2))
+  (use-package lsp-ui
+    :ensure t
+    :custom
+    (lsp-ui-sideline-show-hover nil)
+    (lsp-ui-sideline-show-diagnostics nil "hide errors from sideline")
+    (lsp-ui-doc-show-with-cursor nil)
+    (lsp-ui-doc-show-with-mouse t)
+    (lsp-ui-doc-position 'at-point) ;; TODO may want to show with mouse instead and be 'at-point
+    (lsp-ui-imenu-enable t)
+    (lsp-ui-sideline-show-code-actions nil) ;; TODO look into enabling this?
+    (lsp-ui-sideline-delay 0.2))
 
-;; ---- LSP Performance ----
-;; https://emacs-lsp.github.io/lsp-mode/page/performance/
+  ;; ---- LSP Performance ----
+  ;; https://emacs-lsp.github.io/lsp-mode/page/performance/
 
-;; Increase the amount of data which Emacs reads from the process.
-;; Again the emacs default is too low 4k considering that the some of the
-;; language server responses are in 800k - 3M range.
-(setopt read-process-output-max (* 3 1024 1024)) ;; 3mb
+  ;; Increase the amount of data which Emacs reads from the process.
+  ;; Again the emacs default is too low 4k considering that the some of the
+  ;; language server responses are in 800k - 3M range.
+  (setopt read-process-output-max (* 3 1024 1024)) ;; 3mb
 
 ;; ----- Flycheck -----
 ;; TODO look into if I still need flycheck, am I actually using it
