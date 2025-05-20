@@ -482,7 +482,7 @@ Deja Vu Serif
     "M-s h"         "search-highlight"
     "M-s"           "search-map")
 
-  ;; Org-mode provides some additional prefix-keys in `org-mode-map'.
+  ;; org-mode provides some additional prefix-keys in `org-mode-map'.
   (with-eval-after-load 'org
     (which-key-add-keymap-based-replacements org-mode-map
       "C-c \""      "org-plot"
@@ -674,6 +674,7 @@ Deja Vu Serif
   ;; ------- key bindings -------
   (defvar-keymap wtf-prefix-org-mode-map
     :doc "Prefix key map for org-mode functions I often call."
+    "," #'org-insert-structure-template
     "a" #'org-agenda
     "b" #'org-switchb
     "c" #'org-capture
@@ -1273,6 +1274,36 @@ Deja Vu Serif
     (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]_build$") ;; Elixir
     (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]postgres-data$")
     (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.vagrant\\'"))
+
+  ;; ------- key bindings -------
+  (defvar-keymap wtf-prefix-lsp-mode-map
+    :doc "Prefix key map for lsp-mode functions I often call."
+    "a" #'lsp-execute-code-action
+    "d" #'lsp-find-declaration
+    "g" #'lsp-ui-doc-glance
+    "h" #'lsp-find-definition
+    "i" #'lsp-find-implementation
+    "n" #'lsp-rename
+    "p" #'lsp-describe-thing-at-point
+    "r" #'lsp-find-references
+    "t" #'lsp-find-type-definition)
+
+  (defvar-keymap wtf-lsp-mode-prefix-map
+    :doc "My prefix key map."
+    "l" wtf-prefix-lsp-mode-map)
+
+  ;; TODO should this only be for lsp-mode, not the global map? lsp-mode-map
+  ;; Bind the prefix key map to a key.
+  ;; Notice the absence of a quote for the map's symbol.
+  (with-eval-after-load 'lsp-mode
+    (keymap-set lsp-mode-map "C-c" wtf-lsp-mode-prefix-map))
+
+  ;; Define how the nested keymaps are labelled in `which-key-mode'.
+  (which-key-add-keymap-based-replacements wtf-lsp-mode-prefix-map
+    "l" `("lsp-mode" . ,wtf-prefix-lsp-mode-map))
+
+(with-eval-after-load 'lsp-mode
+  (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration))
 
   (use-package lsp-ui
     :ensure t
@@ -1908,7 +1939,7 @@ Deja Vu Serif
   (keymap-global-set "C-h" 'wtf-transient-metahelp-menu)
 #+end_src
 
-** TODO lsp-mode
+
 ** org-agenda-mode
 #+begin_src emacs-lisp
 
