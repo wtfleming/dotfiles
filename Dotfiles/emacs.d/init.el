@@ -1,3 +1,73 @@
+;;; ---- package management ----
+;; Store downloaded packages in a directory corresponding to the emacs version we are running
+;; Make upgrading emacs to a new major version easier/safer
+(setopt package-user-dir (format "~/.emacs.d/elpa-%d" emacs-major-version))
+
+;; Fix problem where emacs can not connect to melpa
+;; https://emacs.stackexchange.com/questions/51721/failed-to-download-gnu-archive
+;; TODO 2/15/25 - is this still a problem?
+(setopt gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+
+
+(require 'package)
+;; If you want to see how long packages take to load
+;; when emacs starts, uncomment the next line
+;; (setopt use-package-compute-statistics t)
+;; then evaluate this function
+;; (use-package-report)
+;;
+;; Output will look like this, and helps identify slow loading
+;; packages that could potentially have their loading deferred
+;; ox-reveal                 Configured    11:43:16.207041         0.77
+;; treesit                   Configured    11:43:16.604111         0.34
+;; js2-mode                  Configured    11:43:16.790564         0.29
+
+
+(setopt package-enable-startup nil)
+(add-to-list 'package-archives
+             '("nongnu" . "https://elpa.nongnu.org/nongnu/") t)
+(add-to-list 'package-archives
+             '("melpa" . "https://melpa.org/packages/") t)
+(add-to-list 'package-archives
+             '("melpa-stable" . "https://stable.melpa.org/packages/") t)
+
+
+(add-to-list 'package-pinned-packages '(company . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(doom-modeline . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(flycheck . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(git-gutter . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(gptel . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(helm . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(helm-core . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(lsp-mode . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(lsp-ui . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(magit . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(magit-section . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(markdown-mode . "melpa-stable") t)
+(add-to-list 'package-pinned-packages '(projectile . "melpa-stable") t)
+;; is this needed now that transient is built in to emacs?
+(add-to-list 'package-pinned-packages '(transient . "melpa-stable") t)
+;; with-editor is a magit dependency
+(add-to-list 'package-pinned-packages '(with-editor . "melpa-stable") t)
+
+(package-initialize)
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
+
+;; use-package-hook-name-suffix is a variable defined in ‘use-package-core.el’.
+;; Its default value is "-hook"
+;; Text append to the name of hooks mentioned by :hook.
+;; Set to nil if you don’t want this to happen; it’s only a convenience.
+;;
+;; Or to put another way the way use-package works by default is to add
+;; the value of this variable to the name of the hook.
+;; So the default way to add a hook would look like:
+;; :hook (after-init . projectile-mode)
+;; but with use-package-hook-name-suffix set to nil it would be:
+;; :hook (after-init-hook . projectile-mode)
+;; (setopt use-package-hook-name-suffix nil)
+
 ;; Do not manually edit this file, if you need to make changes it is generated
 ;; from a org-bablel literate configuration available here:
 ;; https://github.com/wtfleming/dotfiles/blob/master/Dotfiles/emacs.d/init.org
@@ -28,6 +98,30 @@
 
 (when (file-exists-p "~/.emacs.d/lisp/rama-mode.el")
   (load "~/.emacs.d/lisp/rama-mode.el"))
+
+;; ------- zenburn-theme -------
+(use-package zenburn-theme
+  :ensure t
+  :config
+  (load-theme 'zenburn t))
+
+;; Fonts
+(defun font-available-p (font-name)
+  (find-font (font-spec :name font-name)))
+
+(when (font-available-p "Fira Code")
+    (set-face-attribute 'default nil
+                        ;; :weight 'semilight
+                        :family "Fira Code"))
+
+;; (set-face-attribute 'variable-pitch nil :family "Fira Code")
+;; (set-face-attribute 'fixed-pitch nil :family "Fira Code")
+;; (setopt modus-themes-mixed-fonts t)
+  
+;; Use a larger font on bigger monitors
+(if (> (display-pixel-width) 1440)
+    (set-face-attribute 'default nil :height 200)
+    (set-face-attribute 'default nil :height 120))
 
 ;;; Functions
 
@@ -106,16 +200,6 @@
   (let ((utc-time (format-time-string "%Y-%m-%d %H:%M:%S" (current-time) t)))
     (message "Current UTC time: %s" utc-time)))
 
-;; Store downloaded packages in a directory corresponding to the emacs version we are running
-;; Make upgrading emacs to a new major version easier/safer
-(setopt package-user-dir (format "~/.emacs.d/elpa-%d" emacs-major-version))
-
-;; Fix problem where emacs can not connect to melpa
-;; https://emacs.stackexchange.com/questions/51721/failed-to-download-gnu-archive
-;; TODO 2/15/25 - is this still a problem?
-(setopt gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
-
-
 ;; ---- Garbage collection ----
 ;;
 ;; Set garbage collection threshold
@@ -138,65 +222,7 @@
                          (message "Garbage Collector has run for %.06fsec"
                                   (k-time (garbage-collect))))))
 
-;; ---- package management ----
-(require 'package)
-;; If you want to see how long packages take to load
-;; when emacs starts, uncomment the next line
-;; (setopt use-package-compute-statistics t)
-;; then evaluate this function
-;; (use-package-report)
-;;
-;; Output will look like this, and helps identify slow loading
-;; packages that could potentially have their loading deferred
-;; ox-reveal                 Configured    11:43:16.207041         0.77
-;; treesit                   Configured    11:43:16.604111         0.34
-;; js2-mode                  Configured    11:43:16.790564         0.29
 
-
-(setopt package-enable-startup nil)
-(add-to-list 'package-archives
-             '("nongnu" . "https://elpa.nongnu.org/nongnu/") t)
-(add-to-list 'package-archives
-             '("melpa" . "https://melpa.org/packages/") t)
-(add-to-list 'package-archives
-             '("melpa-stable" . "https://stable.melpa.org/packages/") t)
-
-
-(add-to-list 'package-pinned-packages '(company . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(doom-modeline . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(flycheck . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(git-gutter . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(gptel . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(helm . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(helm-core . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(lsp-mode . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(lsp-ui . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(magit . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(magit-section . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(markdown-mode . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(projectile . "melpa-stable") t)
-;; is this needed now that transient is built in to emacs?
-(add-to-list 'package-pinned-packages '(transient . "melpa-stable") t)
-;; with-editor is a magit dependency
-(add-to-list 'package-pinned-packages '(with-editor . "melpa-stable") t)
-
-(package-initialize)
-(unless (package-installed-p 'use-package)
-  (package-refresh-contents)
-  (package-install 'use-package))
-
-;; use-package-hook-name-suffix is a variable defined in ‘use-package-core.el’.
-;; Its default value is "-hook"
-;; Text append to the name of hooks mentioned by :hook.
-;; Set to nil if you don’t want this to happen; it’s only a convenience.
-;;
-;; Or to put another way the way use-package works by default is to add
-;; the value of this variable to the name of the hook.
-;; So the default way to add a hook would look like:
-;; :hook (after-init . projectile-mode)
-;; but with use-package-hook-name-suffix set to nil it would be:
-;; :hook (after-init-hook . projectile-mode)
-;; (setopt use-package-hook-name-suffix nil)
 
 
 ;; Helm appears to be using ffap internally which can cause
@@ -212,20 +238,6 @@
   :if (display-graphic-p))
 
 
-;; Fonts
-(defun font-available-p (font-name)
-  (find-font (font-spec :name font-name)))
-
-;; (cond
-;;  ((font-available-p "Cascadia Code")
-;;   (set-frame-font "Cascadia Code-12"))
-;;  ((font-available-p "Menlo")
-;;   (set-frame-font "Menlo-12"))
-;;  ((font-available-p "DejaVu Sans Mono")
-;;   (set-frame-font "DejaVu Sans Mono-12"))
-;;  ((font-available-p "Inconsolata")
-;;   (set-frame-font "Inconsolata-12")))
-
 ;; ------- Keybindings -------
 (keymap-global-set "C-x C-u" 'undo)
 
@@ -239,11 +251,6 @@
 
 
 ;; ------- Visual Settings -------
-
-;; Use a larger font on bigger monitors
-(if (> (display-pixel-width) 1440)
-    (set-face-attribute 'default nil :height 200)
-  (set-face-attribute 'default nil :height 120))
 
 ;; Ensure line and column numbers are displayed on the mode line
 (setopt line-number-mode t) ; Default is on for line, but set it anyways
@@ -440,11 +447,6 @@
   :ensure t
   :mode ("\\.http\\'" . restclient-mode))
 
-;; ------- zenburn-theme -------
-(use-package zenburn-theme
-  :ensure t
-  :config
-  (load-theme 'zenburn t))
 
 ;; ------- uniquify -------
 (use-package uniquify
