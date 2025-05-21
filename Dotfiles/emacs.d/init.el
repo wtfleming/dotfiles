@@ -434,8 +434,8 @@
 ;; ------- Company -------
 (use-package company
   :ensure t
-  :config
-  (add-hook 'after-init-hook 'global-company-mode)
+  ;;:config
+  ;;(add-hook 'after-init-hook 'global-company-mode)
   :custom
   (company-idle-delay 0.0)
   (company-minimum-prefix-length 1))
