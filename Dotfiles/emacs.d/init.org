@@ -693,7 +693,8 @@ Deja Vu Serif
   ;; Prefixes we only want when we are in org-mode
   (defvar-keymap wtf-prefix-org-mode-local-map
     :doc "Prefix key map for org-mode functions I often call."
-    "," #'org-insert-structure-template)
+    "," #'org-insert-structure-template
+    "i" #'org-insert-link)
 
   (defvar-keymap wtf-org-mode-local-prefix-map
     :doc "My prefix key map."
