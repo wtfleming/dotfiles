@@ -662,25 +662,25 @@
            "- %?\n %x\n")))
 
 ;; ------- Org agenda-------
-                                        ; Store list of agenda files in org folder so we can easily use
-                                        ; git to keep it synced
+;; Store list of agenda files in org folder so we can easily use
+;; git to keep it synced
 (setopt org-agenda-files (concat org-directory ".agenda-files"))
 
-                                        ; Start the agenda on today instead of the monday of this week
+;; Start the agenda on today instead of the monday of this week
 (setopt org-agenda-start-on-weekday nil)
 
-                                        ; Show two weeks in the agenda view
+;; Show two weeks in the agenda view
 (setopt org-agenda-span 14)
 
 ;; ------- Misc -------
-                                        ; Don't close windows on exit
+;; Don't close windows on exit
 (setopt org-agenda-window-setup 'current-window)
 
-                                        ; Use solarized CSS for export  http://thomasf.github.io/solarized-css/
+;; Use solarized CSS for export  http://thomasf.github.io/solarized-css/
 (setopt org-export-html-style-include-scripts nil
         org-export-html-style-include-default nil)
 (setopt org-export-html-style
-        (concat "<link rel=\"stylesheet\" type=\"text/css\" href=\"" (expand-file-name org-directory) "css/solarized-light.min.css\" />"))
+        (concat "<link rel=\"stylesheet\" type=\"text/css\" href=\"" (expand-file-name org-directory) ".css/solarized-light.min.css\" />"))
 
 
 ;; Use unicode symbol to display org-mode checkboxes
