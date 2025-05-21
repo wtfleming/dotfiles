@@ -1320,7 +1320,7 @@ Deja Vu Serif
     (lsp-ui-sideline-show-hover nil)
     (lsp-ui-sideline-show-diagnostics nil "hide errors from sideline")
     (lsp-ui-doc-show-with-cursor nil)
-    (lsp-ui-doc-show-with-mouse t)
+    (lsp-ui-doc-show-with-mouse nil)
     (lsp-ui-doc-position 'at-point) ;; TODO may want to show with mouse instead and be 'at-point
     (lsp-ui-imenu-enable t)
     (lsp-ui-sideline-show-code-actions nil) ;; TODO look into enabling this?
