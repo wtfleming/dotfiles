@@ -604,6 +604,7 @@
 (setopt org-directory "~/org-mode/")
 (setopt org-return-follows-link t)
 (setopt org-startup-indented t)
+(setopt org-startup-folded 'content)
 
 
 ;;------- key bindings -------
