@@ -636,7 +636,7 @@ Deja Vu Serif
 
 * org-mode
 #+begin_src emacs-lisp
-    ;;; org-mode
+  ;;; org-mode
   ;; ------- org-reveal -------
   ;; https://github.com/hexmode/ox-reveal
   ;; Reveal.js is a tool for creating good-looking HTML presentations.
@@ -671,26 +671,37 @@ Deja Vu Serif
   (setopt org-startup-indented t)
 
 
-  ;; ------- key bindings -------
-  (defvar-keymap wtf-prefix-org-mode-map
+  ;;------- key bindings -------
+  (defvar-keymap wtf-prefix-org-mode-global-map
     :doc "Prefix key map for org-mode functions I often call."
-    "," #'org-insert-structure-template
     "a" #'org-agenda
     "b" #'org-switchb
     "c" #'org-capture
     "l" #'org-store-link)
 
-  (defvar-keymap wtf-prefix-map
+  (defvar-keymap wtf-org-mode-prefix-map
     :doc "My prefix key map."
-    "o" wtf-prefix-org-mode-map)
+    "o" wtf-prefix-org-mode-global-map)
 
   ;; Bind the prefix key map to a key.
-  ;; Notice the absence of a quote for the map's symbol.
-  (keymap-set global-map "C-c" wtf-prefix-map)
+  (keymap-set global-map "C-c" wtf-org-mode-prefix-map)
 
   ;; Define how the nested keymaps are labelled in `which-key-mode'.
-  (which-key-add-keymap-based-replacements wtf-prefix-map
-    "o" `("org-mode" . ,wtf-prefix-org-mode-map))
+  (which-key-add-keymap-based-replacements wtf-org-mode-prefix-map
+    "o" `("org-mode" . ,wtf-prefix-org-mode-global-map))
+
+  ;; Prefixes we only want when we are in org-mode
+  (defvar-keymap wtf-prefix-org-mode-local-map
+    :doc "Prefix key map for org-mode functions I often call."
+    "," #'org-insert-structure-template)
+
+  (defvar-keymap wtf-org-mode-local-prefix-map
+    :doc "My prefix key map."
+    "o" wtf-prefix-org-mode-local-map)
+
+  (with-eval-after-load 'org
+    (keymap-set org-mode-map "C-c" wtf-org-mode-local-prefix-map))
+
 
   ;; ------- tags -------
   (setopt org-tag-alist
@@ -1292,9 +1303,6 @@ Deja Vu Serif
     :doc "My prefix key map."
     "l" wtf-prefix-lsp-mode-map)
 
-  ;; TODO should this only be for lsp-mode, not the global map? lsp-mode-map
-  ;; Bind the prefix key map to a key.
-  ;; Notice the absence of a quote for the map's symbol.
   (with-eval-after-load 'lsp-mode
     (keymap-set lsp-mode-map "C-c" wtf-lsp-mode-prefix-map))
 
