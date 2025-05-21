@@ -1,3 +1,4 @@
+# -*- eval: (save-place-local-mode -1); -*- 
 #+title: GNU Emacs Configuration
 #+property: header-args :tangle "init.el"
 #+options: ':t toc:nil num:t author:nil
