@@ -1851,6 +1851,12 @@ Deja Vu Serif
       ))
 #+end_src
 
+** TODO rewrite directive
+look at variable gptel-rewrite-directives-hook
+For text I want a prompt like "rewrite the following message for better readability"
+I think I want to use gptel-rewrite as it gives access to diff, but maybe an elisp function
+would work well enough instead?
+
 * transient
 #+begin_src emacs-lisp
   (use-package transient
