@@ -1726,6 +1726,8 @@ Can be used with the `gptel-post-response-functions' hook."
 
 ;; ------- Find potential issues in source code -------
 ;; TODO look at the current mode, if it is typescript, include that info in the system message (and same for other languages)
+;; TODO change so if a region is active use that, otherwise the entire buffer
+;; TODO if not in a programming mode, don't do anything
 (defun wtf-gptel-find-code-issues-in-current-buffer ()
   "Use an LLM to find potential source code issues in the current buffer."
   (interactive)
@@ -1844,3 +1846,9 @@ Can be used with the `gptel-post-response-functions' hook."
  'org-agenda-mode-hook
  (lambda ()
    (define-key org-agenda-mode-map "." 'wtf-transient-org-agenda-mode-menu)))
+
+(transient-define-prefix wtf-transient-gptel-prefix ()
+    "Insert emoji"
+    [("w" "Define word" wtf-gptel-define-word)
+     ("c" "Find code issues in current buffer" wtf-gptel-find-code-issues-in-current-buffer)])
+  (keymap-global-set "C-c g" 'wtf-transient-gptel-prefix)
