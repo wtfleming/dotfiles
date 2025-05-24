@@ -1,3 +1,4 @@
+* Misc
 Install homebrew
 https://brew.sh/
 
@@ -17,7 +18,7 @@ brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake
 * emacs
 ---------- Build emacs on an ARM Mac from source
 #+begin_src
-  # Note: if building for emacs 29 need to brew install jansson, but not for 30 and newer
+# Note: if building for emacs 29 need to brew install jansson, but not for 30 and newer
 brew install gcc libgccjit make gnutls texinfo autoconf pkg-config tree-sitter
 
 # Emacs flyspell needs a spell checking tool, install one on macOS
@@ -60,20 +61,16 @@ Run 'gmake' to build Emacs, then run 'src/emacs' to test it.
 
 # Run 'gmake install'
 
-
 # For my config currently need to run these commands
 M-x all-the-icons-install-fonts
 M-x nerd-icons-install-fonts
-
 #+end_src
 
 
-# Can see what features emacs was built with
-look at variable system-configuration-features
+You can see what features emacs was built with by looking at variable system-configuration-features
 
-# ---------------
 
-# LLMs with gptel
+** LLMs with gptel
 in ~/.authinfo have the following lines
 machine api.openai.com login apikey password <api key goes here>
 machine api.anthropic.com login apikey password <api key goes here>
