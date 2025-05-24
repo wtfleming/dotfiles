@@ -67,8 +67,11 @@ machine api.openai.com login apikey password <api key goes here>
 machine api.anthropic.com login apikey password <api key goes here>
 
 * Misc homebrew
-# Python
-brew install uv
+#+begin_src sh
+  # Python
+  brew install uv
+
+#+end_src
 
 # Clojure things
 brew install borkdude/brew/clj-kondo
