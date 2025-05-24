@@ -206,6 +206,11 @@
   (let ((utc-time (format-time-string "%Y-%m-%d %H:%M:%S" (current-time) t)))
     (message "Current UTC time: %s" utc-time)))
 
+;; Request that documentation of functions and commands shown in *Help* buffers
+;; popped by C-h f includes examples of their use
+(add-hook 'help-fns-describe-function-functions
+          #'shortdoc-help-fns-examples-function)
+
 ;; ---- Garbage collection ----
 ;;
 ;; Set garbage collection threshold
