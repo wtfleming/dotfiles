@@ -19,7 +19,7 @@ brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake
 Build emacs on an ARM Mac from source
 #+begin_src
 # Note: if building for emacs 29 need to brew install jansson, but not for 30 and newer
-brew install gcc libgccjit make gnutls texinfo autoconf pkg-config tree-sitter
+brew install gcc libgccjit make gnutls texinfo autoconf pkg-config tree-sitter wxwidgets
 
 # Emacs flyspell needs a spell checking tool, install one on macOS
 brew install ispell
@@ -84,7 +84,6 @@ machine api.anthropic.com login apikey password <api key goes here>
   # Python
   brew install uv
 
-   
   # Clojure things
   brew install borkdude/brew/clj-kondo
   brew install clojure-lsp/brew/clojure-lsp-native
@@ -124,11 +123,11 @@ git config --global core.excludesfile ~/.gitexcludes
 
 
 * Mission Control
-# Disable mission control since I use those keyboard shortcuts in emacs
+Disable mission control since I use those keyboard shortcuts in emacs
 Go to System Preferences > Keyboard > Keyboard Shortcuts > Mission Control and change the settings for "Move left a space" and "Move right a space" or disable them completely.
 http://apple.stackexchange.com/questions/18043/how-can-i-make-ctrlright-left-arrow-stop-changing-desktops-in-lion
 
-Also if install a japanese keyboard need to disable control space since I use that in emacs a bunch
+If a japanese keyboard is installed, need to disable Control-space since I use that in emacs a bunch
 Go to System Preferences > Keyboard > Keyboard Shortcuts > Input Sources
   Disable the 2 select an input source shortcuts
 
@@ -162,7 +161,7 @@ $ clj
 user=> (+ 1 2)
 3
 
-# Install leiningen
+*** Install leiningen
 $ curl https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein > ~/bin/lein
 $ chmod a+x ~/bin/lein
 
@@ -170,18 +169,15 @@ Verify installation
 $ lein version
 
 
-Install Docker
+* Docker
 https://hub.docker.com/editions/community/docker-ce-desktop-mac
 
 $ docker login
 Username is not the default email displayed, look it up by logging into https://hub.docker.com
 
-
-
+* awscli
 brew install awscli
 $ aws configure
-
-
 
 * asdf
 See https://asdf-vm.com/guide/getting-started.html
@@ -196,10 +192,13 @@ Add the following to ~/.zshrc:
 
 Completions are configured by either a ZSH Framework asdf plugin or by adding the following to your .zshrc:
 
+#+begin_src
 # append completions to fpath
 fpath=(${ASDF_DIR}/completions $fpath)
 # initialise completions with ZSH's compinit
 autoload -Uz compinit && compinit
+
+#+end_src
 
 if you are using a custom compinit setup, ensure compinit is below your sourcing of asdf.sh
 if you are using a custom compinit setup with a ZSH Framework, ensure compinit is below your sourcing of the framework
@@ -226,8 +225,7 @@ asdf install elixir 1.14.4-otp-25
 asdf global elixir 1.14.4-otp-25
 
 
-
-# For building with wxWidgets (start observer or debugger!)
+For building with wxWidgets (start observer or debugger!)
 brew install wxwidgets
 
 You can test that it worked with
