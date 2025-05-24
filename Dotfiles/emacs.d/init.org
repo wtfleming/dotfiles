@@ -271,6 +271,11 @@ Deja Vu Serif
 
 * Common Setup
 #+begin_src emacs-lisp
+  ;; Request that documentation of functions and commands shown in *Help* buffers
+  ;; popped by C-h f includes examples of their use
+  (add-hook 'help-fns-describe-function-functions
+            #'shortdoc-help-fns-examples-function)
+
   ;; ---- Garbage collection ----
   ;;
   ;; Set garbage collection threshold
@@ -322,7 +327,7 @@ Deja Vu Serif
 
 
   ;; ------- Visual Settings -------
-  
+
   ;; Ensure line and column numbers are displayed on the mode line
   (setopt line-number-mode t) ; Default is on for line, but set it anyways
   (setopt column-number-mode t)
