@@ -112,18 +112,22 @@ machine api.anthropic.com login apikey password <api key goes here>
 #+end_src
 
 * Git
-
 Install dev tools - this is one way to prompt it:
-git --version
+#+begin_src
+  git --version
 
 brew install git-lfs
 git lfs install
 git config --global core.excludesfile ~/.gitexcludes
 
+#+end_src
+
 
 
 * Mission Control
 Disable mission control since I use those keyboard shortcuts in emacs
+
+
 Go to System Preferences > Keyboard > Keyboard Shortcuts > Mission Control and change the settings for "Move left a space" and "Move right a space" or disable them completely.
 http://apple.stackexchange.com/questions/18043/how-can-i-make-ctrlright-left-arrow-stop-changing-desktops-in-lion
 
@@ -154,19 +158,24 @@ Verify installation
   java -version
 
 ** Install Clojure CLI tools
+#+begin_src
 $ brew install clojure/tools/clojure
-
 
 $ clj
 user=> (+ 1 2)
 3
 
+#+end_src
+
 *** Install leiningen
+#+begin_src
 $ curl https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein > ~/bin/lein
 $ chmod a+x ~/bin/lein
 
-Verify installation
+# Verify installation
 $ lein version
+
+#+end_src
 
 
 * Docker
@@ -204,14 +213,7 @@ if you are using a custom compinit setup, ensure compinit is below your sourcing
 if you are using a custom compinit setup with a ZSH Framework, ensure compinit is below your sourcing of the framework
 
 ** Erlang/Elixir
-On an INTEL mac modal popups from the OS will flash on the screen often.
-If you’re using asdf, you can workaround this issue by disabling jit by adding:
-export KERL_CONFIGURE_OPTIONS="--disable-jit"
-to your .bashrc/.zshrc before installing erlang.
-
-This doesn't affect ARM macs, and a workaround will probably be in erlang/OTP 27
-
-
+#+begin_src
 asdf plugin-add erlang
 asdf plugin-add elixir
 
@@ -236,6 +238,8 @@ mix local.hex --if-missing --force
 
 mix archive.install hex phx_new
 
+#+end_src
+
 * Japanese keyboard
 System Settings->Keyboard->Text input
   Add Japanese - Romaji source
@@ -244,10 +248,14 @@ System Settings->Keyboard->Text input
 * Rust
 https://rustup.rs/
 https://github.com/rust-lang/rust-analyzer
+#+begin_src
 $ brew install rust-analyzer
+#+end_src
+
 
 * Tailwind CSS CLI tool
-
+#+begin_src
 curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-macos-arm64
 chmod +x tailwindcss-macos-arm64
 mv tailwindcss-macos-arm64 tailwindcss
+#+end_src
