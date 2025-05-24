@@ -16,7 +16,7 @@ https://github.com/tonsky/FiraCode/wiki/Installing
 brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake
 
 * emacs
----------- Build emacs on an ARM Mac from source
+Build emacs on an ARM Mac from source
 #+begin_src
 # Note: if building for emacs 29 need to brew install jansson, but not for 30 and newer
 brew install gcc libgccjit make gnutls texinfo autoconf pkg-config tree-sitter
@@ -51,10 +51,10 @@ Note that emacs 29 requires --with-json but we do not from emacs 30 on
  
 
  #+begin_src
-  ./autogen.sh
+./autogen.sh
 
-   # To see configure options run ./configure --help
-  ./configure --with-native-compilation --with-tree-sitter --without-compress-install --disable-gc-mark-trace --with-xwidgets
+# To see configure options run ./configure --help
+./configure --with-native-compilation --with-tree-sitter --without-compress-install --disable-gc-mark-trace --with-xwidgets
 
 # Run 'make' to build Emacs, then run 'src/emacs' to test it.
 Run 'gmake' to build Emacs, then run 'src/emacs' to test it.
@@ -71,9 +71,13 @@ You can see what features emacs was built with by looking at variable system-con
 
 
 ** LLMs with gptel
-in ~/.authinfo have the following lines
+In ~/.authinfo have the following lines:
+
+#+begin_src
 machine api.openai.com login apikey password <api key goes here>
 machine api.anthropic.com login apikey password <api key goes here>
+#+end_src
+
 
 * Misc homebrew
 #+begin_src sh
