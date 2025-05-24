@@ -32,16 +32,24 @@ something like
 path+=("$HOME/bin/emacs-emacs-29.4/src")
 is in .zshrc
 
-
-# To see configure options run ./configure --help
 ./autogen.sh
+
 #  Note that emacs 29 requires --with-json but we do not from emacs 30 on
-./configure --with-native-compilation --with-tree-sitter --without-compress-install
+#
+# '--disable-gc-mark-trace'. This disables the GC mark trace buffer for about 5%
+# better garbage collection performance.
+# Doing so may make it more difficult for Emacs developers to help finding
+# GC-related bugs that you run into, which is why the mark trace buffer is
+# enabled by default.
+#
+# To see configure options run ./configure --help
+./configure --with-native-compilation --with-tree-sitter --without-compress-install --disable-gc-mark-trace --with-xwidgets
+
 
 # Run 'make' to build Emacs, then run 'src/emacs' to test it.
 Run 'gmake' to build Emacs, then run 'src/emacs' to test it.
 
-Run 'gmake install'
+# Run 'gmake install'
 
 
 # For my config currently need to run these commands
