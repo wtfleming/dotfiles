@@ -2,18 +2,16 @@
 Install homebrew
 https://brew.sh/
 
-
-If zsh complains about unsecure files run
-compaudit | xargs chmod g-w
-
 Install dotfiles
 https://github.com/wtfleming/dotfiles
 
 Install Fira code
 https://github.com/tonsky/FiraCode/wiki/Installing
 
-
+#+begin_src
 brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake
+#+end_src
+
 
 * emacs
 Build emacs on an ARM Mac from source
