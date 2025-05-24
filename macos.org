@@ -32,19 +32,26 @@ something like
 path+=("$HOME/bin/emacs-emacs-29.4/src")
 is in .zshrc
 
-./autogen.sh
+#+begin_src
+  ./autogen.sh
+#+end_src
 
-#  Note that emacs 29 requires --with-json but we do not from emacs 30 on
-#
-# '--disable-gc-mark-trace'. This disables the GC mark trace buffer for about 5%
-# better garbage collection performance.
-# Doing so may make it more difficult for Emacs developers to help finding
-# GC-related bugs that you run into, which is why the mark trace buffer is
-# enabled by default.
-#
-# To see configure options run ./configure --help
-./configure --with-native-compilation --with-tree-sitter --without-compress-install --disable-gc-mark-trace --with-xwidgets
 
+Note that emacs 29 requires --with-json but we do not from emacs 30 on
+
+ '--disable-gc-mark-trace'. This disables the GC mark trace buffer for about 5%
+ better garbage collection performance.
+ Doing so may make it more difficult for Emacs developers to help finding
+ GC-related bugs that you run into, which is why the mark trace buffer is
+ enabled by default.
+
+ 
+
+ #+begin_src
+  ./autogen.sh
+
+   # To see configure options run ./configure --help
+  ./configure --with-native-compilation --with-tree-sitter --without-compress-install --disable-gc-mark-trace --with-xwidgets
 
 # Run 'make' to build Emacs, then run 'src/emacs' to test it.
 Run 'gmake' to build Emacs, then run 'src/emacs' to test it.
@@ -55,6 +62,9 @@ Run 'gmake' to build Emacs, then run 'src/emacs' to test it.
 # For my config currently need to run these commands
 M-x all-the-icons-install-fonts
 M-x nerd-icons-install-fonts
+
+#+end_src
+
 
 # Can see what features emacs was built with
 look at variable system-configuration-features
@@ -71,32 +81,33 @@ machine api.anthropic.com login apikey password <api key goes here>
   # Python
   brew install uv
 
+   
+  # Clojure things
+  brew install borkdude/brew/clj-kondo
+  brew install clojure-lsp/brew/clojure-lsp-native
+  brew install borkdude/brew/babashka
+
+  # Shell scripts linter
+  brew install shellcheck
+
+  # YAML language server
+  brew install yaml-language-server
+
+  # Glow is a terminal based markdown reader
+  brew install glow
+
+  # Terraform language server
+  brew install hashicorp/tap/terraform-ls
+
+  # For erlang installed with asdf
+  brew install autoconf
+  # For asdf to build Erlang with wxWidgets (start observer or debugger!)
+  brew install wxmac
+
+  # For exporting LaTex from emacs
+  brew install mactex
+
 #+end_src
-
-# Clojure things
-brew install borkdude/brew/clj-kondo
-brew install clojure-lsp/brew/clojure-lsp-native
-brew install borkdude/brew/babashka
-
-# Shell scripts linter
-brew install shellcheck
-
-# YAML language server
-brew install yaml-language-server
-
-# Glow is a terminal based markdown reader
-brew install glow
-
-# Terraform language server
-brew install hashicorp/tap/terraform-ls
-
-# For erlang installed with asdf
-brew install autoconf
-# For asdf to build Erlang with wxWidgets (start observer or debugger!)
-brew install wxmac
-
-# For exporting LaTex from emacs
-brew install mactex
 
 * Git
 
