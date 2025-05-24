@@ -229,9 +229,9 @@
 (defvar k-gc-timer
   (run-with-idle-timer 60 t
                        (lambda ()
-                         (message "Garbage Collector has run for %.06fsec"
-                                  (k-time (garbage-collect))))))
-
+                         (let ((duration (k-time (garbage-collect))))
+                           (when (> duration 1.0)
+                               (message "%.06f seconds" duration))))))
 
 
 
@@ -359,6 +359,10 @@
          ("C-c C-<" . mc/mark-all-like-this)
          ("C-S-c C-S-c" . mc/edit-lines)))
 
+;; ------- posframe -------
+(use-package posframe
+  :ensure t
+  :pin melpa-stable)
 
 ;; ;; -------yasnippet -------
 ;; (use-package yasnippet
@@ -1635,7 +1639,6 @@
 ;; (use-package mermaid-mode
 ;;   :ensure t)
 
-;;; gptel
 ;; ------- gptel -------
 ;; Functions to include the gptel backend and model in responses from an LLM
 (defun wtf-gptel-backend-and-model ()
@@ -1693,6 +1696,10 @@ Can be used with the `gptel-post-response-functions' hook."
     (setopt gptel-directives (assoc-delete-all 'default gptel-directives))
     (add-to-list 'gptel-directives `(default . ,my-gptel-system-msg) )
     (setopt gptel--system-message my-gptel-system-msg)))
+
+(use-package gptel-quick
+  :vc (modus-themes :url "https://github.com/karthink/gptel-quick"
+                    :branch "master"))
 
 ;; ------- gptel tools -------
 (gptel-make-tool
@@ -1876,5 +1883,7 @@ Can be used with the `gptel-post-response-functions' hook."
 (transient-define-prefix wtf-transient-gptel-prefix ()
     "Insert emoji"
     [("w" "Define word" wtf-gptel-define-word)
+     ("q" "gptel-quick" gptel-quick)
+     ("r" "gptel-rewrite" gptel-rewrite)
      ("c" "Find code issues in current buffer" wtf-gptel-find-code-issues-in-current-buffer)])
   (keymap-global-set "C-c g" 'wtf-transient-gptel-prefix)

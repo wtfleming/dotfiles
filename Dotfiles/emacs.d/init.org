@@ -296,9 +296,9 @@ Deja Vu Serif
   (defvar k-gc-timer
     (run-with-idle-timer 60 t
                          (lambda ()
-                           (message "Garbage Collector has run for %.06fsec"
-                                    (k-time (garbage-collect))))))
-
+                           (let ((duration (k-time (garbage-collect))))
+                             (when (> duration 1.0)
+                                 (message "%.06f seconds" duration))))))
 
 
 
@@ -426,6 +426,10 @@ Deja Vu Serif
            ("C-c C-<" . mc/mark-all-like-this)
            ("C-S-c C-S-c" . mc/edit-lines)))
 
+  ;; ------- posframe -------
+  (use-package posframe
+    :ensure t
+    :pin melpa-stable)
 
   ;; ;; -------yasnippet -------
   ;; (use-package yasnippet
@@ -1736,9 +1740,8 @@ Deja Vu Serif
 #+end_src
 
 * gptel
-** Setup package
+** Functions
 #+begin_src emacs-lisp
-  ;;; gptel
   ;; ------- gptel -------
   ;; Functions to include the gptel backend and model in responses from an LLM
   (defun wtf-gptel-backend-and-model ()
@@ -1766,7 +1769,10 @@ Deja Vu Serif
       (goto-char response-begin-pos)
       (insert inserted-string)
       (goto-char (+ response-end-pos len-inserted))))
+#+end_src
 
+** Setup package
+#+begin_src emacs-lisp
   ;; For Ollama, You should have at least 8 GB of RAM available to run the 7B models,
   ;; 16 GB to run the 13B models, and 32 GB to run the 33B models.
   (use-package gptel
@@ -1796,6 +1802,12 @@ Deja Vu Serif
       (setopt gptel-directives (assoc-delete-all 'default gptel-directives))
       (add-to-list 'gptel-directives `(default . ,my-gptel-system-msg) )
       (setopt gptel--system-message my-gptel-system-msg)))
+#+end_src
+** gptel-quick
+#+begin_src emacs-lisp
+  (use-package gptel-quick
+    :vc (modus-themes :url "https://github.com/karthink/gptel-quick"
+                      :branch "master"))
 #+end_src
 
 ** Tools
@@ -2005,9 +2017,11 @@ would work well enough instead?
 
 ** gptel
 #+begin_src elisp
-(transient-define-prefix wtf-transient-gptel-prefix ()
-    "Insert emoji"
-    [("w" "Define word" wtf-gptel-define-word)
-     ("c" "Find code issues in current buffer" wtf-gptel-find-code-issues-in-current-buffer)])
-  (keymap-global-set "C-c g" 'wtf-transient-gptel-prefix)
+  (transient-define-prefix wtf-transient-gptel-prefix ()
+      "Insert emoji"
+      [("w" "Define word" wtf-gptel-define-word)
+       ("q" "gptel-quick" gptel-quick)
+       ("r" "gptel-rewrite" gptel-rewrite)
+       ("c" "Find code issues in current buffer" wtf-gptel-find-code-issues-in-current-buffer)])
+    (keymap-global-set "C-c g" 'wtf-transient-gptel-prefix)
 #+end_src
