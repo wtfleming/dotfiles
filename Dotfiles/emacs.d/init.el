@@ -99,11 +99,16 @@
 (when (file-exists-p "~/.emacs.d/lisp/rama-mode.el")
   (load "~/.emacs.d/lisp/rama-mode.el"))
 
-;; ------- zenburn-theme -------
-(use-package zenburn-theme
-  :ensure t
-  :config
-  (load-theme 'zenburn t))
+;; ------- themes -------
+;;(use-package zenburn-theme
+;;  :ensure t
+;;  :config
+;;  (load-theme 'zenburn t))
+
+;; (load-theme 'modus-operandi)            ; Light theme
+;;(load-theme 'modus-vivendi)             ; Dark theme
+(load-theme 'modus-vivendi-tinted)             ; Dark theme
+(setopt modus-themes-mixed-fonts t)
 
 ;; Fonts
 (defun font-available-p (font-name)
@@ -116,7 +121,8 @@
 
 ;; (set-face-attribute 'variable-pitch nil :family "Fira Code")
 ;; (set-face-attribute 'fixed-pitch nil :family "Fira Code")
-;; (setopt modus-themes-mixed-fonts t)
+
+;; (add-hook 'text-mode-hook #'variable-pitch-mode)
   
 ;; Use a larger font on bigger monitors
 (if (> (display-pixel-width) 1440)
