@@ -112,12 +112,11 @@ machine api.anthropic.com login apikey password <api key goes here>
 * Git
 Install dev tools - this is one way to prompt it:
 #+begin_src
-  git --version
+git --version
 
 brew install git-lfs
 git lfs install
 git config --global core.excludesfile ~/.gitexcludes
-
 #+end_src
 
 
