@@ -1698,8 +1698,11 @@ Can be used with the `gptel-post-response-functions' hook."
     (setopt gptel--system-message my-gptel-system-msg)))
 
 (use-package gptel-quick
+  :ensure t
   :vc (modus-themes :url "https://github.com/karthink/gptel-quick"
                     :branch "master"))
+;; TODO if I use a :custom, gptel-quick-timeout doesn't seem to get set?
+(setopt gptel-quick-timeout 60)
 
 ;; ------- gptel tools -------
 (gptel-make-tool
@@ -1760,7 +1763,7 @@ Can be used with the `gptel-post-response-functions' hook."
 ;; ------- Find potential issues in source code -------
 ;; TODO look at the current mode, if it is typescript, include that info in the system message (and same for other languages)
 ;; TODO change so if a region is active use that, otherwise the entire buffer
-;; TODO if not in a programming mode, don't do anything
+;; TODO if not in a programming mode, don't do anything except call (message) to indicate it
 (defun wtf-gptel-find-code-issues-in-current-buffer ()
   "Use an LLM to find potential source code issues in the current buffer."
   (interactive)
