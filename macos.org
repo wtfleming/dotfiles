@@ -14,7 +14,7 @@ https://github.com/tonsky/FiraCode/wiki/Installing
 
 brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake
 
-
+* emacs
 # ---------- Build emacs on an ARM Mac from source
 # Note: if building for emacs 29 need to brew install jansson, but not for 30 and newer
 brew install gcc libgccjit make gnutls texinfo autoconf pkg-config tree-sitter
@@ -66,6 +66,7 @@ in ~/.authinfo have the following lines
 machine api.openai.com login apikey password <api key goes here>
 machine api.anthropic.com login apikey password <api key goes here>
 
+* Misc homebrew
 # Python
 brew install uv
 
@@ -94,6 +95,8 @@ brew install wxmac
 # For exporting LaTex from emacs
 brew install mactex
 
+* Git
+
 Install dev tools - this is one way to prompt it:
 git --version
 
@@ -103,7 +106,7 @@ git config --global core.excludesfile ~/.gitexcludes
 
 
 
-
+* Mission Control
 # Disable mission control since I use those keyboard shortcuts in emacs
 Go to System Preferences > Keyboard > Keyboard Shortcuts > Mission Control and change the settings for "Move left a space" and "Move right a space" or disable them completely.
 http://apple.stackexchange.com/questions/18043/how-can-i-make-ctrlright-left-arrow-stop-changing-desktops-in-lion
@@ -115,7 +118,7 @@ Go to System Preferences > Keyboard > Keyboard Shortcuts > Input Sources
 Go to System Preferences > Keyboard > Dictation > Shortcut
   And change it to not be pressing control twice
 
-# Install java 21
+* Java
 
 $ brew install openjdk@21
 For the system Java wrappers to find this JDK, symlink it with
@@ -134,7 +137,7 @@ For compilers to find openjdk you may need to set:
 Verify installation
   java -version
 
-# Install Clojure CLI tools
+** Install Clojure CLI tools
 $ brew install clojure/tools/clojure
 
 
@@ -163,7 +166,7 @@ $ aws configure
 
 
 
-# asdf
+* asdf
 See https://asdf-vm.com/guide/getting-started.html
 
 brew install coreutils curl git
@@ -184,7 +187,7 @@ autoload -Uz compinit && compinit
 if you are using a custom compinit setup, ensure compinit is below your sourcing of asdf.sh
 if you are using a custom compinit setup with a ZSH Framework, ensure compinit is below your sourcing of the framework
 
-# Erlang/Elixir
+** Erlang/Elixir
 On an INTEL mac modal popups from the OS will flash on the screen often.
 If you’re using asdf, you can workaround this issue by disabling jit by adding:
 export KERL_CONFIGURE_OPTIONS="--disable-jit"
@@ -218,17 +221,17 @@ mix local.hex --if-missing --force
 
 mix archive.install hex phx_new
 
-# Japanese keyboard
+* Japanese keyboard
 System Settings->Keyboard->Text input
   Add Japanese - Romaji source
   Enable "Use Caps Lock key to switch to and from U.S."
 
-# Rust
+* Rust
 https://rustup.rs/
 https://github.com/rust-lang/rust-analyzer
 $ brew install rust-analyzer
 
-# Tailwind CSS CLI tool
+* Tailwind CSS CLI tool
 
 curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-macos-arm64
 chmod +x tailwindcss-macos-arm64
