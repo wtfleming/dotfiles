@@ -105,10 +105,9 @@
 ;;  :config
 ;;  (load-theme 'zenburn t))
 
-;; (load-theme 'modus-operandi)            ; Light theme
-;;(load-theme 'modus-vivendi)             ; Dark theme
-(load-theme 'modus-vivendi-tinted)             ; Dark theme
+;; (load-theme 'modus-operandi)     ; Light theme
 (setopt modus-themes-mixed-fonts t)
+(load-theme 'modus-vivendi-tinted)
 
 ;; Fonts
 (defun font-available-p (font-name)
@@ -609,6 +608,22 @@
      ;; (http . t) ;; see https://github.com/zweifisch/ob-http
      (python . t)
      (shell . t))))
+
+(setopt org-structure-template-alist
+        '(("s" . "src")
+          ("e" . "src emacs-lisp")
+          ("E" . "src emacs-lisp :results value code :lexical t")
+          ("t" . "src emacs-lisp :tangle FILENAME")
+          ("T" . "src emacs-lisp :tangle FILENAME :mkdirp yes")
+          ("x" . "example")
+          ("X" . "export")
+          ("q" . "quote")))
+
+;; Defaults for org-structure-template-alist:
+;; (("a" . "export ascii") ("c" . "center") ("C" . "comment")
+;; ("e" . "example") ("E" . "export") ("h" . "export html")
+;; ("l" . "export latex") ("q" . "quote") ("s" . "src") ("v" . "verse"))
+
 
 ;; ------- org-mode settings -------
 (add-to-list 'auto-mode-alist '("\\.org$" . org-mode))
