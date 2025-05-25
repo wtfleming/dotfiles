@@ -691,13 +691,6 @@
 ;; Don't close windows on exit
 (setopt org-agenda-window-setup 'current-window)
 
-;; Use solarized CSS for export  http://thomasf.github.io/solarized-css/
-(setopt org-export-html-style-include-scripts nil
-        org-export-html-style-include-default nil)
-(setopt org-export-html-style
-        (concat "<link rel=\"stylesheet\" type=\"text/css\" href=\"" (expand-file-name org-directory) ".css/solarized-light.min.css\" />"))
-
-
 ;; Use unicode symbol to display org-mode checkboxes
 ;; https://blog.jft.rocks/emacs/unicode-for-orgmode-checkboxes.html
 (add-hook 'org-mode-hook (lambda ()
