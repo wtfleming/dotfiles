@@ -687,6 +687,20 @@
 ;; Show two weeks in the agenda view
 (setopt org-agenda-span 14)
 
+;; automatically resize window margins to keep the text comfortably in the middle of the window.
+(use-package olivetti
+  :pin melpa-stable
+  :ensure t
+  :custom
+  (olivetti-body-width 0.5)
+  (olivetti-style t))
+
+(defun org-agenda-open-hook ()
+  "Hook to run when org-agenda opens"
+  (olivetti-mode))
+
+(add-hook 'org-agenda-mode-hook 'org-agenda-open-hook)
+
 ;; ------- Misc -------
 ;; Don't close windows on exit
 (setopt org-agenda-window-setup 'current-window)
