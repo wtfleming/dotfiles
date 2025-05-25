@@ -32,24 +32,6 @@
              '("melpa-stable" . "https://stable.melpa.org/packages/") t)
 
 
-(add-to-list 'package-pinned-packages '(company . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(doom-modeline . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(flycheck . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(git-gutter . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(gptel . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(helm . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(helm-core . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(lsp-mode . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(lsp-ui . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(magit . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(magit-section . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(markdown-mode . "melpa-stable") t)
-(add-to-list 'package-pinned-packages '(projectile . "melpa-stable") t)
-;; is this needed now that transient is built in to emacs?
-(add-to-list 'package-pinned-packages '(transient . "melpa-stable") t)
-;; with-editor is a magit dependency
-(add-to-list 'package-pinned-packages '(with-editor . "melpa-stable") t)
-
 (package-initialize)
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
@@ -337,6 +319,7 @@
 ;; ------- markdown-mode -------
 (use-package markdown-mode
   :ensure t
+  :pin melpa-stable
   :mode ("README\\.md\\'" . gfm-mode) ;; github flavored markdown
   :init (setq markdown-command "pandoc")
   :bind (:map markdown-mode-map
@@ -450,6 +433,7 @@
   :ensure t
   ;;:config
   ;;(add-hook 'after-init-hook 'global-company-mode)
+  :pin melpa-stable
   :custom
   (company-idle-delay 0.0)
   (company-minimum-prefix-length 1))
@@ -512,6 +496,7 @@
 
 ;; ------- projectile -------
 (use-package projectile
+  :pin melpa-stable
   :ensure t)
 
 ;; (use-package projectile
@@ -867,6 +852,7 @@
 ;;; helm
 (use-package helm
   :ensure t
+  :pin melpa-stable
   :bind (("C-x b" . helm-mini)
          ("M-x" . helm-M-x)
          ("M-y" . helm-show-kill-ring)
@@ -882,6 +868,8 @@
           helm-buffers-fuzzy-matching           t
           helm-recentf-fuzzy-match              t)
     (helm-mode 1)))
+
+(add-to-list 'package-pinned-packages '(helm-core . "melpa-stable") t)
 
 ;;(global-set-key (kbd "C-c h o") 'helm-occur)
 ;;(global-set-key (kbd "C-c h x") 'helm-register)
@@ -1087,6 +1075,7 @@
 
 (use-package doom-modeline
   :ensure t
+  :pin melpa-stable
   :init (doom-modeline-mode 1))
 
 ;; (require 'doom-modeline)
@@ -1194,95 +1183,93 @@
 (setopt doom-modeline-irc-stylize 'identity)
 
 ;; ------- Language Server -------
-  (use-package lsp-mode
-    :ensure t
-    :commands (lsp lsp-deferred)
-    :hook ((elixir-mode . lsp-deferred)
-           (rust-mode . lsp-deferred)
-           ;; (clojure-mode . lsp)
-           ;; (clojurec-mode . lsp)
-           ;; (clojurescript-mode . lsp)
-           (sh-mode . lsp-deferred)
-           (yaml-mode . lsp)
-           (typescript-ts-mode . lsp-deferred)
-           (terraform-mode . lsp-deferred)
-           )
-    :init
-    (add-to-list 'exec-path "~/bin/elixir-ls")
-    :bind (("M-j" . lsp-ui-imenu)
-           ("M-?" . lsp-find-references))
-    ;; :config
-    ;; (dolist (m '(clojure-mode
-    ;;              clojurec-mode
-    ;;              clojurescript-mode
-    ;;              clojurex-mode))
-    ;;   (add-to-list 'lsp-language-id-configuration `(,m . "clojure")))
-    :custom
-    (lsp-file-watch-threshold 2200)
-    (lsp-semantic-tokens-enable t))
+(use-package lsp-mode
+  :ensure t
+  :pin melpa-stable
+  :commands (lsp lsp-deferred)
+  :hook ((elixir-mode . lsp-deferred)
+         (rust-mode . lsp-deferred)
+         ;; (clojure-mode . lsp)
+         ;; (clojurec-mode . lsp)
+         ;; (clojurescript-mode . lsp)
+         (sh-mode . lsp-deferred)
+         (yaml-mode . lsp)
+         (typescript-ts-mode . lsp-deferred)
+         (terraform-mode . lsp-deferred)
+         )
+  :init
+  (add-to-list 'exec-path "~/bin/elixir-ls")
+  :bind (("M-j" . lsp-ui-imenu)
+         ("M-?" . lsp-find-references))
+  ;; :config
+  ;; (dolist (m '(clojure-mode
+  ;;              clojurec-mode
+  ;;              clojurescript-mode
+  ;;              clojurex-mode))
+  ;;   (add-to-list 'lsp-language-id-configuration `(,m . "clojure")))
+  :custom
+  (lsp-file-watch-threshold 2200)
+  (lsp-semantic-tokens-enable t))
 
-  (with-eval-after-load 'lsp-mode
-    (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.circleci\\'")
-    (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\deps$") ;; Elixir
-    (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]_build$") ;; Elixir
-    (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]postgres-data$")
-    (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.vagrant\\'"))
+(with-eval-after-load 'lsp-mode
+  (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.circleci\\'")
+  (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\deps$") ;; Elixir
+  (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]_build$") ;; Elixir
+  (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]postgres-data$")
+  (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.vagrant\\'"))
 
-  ;; ------- key bindings -------
-  (defvar-keymap wtf-prefix-lsp-mode-map
-    :doc "Prefix key map for lsp-mode functions I often call."
-    "a" #'lsp-execute-code-action
-    "d" #'lsp-find-declaration
-    "g" #'lsp-ui-doc-glance
-    "h" #'lsp-find-definition
-    "i" #'lsp-find-implementation
-    "n" #'lsp-rename
-    "p" #'lsp-describe-thing-at-point
-    "r" #'lsp-find-references
-    "t" #'lsp-find-type-definition)
+;; ------- key bindings -------
+(defvar-keymap wtf-prefix-lsp-mode-map
+  :doc "Prefix key map for lsp-mode functions I often call."
+  "a" #'lsp-execute-code-action
+  "d" #'lsp-find-declaration
+  "g" #'lsp-ui-doc-glance
+  "h" #'lsp-find-definition
+  "i" #'lsp-find-implementation
+  "n" #'lsp-rename
+  "p" #'lsp-describe-thing-at-point
+  "r" #'lsp-find-references
+  "t" #'lsp-find-type-definition)
 
-  (defvar-keymap wtf-lsp-mode-prefix-map
-    :doc "My prefix key map."
-    "l" wtf-prefix-lsp-mode-map)
+(defvar-keymap wtf-lsp-mode-prefix-map
+  :doc "My prefix key map."
+  "l" wtf-prefix-lsp-mode-map)
 
-  (with-eval-after-load 'lsp-mode
-    (keymap-set lsp-mode-map "C-c" wtf-lsp-mode-prefix-map))
+(with-eval-after-load 'lsp-mode
+  (keymap-set lsp-mode-map "C-c" wtf-lsp-mode-prefix-map))
 
-  ;; Define how the nested keymaps are labelled in `which-key-mode'.
-  (which-key-add-keymap-based-replacements wtf-lsp-mode-prefix-map
-    "l" `("lsp-mode" . ,wtf-prefix-lsp-mode-map))
+;; Define how the nested keymaps are labelled in `which-key-mode'.
+(which-key-add-keymap-based-replacements wtf-lsp-mode-prefix-map
+  "l" `("lsp-mode" . ,wtf-prefix-lsp-mode-map))
 
 (with-eval-after-load 'lsp-mode
   (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration))
 
-  (use-package lsp-ui
-    :ensure t
-    :custom
-    (lsp-ui-sideline-show-hover nil)
-    (lsp-ui-sideline-show-diagnostics nil "hide errors from sideline")
-    (lsp-ui-doc-show-with-cursor nil)
-    (lsp-ui-doc-show-with-mouse nil)
-    (lsp-ui-doc-position 'at-point) ;; TODO may want to show with mouse instead and be 'at-point
-    (lsp-ui-imenu-enable t)
-    (lsp-ui-sideline-show-code-actions nil) ;; TODO look into enabling this?
-    (lsp-ui-sideline-delay 0.2))
+(use-package lsp-ui
+  :ensure t
+  :pin melpa-stable
+  :custom
+  (lsp-ui-sideline-show-hover nil)
+  (lsp-ui-sideline-show-diagnostics nil "hide errors from sideline")
+  (lsp-ui-doc-show-with-cursor nil)
+  (lsp-ui-doc-show-with-mouse nil)
+  (lsp-ui-doc-position 'at-point) ;; TODO may want to show with mouse instead and be 'at-point
+  (lsp-ui-imenu-enable t)
+  (lsp-ui-sideline-show-code-actions nil) ;; TODO look into enabling this?
+  (lsp-ui-sideline-delay 0.2))
 
-  ;; ---- LSP Performance ----
-  ;; https://emacs-lsp.github.io/lsp-mode/page/performance/
+;; ---- LSP Performance ----
+;; https://emacs-lsp.github.io/lsp-mode/page/performance/
 
-  ;; Increase the amount of data which Emacs reads from the process.
-  ;; Again the emacs default is too low 4k considering that the some of the
-  ;; language server responses are in 800k - 3M range.
-  (setopt read-process-output-max (* 3 1024 1024)) ;; 3mb
+;; Increase the amount of data which Emacs reads from the process.
+;; Again the emacs default is too low 4k considering that the some of the
+;; language server responses are in 800k - 3M range.
+(setopt read-process-output-max (* 3 1024 1024)) ;; 3mb
 
 ;; ----- Flycheck -----
-;; TODO look into if I still need flycheck, am I actually using it
-;;   or is lsp-mode doing enough?
-;;   ie see https://github.com/emacs-lsp/lsp-mode/issues/318
 (use-package flycheck
+  :pin melpa-stable
   :ensure t)
-;; :init
-;; (add-hook 'clojure-mode-hook 'flycheck-mode))
 
 (setopt flycheck-checker-error-threshold 1500)
 
@@ -1402,16 +1389,40 @@
 ;; ----- git-gutter -----
 (use-package git-gutter
   :ensure t
+  :pin melpa-stable
   :init
   (global-git-gutter-mode +1))
 
 
 ;; ------- magit -------
+;;  with-editor is a magit dependency
+;; (use-package with-editor
+;;   :ensure t
+;;   :pin melpa-stable)
+
+;; TODO currently some sort of problem
+;; with magit on melpa-stable, diffs don't highlight in red and green
+;; so not pinning to melpa-stable for now
 (use-package magit
   :ensure t
+  ;;:pin melpa-stable
   :bind (("C-c m" . magit-status)))
 
-;; ------- Clojure -------
+;;  (use-package magit-section
+;;    :ensure t
+;;    :pin melpa-stable)
+
+
+;;  (use-package magit
+;;    :ensure t
+;;    ;;:pin melpa-stable
+;;    :bind (("C-c m" . magit-status)))
+
+
+
+
+
+;; ;; ------- Clojure
 ;; Install a language server
 ;; brew install clojure-lsp/brew/clojure-lsp-native
 
@@ -1671,6 +1682,7 @@ Can be used with the `gptel-post-response-functions' hook."
 ;; 16 GB to run the 13B models, and 32 GB to run the 33B models.
 (use-package gptel
   :ensure t
+  :pin melpa-stable
   :config
   ;; (add-hook 'gptel-pre-response-hook 'wtf-gptel-insert-model-in-non-gptel-buffers)
   (add-hook 'gptel-post-response-functions 'wtf-gptel-insert-model-in-chat-buffers)
@@ -1777,7 +1789,9 @@ Can be used with the `gptel-post-response-functions' hook."
       )
     ))
 
+;; TODO should use the transient built in to emacs instead?
 (use-package transient
+  ;;:pin melpa-stable
   :ensure t)
 
 (transient-define-prefix wtf-links ()

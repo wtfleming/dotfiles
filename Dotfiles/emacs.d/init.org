@@ -59,24 +59,6 @@ And then run the script located at ~/src/dotfiles/sync-dotfiles.sh
                '("melpa-stable" . "https://stable.melpa.org/packages/") t)
 
 
-  (add-to-list 'package-pinned-packages '(company . "melpa-stable") t)
-  (add-to-list 'package-pinned-packages '(doom-modeline . "melpa-stable") t)
-  (add-to-list 'package-pinned-packages '(flycheck . "melpa-stable") t)
-  (add-to-list 'package-pinned-packages '(git-gutter . "melpa-stable") t)
-  (add-to-list 'package-pinned-packages '(gptel . "melpa-stable") t)
-  (add-to-list 'package-pinned-packages '(helm . "melpa-stable") t)
-  (add-to-list 'package-pinned-packages '(helm-core . "melpa-stable") t)
-  (add-to-list 'package-pinned-packages '(lsp-mode . "melpa-stable") t)
-  (add-to-list 'package-pinned-packages '(lsp-ui . "melpa-stable") t)
-  (add-to-list 'package-pinned-packages '(magit . "melpa-stable") t)
-  (add-to-list 'package-pinned-packages '(magit-section . "melpa-stable") t)
-  (add-to-list 'package-pinned-packages '(markdown-mode . "melpa-stable") t)
-  (add-to-list 'package-pinned-packages '(projectile . "melpa-stable") t)
-  ;; is this needed now that transient is built in to emacs?
-  (add-to-list 'package-pinned-packages '(transient . "melpa-stable") t)
-  ;; with-editor is a magit dependency
-  (add-to-list 'package-pinned-packages '(with-editor . "melpa-stable") t)
-
   (package-initialize)
   (unless (package-installed-p 'use-package)
     (package-refresh-contents)
@@ -404,6 +386,7 @@ Deja Vu Serif
   ;; ------- markdown-mode -------
   (use-package markdown-mode
     :ensure t
+    :pin melpa-stable
     :mode ("README\\.md\\'" . gfm-mode) ;; github flavored markdown
     :init (setq markdown-command "pandoc")
     :bind (:map markdown-mode-map
@@ -517,6 +500,7 @@ Deja Vu Serif
     :ensure t
     ;;:config
     ;;(add-hook 'after-init-hook 'global-company-mode)
+    :pin melpa-stable
     :custom
     (company-idle-delay 0.0)
     (company-minimum-prefix-length 1))
@@ -579,6 +563,7 @@ Deja Vu Serif
 
   ;; ------- projectile -------
   (use-package projectile
+    :pin melpa-stable
     :ensure t)
 
   ;; (use-package projectile
@@ -949,6 +934,7 @@ Deja Vu Serif
   ;;; helm
   (use-package helm
     :ensure t
+    :pin melpa-stable
     :bind (("C-x b" . helm-mini)
            ("M-x" . helm-M-x)
            ("M-y" . helm-show-kill-ring)
@@ -965,6 +951,8 @@ Deja Vu Serif
             helm-recentf-fuzzy-match              t)
       (helm-mode 1)))
 
+  (add-to-list 'package-pinned-packages '(helm-core . "melpa-stable") t)
+  
   ;;(global-set-key (kbd "C-c h o") 'helm-occur)
   ;;(global-set-key (kbd "C-c h x") 'helm-register)
   ;;(global-set-key (kbd "C-c h g") 'helm-google-suggest)
@@ -1177,6 +1165,7 @@ Deja Vu Serif
 
   (use-package doom-modeline
     :ensure t
+    :pin melpa-stable
     :init (doom-modeline-mode 1))
 
   ;; (require 'doom-modeline)
@@ -1291,6 +1280,7 @@ Deja Vu Serif
   ;; ------- Language Server -------
   (use-package lsp-mode
     :ensure t
+    :pin melpa-stable
     :commands (lsp lsp-deferred)
     :hook ((elixir-mode . lsp-deferred)
            (rust-mode . lsp-deferred)
@@ -1347,11 +1337,12 @@ Deja Vu Serif
   (which-key-add-keymap-based-replacements wtf-lsp-mode-prefix-map
     "l" `("lsp-mode" . ,wtf-prefix-lsp-mode-map))
 
-(with-eval-after-load 'lsp-mode
-  (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration))
+  (with-eval-after-load 'lsp-mode
+    (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration))
 
   (use-package lsp-ui
     :ensure t
+    :pin melpa-stable
     :custom
     (lsp-ui-sideline-show-hover nil)
     (lsp-ui-sideline-show-diagnostics nil "hide errors from sideline")
@@ -1375,13 +1366,9 @@ Deja Vu Serif
 
 #+begin_src emacs-lisp
   ;; ----- Flycheck -----
-  ;; TODO look into if I still need flycheck, am I actually using it
-  ;;   or is lsp-mode doing enough?
-  ;;   ie see https://github.com/emacs-lsp/lsp-mode/issues/318
   (use-package flycheck
+    :pin melpa-stable
     :ensure t)
-  ;; :init
-  ;; (add-hook 'clojure-mode-hook 'flycheck-mode))
 
   (setopt flycheck-checker-error-threshold 1500)
 
@@ -1501,16 +1488,40 @@ Deja Vu Serif
   ;; ----- git-gutter -----
   (use-package git-gutter
     :ensure t
+    :pin melpa-stable
     :init
     (global-git-gutter-mode +1))
 
 
   ;; ------- magit -------
+  ;;  with-editor is a magit dependency
+  ;; (use-package with-editor
+  ;;   :ensure t
+  ;;   :pin melpa-stable)
+
+  ;; TODO currently some sort of problem
+  ;; with magit on melpa-stable, diffs don't highlight in red and green
+  ;; so not pinning to melpa-stable for now
   (use-package magit
     :ensure t
+    ;;:pin melpa-stable
     :bind (("C-c m" . magit-status)))
 
-  ;; ------- Clojure -------
+  ;;  (use-package magit-section
+  ;;    :ensure t
+  ;;    :pin melpa-stable)
+
+
+  ;;  (use-package magit
+  ;;    :ensure t
+  ;;    ;;:pin melpa-stable
+  ;;    :bind (("C-c m" . magit-status)))
+
+
+
+
+
+  ;; ;; ------- Clojure
   ;; Install a language server
   ;; brew install clojure-lsp/brew/clojure-lsp-native
 
@@ -1777,6 +1788,7 @@ Deja Vu Serif
   ;; 16 GB to run the 13B models, and 32 GB to run the 33B models.
   (use-package gptel
     :ensure t
+    :pin melpa-stable
     :config
     ;; (add-hook 'gptel-pre-response-hook 'wtf-gptel-insert-model-in-non-gptel-buffers)
     (add-hook 'gptel-post-response-functions 'wtf-gptel-insert-model-in-chat-buffers)
@@ -1907,7 +1919,9 @@ would work well enough instead?
 
 * transient
 #+begin_src emacs-lisp
+  ;; TODO should use the transient built in to emacs instead?
   (use-package transient
+    ;;:pin melpa-stable
     :ensure t)
 
   (transient-define-prefix wtf-links ()
