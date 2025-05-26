@@ -684,19 +684,45 @@
 ;; Start the agenda on today instead of the monday of this week
 (setopt org-agenda-start-on-weekday nil)
 
-;; Show two weeks in the agenda view
-(setopt org-agenda-span 14)
+;; Show 1 day in the agenda view
+(setopt org-agenda-span 1)
+
+(setopt org-agenda-show-current-time-in-grid nil)
+(setopt org-agenda-current-time-string "")
+(setopt org-agenda-time-grid '((daily) () "" ""))
+;;(setopt org-agenda-time-grid '((daily) (600 1200 1800) "---" "-----"))
+
+;; Don't hide all tags in org-agenda
+(setopt org-agenda-remove-tags nil)
+;; (setopt org-agenda-hide-tags-regexp ".*")
+
+;; Remove category names and scheduling type from agenda view
+(setq org-agenda-prefix-format '((agenda . "  %?-2i %t ")
+                                 (todo . " %i %-12:c")
+                                 (tags . " %i %-12:c")
+                                 (search . " %i %-12:c")))
+
+;; Seems to default to the name of the file, but could also add categories to
+;; the org-mode files with TODOs like:
+;; :PROPERTIES:
+;; :CATEGORY: todo
+;; :END:
+;; or (org-set-property) and then choose CATEGORY
+(setq org-agenda-category-icon-alist `(("todo" ,(list (all-the-icons-faicon "home" :v-adjust 0.005)) nil nil :ascent center)
+                                       ("recurring" ,(list (all-the-icons-faicon "home" :v-adjust 0.005)) nil nil :ascent center)))
 
 ;; automatically resize window margins to keep the text comfortably in the middle of the window.
 (use-package olivetti
   :pin melpa-stable
   :ensure t
   :custom
-  (olivetti-body-width 0.5)
+  (olivetti-body-width 80) ; 80 columns
   (olivetti-style t))
 
 (defun org-agenda-open-hook ()
   "Hook to run when org-agenda opens"
+  (keymap-set org-agenda-mode-map "[" 'org-agenda-earlier)
+  (keymap-set org-agenda-mode-map "]" 'org-agenda-later)
   (olivetti-mode))
 
 (add-hook 'org-agenda-mode-hook 'org-agenda-open-hook)
@@ -1896,7 +1922,9 @@ Can be used with the `gptel-post-response-functions' hook."
 
 (transient-define-prefix wtf-transient-org-agenda-mode-menu ()
   ""
-  [("t" "Cycle TODO state of line" org-agenda-todo)]
+  [("t" "Cycle TODO state of line" org-agenda-todo)
+   ("[" "org-agenda-earlier" org-agenda-earlier)
+   ("]" "org-agenda-later" org-agenda-later)]
   [("q" "Quit" transient-quit-one)])
 
 (add-hook
