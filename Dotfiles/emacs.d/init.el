@@ -705,10 +705,11 @@
 ;; Seems to default to the name of the file, but could also add categories to
 ;; the org-mode files with TODOs like:
 ;; :PROPERTIES:
-;; :CATEGORY: todo
+;; :CATEGORY: Home
 ;; :END:
 ;; or (org-set-property) and then choose CATEGORY
 (setq org-agenda-category-icon-alist `(("todo" ,(list (all-the-icons-faicon "home" :v-adjust 0.005)) nil nil :ascent center)
+                                       ("Home" ,(list (all-the-icons-faicon "home" :v-adjust 0.005)) nil nil :ascent center)
                                        ("recurring" ,(list (all-the-icons-faicon "home" :v-adjust 0.005)) nil nil :ascent center)))
 
 ;; automatically resize window margins to keep the text comfortably in the middle of the window.
