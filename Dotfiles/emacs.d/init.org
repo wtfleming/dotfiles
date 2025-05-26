@@ -784,6 +784,7 @@ Deja Vu Serif
   ;; or (org-set-property) and then choose CATEGORY
   (setq org-agenda-category-icon-alist `(("todo" ,(list (all-the-icons-faicon "home" :v-adjust 0.005)) nil nil :ascent center)
                                          ("Home" ,(list (all-the-icons-faicon "home" :v-adjust 0.005)) nil nil :ascent center)
+                                         ("Garden" ,(list (all-the-icons-faicon "home" :v-adjust 0.005)) nil nil :ascent center)
                                          ("recurring" ,(list (all-the-icons-faicon "home" :v-adjust 0.005)) nil nil :ascent center)))
 
   ;; automatically resize window margins to keep the text comfortably in the middle of the window.
