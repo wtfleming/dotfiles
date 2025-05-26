@@ -1824,7 +1824,6 @@ Can be used with the `gptel-post-response-functions' hook."
       )
     ))
 
-;; TODO should use the transient built in to emacs instead?
 (use-package transient
   ;;:pin melpa-stable
   :ensure t)
@@ -1923,10 +1922,13 @@ Can be used with the `gptel-post-response-functions' hook."
 (keymap-global-set "C-h" 'wtf-transient-metahelp-menu)
 
 (transient-define-prefix wtf-transient-org-agenda-mode-menu ()
-  ""
-  [("t" "Cycle TODO state of line" org-agenda-todo)
-   ("[" "org-agenda-earlier" org-agenda-earlier)
-   ("]" "org-agenda-later" org-agenda-later)]
+  "org-agenda transient menu"
+  [[("t" "Cycle TODO state of line" org-agenda-todo)
+    ("[" "org-agenda-earlier" org-agenda-earlier)
+    ("]" "org-agenda-later" org-agenda-later)]
+   [("w" "org-agenda-week-view" org-agenda-week-view)
+    ("d" "org-agenda-day-view" org-agenda-day-view)
+    ("m" "org-agenda-month-view" org-agenda-month-view)]]
   [("q" "Quit" transient-quit-one)])
 
 (add-hook
