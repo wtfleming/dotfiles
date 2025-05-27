@@ -5,8 +5,12 @@ https://brew.sh/
 Install dotfiles
 https://github.com/wtfleming/dotfiles
 
-Install Fira code
+Install Fira code font
 https://github.com/tonsky/FiraCode/wiki/Installing
+
+Install FiraGO font
+https://github.com/bBoxType/FiraGO
+https://bboxtype.com/typefaces/FiraGO/
 
 #+begin_src
 brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake
