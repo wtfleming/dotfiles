@@ -78,8 +78,11 @@
 ;; (load "09-gptel.el")
 ;; (load "10-transient.el")
 
-(when (file-exists-p "~/.emacs.d/lisp/rama-mode.el")
-  (load "~/.emacs.d/lisp/rama-mode.el"))
+;; If this is a work computer want to load any
+;; work specific configuration that I don't want
+;; stored in git
+(when (file-exists-p "~/.local/emacs/work.el")
+  (load "~/.local/emacs/work.el"))
 
 ;; ------- themes -------
 ;;(use-package zenburn-theme
