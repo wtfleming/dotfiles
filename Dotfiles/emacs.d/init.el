@@ -265,7 +265,7 @@
 (add-hook 'text-mode-hook 'flyspell-mode)
 
 ;; When programming, enable Flyspell mode for comments and strings only.
-(add-hook 'prog-mode-hook 'flyspell-prog-mode)
+;; (add-hook 'prog-mode-hook 'flyspell-prog-mode)
 
 
 ;; ------- Misc -------
