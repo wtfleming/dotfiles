@@ -100,9 +100,12 @@
                         ;; :weight 'semilight
                         :family "Fira Code"))
 
+(when (font-available-p "FiraGo")
+  (set-face-attribute 'variable-pitch nil :family "FiraGo"))
+
+
 ;; (set-face-attribute 'variable-pitch nil :family "Fira Code")
 ;; (set-face-attribute 'fixed-pitch nil :family "Fira Code")
-
 ;; (add-hook 'text-mode-hook #'variable-pitch-mode)
   
 ;; Use a larger font on bigger monitors
