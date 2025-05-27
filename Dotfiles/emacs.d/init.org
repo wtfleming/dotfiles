@@ -134,8 +134,6 @@ Do something to crash and don't start emacs?
   (setopt modus-themes-mixed-fonts t)
   (load-theme 'modus-vivendi-tinted)
 
-
-
 #+end_src
 
 * Fonts
@@ -150,9 +148,12 @@ Do something to crash and don't start emacs?
                           ;; :weight 'semilight
                           :family "Fira Code"))
 
+  (when (font-available-p "FiraGo")
+    (set-face-attribute 'variable-pitch nil :family "FiraGo"))
+
+
   ;; (set-face-attribute 'variable-pitch nil :family "Fira Code")
   ;; (set-face-attribute 'fixed-pitch nil :family "Fira Code")
-  
   ;; (add-hook 'text-mode-hook #'variable-pitch-mode)
     
   ;; Use a larger font on bigger monitors
@@ -160,6 +161,8 @@ Do something to crash and don't start emacs?
       (set-face-attribute 'default nil :height 200)
       (set-face-attribute 'default nil :height 120))  
 #+end_src
+
+
 
 ** TODO look at additional coding fonts
 Jetbrains Mono
