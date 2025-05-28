@@ -1828,15 +1828,28 @@ Deja Vu Serif
       (goto-char (+ response-end-pos len-inserted))))
 #+end_src
 
+** mcp.el
+gptel requires [[https://github.com/lizqwerscott/mcp.el][mcp.el]] but it is currently not on melpa...
+So until it is we need to install it manually
+
+#+begin_src emacs-lisp
+  (when (file-exists-p "~/.local/emacs/elisp/mcp-hub.el")
+    (add-to-list 'load-path "~/.local/emacs/elisp")
+    (require 'mcp-hub))
+#+end_src
+
+
 ** Setup package
 #+begin_src emacs-lisp
   ;; For Ollama, You should have at least 8 GB of RAM available to run the 7B models,
   ;; 16 GB to run the 13B models, and 32 GB to run the 33B models.
   (use-package gptel
     :ensure t
-    :pin melpa-stable
+    ;;:pin melpa-stable
     :config
     ;; (add-hook 'gptel-pre-response-hook 'wtf-gptel-insert-model-in-non-gptel-buffers)
+    ;; gptel-integrations is not loaded by default and needed for gptel mcp functions
+    (require 'gptel-integrations)
     (add-hook 'gptel-post-response-functions 'wtf-gptel-insert-model-in-chat-buffers)
     (gptel-make-ollama "Ollama" ; Can be any name of your choosing
       :host "localhost:11434"
