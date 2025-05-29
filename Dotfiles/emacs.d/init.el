@@ -674,7 +674,7 @@
           ("@email" . ?e)))
 
 (setopt org-todo-keywords
-        '((sequence "TODO" "IN-PROGRESS" "WAITING" "DONE")))
+        '((sequence "TODO" "IN-PROGRESS" "BLOCKED" "DONE")))
 
 ;; ------- Org Capture -------
 (setopt org-default-notes-file (concat org-directory "/notes.org"))
@@ -728,6 +728,8 @@
            ((org-agenda-overriding-header "High Priority Tasks")))
           ("i" "In Progress" todo "IN-PROGRESS"
            ((org-agenda-overriding-header "In Progress Tasks")))
+          ("w" "Blocked" todo "BLOCKED"
+           ((org-agenda-overriding-header "Blocked Tasks")))
           ("g" "Garden" tags-todo "+garden")))
 
 ;; Seems to default to the name of the file, but could also add categories to
