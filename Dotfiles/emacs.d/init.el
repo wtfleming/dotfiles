@@ -687,7 +687,12 @@
 ;; ------- Org agenda-------
 ;; Store list of agenda files in org folder so we can easily use
 ;; git to keep it synced
-(setopt org-agenda-files (concat org-directory ".agenda-files"))
+(setopt org-agenda-files (list
+                          (concat org-directory "agenda/important-dates.org")
+                          (concat org-directory "agenda/recurring.org")
+                          (concat org-directory "agenda/todo.org")
+                          (concat org-directory "agenda/garden-todo.org")))
+
 
 ;; Start the agenda on today instead of the monday of this week
 (setopt org-agenda-start-on-weekday nil)
@@ -709,6 +714,19 @@
                                  (todo . " %i %-12:c")
                                  (tags . " %i %-12:c")
                                  (search . " %i %-12:c")))
+
+(setopt org-agenda-custom-commands
+        '(("p" "Planning"
+           ((tags-todo "+planning"
+                       ((org-agenda-overriding-header "Planning Tasks")))
+            ;; If want to pull in a file not in org-agenda-files can do so like this
+            ;;(tags-todo ".*" ((org-agenda-files '("~/tmp/inbox.org"))
+            ;;            (org-agenda-overriding-header "Unprocessed Inbox Items")))
+            (tags-todo "-{.*}"
+                       ((org-agenda-overriding-header "Untagged Tasks")))))
+          ("h" "High Priority Tasks" tags-todo "+PRIORITY=\"A\""
+           ((org-agenda-overriding-header "High Priority Tasks")))
+          ("g" "Garden" tags-todo "+garden")))
 
 ;; Seems to default to the name of the file, but could also add categories to
 ;; the org-mode files with TODOs like:
