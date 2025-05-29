@@ -1693,6 +1693,13 @@
 ;; (use-package mermaid-mode
 ;;   :ensure t)
 
+(use-package aidermacs
+  :ensure t
+  :bind (("C-c a" . aidermacs-transient-menu))
+  :custom
+  (aidermacs-use-architect-mode t)
+  (aidermacs-default-model "sonnet"))
+
 ;; ------- gptel -------
 ;; Functions to include the gptel backend and model in responses from an LLM
 (defun wtf-gptel-backend-and-model ()
