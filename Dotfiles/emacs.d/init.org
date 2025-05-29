@@ -1799,6 +1799,18 @@ Deja Vu Serif
   ;;   :ensure t)
 #+end_src
 
+
+* aider
+
+#+begin_src emacs-lisp
+  (use-package aidermacs
+    :ensure t
+    :bind (("C-c a" . aidermacs-transient-menu))
+    :custom
+    (aidermacs-use-architect-mode t)
+    (aidermacs-default-model "sonnet"))
+#+end_src
+
 * gptel
 ** Functions
 #+begin_src emacs-lisp
