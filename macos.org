@@ -260,3 +260,8 @@ curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/t
 chmod +x tailwindcss-macos-arm64
 mv tailwindcss-macos-arm64 tailwindcss
 #+end_src
+
+* aider
+brew install aider
+
+Add api keys to .env see https://aider.chat/docs/config/dotenv.html
