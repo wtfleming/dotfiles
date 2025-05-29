@@ -1721,7 +1721,10 @@ Can be used with the `gptel-post-response-functions' hook."
 
 (when (file-exists-p "~/.local/emacs/elisp/mcp-hub.el")
   (add-to-list 'load-path "~/.local/emacs/elisp")
-  (require 'mcp-hub))
+  (require 'mcp-hub)
+  (setq mcp-hub-servers
+          '(("api-gateway" . (:command "node" :args ("/Users/wfleming/src/hack-week/api-gateway-mcp/build/index.js"))))
+          ))
 
 ;; For Ollama, You should have at least 8 GB of RAM available to run the 7B models,
 ;; 16 GB to run the 13B models, and 32 GB to run the 33B models.
@@ -1764,18 +1767,18 @@ Can be used with the `gptel-post-response-functions' hook."
 (setopt gptel-quick-timeout 60)
 
 ;; ------- gptel tools -------
-(gptel-make-tool
- :name "read_buffer"                    ; snake_case name
- :function (lambda (buffer)             ; the function that will run
-             (unless (buffer-live-p (get-buffer buffer))
-               (error "error: buffer %s is not live." buffer))
-             (with-current-buffer  buffer
-               (buffer-substring-no-properties (point-min) (point-max))))
- :description "return the contents of an emacs buffer"
- :args (list '(:name "buffer"
-                     :type string             ; :type value must be a symbol
-                     :description "the name of the buffer whose contents are to be retrieved"))
- :category "emacs")                     ; An arbitrary label for grouping
+;;  (gptel-make-tool
+;;   :name "read_buffer"                    ; snake_case name
+;;   :function (lambda (buffer)             ; the function that will run
+;;               (unless (buffer-live-p (get-buffer buffer))
+;;                 (error "error: buffer %s is not live." buffer))
+;;               (with-current-buffer  buffer
+;;                 (buffer-substring-no-properties (point-min) (point-max))))
+;;   :description "return the contents of an emacs buffer"
+;;   :args (list '(:name "buffer"
+;;                       :type string             ; :type value must be a symbol
+;;                       :description "the name of the buffer whose contents are to be retrieved"))
+;;   :category "emacs")                     ; An arbitrary label for grouping
 
 ;; ------- common gptel functions -------
 (defun wtf-gptel-stash-response (buffer-name prompt response)
