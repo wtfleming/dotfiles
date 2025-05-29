@@ -726,6 +726,8 @@
                        ((org-agenda-overriding-header "Untagged Tasks")))))
           ("h" "High Priority Tasks" tags-todo "+PRIORITY=\"A\""
            ((org-agenda-overriding-header "High Priority Tasks")))
+          ("i" "In Progress" todo "IN-PROGRESS"
+           ((org-agenda-overriding-header "In Progress Tasks")))
           ("g" "Garden" tags-todo "+garden")))
 
 ;; Seems to default to the name of the file, but could also add categories to
