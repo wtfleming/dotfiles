@@ -336,10 +336,10 @@
 ;; ------- rainbow-mode -------
 ;; Colorize color names in programming buffers
 ;; For example: white or black or #000000
-(use-package rainbow-mode
-  :ensure t
-  :config
-  (add-hook 'prog-mode-hook #'rainbow-mode))
+;;(use-package rainbow-mode
+;;  :ensure t
+;;  :config
+;;  (add-hook 'prog-mode-hook #'rainbow-mode))
 
 
 ;; ------- multiple-cursors -------
