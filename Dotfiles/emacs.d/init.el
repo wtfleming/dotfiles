@@ -673,6 +673,8 @@
           ;; Activities
           ("@email" . ?e)))
 
+(setopt org-log-done 'time)
+
 (setopt org-todo-keywords
         '((sequence "TODO" "IN-PROGRESS" "BLOCKED" "DONE")))
 
