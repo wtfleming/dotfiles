@@ -742,18 +742,18 @@
                                        ("recurring" ,(list (all-the-icons-faicon "home" :v-adjust 0.005)) nil nil :ascent center)))
 
 ;; automatically resize window margins to keep the text comfortably in the middle of the window.
-(use-package olivetti
-  :pin melpa-stable
-  :ensure t
-  :custom
-  (olivetti-body-width 80) ; 80 columns
-  (olivetti-style t))
+;;(use-package olivetti
+;;  :pin melpa-stable
+;;  :ensure t
+;;  :custom
+;;  (olivetti-body-width 80) ; 80 columns
+;;  (olivetti-style t))
 
 (defun org-agenda-open-hook ()
   "Hook to run when org-agenda opens"
+  ;; (olivetti-mode)
   (keymap-set org-agenda-mode-map "[" 'org-agenda-earlier)
-  (keymap-set org-agenda-mode-map "]" 'org-agenda-later)
-  (olivetti-mode))
+  (keymap-set org-agenda-mode-map "]" 'org-agenda-later))
 
 (add-hook 'org-agenda-mode-hook 'org-agenda-open-hook)
 
