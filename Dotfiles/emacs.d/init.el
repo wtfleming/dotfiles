@@ -1756,7 +1756,7 @@ Can be used with the `gptel-post-response-functions' hook."
   (add-to-list 'load-path "~/.local/emacs/elisp")
   (require 'mcp-hub)
   (setq mcp-hub-servers
-          '(("api-gateway" . (:command "node" :args ("/Users/wfleming/src/hack-week/api-gateway-mcp/build/index.js"))))
+          '(("api-gateway" . (:command "node" :args ("/Users/wfleming/src/dashboard/packages/hackweek-mcp-mavericks/build/index.js"))))
           ))
 
 ;; For Ollama, You should have at least 8 GB of RAM available to run the 7B models,
