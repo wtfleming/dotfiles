@@ -1876,7 +1876,7 @@ So until it is we need to install it manually
     (add-to-list 'load-path "~/.local/emacs/elisp")
     (require 'mcp-hub)
     (setq mcp-hub-servers
-            '(("api-gateway" . (:command "node" :args ("/Users/wfleming/src/hack-week/api-gateway-mcp/build/index.js"))))
+            '(("api-gateway" . (:command "node" :args ("/Users/wfleming/src/dashboard/packages/hackweek-mcp-mavericks/build/index.js"))))
             ))
 #+end_src
 
