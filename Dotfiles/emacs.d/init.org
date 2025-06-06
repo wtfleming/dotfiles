@@ -1913,18 +1913,20 @@ Its value is
 #+end_src
 
 ** mcp.el
-gptel requires [[https://github.com/lizqwerscott/mcp.el][mcp.el]] but it is currently not on melpa...
-So until it is we need to install it manually
-
+    
 #+begin_src emacs-lisp
-  (when (file-exists-p "~/.local/emacs/elisp/mcp-hub.el")
-    (add-to-list 'load-path "~/.local/emacs/elisp")
-    (require 'mcp-hub)
-    (setq mcp-hub-servers
-          '(("api-gateway" . (:command "node" :args ("/Users/wfleming/src/dashboard/packages/hackweek-mcp-mavericks/build/index.js")))
-            ("fetch" . (:command "uvx" :args ("mcp-server-fetch")))
+    (use-package mcp
+      :ensure t)
+  (setq mcp-hub-servers
+            '(("api-gateway" . (:command "node" :args ("/Users/wfleming/src/dashboard/packages/hackweek-mcp-mavericks/build/index.js")))
+              ("fetch" . (:command "uvx" :args ("mcp-server-fetch")))
+              ("awslabs.aws-documentation-mcp-server" . (:command "uvx"
+                                                                  :args ("awslabs.aws-documentation-mcp-server@latest")
+                                                                  :env (:FASTMCP_LOG_LEVEL "ERROR"
+                                                                                           :AWS_DOCUMENTATION_PARTITION "aws")
+                                                                  ))
+              )
             )
-          ))
 #+end_src
 '(("fetch" . (:command "uvx" :args ("mcp-server-fetch"))))
 '(("api-gateway" . (:command "node" :args ("/Users/wfleming/src/dashboard/packages/hackweek-mcp-mavericks/build/index.js"))))
