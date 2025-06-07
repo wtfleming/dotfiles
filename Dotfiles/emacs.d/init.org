@@ -1915,21 +1915,19 @@ Its value is
 ** mcp.el
     
 #+begin_src emacs-lisp
-    (use-package mcp
-      :ensure t)
-  (setq mcp-hub-servers
-            '(("api-gateway" . (:command "node" :args ("/Users/wfleming/src/dashboard/packages/hackweek-mcp-mavericks/build/index.js")))
-              ("fetch" . (:command "uvx" :args ("mcp-server-fetch")))
-              ("awslabs.aws-documentation-mcp-server" . (:command "uvx"
-                                                                  :args ("awslabs.aws-documentation-mcp-server@latest")
-                                                                  :env (:FASTMCP_LOG_LEVEL "ERROR"
-                                                                                           :AWS_DOCUMENTATION_PARTITION "aws")
-                                                                  ))
-              )
-            )
+  (use-package mcp
+    :ensure t)
+  
+  (setopt mcp-hub-servers
+        '(("api-gateway" . (:command "node" :args ("/Users/wfleming/src/dashboard/packages/hackweek-mcp-mavericks/build/index.js")))
+          ("fetch" . (:command "uvx" :args ("mcp-server-fetch")))
+          ("awslabs.aws-documentation-mcp-server" . (:command "uvx"
+                                                              :args ("awslabs.aws-documentation-mcp-server@latest")
+                                                              :env (:FASTMCP_LOG_LEVEL "ERROR"
+                                                                    :AWS_DOCUMENTATION_PARTITION "aws")))
+          ))
 #+end_src
-'(("fetch" . (:command "uvx" :args ("mcp-server-fetch"))))
-'(("api-gateway" . (:command "node" :args ("/Users/wfleming/src/dashboard/packages/hackweek-mcp-mavericks/build/index.js"))))
+
 
 ** Setup package
 #+begin_src emacs-lisp
