@@ -1785,17 +1785,16 @@ Can be used with the `gptel-post-response-functions' hook."
     (goto-char (+ response-end-pos len-inserted))))
 
 (use-package mcp
-    :ensure t)
-(setq mcp-hub-servers
-          '(("api-gateway" . (:command "node" :args ("/Users/wfleming/src/dashboard/packages/hackweek-mcp-mavericks/build/index.js")))
-            ("fetch" . (:command "uvx" :args ("mcp-server-fetch")))
-            ("awslabs.aws-documentation-mcp-server" . (:command "uvx"
-                                                                :args ("awslabs.aws-documentation-mcp-server@latest")
-                                                                :env (:FASTMCP_LOG_LEVEL "ERROR"
-                                                                                         :AWS_DOCUMENTATION_PARTITION "aws")
-                                                                ))
-            )
-          )
+  :ensure t)
+
+(setopt mcp-hub-servers
+      '(("api-gateway" . (:command "node" :args ("/Users/wfleming/src/dashboard/packages/hackweek-mcp-mavericks/build/index.js")))
+        ("fetch" . (:command "uvx" :args ("mcp-server-fetch")))
+        ("awslabs.aws-documentation-mcp-server" . (:command "uvx"
+                                                            :args ("awslabs.aws-documentation-mcp-server@latest")
+                                                            :env (:FASTMCP_LOG_LEVEL "ERROR"
+                                                                  :AWS_DOCUMENTATION_PARTITION "aws")))
+        ))
 
 ;; For Ollama, You should have at least 8 GB of RAM available to run the 7B models,
 ;; 16 GB to run the 13B models, and 32 GB to run the 33B models.
