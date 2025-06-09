@@ -876,10 +876,6 @@
                  ("Dired" (mode . dired-mode))
                  ("erc" (mode . erc-mode))
                  ("Markdown" (mode . markdown-mode))
-                                        ;               ("helm" (or
-                                        ;                        (name . "^\\*helm")
-                                        ;                        (name . "^\\*Helm")))
-
                  ("Emacs" (or
                            (mode . package-menu-mode)
                            (name . "^\\*scratch\\*$")
