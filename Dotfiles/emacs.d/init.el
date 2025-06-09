@@ -1846,6 +1846,16 @@ Can be used with the `gptel-post-response-functions' hook."
 ;;                       :description "the name of the buffer whose contents are to be retrieved"))
 ;;   :category "emacs")                     ; An arbitrary label for grouping
 
+
+;;(gptel-make-tool
+;; :name "read_elisp_documentation"                    ; snake_case name
+;; :function (lambda (function-name) (documentation (intern function-name)))
+;; :description "fetches emacs lisp (elisp) documentation for an elisp function"
+;; :args (list '(:name "function_name"
+;;                     :type string             ; :type value must be a symbol
+;;                     :description "the name of the elisp function whose documentation is to be retrieved"))
+;; :category "emacs")                     ; An arbitrary label for grouping
+
 ;; ------- common gptel functions -------
 (defun wtf-gptel-stash-response (buffer-name prompt response)
   "Store a response in a well known buffer and pop up a window with that buffer"
