@@ -1812,7 +1812,7 @@ Can be used with the `gptel-post-response-functions' hook."
   ;; The line should look like this:
   ;; machine api.anthropic.com login apikey password <api-key>
   (setopt
-   gptel-model 'claude-3-7-sonnet-20250219
+   gptel-model 'claude-sonnet-4-20250514
    gptel-backend (gptel-make-anthropic "Claude"
                    :stream t
                    :key gptel-api-key))
