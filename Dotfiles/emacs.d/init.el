@@ -948,10 +948,12 @@
 (use-package helm
   :ensure t
   :pin melpa-stable
-  :bind (("C-x b" . helm-mini)
-         ("M-x" . helm-M-x)
+  :bind (
+         ;;("C-x b" . helm-mini)
+         ;;("M-x" . helm-M-x)
          ("M-y" . helm-show-kill-ring)
-         ("C-x C-f" . helm-find-files))
+         ;;("C-x C-f" . helm-find-files)
+         )
   :config
   (progn
     (setq helm-split-window-in-side-p           t ; open helm buffer inside current window, not occupy whole other window
@@ -981,6 +983,30 @@
 ;; Allow arrow keys to once again change directories in helm-find-files
 ;; See https://github.com/emacs-helm/helm/wiki/FAQ#arrow-keys-behavior-have-changed
 (customize-set-variable 'helm-ff-lynx-style-map t)
+
+(use-package vertico
+  :ensure t
+  :custom
+  (vertico-cycle t)
+  :init
+  (vertico-mode))
+
+;; Persist history over Emacs restarts. Vertico sorts by history position.
+(use-package savehist
+  :init
+  (savehist-mode))
+
+(use-package marginalia
+  :after vertico
+  :ensure t
+  :init
+  (marginalia-mode))
+
+(use-package orderless
+  :ensure t
+  :custom
+  (completion-styles '(orderless basic))
+  (completion-category-overrides '((file (styles basic partial-completion)))))
 
 ;;   ;;; hydra
 ;;   ;; https://github.com/abo-abo/hydra
