@@ -585,7 +585,12 @@
 ;; Org-Reveal exports your Org documents to reveal.js presentations.
 ;; Wait 3 seconds to load as this package is somewhat
 ;; slow to load, and this helps with emacs startup speed
-(use-package ox-reveal
+;;  (use-package ox-reveal
+;;    :defer 3
+;;    :after org
+;;    :ensure t)
+
+(use-package org-re-reveal
   :defer 3
   :after org
   :ensure t)
