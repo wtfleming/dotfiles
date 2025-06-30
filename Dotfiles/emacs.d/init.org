@@ -2121,6 +2121,16 @@ For text I want a prompt like "rewrite the following message for better readabil
 I think I want to use gptel-rewrite as it gives access to diff, but maybe an elisp function
 would work well enough instead?
 
+** Presets
+Can use a preset in a prompt by adding @preset-name to it. For example:
+@explain println("hola");
+Would run the explain preset and explain what the println call is
+
+#+begin_src emacs-lisp
+(gptel-make-preset 'explain
+  :system "Explain what this code does to a novice programmer.")
+#+end_src
+
 * transient
 #+begin_src emacs-lisp
   (use-package transient

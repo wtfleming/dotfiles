@@ -1950,6 +1950,9 @@ Can be used with the `gptel-post-response-functions' hook."
       )
     ))
 
+(gptel-make-preset 'explain
+  :system "Explain what this code does to a novice programmer.")
+
 (use-package transient
   ;;:pin melpa-stable
   :ensure t)
