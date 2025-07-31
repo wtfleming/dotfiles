@@ -62,8 +62,8 @@ export PATH="/usr/local/opt/openjdk/bin:$PATH"
 # If ruby installed via homebrew add it to the path
 # export PATH="/usr/local/opt/ruby/bin:$PATH"
 
-# If a file named .work exists, source it
-[ -f .work ] && source .work
+# If a file named .work exists in the home directory, source it
+[ -f ~/.work ] && source ~/.work
 
 # Include docs when building Erlang via asdf
 # This will make the Erlang docs available in Elixir's iex help functionality
