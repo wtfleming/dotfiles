@@ -1937,6 +1937,7 @@ Can be used with the `gptel-post-response-functions' hook."
 ;; TODO look at the current mode, if it is typescript, include that info in the system message (and same for other languages)
 ;; TODO change so if a region is active use that, otherwise the entire buffer
 ;; TODO if not in a programming mode, don't do anything except call (message) to indicate it
+;; TODO use gptel-make-preset for this instead?
 (defun wtf-gptel-find-code-issues-in-current-buffer ()
   "Use an LLM to find potential source code issues in the current buffer."
   (interactive)
@@ -1952,6 +1953,13 @@ Can be used with the `gptel-post-response-functions' hook."
 
 (gptel-make-preset 'explain
   :system "Explain what this code does to a novice programmer.")
+
+(gptel-make-preset 'fetch
+  :description "Fetches a web page and answers questions about its content"
+  :backend "Claude"
+  ;; :model 'claude-3-7-sonnet-20250219.1
+  :system "You are an expert at explaining information from the web. Cite your sources"
+  :tools '("mcp-fetch"))
 
 (use-package transient
   ;;:pin melpa-stable
