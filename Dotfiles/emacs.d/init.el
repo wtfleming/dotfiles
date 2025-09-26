@@ -641,8 +641,9 @@
   "a" #'org-agenda
   "b" #'org-switchb
   "c" #'org-capture
-  "l" #'org-store-link)
-
+  "l" #'org-store-link
+  "s" #'org-babel-execute-src-block)
+  
 (defvar-keymap wtf-org-mode-prefix-map
   :doc "My prefix key map."
   "o" wtf-prefix-org-mode-global-map)
