@@ -1848,7 +1848,7 @@ Can be used with the `gptel-post-response-functions' hook."
   ;; The line should look like this:
   ;; machine api.anthropic.com login apikey password <api-key>
   (setopt
-   gptel-model 'claude-sonnet-4-20250514
+   gptel-model 'claude-sonnet-4-5-20250929
    gptel-backend (gptel-make-anthropic "Claude"
                    :stream t
                    :key gptel-api-key))
@@ -1860,6 +1860,12 @@ Can be used with the `gptel-post-response-functions' hook."
     (setopt gptel-directives (assoc-delete-all 'default gptel-directives))
     (add-to-list 'gptel-directives `(default . ,my-gptel-system-msg) )
     (setopt gptel--system-message my-gptel-system-msg)))
+
+  ;; Sonnet 4.5 isn't supported by gptel yet, but we can add it like this
+  ;; For some reason this needs to be outside of the use-package call
+  ;; similiar to https://github.com/karthink/gptel/issues/649#issuecomment-2669306524
+  (push 'claude-sonnet-4-5-20250929
+    (gptel-backend-models (gptel-get-backend "Claude")))
 
 (use-package gptel-quick
   :ensure t
