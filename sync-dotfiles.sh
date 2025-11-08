@@ -55,5 +55,16 @@ cp ~/src/dotfiles/Dotfiles/emacs.d/init.el ~/.emacs.d/.
 # we do not want to overwrite
 touch ~/src/dotfiles/Dotfiles/emacs.d/my-customized.el
 
+# claude code
+if [ ! -d ~/.claude ]; then
+    mkdir ~/.claude
+fi
+if [ ! -d ~/.claude/commands ]; then
+    mkdir ~/.claude/commands
+fi
+
+cp ~/src/dotfiles/Dotfiles/claude/commands/* ~/.claude/commands/
+
+
 echo "Successfully synced dotfiles."
 echo "If this is a work computer ensure that the correct email is being used in .gitconfig"
