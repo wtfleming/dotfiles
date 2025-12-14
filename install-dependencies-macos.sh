@@ -4,8 +4,7 @@ brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake
 
 # ---------- Build emacs on an ARM Mac from source
 # Note: if building for emacs 29 need to brew install jansson, but not for 30 and newer
-brew install gcc libgccjit make gnutls texinfo autoconf pkg-config tree-sitter
-
+brew install gcc libgccjit make gnutls texinfo autoconf pkg-config tree-sitter tree-sitter-cli
 
 brew install ispell
 
