@@ -62,8 +62,14 @@ fi
 if [ ! -d ~/.claude/commands ]; then
     mkdir ~/.claude/commands
 fi
+if [ ! -d ~/.claude/hooks ]; then
+    mkdir ~/.claude/hooks
+fi
 
-cp ~/src/dotfiles/Dotfiles/claude/commands/* ~/.claude/commands/
+
+cp ~/src/dotfiles/Dotfiles/claude/settings.json ~/.claude/settings.json
+cp ~/src/dotfiles/Dotfiles/claude/commands/* ~/.claude/commands/.
+cp ~/src/dotfiles/Dotfiles/claude/hooks/* ~/.claude/hooks/.
 cp ~/src/dotfiles/Dotfiles/claude/CLAUDE.md ~/.claude/CLAUDE.md
 
 echo "Successfully synced dotfiles."
