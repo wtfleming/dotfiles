@@ -64,7 +64,7 @@ if [ ! -d ~/.claude/commands ]; then
 fi
 
 cp ~/src/dotfiles/Dotfiles/claude/commands/* ~/.claude/commands/
-
+cp ~/src/dotfiles/Dotfiles/claude/CLAUDE.md ~/.claude/CLAUDE.md
 
 echo "Successfully synced dotfiles."
 echo "If this is a work computer ensure that the correct email is being used in .gitconfig"
