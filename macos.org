@@ -27,6 +27,75 @@ brew install terminal-notifier
 
 * emacs
 Build emacs on an ARM Mac from source
+
+If emacs build complains about tree-sitter and implicit-function-declaration
+it is because clang 16 made it an error https://www.redhat.com/en/blog/new-warnings-and-errors-clang-16
+and tree-sitter is still using the old behavior
+
+-Wno-error=implicit-function-declaration
+
+tree-sitter@0.25 is keg-only, which means it was not symlinked into /opt/homebrew,
+because this is an alternate version of another formula.
+
+For compilers to find tree-sitter@0.25 you may need to set:
+  export LDFLAGS="-L/opt/homebrew/opt/tree-sitter@0.25/lib"
+  export CPPFLAGS="-I/opt/homebrew/opt/tree-sitter@0.25/include"
+
+i'm not sure the best way to fix this but
+
+$ ./configure CFLAGS="-Wno-error=implicit-function-declaration" --with-native-compilation --with-tree-sitter --without-compress-install --disable-gc-mark-trace --with-xwidgets
+$ gmake
+
+gets us mostly there, but still have errors
+
+./configure TREE_SITTER_CFLAGS="-Wno-error=implicit-function-declaration" LDFLAGS="-L/opt/homebrew/opt/tree-sitter/lib" CFLAGS="-Wno-error=implicit-function-declaration" --with-native-compilation --with-tree-sitter --without-compress-install --disable-gc-mark-trace --with-xwidgets
+
+Might be possible to fix by compiling with gcc instead of clang?
+
+./configure TREE_SITTER_CFLAGS="-Wno-error=implicit-function-declaration" LDFLAGS="-L/opt/homebrew/opt/tree-sitter/lib" CFLAGS="-Wno-error=implicit-function-declaration" --with-native-compilation --with-tree-sitter --without-compress-install --disable-gc-mark-trace --with-xwidgets
+
+
+./configure TREE_SITTER_CFLAGS="-Wno-error=implicit-function-declaration" LDFLAGS="-L/opt/homebrew/opt/tree-sitter/lib" --with-native-compilation --with-tree-sitter --without-compress-install --disable-gc-mark-trace --with-xwidgets
+
+
+CPPFLAGS="-I/opt/homebrew/opt/tree-sitter/include"
+
+./configure TREE_SITTER_CFLAGS="-Wno-error=implicit-function-declaration" LDFLAGS="-L/opt/homebrew/opt/tree-sitter/lib" CPPFLAGS="-I/opt/homebrew/opt/tree-sitter/include" --with-native-compilation --with-tree-sitter --without-compress-install --disable-gc-mark-trace --with-xwidgets
+
+  TREE_SITTER_CFLAGS
+              C compiler flags for TREE_SITTER, overriding pkg-config
+  TREE_SITTER_LIBS
+              linker flags for TREE_SITTER, overriding pkg-config
+
+
+./configure TREE_SITTER_CFLAGS="-Wno-error=implicit-function-declaration" LDFLAGS="-L/opt/homebrew/opt/tree-sitter@0.25/lib" CPPFLAGS="-I/opt/homebrew/opt/tree-sitter@0.25/include" --with-native-compilation --with-tree-sitter --without-compress-install --disable-gc-mark-trace --with-xwidgets
+
+
+
+
+TREE_SITTER_LIBS="-L/opt/homebrew/opt/tree-sitter@0.25/lib -ltree-sitter" \
+
+./configure TREE_SITTER_LIBS="-L/opt/homebrew/opt/tree-sitter@0.25/lib -ltree-sitter" TREE_SITTER_CFLAGS="-Wno-error=implicit-function-declaration" LDFLAGS="-L/opt/homebrew/opt/tree-sitter@0.25/lib" CPPFLAGS="-I/opt/homebrew/opt/tree-sitter@0.25/include" --with-native-compilation --with-tree-sitter --without-compress-install --disable-gc-mark-trace --with-xwidgets
+
+CC=clang-16
+
+# THIS SEEMS TO WORK! But maybe we should try compiling with gcc instead of clang?
+or see if we can revert clang to 15 till the library fixes it
+
+./configure TREE_SITTER_LIBS="-L/opt/homebrew/opt/tree-sitter@0.25/lib -ltree-sitter" TREE_SITTER_CFLAGS="-Wno-error=implicit-function-declaration" LDFLAGS="-L/opt/homebrew/opt/tree-sitter@0.25/lib" CPPFLAGS="-I/opt/homebrew/opt/tree-sitter@0.25/include" --with-native-compilation --with-tree-sitter --without-compress-install --disable-gc-mark-trace --with-xwidgets
+gmake
+
+
+# TODO try building using all processors
+
+gmake -j$(nproc)
+
+
+
+# TODO try installing normal tree-sitter (not @0.25) and see if we can make it build
+
+
+
 #+begin_src
 
 # note: emacs 30.2 needs tree sitter 0.25 to build
