@@ -1,0 +1,26 @@
+{
+  "includeCoAuthoredBy": false,
+  "model": "opus",
+  "hooks": {
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/needs-permission.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/notify-ready.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

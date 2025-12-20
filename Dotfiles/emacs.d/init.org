@@ -1632,6 +1632,8 @@ Its value is
   (add-hook 'terraform-mode-hook (lambda () (subword-mode +1)))
   (add-hook 'typescript-mode-hook (lambda () (subword-mode +1)))
   (add-hook 'typescript-ts-mode-hook (lambda () (subword-mode +1)))
+  (add-hook 'tsx-ts-mode-hook (lambda () (subword-mode +1)))
+  (add-hook 'json-ts-mode-hook (lambda () (subword-mode +1)))
 
 
   ;; ----- git-gutter -----
