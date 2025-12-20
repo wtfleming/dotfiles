@@ -16,12 +16,16 @@ https://bboxtype.com/typefaces/FiraGO/
 brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake
 #+end_src
 
-
 * emacs
 Build emacs on an ARM Mac from source
 #+begin_src
+
+# note: emacs 30.2 needs tree sitter 0.25 to build
+# emacs 31 or later will probably need a more recent version
+brew install tree-sitter@0.25
+
 # Note: if building for emacs 29 need to brew install jansson, but not for 30 and newer
-brew install gcc libgccjit make gnutls texinfo autoconf pkg-config tree-sitter wxwidgets
+brew install gcc libgccjit make gnutls texinfo autoconf pkg-config wxwidgets
 
 # Emacs flyspell needs a spell checking tool, install one on macOS
 brew install ispell
