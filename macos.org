@@ -13,7 +13,7 @@ https://github.com/bBoxType/FiraGO
 https://bboxtype.com/typefaces/FiraGO/
 
 #+begin_src
-brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake 
+brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake imagemagick
 #+end_src
 
 #+begin_src
