@@ -25,6 +25,14 @@ brew install terminal-notifier
 3. Make sure Allow Notifications is turned ON and set to Banners or Alerts
 
 
+* Claude Code
+** ast-grep
+https://github.com/ast-grep/claude-skill
+brew install ast-grep
+
+/plugin marketplace add ast-grep/claude-skill
+/plugin install ast-grep
+
 * emacs
 Build emacs on an ARM Mac from source
 
