@@ -1429,7 +1429,6 @@ Its value is
   ;; ------- Language Server -------
   (use-package lsp-mode
     :ensure t
-    :pin melpa-stable
     :commands (lsp lsp-deferred)
     :hook ((elixir-mode . lsp-deferred)
            (rust-mode . lsp-deferred)

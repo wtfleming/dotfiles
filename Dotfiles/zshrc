@@ -15,6 +15,7 @@ path+=("$HOME/anaconda3/bin")
 path+=("$HOME/bin/spark/bin")
 path+=("/usr/local/opt/postgresql@16/bin")
 path+=("$HOME/bin/emacs-30.2/src")
+path+=("$HOME/.local/bin")
 
 # export to sub-processes (make it inherited by child processes)
 export PATH
