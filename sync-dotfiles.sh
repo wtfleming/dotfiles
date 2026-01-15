@@ -71,7 +71,9 @@ fi
 if [ ! -d ~/.claude/scripts ]; then
     mkdir ~/.claude/scripts
 fi
-
+if [ ! -d ~/.claude/my-agents ]; then
+    mkdir ~/.claude/my-agents
+fi
 
 cp ~/src/dotfiles/Dotfiles/claude/settings.json ~/.claude/settings.json
 cp ~/src/dotfiles/Dotfiles/claude/commands/* ~/.claude/commands/.
@@ -79,6 +81,8 @@ cp ~/src/dotfiles/Dotfiles/claude/hooks/* ~/.claude/hooks/.
 cp -r ~/src/dotfiles/Dotfiles/claude/skills/* ~/.claude/skills/.
 cp ~/src/dotfiles/Dotfiles/claude/scripts/* ~/.claude/scripts/.
 cp ~/src/dotfiles/Dotfiles/claude/CLAUDE.md ~/.claude/CLAUDE.md
+cp ~/src/dotfiles/Dotfiles/claude/my-agents/* ~/.claude/my-agents/.
+
 
 echo "Successfully synced dotfiles."
 echo "If this is a work computer ensure that the correct email is being used in .gitconfig"
