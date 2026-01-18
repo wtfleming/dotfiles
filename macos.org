@@ -26,6 +26,10 @@ brew install terminal-notifier
 
 
 * Claude Code
+/plugin marketplace add anthropics/claude-code
+/plugin install frontend-design@claude-code-plugins
+
+
 ** ast-grep
 https://github.com/ast-grep/claude-skill
 brew install ast-grep
