@@ -20,6 +20,12 @@ brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake ima
 brew install terminal-notifier
 #+end_src
 
+mold is a linker for Rust, sccache is a compiler cache for rust
+#+begin_src
+brew install mold sccache
+#+end_src
+
+
 1. Open System Settings → Notifications
 2. Scroll down and look for terminal-notifier in the app list
 3. Make sure Allow Notifications is turned ON and set to Banners or Alerts
