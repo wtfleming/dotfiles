@@ -20,9 +20,9 @@ brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake ima
 brew install terminal-notifier
 #+end_src
 
-mold is a linker for Rust, sccache is a compiler cache for rust
+lld is a linker from llvm for Rust that is faster, sccache is a compiler cache for rust
 #+begin_src
-brew install mold sccache
+brew install lld sccache
 #+end_src
 
 
