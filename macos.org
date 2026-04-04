@@ -289,6 +289,25 @@ Username is not the default email displayed, look it up by logging into https://
 brew install awscli
 $ aws configure
 
+
+* mise
+#+begin_src
+brew install mise
+
+mise doctor
+  
+mise use erlang@28.4.1
+mise use elixir@1.19.5
+
+or
+  
+mise use erlang@latest
+mise use elixir@latest
+
+echo 'eval "$(mise activate zsh)"' >> ~/.zshrc
+source ~/.zshrc
+  
+#+end_src
 * asdf
 See https://asdf-vm.com/guide/getting-started.html
 
