@@ -1312,7 +1312,6 @@
 ;; ------- Language Server -------
 (use-package lsp-mode
   :ensure t
-  :pin melpa-stable
   :commands (lsp lsp-deferred)
   :hook ((elixir-mode . lsp-deferred)
          (rust-mode . lsp-deferred)
@@ -1511,6 +1510,8 @@
 (add-hook 'terraform-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'typescript-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'typescript-ts-mode-hook (lambda () (subword-mode +1)))
+(add-hook 'tsx-ts-mode-hook (lambda () (subword-mode +1)))
+(add-hook 'json-ts-mode-hook (lambda () (subword-mode +1)))
 
 
 ;; ----- git-gutter -----
@@ -1705,22 +1706,23 @@
 ;;   :ensure t)
 
 ;; ------- hcl-mode -------
-;; ;; Compatability with HCL and Terraform syntax
-;; (use-package hcl-mode
-;;   :ensure t)
+;; Compatability with HCL and Terraform syntax
+(use-package hcl-mode
+  :ensure t)
 
-;; ------- terraform-mode -------
-;; (use-package terraform-mode
-;;   :ensure t
-;;   :mode (("\\.tpl\\'" . terraform-mode)
-;;          ("\\.tf\\'" . terraform-mode))
+------- terraform-mode -------
+(use-package terraform-mode
+  :ensure t
+  :mode (("\\.tpl\\'" . terraform-mode)
+         ("\\.tf\\'" . terraform-mode))
 
-;;   ;; Currently lsp-mode supports two terraform language servers.
-;;   ;; If you would want to go with the official Hashicorp's language server, set this:
-;;   :config (setopt lsp-disabled-clients '(tfls)))
+  ;; Currently lsp-mode supports two terraform language servers.
+  ;; If you would want to go with the official Hashicorp's language server, set this:
+  :config (setopt lsp-disabled-clients '(tfls)))
 
 
-;; ------- Misc -------
+;; ------- M
+isc -------
 (use-package dockerfile-mode
   :ensure t
   :mode
