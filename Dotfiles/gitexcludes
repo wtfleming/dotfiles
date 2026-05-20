@@ -95,3 +95,6 @@ metals.sbt
 
 ### Language server
 .lsp/
+
+.arch-reviewer/
+.claude/settings.local.json
