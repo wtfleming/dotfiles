@@ -41,7 +41,7 @@ deployed state disagree.
   - `Dotfiles/sbtconfig` → `~/.sbt/...` (confirm target)
   - `Dotfiles/hiverc` → `~/.hiverc`
   - `Dotfiles/emacs.d/init.org` (source for init.el?) — confirm whether it should sync
-  - `babashka-scripts/bb-edn`, `babashka-scripts/shell-env.sh`
+  - `babashka-scripts/bb-edn/bb.edn`, `babashka-scripts/shell-env.sh`
 - **Files:** `sync-dotfiles.sh`
 - **Fix:** Add sync steps (with `mkdir -p` guards) for the configs that should be
   deployed; explicitly document the ones that should not.

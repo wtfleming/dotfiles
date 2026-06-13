@@ -14,8 +14,9 @@ live under `bin/`. They are deployed to the home directory by `sync-dotfiles.sh`
   - `Dotfiles/claude/` — Claude Code config: `settings.json`, `CLAUDE.md` (the
     global one deployed to `~/.claude/`), `commands/`, `hooks/`, `skills/`,
     `scripts/`, `my-agents/`.
+  - `Dotfiles/config/`, `Dotfiles/lein/` — clj-kondo and Leiningen configs.
 - `bin/` — small helper scripts deployed to `~/bin/` (tmux session launchers, llm helpers).
-- `babashka-scripts/`, `docker-compose/`, `config/`, `lein/` — misc tooling.
+- `babashka-scripts/`, `docker-compose/` — misc tooling.
 - `old-scripts/` — archived, unused scripts (do not deploy).
 - `*.org` — machine setup notes (`macos.org`, `raspbian.org`, `setup-ubuntu-18-04.org`).
 - `install-dependencies-macos.sh` — Homebrew bootstrap for a new Mac.
