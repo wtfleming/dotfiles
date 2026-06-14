@@ -1710,7 +1710,7 @@
 (use-package hcl-mode
   :ensure t)
 
-------- terraform-mode -------
+;; ------- terraform-mode -------
 (use-package terraform-mode
   :ensure t
   :mode (("\\.tpl\\'" . terraform-mode)
@@ -1721,8 +1721,7 @@
   :config (setopt lsp-disabled-clients '(tfls)))
 
 
-;; ------- M
-isc -------
+;; ------- Misc -------
 (use-package dockerfile-mode
   :ensure t
   :mode

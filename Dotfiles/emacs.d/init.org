@@ -1831,7 +1831,7 @@ Its value is
   (use-package hcl-mode
     :ensure t)
 
-  ------- terraform-mode -------
+  ;; ------- terraform-mode -------
   (use-package terraform-mode
     :ensure t
     :mode (("\\.tpl\\'" . terraform-mode)
