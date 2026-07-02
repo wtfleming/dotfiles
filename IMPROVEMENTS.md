@@ -48,17 +48,35 @@ deployed state disagree.
 - **Acceptance:** Every tracked config under `Dotfiles/` is either synced or has a
   documented reason it isn't.
 
-### 4. tmux launcher scripts have no shebang (shellcheck SC2148)
+### 4. `my-customized.el` is never deployed, but `init.el` hard-loads it
+- **Problem:** `init.el` sets `custom-file` to `~/.emacs.d/my-customized.el` and then
+  calls `(load custom-file)` unconditionally (init.el:58–59). `sync-dotfiles.sh` only
+  `touch`es the **repo** copy (`Dotfiles/emacs.d/my-customized.el`) and never creates
+  the file in `~/.emacs.d/`. On a fresh machine, emacs errors at startup with
+  `file-missing`.
+- **Files:** `sync-dotfiles.sh`, `Dotfiles/emacs.d/init.el` (and `init.org`, its source)
+- **Fix:** Either add `touch ~/.emacs.d/my-customized.el` to the sync script (do NOT
+  `cp` — the deployed file holds machine-local customizations that must not be
+  overwritten), or make the load tolerant: `(load custom-file :no-error)`. Doing both
+  is reasonable. Apply the same change to `init.org` so the two stay in step.
+- **Acceptance:** On a machine with no `~/.emacs.d/my-customized.el`, emacs starts
+  cleanly after `sync-dotfiles.sh`; existing local customizations are never clobbered
+  by re-running sync.
+
+### 5. tmux launcher scripts have no shebang (shellcheck SC2148)
 - **Problem:** `bin/tmux-homn`, `bin/tmux-onecc`, `bin/tmux-tokubai` start directly
   with a command and have no `#!` line. They also use the
   `cmd; if [ "$?" -eq 1 ]` antipattern instead of testing the command directly.
-- **Files:** `bin/tmux-homn`, `bin/tmux-onecc`, `bin/tmux-tokubai`
+  `babashka-scripts/shell-env.sh` has the same SC2148 problem (no shebang).
+- **Files:** `bin/tmux-homn`, `bin/tmux-onecc`, `bin/tmux-tokubai`,
+  `babashka-scripts/shell-env.sh`
 - **Fix:** Add `#!/bin/bash` (or `#!/bin/sh`). Replace
   `tmux has-session -t x; if [ "$?" -eq 1 ]` with
-  `if ! tmux has-session -t x 2>/dev/null; then`.
-- **Acceptance:** `shellcheck bin/*` is clean.
+  `if ! tmux has-session -t x 2>/dev/null; then`. For `shell-env.sh`, add a shebang
+  (or convert it to a documented snippet if it isn't meant to be executed).
+- **Acceptance:** `shellcheck bin/* babashka-scripts/shell-env.sh` is clean.
 
-### 5. Enable tmux focus-events for Claude Code focus tracking
+### 6. Enable tmux focus-events for Claude Code focus tracking
 - **Problem:** When Claude Code starts inside tmux it prints
   `tmux focus-events off · add 'set -g focus-events on' to ~/.tmux.conf and reattach
   for focus tracking`. `Dotfiles/tmux.conf` has no `focus-events` setting, so tmux
@@ -71,21 +89,28 @@ deployed state disagree.
 - **Acceptance:** Starting Claude Code in tmux no longer shows the focus-events
   warning; `tmux show-options -g focus-events` reports `on`.
 
-### 6. `install-dependencies-macos.sh` is missing tools the configs depend on
+### 7. `install-dependencies-macos.sh` is missing tools the configs depend on
 - **Problem:** Runtime deps used by this repo's own scripts are not installed:
   - `terminal-notifier` — required by `Dotfiles/claude/hooks/{needs-permission,notify-ready}.sh`
   - `jq` — required by `Dotfiles/claude/scripts/status-line.sh`
   - `ollama` (and optionally `glow`) — required by `bin/wtf-llm-summarize` / `wtf-llm-mindmap`
+  - Tools the global `Dotfiles/claude/CLAUDE.md` tells Claude are available but the
+    script never installs: `imagemagick` (magick), `node`, `gh`, `docker`
+  - Tools implied by tracked configs: `babashka` (bb.edn / shell-env.sh),
+    `leiningen` (`Dotfiles/lein/profiles.clj`), `clj-kondo` (`Dotfiles/config/clj-kondo/`),
+    `sbt` (`Dotfiles/sbtconfig`) — install or document as work-machine-only
+  - Script hygiene: no `set -e`, and `coreutils` is installed twice (lines 3 and 23)
 - **Files:** `install-dependencies-macos.sh`
-- **Fix:** Add `brew install terminal-notifier jq` and (if desired) `ollama`/`glow`.
+- **Fix:** Add `brew install terminal-notifier jq` and the others as desired; dedupe
+  `coreutils`; add `set -e` (or `set -euo pipefail`).
 - **Acceptance:** A fresh machine that runs install + sync has working claude hooks,
-  status line, and llm helper scripts.
+  status line, and llm helper scripts, and every tool the global CLAUDE.md advertises.
 
 ---
 
 ## Medium priority (robustness / maintainability)
 
-### 7. Make the sync strategy safer (symlinks or backups)
+### 8. Make the sync strategy safer (symlinks or backups)
 - **Problem:** `sync-dotfiles.sh` blindly `cp`s over existing files with no backup,
   no dry-run, and no diff. Edits made to deployed files don't flow back to the repo
   (the script's own comment notes this). `cp bin/*` would also break if `bin/` ever
@@ -98,7 +123,7 @@ deployed state disagree.
     and `cp -R`/explicit file lists instead of bare globs.
 - **Acceptance:** Running sync twice is idempotent and never silently destroys local edits.
 
-### 8. gitconfig / shell email handling for work machines
+### 9. gitconfig / shell email handling for work machines
 - **Problem:** Personal name+email are hardcoded in `Dotfiles/gitconfig` AND exported
   in `Dotfiles/bashrc` (`GIT_AUTHOR_EMAIL` etc.). The sync script has a TODO worrying
   about clobbering a work email. Two sources of truth for identity.
@@ -114,7 +139,7 @@ deployed state disagree.
 - **Acceptance:** Work repos pick up the work email automatically with no manual step;
   identity is defined in exactly one place.
 
-### 9. Hardcoded version numbers in `zshrc` PATH entries will rot
+### 10. Hardcoded version numbers in `zshrc` PATH entries will rot
 - **Problem:** `Dotfiles/zshrc` pins `apache-maven-3.6.3`, `emacs-30.2/src`,
   `postgresql@16`, `spark`, `anaconda3` in `PATH`. These break on upgrade and add
   dead PATH entries on machines that don't have them.
@@ -125,7 +150,7 @@ deployed state disagree.
 - **Acceptance:** A machine missing maven/spark/anaconda has a clean PATH with no
   nonexistent dirs.
 
-### 10. Outdated model id pinned in a slash command
+### 11. Outdated model id pinned in a slash command
 - **Problem:** `Dotfiles/claude/commands/deep-analysis.md` frontmatter pins
   `model: claude-opus-4-1-20250805`, an older model.
 - **Files:** `Dotfiles/claude/commands/deep-analysis.md`
@@ -133,27 +158,41 @@ deployed state disagree.
   pin to inherit the session model.
 - **Acceptance:** Command runs on a current model.
 
-### 11. `.gitignore` is minimal
+### 12. `.gitignore` is minimal
 - **Problem:** Root `.gitignore` only ignores `.DS_Store`. Local-only artifacts like
   `Dotfiles/emacs.d/my-customized.el` (created/touched by sync, meant to hold local
-  changes) risk being committed.
+  changes) risk being committed. `.claude/settings.local.json` exists at the repo
+  root and is only kept out of git by the global excludes file — which item 1 shows
+  is not actually wired up, so on a fresh clone it could be committed by accident.
 - **Files:** `.gitignore`, `sync-dotfiles.sh`
 - **Fix:** Confirm whether `my-customized.el` should be ignored (it's `touch`ed by
-  sync to stay empty in git). If yes, add it to `.gitignore`.
-- **Acceptance:** Local-only files cannot be accidentally committed.
+  sync to stay empty in git). Add `.claude/settings.local.json` to the root
+  `.gitignore` so it's protected regardless of global git config.
+- **Acceptance:** Local-only files cannot be accidentally committed, even on a fresh
+  clone with default git config.
+
+### 13. No CI to enforce the repo's own conventions
+- **Problem:** `CLAUDE.md` requires scripts to be shellcheck-clean, but nothing
+  enforces it — regressions only surface when someone remembers to run `shellcheck`
+  locally (items 5 and the `shell-env.sh` gap show this already slipped).
+- **Files:** `.github/workflows/` (new)
+- **Fix:** Add a small GitHub Actions workflow that runs
+  `shellcheck sync-dotfiles.sh install-dependencies-macos.sh bin/* Dotfiles/claude/hooks/*.sh Dotfiles/claude/scripts/*.sh`
+  on push/PR. Optionally also validate `Dotfiles/claude/settings.json` with `jq empty`.
+- **Acceptance:** A PR introducing a shellcheck error or invalid settings JSON fails CI.
 
 ---
 
 ## Low priority (cleanup / documentation)
 
-### 12. README is nearly empty
+### 14. README is nearly empty
 - **Problem:** `README.md` is 3 lines and only mentions the git completion source.
 - **Fix:** Document: what the repo contains, how to bootstrap a new machine
   (`install-dependencies-macos.sh` then `sync-dotfiles.sh`), the work-email caveat,
   and the sync strategy. Reference `CLAUDE.md`.
 - **Acceptance:** A new machine can be set up by following the README alone.
 
-### 13. Dead / archived scripts
+### 15. Dead / archived scripts
 - **Problem:** `old-scripts/` holds unused EMR/EC2 helpers; `bin/empty-directories`
   and the tmux scripts are project-specific (homn/onecc/tokubai).
 - **Fix:** Confirm `old-scripts/` is intentionally archived (add a one-line README in
@@ -161,23 +200,36 @@ deployed state disagree.
   public repo.
 - **Acceptance:** Intent of each non-synced script is documented.
 
-### 14. Commented-out cruft across shell configs
+### 16. Stale machine-setup notes
+- **Problem:** `setup-ubuntu-18-04.org` documents Ubuntu 18.04, which reached end of
+  standard support in 2023; `raspbian.org` may be similarly dated. Stale docs in a
+  public repo suggest procedures that no longer work.
+- **Files:** `setup-ubuntu-18-04.org`, `raspbian.org`, `macos.org`
+- **Fix:** Review each: update, mark as historical at the top of the file, or move to
+  an archive dir alongside `old-scripts/`.
+- **Acceptance:** Every setup doc is either current or explicitly labeled historical.
+
+### 17. Commented-out cruft across shell configs
 - **Problem:** `bashrc`, `zshrc`, `bash_profile`, `bash_aliases` carry large blocks of
   commented-out history (old java/nvm/android/rvm lines).
 - **Fix:** Prune dead comments; keep only ones with future value. Low risk, do last.
 - **Acceptance:** Shell configs are readable; git history preserves anything removed.
 
-### 15. No LICENSE
+### 18. No LICENSE
 - **Problem:** Public dotfiles repo with no license file.
 - **Fix:** Add one (e.g. MIT) if you want others to reuse it. Optional.
 
-### 16. `bashrc` uses non-POSIX `==` in `[ ]`
+### 19. `bashrc` uses non-POSIX `==` in `[ ]`
 - **Problem:** `[ "$(uname)" == "Darwin" ]` — works in bash but not POSIX `sh`.
 - **Fix:** Use single `=`. Minor.
 
 ---
 
 ## Notes / things verified as OK
-- `sync-dotfiles.sh` passes `shellcheck` cleanly.
+- `sync-dotfiles.sh` passes `shellcheck` cleanly, as do the claude hooks
+  (`needs-permission.sh`, `notify-ready.sh`), `status-line.sh`, and
+  `install-dependencies-macos.sh`.
 - `Dotfiles/ssh/config` and `Dotfiles/claude/settings.json` contain no secrets.
 - `gitexcludes` already lists `.claude/settings.local.json` and common editor junk.
+- `Dotfiles/claude/settings.json` model (`opus`) and hook/statusline paths match what
+  `sync-dotfiles.sh` deploys.
