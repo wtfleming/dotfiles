@@ -7,6 +7,7 @@
   },
   "permissions": {
     "allow": [
+      "Bash(basename *)",
       "Bash(cargo check:*)",
       "Bash(cargo build:*)",
       "Bash(cargo clippy:*)",
@@ -20,29 +21,52 @@
       "Bash(cargo search:*)",
       "Bash(cargo test:*)",
       "Bash(cargo tree:*)",
+      "Bash(date *)",
+      "Bash(df *)",
+      "Bash(diff *)",
+      "Bash(dirname *)",
+      "Bash(du *)",
+      "Bash(file *)",
       "Bash(find:*)",
       "Bash(git diff:*)",
       "Bash(grep:*)",
       "Bash(head:*)",
+      "Bash(du *)",
       "Bash(ls:*)",
+      "Bash(md5 *)",
       "Bash(mkdir:*)",
       "Bash(pnpm audit:*)",
       "Bash(pnpm build:*)",
       "Bash(pnpm lint)",
       "Bash(pnpm test:*)",
       "Bash(pnpm why:*)",
+      "Bash(readlink *)",
+      "Bash(realpath *)",
       "Bash(rg:*)",
       "Bash(sed:*)",
+      "Bash(stat *)",
+      "Bash(tree *)",
       "Bash(tail:*)"
     ],
     "deny": [
       "Bash(cargo owner:*)",
       "Bash(cargo publish:*)",
       "Bash(cargo yank:*)",
+      "Bash(dd *)",
+      "Bash(diskutil *)",
+      "Bash(mkfs *)",
+      "Bash(rm -rf / *)",
+      "Bash(rm -rf /* *)",
+      "Bash(rm -rf ~ *)",
+      "Bash(rm -rf $HOME *)",
+      "Bash(sudo rm -rf / *)",
+      "Bash(sudo rm -rf /* *)",
       "Read(./aws/**)",
+      "Read(./config/credentials.json)",
       "Read(./.env)",
       "Read(./.env.*)",
-      "Read(./secrets/**)"
+      "Read(./secrets/**)",
+      "Read(~/.ssh/**)"
     ],
     "ask": [
       "Bash(cargo add:*)",
@@ -52,7 +76,10 @@
       "Bash(cargo remove:*)",
       "Bash(cargo uninstall:*)",
       "Bash(cargo update:*)",
+      "Bash(docker push *)",
+      "Bash(gh pr merge *)",
       "Bash(git push:*)",
+      "Bash(npm publish *)",
       "Bash(rm:*)"
     ]
   },
@@ -77,5 +104,12 @@
         ]
       }
     ]
+  },
+  "enabledPlugins": {
+    "explanatory-output-style@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "plugin-dev@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "skill-creator@claude-plugins-official": true
   }
 }
