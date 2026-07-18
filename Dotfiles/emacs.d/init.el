@@ -56,7 +56,7 @@
 
 ;; Write any customized variables to a specific file instead of this file
 (setopt custom-file "~/.emacs.d/my-customized.el")
-(load custom-file)
+(load custom-file :no-error)
 
 ;; Turn off mouse interface early in startup to avoid momentary display
                                         ;(if (fboundp 'menu-bar-mode) (menu-bar-mode -1))
