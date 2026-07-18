@@ -11,43 +11,6 @@ deployed state disagree.
 
 ## High priority (correctness bugs / things that don't work)
 
-### 1. `gitexcludes` is copied but never wired into git
-- **Problem:** `sync-dotfiles.sh` copies `Dotfiles/gitexcludes` to `~/.gitexcludes`,
-  but `Dotfiles/gitconfig` has no `[core] excludesfile = ~/.gitexcludes` entry, so
-  the global ignore file is never used by git.
-- **Files:** `Dotfiles/gitconfig`, `sync-dotfiles.sh`
-- **Fix:** Add to `gitconfig`:
-  ```ini
-  [core]
-      excludesfile = ~/.gitexcludes
-  ```
-- **Acceptance:** `git config --get core.excludesfile` returns `~/.gitexcludes` after sync.
-
-### 2. Bash config files exist in the repo but are never synced
-- **Problem:** `Dotfiles/bashrc`, `bash_profile`, `bash_aliases`, `bash_logout`
-  are tracked but `sync-dotfiles.sh` only copies `zshrc`. A bash login would not
-  pick up any of these.
-- **Files:** `sync-dotfiles.sh`, `Dotfiles/bash*`
-- **Fix:** Either (a) add copy steps for the bash files, or (b) if zsh is the only
-  shell in use, move the bash files to an `archive/`/`old-scripts/` dir and note
-  the decision in `README.md`. Decide intent first.
-- **Acceptance:** Repo no longer contains tracked-but-unsynced shell configs without
-  an explicit "intentionally not synced" note.
-
-### 3. Several tracked config files are never synced
-- **Problem:** These exist in the repo but `sync-dotfiles.sh` never deploys them:
-  - `Dotfiles/config/clj-kondo/config.edn` → `~/.config/clj-kondo/config.edn`
-  - `Dotfiles/lein/profiles.clj` → `~/.lein/profiles.clj`
-  - `Dotfiles/sbtconfig` → `~/.sbt/...` (confirm target)
-  - `Dotfiles/hiverc` → `~/.hiverc`
-  - `Dotfiles/emacs.d/init.org` (source for init.el?) — confirm whether it should sync
-  - `babashka-scripts/bb-edn/bb.edn`, `babashka-scripts/shell-env.sh`
-- **Files:** `sync-dotfiles.sh`
-- **Fix:** Add sync steps (with `mkdir -p` guards) for the configs that should be
-  deployed; explicitly document the ones that should not.
-- **Acceptance:** Every tracked config under `Dotfiles/` is either synced or has a
-  documented reason it isn't.
-
 ### 4. `my-customized.el` is never deployed, but `init.el` hard-loads it
 - **Problem:** `init.el` sets `custom-file` to `~/.emacs.d/my-customized.el` and then
   calls `(load custom-file)` unconditionally (init.el:58–59). `sync-dotfiles.sh` only
@@ -67,14 +30,11 @@ deployed state disagree.
 - **Problem:** `bin/tmux-homn`, `bin/tmux-onecc`, `bin/tmux-tokubai` start directly
   with a command and have no `#!` line. They also use the
   `cmd; if [ "$?" -eq 1 ]` antipattern instead of testing the command directly.
-  `babashka-scripts/shell-env.sh` has the same SC2148 problem (no shebang).
-- **Files:** `bin/tmux-homn`, `bin/tmux-onecc`, `bin/tmux-tokubai`,
-  `babashka-scripts/shell-env.sh`
+- **Files:** `bin/tmux-homn`, `bin/tmux-onecc`, `bin/tmux-tokubai`
 - **Fix:** Add `#!/bin/bash` (or `#!/bin/sh`). Replace
   `tmux has-session -t x; if [ "$?" -eq 1 ]` with
-  `if ! tmux has-session -t x 2>/dev/null; then`. For `shell-env.sh`, add a shebang
-  (or convert it to a documented snippet if it isn't meant to be executed).
-- **Acceptance:** `shellcheck bin/* babashka-scripts/shell-env.sh` is clean.
+  `if ! tmux has-session -t x 2>/dev/null; then`.
+- **Acceptance:** `shellcheck bin/*` is clean.
 
 ### 6. Enable tmux focus-events for Claude Code focus tracking
 - **Problem:** When Claude Code starts inside tmux it prints
@@ -96,9 +56,6 @@ deployed state disagree.
   - `ollama` (and optionally `glow`) — required by `bin/wtf-llm-summarize` / `wtf-llm-mindmap`
   - Tools the global `Dotfiles/claude/CLAUDE.md` tells Claude are available but the
     script never installs: `imagemagick` (magick), `node`, `gh`, `docker`
-  - Tools implied by tracked configs: `babashka` (bb.edn / shell-env.sh),
-    `leiningen` (`Dotfiles/lein/profiles.clj`), `clj-kondo` (`Dotfiles/config/clj-kondo/`),
-    `sbt` (`Dotfiles/sbtconfig`) — install or document as work-machine-only
   - Script hygiene: no `set -e`, and `coreutils` is installed twice (lines 3 and 23)
 - **Files:** `install-dependencies-macos.sh`
 - **Fix:** Add `brew install terminal-notifier jq` and the others as desired; dedupe
@@ -124,18 +81,16 @@ deployed state disagree.
 - **Acceptance:** Running sync twice is idempotent and never silently destroys local edits.
 
 ### 9. gitconfig / shell email handling for work machines
-- **Problem:** Personal name+email are hardcoded in `Dotfiles/gitconfig` AND exported
-  in `Dotfiles/bashrc` (`GIT_AUTHOR_EMAIL` etc.). The sync script has a TODO worrying
-  about clobbering a work email. Two sources of truth for identity.
-- **Files:** `Dotfiles/gitconfig`, `Dotfiles/bashrc`, `sync-dotfiles.sh`
+- **Problem:** Personal name+email are hardcoded in `Dotfiles/gitconfig`. The sync
+  script has a TODO worrying about clobbering a work email on work machines.
+- **Files:** `Dotfiles/gitconfig`, `sync-dotfiles.sh`
 - **Fix:** Use git conditional includes:
   ```ini
   [includeIf "gitdir:~/src/work/"]
       path = ~/.gitconfig-work
   ```
   Keep personal identity in the main gitconfig, work identity in an un-synced
-  `~/.gitconfig-work`. Remove the duplicate `GIT_AUTHOR_*` exports from `bashrc`
-  (let gitconfig own identity), or document why both exist.
+  `~/.gitconfig-work`.
 - **Acceptance:** Work repos pick up the work email automatically with no manual step;
   identity is defined in exactly one place.
 
@@ -174,7 +129,7 @@ deployed state disagree.
 ### 13. No CI to enforce the repo's own conventions
 - **Problem:** `CLAUDE.md` requires scripts to be shellcheck-clean, but nothing
   enforces it — regressions only surface when someone remembers to run `shellcheck`
-  locally (items 5 and the `shell-env.sh` gap show this already slipped).
+  locally (item 5 shows this already slipped).
 - **Files:** `.github/workflows/` (new)
 - **Fix:** Add a small GitHub Actions workflow that runs
   `shellcheck sync-dotfiles.sh install-dependencies-macos.sh bin/* Dotfiles/claude/hooks/*.sh Dotfiles/claude/scripts/*.sh`
@@ -210,18 +165,14 @@ deployed state disagree.
 - **Acceptance:** Every setup doc is either current or explicitly labeled historical.
 
 ### 17. Commented-out cruft across shell configs
-- **Problem:** `bashrc`, `zshrc`, `bash_profile`, `bash_aliases` carry large blocks of
-  commented-out history (old java/nvm/android/rvm lines).
+- **Problem:** `zshrc` carries large blocks of commented-out history (old
+  java/nvm/android/rvm lines).
 - **Fix:** Prune dead comments; keep only ones with future value. Low risk, do last.
 - **Acceptance:** Shell configs are readable; git history preserves anything removed.
 
 ### 18. No LICENSE
 - **Problem:** Public dotfiles repo with no license file.
 - **Fix:** Add one (e.g. MIT) if you want others to reuse it. Optional.
-
-### 19. `bashrc` uses non-POSIX `==` in `[ ]`
-- **Problem:** `[ "$(uname)" == "Darwin" ]` — works in bash but not POSIX `sh`.
-- **Fix:** Use single `=`. Minor.
 
 ---
 

@@ -14,9 +14,8 @@ live under `bin/`. They are deployed to the home directory by `sync-dotfiles.sh`
   - `Dotfiles/claude/` — Claude Code config: `settings.json`, `CLAUDE.md` (the
     global one deployed to `~/.claude/`), `commands/`, `hooks/`, `skills/`,
     `scripts/`, `my-agents/`.
-  - `Dotfiles/config/`, `Dotfiles/lein/` — clj-kondo and Leiningen configs.
 - `bin/` — small helper scripts deployed to `~/bin/` (tmux session launchers, llm helpers).
-- `babashka-scripts/`, `docker-compose/` — misc tooling.
+- `docker-compose/` — misc tooling.
 - `old-scripts/` — archived, unused scripts (do not deploy).
 - `*.org` — machine setup notes (`macos.org`, `raspbian.org`, `setup-ubuntu-18-04.org`).
 - `install-dependencies-macos.sh` — Homebrew bootstrap for a new Mac.
@@ -35,6 +34,8 @@ home directory. Key consequences to keep in mind:
   this — see `IMPROVEMENTS.md`.
 - `Dotfiles/emacs.d/my-customized.el` is intended to hold machine-local emacs changes;
   sync only `touch`es it so it stays empty in git.
+- `Dotfiles/emacs.d/init.org` is the org source that generates `init.el`. It is
+  edited and tangled in the repo and is intentionally **not** synced to `$HOME`.
 
 ## Conventions
 
