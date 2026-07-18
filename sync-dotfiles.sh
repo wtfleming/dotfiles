@@ -55,6 +55,10 @@ cp ~/src/dotfiles/Dotfiles/emacs.d/init.el ~/.emacs.d/.
 # we do not want to overwrite
 touch ~/src/dotfiles/Dotfiles/emacs.d/my-customized.el
 
+# init.el loads this file, so make sure it exists in ~/.emacs.d on a fresh
+# machine. Never cp it — the deployed copy holds machine-local customizations.
+touch ~/.emacs.d/my-customized.el
+
 # claude code
 if [ ! -d ~/.claude ]; then
     mkdir ~/.claude
