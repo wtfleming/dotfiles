@@ -3,6 +3,7 @@
         email = wfleming77@gmail.com
 [core]
         editor = emacs
+        excludesfile = ~/.gitexcludes
 [color]
         ui = true
 [github]
