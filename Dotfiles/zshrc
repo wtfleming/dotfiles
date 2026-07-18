@@ -29,10 +29,6 @@ if [ "$(uname)" = "Darwin" ]; then
 fi
 
 export GIT_EDITOR=emacs
-# export GIT_AUTHOR_NAME="Will Fleming"
-# export GIT_AUTHOR_EMAIL=wfleming77@gmail.com
-# export GIT_COMMITTER_NAME="$GIT_AUTHOR_NAME"
-# export GIT_COMMITTER_EMAIL="$GIT_AUTHOR_EMAIL"
 
 
 # List tmux sessions on login. If none, don't show the error.
@@ -52,16 +48,8 @@ setopt PROMPT_SUBST ; PS1='[%n@%m %c$(__git_ps1 " (%s)")]\$ '
 
 export PATH="/usr/local/opt/openjdk/bin:$PATH"
 
-# On OS X with java 8 and 11 installed, use 8
-# alias j11="export JAVA_HOME=`/usr/libexec/java_home -v 11`"
-# alias j8="export JAVA_HOME=`/usr/libexec/java_home -v 1.8`"
-# j8
-
 # https://github.com/asdf-vm/asdf
 # . "$HOME/.asdf/asdf.sh"
-
-# If ruby installed via homebrew add it to the path
-# export PATH="/usr/local/opt/ruby/bin:$PATH"
 
 # If a file named .work exists in the home directory, source it
 [ -f ~/.work ] && source ~/.work
@@ -73,6 +61,3 @@ export KERL_BUILD_DOCS="yes"
 
 # Enable shell history in iex and erl
 export ERL_AFLAGS="-kernel shell_history enabled -kernel shell_history_file_bytes 1024000"
-
-# export PATH="/opt/homebrew/opt/openjdk@17/bin:$PATH"
-# export PATH="/usr/local/opt/openjdk@17/bin:$PATH"
