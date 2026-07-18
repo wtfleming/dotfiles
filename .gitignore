@@ -1,1 +1,6 @@
 **/.DS_Store
+
+# Claude Code local settings — machine-local, never commit.
+# Also in gitexcludes, but kept here so a fresh clone with default
+# git config is protected too.
+.claude/settings.local.json
