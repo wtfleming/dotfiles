@@ -37,7 +37,6 @@ See `CLAUDE.md` for the full layout and repo conventions. Highlights:
 - `Dotfiles/` — shell, git, tmux, ssh, emacs, and Claude Code configs
 - `bin/` — helper scripts deployed to `~/bin/`
 - `*.org` — machine setup notes
-- `IMPROVEMENTS.md` — backlog of known problems
 
 ## Credits
 
