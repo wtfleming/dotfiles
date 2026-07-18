@@ -1,0 +1,18 @@
+name: lint
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # shellcheck and jq are preinstalled on ubuntu-latest runners
+      - name: shellcheck
+        run: shellcheck sync-dotfiles.sh install-dependencies-macos.sh bin/* Dotfiles/claude/hooks/*.sh Dotfiles/claude/scripts/*.sh
+
+      - name: validate claude settings.json
+        run: jq empty Dotfiles/claude/settings.json
