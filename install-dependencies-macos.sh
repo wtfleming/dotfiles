@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake
 
 # ---------- Build emacs on an ARM Mac from source
@@ -20,7 +22,25 @@ brew install yaml-language-server
 
 brew install awscli
 
-brew install coreutils curl git
+brew install curl git
 
 # Rust
 brew install rust-analyzer
+
+# Used by the Claude Code hooks (Dotfiles/claude/hooks/*.sh)
+brew install terminal-notifier
+
+# Used by the Claude Code status line (Dotfiles/claude/scripts/status-line.sh)
+brew install jq
+
+# Used by bin/wtf-llm-summarize and bin/wtf-llm-mindmap
+brew install ollama
+
+# Tools the global claude CLAUDE.md advertises as available
+brew install imagemagick node gh
+
+# Docker Desktop (provides the docker CLI). Guarded so re-running the script
+# doesn't fail on a machine where Docker.app was installed manually.
+if [ ! -d /Applications/Docker.app ]; then
+    brew install --cask docker
+fi
