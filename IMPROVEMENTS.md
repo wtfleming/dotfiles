@@ -11,44 +11,6 @@ deployed state disagree.
 
 ## High priority (correctness bugs / things that don't work)
 
-### 4. `my-customized.el` is never deployed, but `init.el` hard-loads it
-- **Problem:** `init.el` sets `custom-file` to `~/.emacs.d/my-customized.el` and then
-  calls `(load custom-file)` unconditionally (init.el:58–59). `sync-dotfiles.sh` only
-  `touch`es the **repo** copy (`Dotfiles/emacs.d/my-customized.el`) and never creates
-  the file in `~/.emacs.d/`. On a fresh machine, emacs errors at startup with
-  `file-missing`.
-- **Files:** `sync-dotfiles.sh`, `Dotfiles/emacs.d/init.el` (and `init.org`, its source)
-- **Fix:** Either add `touch ~/.emacs.d/my-customized.el` to the sync script (do NOT
-  `cp` — the deployed file holds machine-local customizations that must not be
-  overwritten), or make the load tolerant: `(load custom-file :no-error)`. Doing both
-  is reasonable. Apply the same change to `init.org` so the two stay in step.
-- **Acceptance:** On a machine with no `~/.emacs.d/my-customized.el`, emacs starts
-  cleanly after `sync-dotfiles.sh`; existing local customizations are never clobbered
-  by re-running sync.
-
-### 5. tmux launcher scripts have no shebang (shellcheck SC2148)
-- **Problem:** `bin/tmux-homn`, `bin/tmux-onecc`, `bin/tmux-tokubai` start directly
-  with a command and have no `#!` line. They also use the
-  `cmd; if [ "$?" -eq 1 ]` antipattern instead of testing the command directly.
-- **Files:** `bin/tmux-homn`, `bin/tmux-onecc`, `bin/tmux-tokubai`
-- **Fix:** Add `#!/bin/bash` (or `#!/bin/sh`). Replace
-  `tmux has-session -t x; if [ "$?" -eq 1 ]` with
-  `if ! tmux has-session -t x 2>/dev/null; then`.
-- **Acceptance:** `shellcheck bin/*` is clean.
-
-### 6. Enable tmux focus-events for Claude Code focus tracking
-- **Problem:** When Claude Code starts inside tmux it prints
-  `tmux focus-events off · add 'set -g focus-events on' to ~/.tmux.conf and reattach
-  for focus tracking`. `Dotfiles/tmux.conf` has no `focus-events` setting, so tmux
-  doesn't forward terminal focus in/out events. This also affects this repo's claude
-  hooks (`needs-permission.sh` / `notify-ready.sh`), which already special-case tmux
-  sessions — focus tracking makes the "is the terminal focused" detection accurate.
-- **Files:** `Dotfiles/tmux.conf`
-- **Fix:** Add `set -g focus-events on` to `Dotfiles/tmux.conf`, then re-run
-  `sync-dotfiles.sh` and reattach (or `tmux source-file ~/.tmux.conf`).
-- **Acceptance:** Starting Claude Code in tmux no longer shows the focus-events
-  warning; `tmux show-options -g focus-events` reports `on`.
-
 ### 7. `install-dependencies-macos.sh` is missing tools the configs depend on
 - **Problem:** Runtime deps used by this repo's own scripts are not installed:
   - `terminal-notifier` — required by `Dotfiles/claude/hooks/{needs-permission,notify-ready}.sh`
@@ -66,19 +28,6 @@ deployed state disagree.
 ---
 
 ## Medium priority (robustness / maintainability)
-
-### 8. Make the sync strategy safer (symlinks or backups)
-- **Problem:** `sync-dotfiles.sh` blindly `cp`s over existing files with no backup,
-  no dry-run, and no diff. Edits made to deployed files don't flow back to the repo
-  (the script's own comment notes this). `cp bin/*` would also break if `bin/` ever
-  gains a subdirectory.
-- **Files:** `sync-dotfiles.sh`
-- **Fix options (pick one, document choice):**
-  - Switch to symlinks (GNU Stow, or a small symlink helper) so the repo is the
-    single source of truth.
-  - Keep `cp` but add: `--dry-run` flag, timestamped backups of overwritten files,
-    and `cp -R`/explicit file lists instead of bare globs.
-- **Acceptance:** Running sync twice is idempotent and never silently destroys local edits.
 
 ### 9. gitconfig / shell email handling for work machines
 - **Problem:** Personal name+email are hardcoded in `Dotfiles/gitconfig`. The sync
@@ -129,7 +78,7 @@ deployed state disagree.
 ### 13. No CI to enforce the repo's own conventions
 - **Problem:** `CLAUDE.md` requires scripts to be shellcheck-clean, but nothing
   enforces it — regressions only surface when someone remembers to run `shellcheck`
-  locally (item 5 shows this already slipped).
+  locally.
 - **Files:** `.github/workflows/` (new)
 - **Fix:** Add a small GitHub Actions workflow that runs
   `shellcheck sync-dotfiles.sh install-dependencies-macos.sh bin/* Dotfiles/claude/hooks/*.sh Dotfiles/claude/scripts/*.sh`
