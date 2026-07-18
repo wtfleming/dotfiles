@@ -8,7 +8,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # shellcheck and jq are preinstalled on ubuntu-latest runners
       - name: shellcheck
