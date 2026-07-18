@@ -1,6 +1,6 @@
-tmux has-session -t tokubai-dev
+#!/bin/bash
 
-if [ "$?" -eq 1 ]; then
+if ! tmux has-session -t tokubai-dev 2>/dev/null; then
     tmux new-session -s tokubai-dev -n docker -d
 
     # C-m sends a Carriage Return sequence

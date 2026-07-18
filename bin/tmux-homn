@@ -1,6 +1,6 @@
-tmux has-session -t homn-dev
+#!/bin/bash
 
-if [ "$?" -eq 1 ]; then
+if ! tmux has-session -t homn-dev 2>/dev/null; then
     tmux new-session -s homn-dev -n docker -d
 
     # C-m sends a Carriage Return sequence
