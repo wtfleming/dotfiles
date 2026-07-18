@@ -15,10 +15,6 @@ https://help.github.com/articles/generating-ssh-keys/
 * Dotfiles
 git clone git@github.com:wtfleming/dotfiles.git
 cp ~/src/dotfiles/Dotfiles/gitconfig ~/.gitconfig
-cp ~/src/dotfiles/Dotfiles/bash_aliases ~/.bash_aliases
-cp ~/src/dotfiles/Dotfiles/bashrc ~/.bashrc
-cp ~/src/dotfiles/Dotfiles/bash_logout ~/.bash_logout
-cp ~/src/dotfiles/Dotfiles/bash_profile ~/.bash_profile
 
 * tmux
 cp ~/src/dotfiles/Dotfiles/tmux.conf ~/.tmux.conf
