@@ -590,6 +590,20 @@ Deja Vu Serif
   (use-package ripgrep
     :ensure t)
 
+  ;; projectile-ripgrep builds the rg command as a single string and runs it
+  ;; through `shell-file-name'. When that shell is zsh, zsh expands globs in the
+  ;; command *before* rg launches. ripgrep.el's default excludes include the
+  ;; unquoted pattern `--glob=!*.osc'; the `*' makes zsh treat the whole word as
+  ;; a filename glob, and since nothing matches, zsh's `nomatch' option aborts
+  ;; the entire command with "no matches found" — rg never runs, every search
+  ;; returns nothing. bash leaves an unmatched glob as a literal string, so
+  ;; running this one command under bash sidesteps the problem. Scoped to just
+  ;; projectile-ripgrep so the interactive Emacs shell stays zsh.
+  (define-advice projectile-ripgrep
+      (:around (orig-fn &rest args) use-bash-shell)
+    (let ((shell-file-name "/bin/bash"))
+      (apply orig-fn args)))
+
   ;; ----------- emacs shell ----------------------------
                                           ; Dont echo passwords
   (add-hook 'comint-output-filter-functions
