@@ -1,6 +1,6 @@
 {
   "includeCoAuthoredBy": false,
-  "disableClaudeAiConnectors": true,
+  "disableClaudeAiConnectors": false,
   "model": "opus",
   "statusLine": {
     "type": "command",
