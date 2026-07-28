@@ -1856,8 +1856,7 @@ Its value is
     :config (setopt lsp-disabled-clients '(tfls)))
 
 
-  ;; ------- M
-  isc -------
+  ;; ------- Misc -------
   (use-package dockerfile-mode
     :ensure t
     :mode
