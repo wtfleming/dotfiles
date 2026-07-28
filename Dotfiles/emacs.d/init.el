@@ -1735,8 +1735,7 @@
   :config (setopt lsp-disabled-clients '(tfls)))
 
 
-;; ------- M
-isc -------
+;; ------- Misc -------
 (use-package dockerfile-mode
   :ensure t
   :mode
@@ -2096,3 +2095,6 @@ Can be used with the `gptel-post-response-functions' hook."
      ("r" "gptel-rewrite" gptel-rewrite)
      ("c" "Find code issues in current buffer" wtf-gptel-find-code-issues-in-current-buffer)])
   (keymap-global-set "C-c g" 'wtf-transient-gptel-prefix)
+
+(add-to-list 'load-path (expand-file-name "wtf-elisp" user-emacs-directory))
+(require 'wtf-github)

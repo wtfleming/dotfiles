@@ -48,8 +48,15 @@ if [ ! -d ~/.emacs.d ]; then
     mkdir ~/.emacs.d
 fi
 
+if [ ! -d ~/.emacs.d/wtf-elisp ]; then
+    mkdir ~/.emacs.d/wtf-elisp
+fi
+
 cp ~/src/dotfiles/Dotfiles/emacs.d/early-init.el ~/.emacs.d/.
 cp ~/src/dotfiles/Dotfiles/emacs.d/init.el ~/.emacs.d/.
+
+# init.el adds this dir to load-path
+cp ~/src/dotfiles/Dotfiles/emacs.d/wtf-elisp/*.el ~/.emacs.d/wtf-elisp/.
 
 # This file will always be empty in git, but might have local changes that
 # we do not want to overwrite
