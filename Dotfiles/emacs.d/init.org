@@ -397,7 +397,51 @@ Deja Vu Serif
     :ensure t
     :pin melpa-stable
     :mode ("README\\.md\\'" . gfm-mode) ;; github flavored markdown
-    :init (setq markdown-command "pandoc")
+    ;; `markdown-preview' builds standalone HTML and splices markdown-css-paths
+    ;; in as <link> tags. github-markdown-css scopes every rule under
+    ;; .markdown-body, so the body preamble/epilogue wrapper is required or the
+    ;; stylesheet does nothing.
+    ;;
+    ;; --syntax-highlighting=none stops pandoc emitting its own <span> tokens,
+    ;; which highlight.js would then refuse to touch. markdown-mode expands "~"
+    ;; for markdown-css-paths, but header content is spliced in as raw HTML, so
+    ;; the <script> src has to be expanded here.
+    ;;
+    ;; Keep every line of the strings below indented at least as far as this
+    ;; block: a line at column 0 makes org-babel-tangle stop de-indenting the
+    ;; whole block, which reformats all of init.el.
+    :init (setq markdown-command "pandoc --syntax-highlighting=none"
+                markdown-css-paths '("~/.emacs.d/github-markdown.css"
+                                     "~/.emacs.d/highlight-github.css")
+                markdown-xhtml-body-preamble "<article class=\"markdown-body\">"
+                markdown-xhtml-body-epilogue "</article>"
+                markdown-xhtml-header-content
+                (concat "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
+    <style>
+      body { margin: 0; background: #ffffff; }
+      @media (prefers-color-scheme: dark) { body { background: #0d1117; } }
+      .markdown-body { max-width: 860px; margin: 0 auto; padding: 2rem 2.5rem; }
+      /* github-markdown-css already frames the block; keep the hljs theme off
+         the padding and background so the two do not fight. */
+      .markdown-body pre code.hljs { padding: 0; background: transparent; }
+    </style>
+    <script src=\""
+                        (expand-file-name "highlight.min.js" user-emacs-directory)
+                        "\"></script>
+    <script src=\""
+                        (expand-file-name "lisp.min.js" user-emacs-directory)
+                        "\"></script>
+    <script>
+      document.addEventListener(\"DOMContentLoaded\", function () {
+        // highlight.js has no Emacs Lisp grammar and registers the generic one
+        // as \"lisp\" with no aliases, so point the elisp fence labels at it.
+        hljs.registerAliases([\"elisp\", \"emacs-lisp\"], { languageName: \"lisp\" });
+        // pandoc puts the language class on <pre>; hljs reads it from <code>.
+        document.querySelectorAll(\"pre[class] > code:not([class])\").forEach(
+          function (c) { c.className = c.parentNode.className; });
+        hljs.highlightAll();
+      });
+    </script>"))
     :bind (:map markdown-mode-map
                 ("C-c C-e" . markdown-do)))
 

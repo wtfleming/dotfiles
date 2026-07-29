@@ -55,6 +55,13 @@ fi
 cp ~/src/dotfiles/Dotfiles/emacs.d/early-init.el ~/.emacs.d/.
 cp ~/src/dotfiles/Dotfiles/emacs.d/init.el ~/.emacs.d/.
 
+# vendored assets for markdown-preview styling and syntax highlighting
+# (see markdown-css-paths and markdown-xhtml-header-content in init.el)
+cp ~/src/dotfiles/Dotfiles/emacs.d/github-markdown.css ~/.emacs.d/.
+cp ~/src/dotfiles/Dotfiles/emacs.d/highlight-github.css ~/.emacs.d/.
+cp ~/src/dotfiles/Dotfiles/emacs.d/highlight.min.js ~/.emacs.d/.
+cp ~/src/dotfiles/Dotfiles/emacs.d/lisp.min.js ~/.emacs.d/.
+
 # init.el adds this dir to load-path
 cp ~/src/dotfiles/Dotfiles/emacs.d/wtf-elisp/*.el ~/.emacs.d/wtf-elisp/.
 
