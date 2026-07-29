@@ -62,11 +62,13 @@
       "Bash(rm -rf $HOME *)",
       "Bash(sudo rm -rf / *)",
       "Bash(sudo rm -rf /* *)",
-      "Read(./aws/**)",
+      "Read(//**/.aws/**)",
+      "Read(//**/.terraform/**)",
       "Read(./config/credentials.json)",
       "Read(./.env)",
       "Read(./.env.*)",
       "Read(./secrets/**)",
+      "Read(~/.aws/**)",
       "Read(~/.ssh/**)"
     ],
     "ask": [
