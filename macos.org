@@ -44,6 +44,301 @@ brew install ast-grep
 /plugin install ast-grep
 
 * emacs
+** Verified build recipe (emacs 30.2, Apple Silicon)
+This is the recipe that actually produced the emacs 30.2 in use. Confirmed against
+~/bin/emacs-30.2/config.log, which shows the working build used a plain configure
+line with *no* CFLAGS / CPPFLAGS / LDFLAGS / TREE_SITTER_* overrides at all.
+
+The older notes further down record a long detour chasing tree-sitter flags that
+turned out to be unnecessary. See "Known gotchas" below for what was really going on.
+
+*** 1. Prerequisites
+#+begin_src sh
+# Build toolchain.
+#   make          -> gmake. macOS ships GNU Make 3.81 (2006); emacs wants newer.
+#   texinfo       -> makeinfo, needed to build the manuals.
+#   gcc/libgccjit -> required by --with-native-compilation.
+brew install gcc libgccjit make gnutls texinfo autoconf pkg-config
+
+# tree-sitter. The version has to match what the emacs version expects:
+#   emacs 30.2 -> tree-sitter 0.25.x
+#   emacs 31+  -> will probably want something newer
+# Prefer the unversioned formula while it is still on the right version: it is
+# not keg-only, so pkg-config finds it with zero extra configuration.
+brew install tree-sitter
+
+# Only if mainline has moved on and you need to pin. This one IS keg-only, which
+# is the source of all the pain in the older notes below -- see gotcha #1.
+# brew install tree-sitter@0.25
+
+# emacs 29 only: jansson, for --with-json. Not needed from emacs 30 on, which
+# ships its own JSON parser.
+# brew install jansson
+
+# Runtime helpers for my config
+brew install ispell    # flyspell needs a spell checker
+brew install pandoc    # markdown-mode uses this to preview markdown
+#+end_src
+
+Verify before going further. This must print a 0.25.x version with no
+PKG_CONFIG_PATH set:
+#+begin_src sh
+pkg-config --modversion tree-sitter
+#+end_src
+If it says "not found in the pkg-config search path", stop and read gotcha #1.
+Do *not* reach for TREE_SITTER_CFLAGS.
+
+Note there is no homebrew package to install for --with-xwidgets: on macOS it uses
+the system WebKit.framework. It has nothing to do with the =wxwidgets= formula.
+
+*** 2. Get the source
+Download a release tag tarball from https://github.com/emacs-mirror/emacs/tags
+(upstream is git://git.savannah.gnu.org/emacs.git if you would rather clone).
+
+Unpack it somewhere you are willing to keep long term -- if you go the "run from
+the build tree" route in step 5, this directory is where the binary lives.
+~/bin/emacs-<version>/ is what I have been doing.
+
+*** 3. Configure
+#+begin_src sh
+./autogen.sh
+
+# ./configure --help lists everything
+./configure \
+    --with-native-compilation \
+    --with-tree-sitter \
+    --without-compress-install \
+    --disable-gc-mark-trace \
+    --with-xwidgets
+#+end_src
+
+That is the whole thing. No environment variable overrides.
+
+What the flags do:
+- --with-native-compilation :: bare (= "yes") natively compiles the preloaded lisp
+  and JIT-compiles the rest on first use. Passing =aot= instead compiles every lisp
+  file in the tree ahead of time: much slower build, no first-use pause later.
+- --with-tree-sitter :: needs pkg-config to find tree-sitter (see step 1).
+- --without-compress-install :: do not gzip the installed .el files.
+- --disable-gc-mark-trace :: about 5% better garbage collection performance. It is
+  enabled by default because disabling it makes it harder for emacs developers to
+  help track down GC-related bugs.
+- --with-xwidgets :: embedded WebKit views, via the system WebKit.framework.
+- emacs 29 also needed --with-json; emacs 30 and newer do not.
+
+configure prints a feature summary at the end. Check these lines before building:
+#+begin_src
+  Does Emacs use -ltree-sitter?                           yes
+  Does Emacs support Xwidgets?                            yes
+  Does Emacs have native lisp compiler?                   yes
+#+end_src
+If tree-sitter says "no" here, fix it now -- the build will otherwise succeed
+without it and you will not notice until much later.
+
+*** 4. Build
+#+begin_src sh
+gmake -j"$(sysctl -n hw.ncpu)"
+#+end_src
+
+Use sysctl, not =nproc=. nproc is GNU coreutils and is not present on a stock macOS.
+
+Verify: =src/emacs -Q= starts.
+
+*** 5. Install -- pick one
+a) App bundle:
+#+begin_src sh
+gmake install                      # builds nextstep/Emacs.app
+cp -R nextstep/Emacs.app /Applications/
+#+end_src
+
+b) Run out of the build tree -- keep the source dir and put its src/ on PATH:
+#+begin_src sh
+# in .zshrc
+path+=("$HOME/bin/emacs-30.2/src")
+#+end_src
+
+(b) is what ~/bin is currently set up for. Whichever you pick, remember to bump the
+version in the path when you upgrade, and delete the old source trees -- they are
+several hundred MB each and they pile up.
+
+*** 6. Verify the result
+#+begin_src sh
+emacs -Q --batch --eval '(progn
+  (princ (format "treesit:     %s\n" (treesit-available-p)))
+  (princ (format "native-comp: %s\n" (native-comp-available-p)))
+  (princ (format "xwidgets:    %s\n" (fboundp (quote make-xwidget))))
+  (princ (format "features:    %s\n" system-configuration-features)))'
+#+end_src
+
+All three predicates should be =t=. Expected feature list for this recipe:
+#+begin_src
+ACL GNUTLS LCMS2 LIBXML2 MODULES NATIVE_COMP NOTIFY KQUEUE NS PDUMPER PNG
+SQLITE3 THREADS TOOLKIT_SCROLL_BARS TREE_SITTER WEBP XWIDGETS ZLIB
+#+end_src
+
+system-configuration-features only reports what was *compiled in*; the predicates
+report what actually works at runtime. Check both -- see gotcha #2.
+
+First launch with my config also needs:
+#+begin_src
+M-x all-the-icons-install-fonts
+M-x nerd-icons-install-fonts
+#+end_src
+
+*** Known gotchas
+**** 1. keg-only tree-sitter (this is what the older notes were fighting)
+tree-sitter@0.25 is a versioned formula, so homebrew does not symlink it into
+/opt/homebrew and its headers are not on the default include path. configure's
+tree-sitter probe then compiles a test program calling ts_parser_new with no
+declaration in scope; clang 16+ treats an implicit function declaration as a hard
+error; configure concludes tree-sitter is missing. The clang change is the
+messenger, not the bug -- the real problem is the missing -I.
+
+The fix is to let pkg-config find the keg, not to silence the compiler:
+#+begin_src sh
+export PKG_CONFIG_PATH="/opt/homebrew/opt/tree-sitter@0.25/lib/pkgconfig"
+
+pkg-config --cflags --libs tree-sitter
+#   -I/opt/homebrew/Cellar/tree-sitter@0.25/0.25.10/include
+#   -L/opt/homebrew/Cellar/tree-sitter@0.25/0.25.10/lib -ltree-sitter
+#+end_src
+Then run the plain ./configure from step 3, unchanged.
+
+Do *not* set TREE_SITTER_CFLAGS. Per ./configure --help it *overrides* pkg-config
+rather than adding to it, so setting it to "-Wno-error=..." deletes the -I path
+pkg-config would have supplied. That is exactly the trap in the older notes below:
+each override knocked out another flag, which then had to be restored by hand as
+CPPFLAGS, then LDFLAGS, then TREE_SITTER_LIBS. PKG_CONFIG_PATH avoids the whole
+chain and does not hardcode Cellar paths that go stale on the next upgrade.
+
+**** 2. brew upgrade gcc can break native compilation
+emacs links against a specific libgccjit. After upgrading gcc, NATIVE_COMP will
+still appear in system-configuration-features (it was compiled in) while
+(native-comp-available-p) returns nil and you get libgccjit errors at runtime.
+The fix is to rebuild emacs. This is why step 6 checks the predicates and not
+just the feature list.
+
+**** 3. Dead ends -- do not re-investigate these
+- Building with homebrew gcc instead of clang: no. The macOS build is a Cocoa/NS
+  build and is partly Objective-C, which homebrew's gcc does not support.
+- CC=clang-16: no such binary. Apple's clang is not installed under versioned names.
+- Downgrading to clang 15: not feasible with Apple's toolchain, and unnecessary --
+  see gotcha #1 for the actual cause.
+- brew install wxwidgets: unrelated to emacs. "xwidgets" is an emacs feature name;
+  the string "wxwidgets" does not appear anywhere in emacs configure.ac.
+
+** Building emacs 31 (speculative -- not yet released)
+Emacs 31 is not out yet. As of <2026-07-30> the latest pretest is 31.0.91
+(announced 2026-07-23; the first pretest 31.0.90 was 2026-06-05) and no release
+date has been announced. Everything below was checked against the =emacs-31=
+branch of the emacs-mirror repo and must be re-verified against the real release.
+
+*** Short answer on tree-sitter: use the unversioned formula, do NOT pin
+#+begin_src sh
+brew install tree-sitter        # 0.26.11 as of this writing
+#+end_src
+
+This is the *opposite* of the emacs 30.2 advice above, and the reason is worth
+knowing because it also explains why 30.2 needed a pin in the first place.
+
+- emacs 30.2 :: src/treesit.c calls =ts_language_version=. tree-sitter 0.26
+  *removed* that function. So emacs 30.2 cannot build against homebrew's current
+  mainline tree-sitter, which is why it needs tree-sitter@0.25 -- and since that
+  formula is keg-only, that pin is the root of the whole PKG_CONFIG_PATH mess in
+  gotcha #1.
+- emacs 31 :: adds a compatibility shim, =treesit_language_abi_version=, which
+  uses the new =ts_language_abi_version= when built against 0.25+ and falls back
+  to the old function otherwise. So it builds against 0.26 fine.
+
+Consequence: on emacs 31 you can use the plain =tree-sitter= formula, which is
+*not* keg-only, so pkg-config finds it with no PKG_CONFIG_PATH and gotcha #1
+simply does not apply. Do not carry the @0.25 pin forward out of habit.
+
+*** The configure floor is not the version you actually want
+The emacs-31 branch configure.ac still requires =tree-sitter >= 0.20.2= --
+unchanged from emacs 30.2.
+
+(If you see a claim that emacs 31 raised the minimum to 0.20.10, it is wrong.
+Verified: emacs-31 configure.ac:4061 and emacs 30.2 configure.ac:4074 both say
+0.20.2.)
+
+But that floor is not the useful number, because ABI 15 support is decided at
+*compile time* by the headers you build against:
+
+#+begin_src c
+  /* src/treesit.c, emacs-31 branch */
+  #if TREE_SITTER_LANGUAGE_VERSION >= 15
+    return ts_language_abi_version (ts_lang);
+  #else
+    return ts_language_version (ts_lang);
+  #endif
+#+end_src
+
+tree-sitter 0.25's api.h is where that constant became 15
+(=TREE_SITTER_LANGUAGE_VERSION 15=, =TREE_SITTER_MIN_COMPATIBLE_LANGUAGE_VERSION 13=).
+So:
+
+- built against tree-sitter < 0.25 :: configure passes, build succeeds, and you
+  silently get *no* ABI 15 support
+- built against 0.25 or newer :: ABI 15 support
+
+The real requirement is therefore tree-sitter >= 0.25, which is stricter than what
+configure enforces, and nothing will warn you. It matters because grammars built
+by a current tree-sitter CLI are ABI 15, and an emacs built against an older
+library rejects them at load time with a version-mismatch error.
+
+*** Build recipe delta from the 30.2 recipe above
+Steps 2-6 are expected to be unchanged. Differences:
+
+1. Prerequisites: =brew install tree-sitter= (unversioned, unpinned). Skip
+   gotcha #1 -- verify with =pkg-config --modversion tree-sitter= and expect it to
+   work with no PKG_CONFIG_PATH set.
+2. Configure: the same flag set is expected to work, but ~--with-xwidgets~ and
+   ~--disable-gc-mark-trace~ are unverified for 31. Diff =./configure --help=
+   against the release before assuming.
+3. Verify: additionally check the ABI, which is the new thing worth checking.
+   #+begin_src elisp
+     (treesit-library-abi-version)     ; expect 15 or higher
+     (treesit-library-abi-version t)   ; oldest compatible, expect 13
+   #+end_src
+   The optional MIN-COMPATIBLE argument is new in 31; in 30.2 the function takes
+   no arguments. The function itself is *not* new -- it is already in 30.2.
+
+*** What is actually new in 31 for tree-sitter
+From etc/NEWS on the emacs-31 branch:
+- =treesit-enabled-modes= :: new user option. Set to t to enable all available
+  tree-sitter modes, or to a list to pick. Drives =major-mode-remap-alist= from
+  the =treesit-major-mode-remap-alist= that mode packages prepare.
+- =treesit-auto-install-grammar= :: new user option, defaults to ='ask=. Installs
+  a missing grammar when a tree-sitter mode is turned on. Note it is a user
+  option, not a function, and grammar installation itself is not new --
+  =treesit-install-language-grammar= has existed since emacs 29. What is new is
+  doing it automatically on demand.
+- =treesit-extra-load-path= :: now a customizable user option; its first entry is
+  the default install directory for the auto-install above.
+- =treesit-language-source-alist= :: now supports keywords, e.g.
+  =(json "https://github.com/tree-sitter/tree-sitter-json" :commit "4d770d3")=
+- treesit-x.el :: new file providing =define-treesit-generic-mode= and a set of
+  simple generic modes such as =gitattributes-generic-ts-mode=.
+- Query predicates =:equal=, =:match= and =:pred= are deprecated, since newer
+  tree-sitter libraries want predicates to end in =?=. =:equal= becomes =:eq?=.
+
+Not a feature, despite appearances: =treesit--build-grammar= is a private
+internal helper (note the double dash), not something to configure or rely on.
+
+*** Re-check when 31.1 actually ships
+- [ ] configure.ac tree-sitter minimum -- still 0.20.2?
+- [ ] Does the mainline homebrew tree-sitter still build cleanly against it?
+- [ ] Does the 30.2 flag set still configure without complaint?
+- [ ] =(treesit-library-abi-version)= on the built emacs -- 15 or higher?
+- [ ] =(native-comp-available-p)= -- does libgccjit need anything new?
+- [ ] Is tree-sitter@0.25 still needed for anything, or can it be uninstalled?
+
+Reference:
+- https://github.com/emacs-mirror/emacs/tree/emacs-31
+- https://lists.gnu.org/archive/html/emacs-devel/2026-07/msg00270.html (31.0.91)
+
+** Original build notes (kept for reference)
 Build emacs on an ARM Mac from source
 
 If emacs build complains about tree-sitter and implicit-function-declaration
