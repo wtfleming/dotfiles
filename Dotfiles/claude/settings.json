@@ -7,6 +7,7 @@
     "command": "~/.claude/scripts/status-line.sh"
   },
   "permissions": {
+    "defaultMode": "auto",
     "allow": [
       "Bash(basename *)",
       "Bash(cargo check:*)",
