@@ -586,6 +586,71 @@ $ aws configure
 
 
 * mise
+** Current recipe
+Unlike the emacs section, this one is *not* verified against a working setup --
+mise is not installed on this machine as of <2026-07-30>. Checked against upstream
+docs only.
+
+*** Install and activate
+#+begin_src sh
+brew install mise
+#+end_src
+
+The activation line goes in =Dotfiles/zshrc= in this repo, *not* in ~/.zshrc:
+
+#+begin_src sh
+eval "$(mise activate zsh)"
+#+end_src
+
+then re-run ./sync-dotfiles.sh and open a new shell.
+
+This is the important correction to the old notes below, which say
+=echo 'eval "$(mise activate zsh)"' >> ~/.zshrc=. sync-dotfiles.sh:38 does
+=cp ~/src/dotfiles/Dotfiles/zshrc ~/.zshrc=, so anything appended to ~/.zshrc
+directly is silently wiped the next time the dotfiles are synced.
+
+*** Install tools -- mind the -g
+#+begin_src sh
+# GLOBAL: writes ~/.config/mise/config.toml. This is what you want for machine setup.
+mise use -g erlang@28.4.1
+mise use -g elixir@1.19.5
+
+# or track latest
+mise use -g erlang@latest
+mise use -g elixir@latest
+
+# PER-PROJECT: writes ./mise.toml in the current directory
+cd ~/src/someproject && mise use elixir@1.19.5
+#+end_src
+
+=mise use= without =-g= writes a mise.toml *in the current directory*. The old
+notes below omit the flag, so following them from the home directory leaves a
+stray ~/mise.toml and no global default.
+
+*** Verify
+#+begin_src sh
+mise doctor        # run after activation, not before -- it checks the shell hookup
+mise ls            # installed tools, and which config file each came from
+which erl elixir
+#+end_src
+
+*** Erlang-specific environment
+Already set in Dotfiles/zshrc, and it applies to mise too despite the comment
+there saying asdf:
+- =KERL_BUILD_DOCS="yes"= :: builds the Erlang docs so iex =h= works on Erlang
+  modules, e.g. =h :unicode.bom_to_encoding=. mise builds Erlang with kerl, same
+  as the asdf plugin did, so the variable is read either way.
+- =ERL_AFLAGS= :: shell history in iex and erl.
+
+For observer/debugger you need wxWidgets:
+#+begin_src sh
+brew install wxwidgets
+# iex> :observer.start()
+#+end_src
+This is the *real* use for the wxwidgets formula, and probably where the emacs
+notes picked it up from -- it does nothing for emacs, see emacs gotcha #3.
+
+** Original notes (kept for reference)
 #+begin_src
 brew install mise
 
@@ -604,6 +669,86 @@ source ~/.zshrc
   
 #+end_src
 * asdf
+** Current recipe (asdf 0.16+, the Go rewrite)
+Also not verified on this machine: asdf is not installed, and the activation line
+in Dotfiles/zshrc:52 is commented out. From upstream docs.
+
+asdf was rewritten in Go in v0.16.0 (2025-01-30). The notes below pin
+=--branch v0.14.0=, the old shell implementation, and every shell-integration
+instruction in them is obsolete. If you have moved to mise (see that section)
+you probably do not need asdf at all -- this is here for projects that require it.
+
+*** What changed in 0.16
+| old (0.14, shell)         | new (0.16+, Go binary)     |
+|---------------------------+----------------------------|
+| . "$HOME/.asdf/asdf.sh"   | removed; put shims on PATH |
+| asdf global <tool> <ver>  | asdf set --home <tool> <ver> |
+| asdf local <tool> <ver>   | asdf set <tool> <ver>      |
+| asdf plugin-add           | asdf plugin add            |
+| git clone a tagged branch | brew install asdf          |
+
+All hyphenated subcommands lost their hyphen, not just plugin-add.
+
+*** Install
+#+begin_src sh
+brew install asdf
+#+end_src
+
+The old =brew install coreutils curl git= line was for the shell implementation.
+The Go binary does not need coreutils.
+
+*** Shell setup
+In =Dotfiles/zshrc= -- not ~/.zshrc, which sync-dotfiles.sh overwrites -- replace
+the commented-out asdf.sh line with:
+
+#+begin_src sh
+export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
+#+end_src
+
+ASDF_DATA_DIR defaults to $HOME/.asdf, so setting it explicitly is optional; the
+shims directory on PATH is the part that matters. Confirm with =asdf info=.
+
+The completions advice below references =$ASDF_DIR/completions=. ASDF_DIR belonged
+to the shell implementation. Use =asdf completion zsh= instead, but check
+=asdf completion --help= against the installed version before wiring it into zshrc
+-- I have not verified the exact invocation.
+
+The old notes also warn that compinit must come *below* the asdf sourcing. In
+Dotfiles/zshrc compinit is at line 44 and the asdf line at 52, i.e. already the
+opposite order, so that advice was being violated anyway. Moot under 0.16, which
+has no asdf.sh to source, but relevant if you ever go back to 0.14.
+
+*** Erlang/Elixir under 0.16
+The Erlang/Elixir subsection below still uses 0.14 syntax. Translated, with
+versions bumped to match the mise section:
+#+begin_src sh
+asdf plugin add erlang
+asdf plugin add elixir
+
+asdf list all erlang
+asdf list all elixir
+
+asdf install erlang 28.4.1
+asdf set --home erlang 28.4.1
+asdf install elixir 1.19.5-otp-28
+asdf set --home elixir 1.19.5-otp-28
+
+mix local.rebar --if-missing --force
+mix local.hex --if-missing --force
+mix archive.install hex phx_new
+#+end_src
+
+Elixir builds from the asdf plugin are suffixed with the OTP major they were
+compiled against, so the =-otp-NN= has to track the erlang version. Run
+=asdf list all elixir= for the suffix that actually exists -- I have not confirmed
+1.19.5-otp-28 is published.
+
+The wxwidgets note in the old subsection is correct and still applies: Erlang's
+observer and debugger are wxWidgets apps.
+
+Reference: https://asdf-vm.com/guide/upgrading-to-v0-16.html
+
+** Original notes (kept for reference -- asdf 0.14, superseded)
 See https://asdf-vm.com/guide/getting-started.html
 
 brew install coreutils curl git
