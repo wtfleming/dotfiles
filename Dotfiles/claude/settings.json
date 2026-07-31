@@ -29,7 +29,6 @@
       "Bash(dirname *)",
       "Bash(du *)",
       "Bash(file *)",
-      "Bash(find:*)",
       "Bash(git diff:*)",
       "Bash(grep:*)",
       "Bash(head:*)",
@@ -45,7 +44,6 @@
       "Bash(readlink *)",
       "Bash(realpath *)",
       "Bash(rg:*)",
-      "Bash(sed:*)",
       "Bash(stat *)",
       "Bash(tree *)",
       "Bash(tail:*)"
