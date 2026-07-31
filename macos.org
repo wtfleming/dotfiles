@@ -498,10 +498,11 @@ machine api.anthropic.com login apikey password <api key goes here>
   # Terraform language server
   brew install hashicorp/tap/terraform-ls
 
-  # For erlang installed with asdf
+  # For erlang installed with mise or asdf
   brew install autoconf
-  # For asdf to build Erlang with wxWidgets (start observer or debugger!)
-  brew install wxmac
+  # For Erlang built with wxWidgets (start observer or debugger!)
+  # Formerly the wxmac formula, which is now just an old name for this one.
+  brew install wxwidgets
 
   # For exporting LaTex from emacs
   brew install mactex
@@ -524,17 +525,88 @@ git config --global core.excludesfile ~/.gitexcludes
 Disable mission control since I use those keyboard shortcuts in emacs
 
 
-Go to System Preferences > Keyboard > Keyboard Shortcuts > Mission Control and change the settings for "Move left a space" and "Move right a space" or disable them completely.
+Go to System Settings > Keyboard > Keyboard Shortcuts > Mission Control and change the settings for "Move left a space" and "Move right a space" or disable them completely.
 http://apple.stackexchange.com/questions/18043/how-can-i-make-ctrlright-left-arrow-stop-changing-desktops-in-lion
 
 If a japanese keyboard is installed, need to disable Control-space since I use that in emacs a bunch
-Go to System Preferences > Keyboard > Keyboard Shortcuts > Input Sources
+Go to System Settings > Keyboard > Keyboard Shortcuts > Input Sources
   Disable the 2 select an input source shortcuts
 
-Go to System Preferences > Keyboard > Dictation > Shortcut
+Go to System Settings > Keyboard > Dictation > Shortcut
   And change it to not be pressing control twice
 
 * Java
+** Current recipe
+The old notes below are broken: they install =openjdk@21= but every path that
+follows points at the *unversioned* =openjdk= keg. Those caveats came from
+=brew info openjdk=, not =brew info openjdk@21=, and the two are different
+prefixes. Following them symlinks a different JDK than the one you installed,
+or nothing at all.
+
+Symptom, and the state of this machine as of <2026-07-30>: java is not working.
+=/Library/Java/JavaVirtualMachines/= is empty, =/usr/libexec/java_home= reports
+"Unable to locate a Java Runtime", and =java -version= fails -- even though
+openjdk plus @23, @24, @25 and @26 are all installed. They are keg-only, so
+installing them registers nothing with macOS on its own.
+
+*** Install
+Pick the version deliberately and use it consistently. Substitute for NN below
+(the machine currently has 23, 24, 25, 26; there is no 21 despite what the old
+notes say):
+
+#+begin_src sh
+brew install openjdk@NN
+
+# Everything after this must use the SAME @NN. Get the prefix from brew rather
+# than typing it, so the two cannot drift apart:
+JDK="$(brew --prefix openjdk@NN)"
+
+# Register it with macOS so /usr/libexec/java_home and the system wrappers see it
+sudo ln -sfn "$JDK/libexec/openjdk.jdk" /Library/Java/JavaVirtualMachines/openjdk-NN.jdk
+#+end_src
+
+Naming the symlink openjdk-NN.jdk rather than openjdk.jdk lets several JDKs be
+registered at once and selected with =/usr/libexec/java_home -v NN=.
+
+openjdk is keg-only -- homebrew does not symlink it into /opt/homebrew, because
+macOS ships similar software and installing in parallel causes trouble. That is
+why the registration step above is required and not optional.
+
+*** PATH
+The old notes say to =echo ... >> ~/.zshrc=. Do not: sync-dotfiles.sh:38 copies
+Dotfiles/zshrc over ~/.zshrc, so that gets wiped on the next sync. Put it in
+=Dotfiles/zshrc= and re-sync.
+
+Note Dotfiles/zshrc:49 currently reads
+=export PATH="/usr/local/opt/openjdk/bin:$PATH"=. /usr/local is the *Intel*
+homebrew prefix; on Apple Silicon it is /opt/homebrew, and /usr/local/opt/openjdk
+does not exist here. The line is a harmless no-op rather than the cause of the
+breakage above, but it has never done anything on this machine. Replace it with
+the versioned path when you decide which JDK should be the default:
+
+#+begin_src sh
+export PATH="/opt/homebrew/opt/openjdk@NN/bin:$PATH"
+#+end_src
+
+Or leave PATH alone and select per-shell with =export JAVA_HOME="$(/usr/libexec/java_home -v NN)"=.
+
+For compilers to find the headers:
+#+begin_src sh
+export CPPFLAGS="-I/opt/homebrew/opt/openjdk@NN/include"
+#+end_src
+
+*** Verify
+#+begin_src sh
+java -version                    # should print the version, not an error
+/usr/libexec/java_home -V        # should list the JDK you registered
+ls /Library/Java/JavaVirtualMachines/
+#+end_src
+
+An empty /Library/Java/JavaVirtualMachines means the =ln -sfn= step above did not
+happen. That is the current state, and it is what "Unable to locate a Java
+Runtime" is telling you -- the JDK is installed, macOS just cannot see it.
+
+** Original notes (kept for reference -- paths do not match the install)
 
 $ brew install openjdk@21
 For the system Java wrappers to find this JDK, symlink it with
@@ -575,7 +647,7 @@ $ lein version
 
 
 * Docker
-https://hub.docker.com/editions/community/docker-ce-desktop-mac
+https://docs.docker.com/desktop/mac/install/
 
 $ docker login
 Username is not the default email displayed, look it up by logging into https://hub.docker.com
