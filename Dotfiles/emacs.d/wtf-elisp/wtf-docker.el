@@ -15,8 +15,9 @@
 ;; `C-c d' opens a transient dispatch with listings for containers,
 ;; images, builds, volumes, and compose projects.  Each listing is a
 ;; `vtable'.  RET inspects the item at point, w copies its identifier,
-;; S sorts by the column at point, g refetches, and q closes the
-;; listing.  Containers also have s (start), o (stop), r (restart),
+;; S sorts by the column at point, g refetches, q closes the listing,
+;; and ? lists every key available in the buffer.
+;; Containers also have s (start), o (stop), r (restart),
 ;; D (remove), l (follow logs), and e (open a shell); images and
 ;; volumes have D (remove); compose projects have u (up), d (down),
 ;; r (restart), and l (follow logs).
@@ -379,103 +380,136 @@ Return non-nil when a matching row was found."
         (forward-line 1))
       nil)))
 
-(defun wtf-docker--list-actions (kind)
-  "Return the vtable :actions list for KIND."
+(defun wtf-docker--actions (kind)
+  "Return KIND's row actions as a list of (KEY DESCRIPTION FUNCTION).
+One table drives both the vtable bindings (`wtf-docker--list-actions')
+and the ? help (`wtf-docker--help'), so the two cannot drift apart."
   (append
+   (pcase kind
+     ('container
+      `(("RET" "inspect the container"
+         ,(lambda (item)
+            (wtf-docker--inspect (map-elt item "Names")
+                                 "inspect" (map-elt item "ID"))))
+        ("s" "start the container"
+         ,(lambda (item)
+            (wtf-docker--run-then-refresh
+             'container (format "Starting %s" (map-elt item "Names"))
+             "start" (map-elt item "ID"))))
+        ("o" "stop the container"
+         ,(lambda (item)
+            (wtf-docker--run-then-refresh
+             'container (format "Stopping %s" (map-elt item "Names"))
+             "stop" (map-elt item "ID"))))
+        ("r" "restart the container"
+         ,(lambda (item)
+            (wtf-docker--run-then-refresh
+             'container (format "Restarting %s" (map-elt item "Names"))
+             "restart" (map-elt item "ID"))))
+        ("D" "remove the container (asks first)"
+         ,(lambda (item)
+            (let ((name (map-elt item "Names")))
+              (when (y-or-n-p (format "Remove container %s? " name))
+                (wtf-docker--run-then-refresh
+                 'container (format "Removing %s" name)
+                 "rm" (map-elt item "ID"))))))
+        ("l" "follow the container's logs"
+         ,(lambda (item)
+            (wtf-docker--follow (map-elt item "Names")
+                                "logs" "-f"
+                                "--tail" (number-to-string wtf-docker-log-tail)
+                                (map-elt item "ID"))))
+        ("e" "open a shell in the container"
+         ,(lambda (item)
+            (wtf-docker--shell (map-elt item "Names") (map-elt item "ID"))))))
+     ('image
+      `(("RET" "inspect the image"
+         ,(lambda (item)
+            (wtf-docker--inspect (wtf-docker--image-name item)
+                                 "inspect" (map-elt item "ID"))))
+        ;; Remove by repository:tag, not ID: removing a multiply-tagged
+        ;; image by ID fails, whereas removing a tag just untags it.
+        ("D" "remove the image (asks first)"
+         ,(lambda (item)
+            (let ((name (wtf-docker--image-name item)))
+              (when (y-or-n-p (format "Remove image %s? " name))
+                (wtf-docker--run-then-refresh
+                 'image (format "Removing %s" name)
+                 "rmi" name)))))))
+     ('build
+      `(("RET" "inspect the build record"
+         ,(lambda (item)
+            (let ((ref (wtf-docker--short-ref (map-elt item "ref"))))
+              (wtf-docker--inspect ref "buildx" "history" "inspect" ref))))
+        ("l" "show the build's logs"
+         ,(lambda (item)
+            (let ((ref (wtf-docker--short-ref (map-elt item "ref"))))
+              (wtf-docker--follow ref "buildx" "history" "logs" ref))))))
+     ('volume
+      `(("RET" "inspect the volume"
+         ,(lambda (item)
+            (wtf-docker--inspect (map-elt item "Name")
+                                 "volume" "inspect" (map-elt item "Name"))))
+        ("D" "remove the volume (asks first)"
+         ,(lambda (item)
+            (let ((name (map-elt item "Name")))
+              (when (y-or-n-p (format "Remove volume %s? " name))
+                (wtf-docker--run-then-refresh
+                 'volume (format "Removing %s" name)
+                 "volume" "rm" name)))))))
+     ('compose
+      `(("RET" "open the project's compose file"
+         ,(lambda (item)
+            (find-file (car (split-string (map-elt item "ConfigFiles") ",")))))
+        ("u" "bring the project up (detached)"
+         ,(lambda (item)
+            (wtf-docker--compose-run (map-elt item "Name")
+                                     (wtf-docker--compose-file-args item)
+                                     "up" "-d")))
+        ("d" "bring the project down (asks first)"
+         ,(lambda (item)
+            (let ((name (map-elt item "Name")))
+              (when (y-or-n-p (format "Bring project %s down? " name))
+                (wtf-docker--compose-run name
+                                         (wtf-docker--compose-file-args item)
+                                         "down")))))
+        ("r" "restart the project"
+         ,(lambda (item)
+            (wtf-docker--compose-run (map-elt item "Name")
+                                     (wtf-docker--compose-file-args item)
+                                     "restart")))
+        ("l" "follow the project's logs"
+         ,(lambda (item)
+            (apply #'wtf-docker--follow (map-elt item "Name")
+                   (append '("compose") (wtf-docker--compose-file-args item)
+                           (list "logs" "-f" "--tail"
+                                 (number-to-string wtf-docker-log-tail)))))))))
    ;; `vtable-map' binds g to `vtable-revert-command', which only
    ;; redraws the cached objects.  Its keymap is a text property on
    ;; every row, so it shadows `special-mode's g; override it here.
-   (list "g" (lambda (_item) (wtf-docker--show-items kind))
-         "w" (lambda (item)
-               (let ((id (map-elt item (wtf-docker--kind-get kind :id-key))))
-                 (kill-new id)
-                 (message "Copied %s" id))))
-   (pcase kind
-     ('container
-      (list
-       "RET" (lambda (item)
-               (wtf-docker--inspect (map-elt item "Names")
-                                    "inspect" (map-elt item "ID")))
-       "s" (lambda (item)
-             (wtf-docker--run-then-refresh
-              'container (format "Starting %s" (map-elt item "Names"))
-              "start" (map-elt item "ID")))
-       "o" (lambda (item)
-             (wtf-docker--run-then-refresh
-              'container (format "Stopping %s" (map-elt item "Names"))
-              "stop" (map-elt item "ID")))
-       "r" (lambda (item)
-             (wtf-docker--run-then-refresh
-              'container (format "Restarting %s" (map-elt item "Names"))
-              "restart" (map-elt item "ID")))
-       "D" (lambda (item)
-             (let ((name (map-elt item "Names")))
-               (when (y-or-n-p (format "Remove container %s? " name))
-                 (wtf-docker--run-then-refresh
-                  'container (format "Removing %s" name)
-                  "rm" (map-elt item "ID")))))
-       "l" (lambda (item)
-             (wtf-docker--follow (map-elt item "Names")
-                                 "logs" "-f"
-                                 "--tail" (number-to-string wtf-docker-log-tail)
-                                 (map-elt item "ID")))
-       "e" (lambda (item)
-             (wtf-docker--shell (map-elt item "Names") (map-elt item "ID")))))
-     ('image
-      (list
-       "RET" (lambda (item)
-               (wtf-docker--inspect (wtf-docker--image-name item)
-                                    "inspect" (map-elt item "ID")))
-       ;; Remove by repository:tag, not ID: removing a multiply-tagged
-       ;; image by ID fails, whereas removing a tag just untags it.
-       "D" (lambda (item)
-             (let ((name (wtf-docker--image-name item)))
-               (when (y-or-n-p (format "Remove image %s? " name))
-                 (wtf-docker--run-then-refresh
-                  'image (format "Removing %s" name)
-                  "rmi" name))))))
-     ('build
-      (list
-       "RET" (lambda (item)
-               (let ((ref (wtf-docker--short-ref (map-elt item "ref"))))
-                 (wtf-docker--inspect ref "buildx" "history" "inspect" ref)))
-       "l" (lambda (item)
-             (let ((ref (wtf-docker--short-ref (map-elt item "ref"))))
-               (wtf-docker--follow ref "buildx" "history" "logs" ref)))))
-     ('volume
-      (list
-       "RET" (lambda (item)
-               (wtf-docker--inspect (map-elt item "Name")
-                                    "volume" "inspect" (map-elt item "Name")))
-       "D" (lambda (item)
-             (let ((name (map-elt item "Name")))
-               (when (y-or-n-p (format "Remove volume %s? " name))
-                 (wtf-docker--run-then-refresh
-                  'volume (format "Removing %s" name)
-                  "volume" "rm" name))))))
-     ('compose
-      (list
-       "RET" (lambda (item)
-               (find-file (car (split-string (map-elt item "ConfigFiles") ","))))
-       "u" (lambda (item)
-             (wtf-docker--compose-run (map-elt item "Name")
-                                      (wtf-docker--compose-file-args item)
-                                      "up" "-d"))
-       "d" (lambda (item)
-             (let ((name (map-elt item "Name")))
-               (when (y-or-n-p (format "Bring project %s down? " name))
-                 (wtf-docker--compose-run name
-                                          (wtf-docker--compose-file-args item)
-                                          "down"))))
-       "r" (lambda (item)
-             (wtf-docker--compose-run (map-elt item "Name")
-                                      (wtf-docker--compose-file-args item)
-                                      "restart"))
-       "l" (lambda (item)
-             (apply #'wtf-docker--follow (map-elt item "Name")
-                    (append '("compose") (wtf-docker--compose-file-args item)
-                            (list "logs" "-f" "--tail"
-                                  (number-to-string wtf-docker-log-tail))))))))))
+   `(("g" "refetch the listing"
+      ,(lambda (_item) (wtf-docker--show-items kind)))
+     ("w" "copy the item's identifier"
+      ,(lambda (item)
+         (let ((id (map-elt item (wtf-docker--kind-get kind :id-key))))
+           (kill-new id)
+           (message "Copied %s" id)))))))
+
+(defun wtf-docker--list-actions (kind)
+  "Return the vtable :actions list for KIND."
+  (mapcan (lambda (action) (list (nth 0 action) (nth 2 action)))
+          (wtf-docker--actions kind)))
+
+(defun wtf-docker--help (kind)
+  "List the keys available in KIND's listing buffer."
+  (with-help-window (help-buffer)
+    (princ (format "Keys in the %s listing:\n\n"
+                   (wtf-docker--kind-get kind :label)))
+    (dolist (action (wtf-docker--actions kind))
+      (princ (format "  %-4s %s\n" (nth 0 action) (nth 1 action))))
+    (princ "  S    sort by the column at point\n")
+    (princ "  q    kill the listing\n")
+    (princ "  ?    show this help\n")))
 
 (defun wtf-docker--render-items (kind items)
   "Render ITEMS of KIND into its listing buffer."
@@ -495,8 +529,14 @@ Return non-nil when a matching row was found."
     (with-current-buffer buf
       (special-mode)
       ;; Compose rather than mutate: `special-mode-map' is shared.
+      ;; ? shadows `describe-mode' from `special-mode-map', which knows
+      ;; nothing about the vtable row actions.
       (use-local-map (make-composed-keymap
-                      (define-keymap "q" #'wtf-docker-list-quit)
+                      (define-keymap
+                        "q" #'wtf-docker-list-quit
+                        "?" (lambda ()
+                              (interactive)
+                              (wtf-docker--help kind)))
                       special-mode-map))
       (setq-local revert-buffer-function
                   (lambda (&rest _) (wtf-docker--show-items kind)))
