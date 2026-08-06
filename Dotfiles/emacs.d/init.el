@@ -1124,7 +1124,10 @@
   :ensure t
   :custom
   (completion-styles '(orderless basic))
-  (completion-category-overrides '((file (styles basic partial-completion)))))
+  ;; orderless first so file names match substrings anywhere ("de" finds both
+  ;; deploy.yaml and render-deploy.yaml). partial-completion is the fallback
+  ;; for expanding multi-component paths like o/s/de, which orderless can't do.
+  (completion-category-overrides '((file (styles orderless partial-completion)))))
 
 ;;   ;;; hydra
 ;;   ;; https://github.com/abo-abo/hydra
