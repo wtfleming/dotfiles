@@ -2330,4 +2330,5 @@ Would run the explain preset and explain what the println call is
 #+begin_src elisp
   (add-to-list 'load-path (expand-file-name "wtf-elisp" user-emacs-directory))
   (require 'wtf-github)
+  (require 'wtf-docker)
 #+end_src
