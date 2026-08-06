@@ -438,7 +438,10 @@
   "<f1>"          "help"
   "<f2>"          "2-column"
   "C-c"           "mode-and-user"
+  "C-c ,"         "semantic/senator"
   "C-c @"         "outline-minor-mode"
+  "C-c O /"       "hide/show-regexp"
+  "C-c n"         "org-roam"
   "C-h 4"         "help-other-win"
   "C-h"           "help"
   "C-x 4"         "other-window"
@@ -475,6 +478,17 @@
     "C-c \""      "org-plot"
     "C-c C-v"     "org-babel"
     "C-c C-x"     "org-extra-commands"))
+
+;; `org-mode-map' inherits from `outline-mode-map', which binds the whole
+;; of `outline-mode-prefix-map' directly under `C-c'.  That crowds `C-c'
+;; in org buffers, so move the prefix map to `C-c O' instead and give it
+;; a name rather than the default "+prefix".  Editing `outline-mode-map'
+;; is the durable fix: detaching the parent doesn't stick, because
+;; `define-derived-mode' re-attaches it every time `org-mode' runs.
+(with-eval-after-load 'outline
+  (keymap-unset outline-mode-map "C-c" t)
+  (which-key-add-keymap-based-replacements outline-mode-map
+    "C-c O" `("outline" . ,outline-mode-prefix-map)))
 
 ;; ------- Dired -------
 (require 'dired )
