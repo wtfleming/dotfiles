@@ -1,5 +1,8 @@
 {
   "includeCoAuthoredBy": false,
+  "attribution": {
+    "sessionUrl": false
+  },
   "disableClaudeAiConnectors": false,
   "model": "opus",
   "statusLine": {
