@@ -63,21 +63,6 @@
 (if (fboundp 'tool-bar-mode) (tool-bar-mode -1))
 (if (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
 
-
-;; Load files from "~/.emacs.d/custom"
-(add-to-list 'load-path (expand-file-name "custom" user-emacs-directory))
-;; (load "00-functions.el")
-;; (load "01-common-setup.el")
-;; (load "02-org-mode.el")
-;; (load "03-macos.el")
-;; (load "04-ibuffer.el")
-;; (load "05-helm.el")
-;; (load "06-hydra.el")
-;; (load "07-doom-modeline.el")
-;; (load "08-programming.el")
-;; (load "09-gptel.el")
-;; (load "10-transient.el")
-
 ;; If this is a work computer want to load any
 ;; work specific configuration that I don't want
 ;; stored in git
@@ -223,13 +208,6 @@
                            (when (> duration 1.0)
                                (message "%.06f seconds" duration))))))
 
-
-
-;; Helm appears to be using ffap internally which can cause
-;; network requests if you M-x while the cursor is on a URL
-;; causing emacs to lock up for up to a few seconds, disable this.
-;; See https://github.com/emacs-helm/helm/issues/648
-(setopt ffap-machine-p-known 'reject)
 
 ;; Note that for all-the-icons to work you must manually install them by calling
 ;; M-x all-the-icons-install-fonts
@@ -1022,46 +1000,6 @@
 (keymap-set ibuffer-mode-map "<up>" 'wtf--ibuffer-previous-line)
 (keymap-set ibuffer-mode-map "<down>" 'wtf--ibuffer-next-line)
 
-;;; helm
-(use-package helm
-  :ensure t
-  :pin melpa-stable
-  :bind (
-         ;;("C-x b" . helm-mini)
-         ;;("M-x" . helm-M-x)
-         ("M-y" . helm-show-kill-ring)
-         ;;("C-x C-f" . helm-find-files)
-         )
-  :config
-  (progn
-    (setq helm-split-window-in-side-p           t ; open helm buffer inside current window, not occupy whole other window
-          helm-move-to-line-cycle-in-source     t ; move to end or beginning of source when reaching top or bottom of source.
-          helm-ff-search-library-in-sexp        t ; search for library in `require' and `declare-function' sexp.
-          helm-scroll-amount                    8 ; scroll 8 lines other window using M-<next>/M-<prior>
-          helm-ff-file-name-history-use-recentf t
-          helm-M-x-fuzzy-match                  t
-          helm-buffers-fuzzy-matching           t
-          helm-recentf-fuzzy-match              t)
-    (helm-mode 1)))
-
-(add-to-list 'package-pinned-packages '(helm-core . "melpa-stable") t)
-
-;;(global-set-key (kbd "C-c h o") 'helm-occur)
-;;(global-set-key (kbd "C-c h x") 'helm-register)
-;;(global-set-key (kbd "C-c h g") 'helm-google-suggest)
-
-
-;; The default "C-x c" is quite close to "C-x C-c", which quits Emacs.
-;; Changed to "C-c h". Note: We must set "C-c h" globally, because we
-;; cannot change `helm-command-prefix-key' once `helm-config' is loaded.
-(global-set-key (kbd "C-c h") 'helm-command-prefix)
-(global-unset-key (kbd "C-x c"))
-
-
-;; Allow arrow keys to once again change directories in helm-find-files
-;; See https://github.com/emacs-helm/helm/wiki/FAQ#arrow-keys-behavior-have-changed
-(customize-set-variable 'helm-ff-lynx-style-map t)
-
 (use-package vertico
   :ensure t
   :custom
@@ -1154,30 +1092,6 @@
 
 ;; (keymap-set dired-mode-map "." 'hydra-dired/body)
 
-
-
-;;   ;; (defhydra hydra-projectile (:color teal
-;;   ;; 			    :columns 4)
-;;   ;;   "Projectile"
-;;   ;;   ("f"   helm-projectile-find-file           "Find File")
-  ;;   ("F"   helm-projectile-find-file-dwim      "Find File dwim")
-  ;;   ("g"   helm-projectile-grep                "grep")
-  ;;   ("r"   helm-projectile-recentf             "Recent Files")
-
-  ;;   ("z"   projectile-cache-current-file       "Cache Current File")
-  ;;   ("d"   helm-projectile-find-dir            "Find Directory")
-  ;;   ("b"   helm-projectile-switch-to-buffer    "Switch to Buffer")
-  ;;   ("c"   projectile-invalidate-cache         "Clear Cache")
-
-  ;;   ("X"   projectile-cleanup-known-projects   "Cleanup Known Projects")
-  ;;   ("o"   projectile-multi-occur              "Multi Occur")
-  ;;   ("s"   helm-projectile-switch-project      "Switch Project")
-  ;;   ("k"   projectile-kill-buffers             "Kill Buffers")
-
-  ;;   ("q"   nil "Cancel" :color blue))
-
-  ;; (define-key projectile-mode-map (kbd "C-c p") 'hydra-projectile/body)
-  ;; (define-key projectile-mode-map (kbd "s-p") 'hydra-projectile/body)
 
 
   ;; (defhydra hydra-flycheck(
