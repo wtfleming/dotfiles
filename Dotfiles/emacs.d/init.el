@@ -2142,3 +2142,4 @@ Can be used with the `gptel-post-response-functions' hook."
 
 (add-to-list 'load-path (expand-file-name "wtf-elisp" user-emacs-directory))
 (require 'wtf-github)
+(require 'wtf-docker)
