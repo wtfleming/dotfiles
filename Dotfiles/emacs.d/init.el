@@ -377,6 +377,108 @@
   :ensure t
   :pin melpa-stable)
 
+;; ------- alert -------
+;; A library for sending notifications, other packages can use it
+;; to display messages outside of emacs
+;; https://github.com/jwiegley/alert
+;;
+;; Shells out to terminal-notifier, install it with
+;; brew install terminal-notifier
+;; Try it out with
+;; (alert "hello" :title "emacs" :severity 'high)
+;;
+;; alert's built in notifier style passes only a title, icon, and message
+;; to terminal-notifier, so notifications arrive silently and are easy to
+;; miss entirely. This style adds a sound, and clicking the notification
+;; brings emacs to the front.
+;;
+;; How long a notification stays on screen is a macOS setting rather than
+;; something emacs controls. To have them wait until dismissed instead of
+;; vanishing after a few seconds, set
+;; System Settings > Notifications > terminal-notifier > Alerts
+(defun wtf-alert-notifier-notify (info)
+  "Notify with terminal-notifier, adding a sound so INFO is noticeable."
+  (if alert-notifier-command
+      (call-process alert-notifier-command nil nil nil
+                    "-title" (alert-encode-string (plist-get info :title))
+                    "-message" (alert-encode-string (plist-get info :message))
+                    "-appIcon" (or (plist-get info :icon)
+                                   alert-notifier-default-icon)
+                    ;; the other choices live in /System/Library/Sounds
+                    "-sound" "Ping"
+                    ;; bring emacs to the front when the alert is clicked
+                    "-activate" "org.gnu.Emacs")
+    (alert-message-notify info)))
+
+;; Whether a macOS notification ever appears on screen, as opposed to going
+;; straight to notification center where it is easy to never notice, is up
+;; to macOS. A posframe is drawn by emacs itself, so nothing outside of
+;; emacs can suppress it. Pop one up in the middle of the frame as well.
+;;
+;; alert takes the popup back down after `alert-fade-time' seconds, or as
+;; soon as the next command runs in the buffer the alert came from,
+;; whichever happens first. If we have been idle longer than
+;; `alert-persist-idle-time' it stays up until we are back.
+;;
+;; That second rule is a problem for an alert sent from the buffer we are
+;; working in. `alert-remove-on-command' is added to `post-command-hook'
+;; while the alert is being sent, so it runs the moment the current command
+;; finishes and the popup is gone before it was ever on screen. Refuse to
+;; take the popup down until it has had a chance to be seen.
+(defvar wtf-alert-posframe-buffer " *wtf-alert*"
+  "Name of the buffer used to show alerts in a posframe.")
+
+(defvar wtf-alert-posframe-shown-at nil
+  "When the alert posframe was last shown, as a float time.")
+
+(defvar wtf-alert-minimum-display-time 3
+  "Seconds the alert posframe stays up no matter what.")
+
+(defun wtf-alert-popup-notify (info)
+  "Notify macOS about INFO, and pop up a posframe in the selected frame."
+  (wtf-alert-notifier-notify info)
+  (when (posframe-workable-p)
+    (setq wtf-alert-posframe-shown-at (float-time))
+    (posframe-show wtf-alert-posframe-buffer
+                   :string (format "\n%s\n\n%s\n"
+                                   (propertize (or (plist-get info :title)
+                                                   "Alert")
+                                               'face 'bold)
+                                   (plist-get info :message))
+                   :poshandler #'posframe-poshandler-frame-center
+                   ;; posframe collapses border-width and
+                   ;; internal-border-width into one setting, so pad the
+                   ;; sides with fringes instead
+                   :border-width 6
+                   :border-color (alist-get (plist-get info :severity)
+                                            alert-severity-colors)
+                   :left-fringe 12
+                   :right-fringe 12
+                   :min-width 50)))
+
+(defun wtf-alert-popup-remove (info)
+  "Take down the posframe used to show INFO, once it has been up long enough."
+  (let ((showing-for (- (float-time) (or wtf-alert-posframe-shown-at 0))))
+    (if (< showing-for wtf-alert-minimum-display-time)
+        (run-with-timer (- wtf-alert-minimum-display-time showing-for) nil
+                        #'wtf-alert-popup-remove info)
+      (posframe-hide wtf-alert-posframe-buffer))))
+
+(use-package alert
+  :ensure t
+  :config
+  (alert-define-style 'wtf-notifier
+                      :title "Notify using terminal-notifier with a sound"
+                      :notifier #'wtf-alert-notifier-notify)
+  (alert-define-style 'wtf-popup
+                      :title "Notify with terminal-notifier and a posframe"
+                      :notifier #'wtf-alert-popup-notify
+                      :remover #'wtf-alert-popup-remove)
+  :custom
+  ;; the default is 5 seconds, which is easy to miss
+  (alert-fade-time 10)
+  (alert-default-style (if (system-type-is-darwin) 'wtf-popup 'message)))
+
 ;; ;; -------yasnippet -------
 ;; (use-package yasnippet
 ;;   :ensure t
