@@ -1,6 +1,6 @@
 ---
 name: code-review
-description: Review code changes and remove AI-generated patterns like excessive comments, gratuitous defensive checks, type escape hatches, etc.
+description: Strip AI-written slop from a diff — excessive comments, gratuitous defensive checks, type escape hatches. Edits files in place. Use only when explicitly asked to clean up AI slop; for reviewing or assessing changes, use the change-reviewer agent instead.
 ---
 
 # Code Review Skill
@@ -9,7 +9,11 @@ Review code changes and remove AI-generated patterns that don't match human-writ
 
 ## Usage
 
-When asked to review a branch or diff, check for and remove AI code slop.
+When explicitly asked to clean up AI slop in a branch or diff, remove it.
+
+This skill **edits code**. A request to review, assess, or check a branch is not
+a request to change it — that is the `change-reviewer` agent, which reports and
+touches nothing. If it is unclear which was meant, ask before editing.
 
 ## What to Look For
 
