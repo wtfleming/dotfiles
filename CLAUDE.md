@@ -31,6 +31,16 @@ home directory. Key consequences to keep in mind:
   the same set on every push:
   `shellcheck sync-dotfiles.sh install-dependencies-macos.sh bin/* Dotfiles/claude/hooks/*.sh Dotfiles/claude/scripts/*.sh`
 - Prefer POSIX-compatible test syntax (`[ "$x" = "$y" ]`, not `==`) in `sh` scripts.
+- **New agents, commands and skills under `Dotfiles/claude/` take a `wtf-` prefix**,
+  in the file name *and* the registered name. These share a namespace with whatever
+  the current project defines in its own `.claude/`, and a collision resolves
+  silently to one of them rather than erroring. Where the registered name lives
+  differs by type:
+  - agent — the `name:` frontmatter, which is what `subagent_type` must match
+  - command — the file name; there is no `name:` field
+  - skill — both the directory name and `name:`
+- `reference/`, `hooks/` and `scripts/` are reached by explicit path from
+  `CLAUDE.md` and `settings.json`, so they share no namespace and are not prefixed.
 - Don't hardcode secrets or work-specific identity. Personal identity lives in
   `Dotfiles/gitconfig`; work machines should override via an un-synced include.
 - This is a **public** repo — don't commit credentials, tokens, internal hostnames,
