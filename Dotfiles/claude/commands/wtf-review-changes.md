@@ -83,6 +83,23 @@ Spawn one `wtf-refuter` subagent per finding, in parallel. It already knows to
 argue the code is correct, to re-run a command the finding claims to have
 observed, and to default to `refuted` when it cannot decide.
 
+How many that is depends on what the earlier passes found, so it cannot be
+announced with the lens count. **Say the number once you know it**, before you
+spawn them, and say what it brings the run's total to. The count that scales
+with the diff is the one worth disclosing, and it is the one the user has not
+already agreed to.
+
+Under `--fix`, refute every finding you will offer to act on — a wrong finding
+becomes a wrong edit, and that is the whole reason this gate exists.
+
+Under `--deep` without `--fix`, refute the Critical and Warning findings only.
+Nothing is going to be edited, Suggestions are the most numerous tier, and one
+agent apiece to verify a naming nit is the bulk of the spend for the least of
+the value. Carry the Suggestions through to the report marked **(unverified)**
+and say how many went unchecked. Never drop them silently to save the spawn —
+an unverified finding the reader knows is unverified is honest; one that
+disappears is not.
+
 **Send it the finding verbatim and nothing else.** Not why you think it might be
 wrong, not where you would look first, not that you already checked something.
 This is the same rule as the reviewer dispatch above and it exists for the same
