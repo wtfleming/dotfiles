@@ -73,7 +73,7 @@ run it too — a formatting diff is a Warning, not a Critical.
 
 ## 4. Review the diff
 
-Work through `~/.claude/my-agents/code-review-checklist.md` in its priority
+Work through `~/.claude/reference/code-review-checklist.md` in its priority
 order: correctness, security, maintainability, performance, testing. Read it
 before you start.
 

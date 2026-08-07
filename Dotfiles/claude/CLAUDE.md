@@ -14,7 +14,7 @@ docker
 
 ## Before You Start
 
-Read the relevant reference docs in `~/.claude/my-agents/`:
+Read the relevant reference docs in `~/.claude/reference/`:
 
 | File                       | When to Read                             |
 |----------------------------|------------------------------------------|

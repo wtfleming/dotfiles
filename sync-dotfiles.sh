@@ -86,8 +86,8 @@ fi
 if [ ! -d ~/.claude/scripts ]; then
     mkdir ~/.claude/scripts
 fi
-if [ ! -d ~/.claude/my-agents ]; then
-    mkdir ~/.claude/my-agents
+if [ ! -d ~/.claude/reference ]; then
+    mkdir ~/.claude/reference
 fi
 if [ ! -d ~/.claude/agents ]; then
     mkdir ~/.claude/agents
@@ -101,7 +101,7 @@ cp ~/src/dotfiles/Dotfiles/claude/hooks/* ~/.claude/hooks/.
 cp -r ~/src/dotfiles/Dotfiles/claude/skills/* ~/.claude/skills/.
 cp ~/src/dotfiles/Dotfiles/claude/scripts/* ~/.claude/scripts/.
 cp ~/src/dotfiles/Dotfiles/claude/CLAUDE.md ~/.claude/CLAUDE.md
-cp ~/src/dotfiles/Dotfiles/claude/my-agents/* ~/.claude/my-agents/.
+cp -r ~/src/dotfiles/Dotfiles/claude/reference/* ~/.claude/reference/.
 cp -r ~/src/dotfiles/Dotfiles/claude/agents/* ~/.claude/agents/.
 cp -r ~/src/dotfiles/Dotfiles/claude/commands/* ~/.claude/commands/.
 
