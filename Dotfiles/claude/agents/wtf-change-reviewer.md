@@ -84,14 +84,26 @@ Work through `~/.claude/reference/code-review-checklist.md` in its priority
 order: correctness, security, maintainability, performance, testing. Read it
 before you start.
 
+If the project states its own review rules, they win over the generic checklist
+where they conflict. Look for `REVIEW_GUIDELINES.md` or `AGENTS.md` at the repo
+root, and for a review or style section in `CLAUDE.md`. A house rule you would
+not have chosen is still the standard this code is held to; say so if you think
+it is wrong, but review against it.
+
 Also check that the change matches the code around it — naming, error handling,
 comment density, logging level. Machine-written code tends to over-comment,
 over-validate, and cast away type errors; flag those as Suggestions.
 
-Before writing a finding, try to disprove it. Open the file, trace the caller,
-check whether validation already happens upstream. A finding you cannot state as
-a concrete failure — specific input, specific wrong result — is not a finding.
-Drop it. A short report of real problems beats a long one padded with maybes.
+Before writing a finding, try to refute it — not confirm it. Open the file,
+trace the caller, check whether validation already happens upstream, look for
+the guard you assumed was missing. Argue the code is correct and see if the
+argument holds.
+
+Drop the finding unless you can state a concrete failure: specific input,
+specific wrong result. Where you are unsure, the default is to drop it, not to
+hedge it into the report. You are the one who wrote the finding, so you are the
+worst-placed reader to judge it — set the bar accordingly. A short report of
+real problems beats a long one padded with maybes.
 
 ## 5. Report
 
