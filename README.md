@@ -40,28 +40,26 @@ repo, not just this one.
 ```
 /wtf-review-changes                  # uncommitted, else the branch, else HEAD
 /wtf-review-changes HEAD~3           # any ref, branch or path
-/wtf-review-changes --fix            # then triage each finding interactively
-/wtf-review-changes main --deep      # add a parallel pass per dimension
-/wtf-review-changes --deep --fix     # both
+/wtf-review-changes main --deep      # add a verified parallel pass per dimension
 ```
 
-With no flags it settles the scope, runs the project's test suite and linter,
+Without `--deep` it settles the scope, runs the project's test suite and linter,
 reviews the diff against the checklist, and prints findings as Critical, Warning
-or Suggestion — then stops. The reviewer has no `Edit` or `Write`, so a plain
-review cannot change anything.
+or Suggestion — then stops. The reviewer has no `Edit` or `Write`, so a review
+cannot change anything.
 
 `--deep` adds five `wtf-lens` agents in parallel, one per dimension: correctness,
 security, tests, maintainability, performance. Their reports are merged and
-deduplicated with the reviewer's. There is deliberately no linter lens — the
-reviewer already runs the real one.
+deduplicated with the reviewer's, then verified before printing: one
+`wtf-refuter` per Critical and Warning finding, each told to argue the finding
+is *wrong* and to answer refuted when unsure. Suggestions arrive marked
+`(unverified)` rather than spending an agent apiece on nits. There is
+deliberately no linter lens — the reviewer already runs the real one.
 
-`--fix` walks the surviving findings one at a time and offers to apply each. It
-edits only what a finding names, and it never commits.
-
-Either flag runs verification first: one `wtf-refuter` per finding, each told to
-argue the finding is *wrong* and to answer refuted when unsure. Under `--deep`
-alone only Critical and Warning are verified; Suggestions arrive marked
-`(unverified)` rather than being dropped.
+There is no fix mode. The report lands in the conversation, so to act on it,
+say which findings — "fix the first two" — and the fixes happen in the main
+session, which knows what you were trying to do. The command never edits and
+never commits.
 
 ### The agents
 
