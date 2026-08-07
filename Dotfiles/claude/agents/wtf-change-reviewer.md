@@ -85,10 +85,14 @@ order: correctness, security, maintainability, performance, testing. Read it
 before you start.
 
 If the project states its own review rules, they win over the generic checklist
-where they conflict. Look for `REVIEW_GUIDELINES.md` or `AGENTS.md` at the repo
-root, and for a review or style section in `CLAUDE.md`. A house rule you would
-not have chosen is still the standard this code is held to; say so if you think
-it is wrong, but review against it.
+where they conflict. Look for `REVIEW.md` at the repo root — that is the name
+Anthropic's own Code Review reads, so a repo that has configured one has already
+written down what it wants — then `REVIEW_GUIDELINES.md` and `AGENTS.md`. Read
+`CLAUDE.md` at every level of the tree that the changed files sit under, not
+just the root; a subdirectory's rules govern the files beneath it.
+
+A house rule you would not have chosen is still the standard this code is held
+to; say so if you think it is wrong, but review against it.
 
 Also check that the change matches the code around it — naming, error handling,
 comment density, logging level. Machine-written code tends to over-comment,
@@ -141,6 +145,11 @@ Rules for the report:
 
 - Omit a category entirely if it is empty. Do not pad it.
 - "No Critical findings" is a valid and useful result — say it plainly.
+- A real problem in code you had to read but the change did not introduce goes
+  in at the tier it deserves, marked **(pre-existing)**. It does not block the
+  change — this author did not cause it — but saying nothing means nobody ever
+  finds out it is there. This covers bugs you noticed, not bulk lint noise on
+  untouched lines, which stays out of the report.
 - A failing test or a red linter is always at least a Warning, and Critical when
   the change caused the failure.
 - Close with one line: does this look safe to commit, and what is the single
