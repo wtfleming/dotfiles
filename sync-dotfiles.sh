@@ -89,6 +89,12 @@ fi
 if [ ! -d ~/.claude/my-agents ]; then
     mkdir ~/.claude/my-agents
 fi
+if [ ! -d ~/.claude/agents ]; then
+    mkdir ~/.claude/agents
+fi
+if [ ! -d ~/.claude/commands ]; then
+    mkdir ~/.claude/commands
+fi
 
 cp ~/src/dotfiles/Dotfiles/claude/settings.json ~/.claude/settings.json
 cp ~/src/dotfiles/Dotfiles/claude/hooks/* ~/.claude/hooks/.
@@ -96,6 +102,8 @@ cp -r ~/src/dotfiles/Dotfiles/claude/skills/* ~/.claude/skills/.
 cp ~/src/dotfiles/Dotfiles/claude/scripts/* ~/.claude/scripts/.
 cp ~/src/dotfiles/Dotfiles/claude/CLAUDE.md ~/.claude/CLAUDE.md
 cp ~/src/dotfiles/Dotfiles/claude/my-agents/* ~/.claude/my-agents/.
+cp ~/src/dotfiles/Dotfiles/claude/agents/* ~/.claude/agents/.
+cp ~/src/dotfiles/Dotfiles/claude/commands/* ~/.claude/commands/.
 
 
 echo "Successfully synced dotfiles."
