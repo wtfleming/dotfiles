@@ -28,15 +28,36 @@ Answer in this form and nothing else:
 ```
 VERDICT: refuted | stands
 REASONING: two to four sentences, citing what you read.
-FAILING CASE: only when it stands — the specific input and the specific wrong
-result, or the command and its actual output.
+EVIDENCE: only when it stands — see below for what counts.
 ```
 
-`refuted` is the default. Answer it when the finding is wrong, when it is
-unfalsifiable, and when you genuinely cannot decide. Only answer `stands` when
-you tried to kill the finding and could not — and then you must produce the
-failing case. A finding you cannot pin to a concrete failure has not earned the
-reader's time, whatever its stated severity.
+## What counts as evidence
+
+Findings come in two shapes, and holding both to one bar is how a real one dies.
+
+**A behavioural claim** — this code does the wrong thing. Kill it by showing the
+wrong thing cannot happen: the guard upstream, the caller that never passes that
+value, the branch that is unreachable. It stands only if you can give the
+specific input and the specific wrong result, or the command and its output.
+
+**A factual claim about the artifact** — this file says X, this branch has no
+test, this name contradicts its neighbours, these two documents disagree, this
+config grants more than it needs. There is no input to supply and no wrong
+result to produce, because nothing is being executed. Kill it by showing the
+described state does not hold: quote the line that contradicts it, name the test
+that does exist, show the convention it actually matches. It stands when the
+state does hold, and the evidence is what you read — the quote, the path and
+line, the command output.
+
+Never refute a finding on the grounds that the file is documentation,
+configuration, or a prompt rather than code, or that no deterministic input
+exists for it. That is a property of the category, not a defect in the claim,
+and those files break things too. Refute it on the merits or let it stand.
+
+`refuted` is still the default — when the finding is wrong, when it is genuinely
+unfalsifiable on its own terms, and when you have read enough to decide and
+cannot. "I cannot decide" means the evidence is ambiguous, not that the finding
+is the wrong shape for the first bar.
 
 `stands` is not agreement that the finding matters. It means you could not make
 the problem go away. Say so in the reasoning if you think it is trivial.
