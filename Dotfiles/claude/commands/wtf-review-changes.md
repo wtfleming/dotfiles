@@ -39,15 +39,23 @@ negotiating with it.
 The reviewer judged its own findings, which is the position it is worst placed
 to judge from. Before offering to act on any of them, check them independently.
 
-Spawn one subagent per finding, in parallel, each told to **refute** it: read
-the file, trace the callers, and argue the code is correct. Ask for a verdict of
-`refuted` or `stands`, with the concrete failing input if it stands. Tell each
-one to answer `refuted` when it cannot decide — a finding that survives an
-honest attempt to kill it is worth your time, and one that does not is worth
-less than the minute spent reading it.
+Spawn one `wtf-refuter` subagent per finding, in parallel. It already knows to
+argue the code is correct, to re-run a command the finding claims to have
+observed, and to default to `refuted` when it cannot decide.
+
+**Send it the finding verbatim and nothing else.** Not why you think it might be
+wrong, not where you would look first, not that you already checked something.
+This is the same rule as the reviewer dispatch above and it exists for the same
+reason: if you wrote the code, a hint about where the refutation lies is you
+arguing your own case through an agent spawned to judge it. A refuter you
+steered has told you nothing.
 
 Report how many findings were dropped and why. Do not walk the user through a
 finding that was refuted.
+
+If everything is refuted, say so plainly and treat it as a result worth doubting
+rather than a clean bill of health — that is also what a gate that never bites
+looks like.
 
 ### Then walk through what survives
 
