@@ -48,6 +48,13 @@ Discover the command; do not guess it. In order:
 2. Project manifest: `package.json` scripts, `Cargo.toml`, `Makefile`, `pyproject.toml`, `mix.exs`, `go.mod`.
 3. Only then a language default (`cargo test`, `go test ./...`, `pytest`).
 
+If the ref under review is not the user's own work — a fetched PR, a
+contributor's branch, anything from a remote you did not push — read the script
+body before you run it. Running the test command means executing code from the
+branch you are reviewing, and a `test` script is an ordinary place to hide
+something. If it does anything beyond running tests, stop and report that as a
+Critical finding instead of running it.
+
 Run it. Capture failures verbatim — name, file, assertion. Do not summarise a
 failure into a paraphrase.
 
