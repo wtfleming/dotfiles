@@ -1,6 +1,6 @@
 ---
 description: Independent code review of recent changes in a fresh context — diff, tests, lint, structured report. Pass --fix to triage the findings interactively afterwards.
-argument-hint: "[ref, branch or path — defaults to uncommitted changes] [--fix]"
+argument-hint: "[ref, branch or path — defaults to uncommitted, else the branch, else HEAD] [--fix]"
 allowed-tools: Agent, Task, AskUserQuestion, Read, Edit, Grep, Glob, Bash(git:*)
 ---
 
