@@ -1,5 +1,5 @@
 ---
-name: change-reviewer
+name: wtf-change-reviewer
 description: Independent review of recent git changes in a fresh context. Runs the diff, the test suite and the linter, then reports findings as Critical / Warning / Suggestion. Use when asked to review changes, review a branch, or check work before committing or opening a PR. Read-only — it reports, it does not fix.
 tools: Read, Grep, Glob, Bash
 ---

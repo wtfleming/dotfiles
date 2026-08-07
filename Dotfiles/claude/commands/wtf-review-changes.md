@@ -3,9 +3,9 @@ description: Independent code review of recent changes in a fresh context — di
 argument-hint: "[ref, branch or path — defaults to uncommitted changes, else the branch]"
 ---
 
-Launch the `change-reviewer` subagent to review: $ARGUMENTS
+Launch the `wtf-change-reviewer` subagent to review: $ARGUMENTS
 
-Dispatch it with the Agent tool, `subagent_type: "change-reviewer"`, and wait for
+Dispatch it with the Agent tool, `subagent_type: "wtf-change-reviewer"`, and wait for
 it (`run_in_background: false`) — the review is the deliverable of this turn.
 
 The whole point is that the reviewer starts cold. So the prompt you send it
