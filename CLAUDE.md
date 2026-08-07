@@ -17,6 +17,12 @@ home directory. Key consequences to keep in mind:
   flow back — change the file under `Dotfiles/` and re-run the sync.
 - **If you add a new config file under `Dotfiles/`, you must also add a copy step to
   `sync-dotfiles.sh`**, or it will never be deployed.
+- **Deleting or renaming a file here does not remove the deployed copy** — `cp` only
+  ever adds. Delete it from `$HOME` by hand as well, in the same change. Skipping that
+  leaves a file nothing in the repo accounts for, which later reads as untracked local
+  cruft and gets "restored", silently reversing the deletion. For a rename it is worse:
+  both names stay live, and for `agents/`, `commands/` and `skills/` both stay
+  registered.
 - `Dotfiles/emacs.d/my-customized.el` is intended to hold machine-local emacs changes;
   sync only `touch`es it so it stays empty in git.
 - `Dotfiles/emacs.d/init.org` is the org source that generates `init.el`. It is
