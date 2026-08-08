@@ -1,11 +1,24 @@
 #!/bin/bash
 
-# Simple status line - shows model and context usage only
+# Simple status line - shows model, git repo/branch and context usage
 
 data=$(cat)
 
 # Get model name
 model=$(echo "$data" | jq -r '.model.display_name // .model.id // "unknown"')
+
+# Get git repo and branch, if we're in a repo at all. One rev-parse gives both:
+# line 1 is the repo root, line 2 the branch (literal "HEAD" when detached).
+cwd=$(echo "$data" | jq -r '.workspace.current_dir // .cwd // "."')
+git_info=""
+if git_out=$(git -C "$cwd" rev-parse --show-toplevel --abbrev-ref HEAD 2>/dev/null); then
+    repo=$(basename "$(echo "$git_out" | sed -n 1p)")
+    branch=$(echo "$git_out" | sed -n 2p)
+    if [ "$branch" = "HEAD" ]; then
+        branch=$(git -C "$cwd" rev-parse --short HEAD 2>/dev/null || echo "detached")
+    fi
+    git_info="${repo}:${branch} | "
+fi
 
 # Get context info
 max_ctx=$(echo "$data" | jq -r '.context_window.context_window_size // 200000')
@@ -50,5 +63,5 @@ else
     context_info="${bar} ${used_k}k/${max_k}k (${pct}% used)"
 fi
 
-# Output: Model | Context
-printf '%b\n' "${model} | ${context_info}"
+# Output: Model | repo:branch | Context
+printf '%b\n' "${model} | ${git_info}${context_info}"
