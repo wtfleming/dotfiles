@@ -20,6 +20,9 @@ no symlinks. The repo is the source of truth: edits made to the deployed
 copies in `$HOME` do not flow back. Change the file under `Dotfiles/` and
 re-run the sync.
 
+It prints each command as it runs, so you can see exactly what landed where.
+Pass `-q` / `--quiet` to silence that and print only errors.
+
 If you add a new config file under `Dotfiles/`, also add a copy step to
 `sync-dotfiles.sh`, or it will never be deployed.
 
