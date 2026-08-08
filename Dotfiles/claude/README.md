@@ -35,6 +35,26 @@ say which findings — "fix the first two" — and the fixes happen in the main
 session, which knows what you were trying to do. The command never edits and
 never commits.
 
+### Design review, earlier in the cycle
+
+`/wtf-design-review` asks a different question at a different time: *is this
+change the right shape?* Run it mid-work, while changing course is still cheap —
+`/wtf-review-changes` is the pre-PR gate, and design feedback that arrives at
+the gate arrives after the sunk cost.
+
+```
+/wtf-design-review                   # uncommitted, else the branch, else HEAD
+/wtf-design-review src/sync         # any ref, branch or path
+```
+
+It dispatches a single `wtf-design-reviewer` agent, cold, with the scope and
+nothing else — no summary of intent, no rejected alternatives — so it reviews
+the shape rather than the rationale. Output is **Suggestion-only** (design
+advice never blocks), and every finding must name a concrete, smaller
+alternative and what it buys; "consider making this more modular" is banned by
+the agent's own rules. It does not run tests or the linter — mid-work they are
+allowed to be red — and it does not hunt bugs.
+
 ### The agents
 
 | Agent | Role |
@@ -42,8 +62,9 @@ never commits.
 | `wtf-change-reviewer` | scope, tests, lint, the full review |
 | `wtf-lens` | one dimension only; dispatched six times by `--deep` |
 | `wtf-refuter` | tries to kill a single finding |
+| `wtf-design-reviewer` | shape of the change, Suggestion-only; dispatched by `/wtf-design-review` |
 
-All three are read-only — no `Edit`, no `Write`, and no ability to spawn an agent
+All four are read-only — no `Edit`, no `Write`, and no ability to spawn an agent
 that has them. Edits only ever happen in the main session, one approval at a time.
 
 ### Tuning it
