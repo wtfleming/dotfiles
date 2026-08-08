@@ -30,7 +30,7 @@ git diff --staged            # staged
 If the working tree is clean, review the branch instead:
 
 ```
-git merge-base HEAD master || git merge-base HEAD main
+git merge-base HEAD main || git merge-base HEAD master
 git diff <merge-base>...HEAD
 ```
 

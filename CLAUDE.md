@@ -35,7 +35,7 @@ home directory. Key consequences to keep in mind:
 
 ## Workflow
 
-- Work on a branch and open a PR to `master`; don't commit to `master` directly.
+- Work on a branch and open a PR to `main`; don't commit to `main` directly.
   Automated code review runs only on PRs, so a direct push gets no review. (The
   `lint` workflow runs on every push either way.)
 
