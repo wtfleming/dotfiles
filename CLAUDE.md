@@ -31,6 +31,11 @@ home directory. Key consequences to keep in mind:
   global memory file, not documentation for this repo.
 - `old-scripts/` is archived and deliberately **not** deployed.
 
+## Workflow
+
+- Work on a branch and open a PR to `master`; don't commit to `master` directly.
+  Automated code review runs on PRs, and direct pushes skip it.
+
 ## Conventions
 
 - Shell scripts target bash/zsh on macOS. Keep them `shellcheck`-clean — CI runs
