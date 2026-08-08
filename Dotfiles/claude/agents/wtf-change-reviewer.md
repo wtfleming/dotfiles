@@ -95,8 +95,11 @@ A house rule you would not have chosen is still the standard this code is held
 to; say so if you think it is wrong, but review against it.
 
 Also check that the change matches the code around it — naming, error handling,
-comment density, logging level. Machine-written code tends to over-comment,
-over-validate, and cast away type errors; flag those as Suggestions.
+comment density, logging level. `~/.claude/reference/slop-patterns.md` is the
+catalogue of what machine-written code tends to do (over-comment, over-validate,
+silence the compiler instead of satisfying it) — read it, and flag matches as
+Suggestions. You report these; removing them is the `wtf-deslop` skill's job,
+not yours.
 
 Before writing a finding, try to refute it — not confirm it. Open the file,
 trace the caller, check whether validation already happens upstream, look for
