@@ -4,7 +4,6 @@
     "sessionUrl": false
   },
   "disableClaudeAiConnectors": false,
-  "model": "opus",
   "statusLine": {
     "type": "command",
     "command": "~/.claude/scripts/status-line.sh"
