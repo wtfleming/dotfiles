@@ -27,7 +27,7 @@ home directory. Key consequences to keep in mind:
   sync only `touch`es it so it stays empty in git.
 - `Dotfiles/emacs.d/init.org` is the org source that generates `init.el`. It is
   edited and tangled in the repo and is intentionally **not** synced to `$HOME`.
-- `Dotfiles/claude/CLAUDE.md` is deployed to `~/.claude/CLAUDE.md` — it is the
+- `Dotfiles/claude/CLAUDE.global.md` is deployed to `~/.claude/CLAUDE.md` — it is the
   global memory file, not documentation for this repo.
 - `old-scripts/` is archived and deliberately **not** deployed.
 

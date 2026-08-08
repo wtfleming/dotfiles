@@ -100,7 +100,7 @@ cp ~/src/dotfiles/Dotfiles/claude/settings.json ~/.claude/settings.json
 cp -r ~/src/dotfiles/Dotfiles/claude/hooks/. ~/.claude/hooks/
 cp -r ~/src/dotfiles/Dotfiles/claude/skills/. ~/.claude/skills/
 cp -r ~/src/dotfiles/Dotfiles/claude/scripts/. ~/.claude/scripts/
-cp ~/src/dotfiles/Dotfiles/claude/CLAUDE.md ~/.claude/CLAUDE.md
+cp ~/src/dotfiles/Dotfiles/claude/CLAUDE.global.md ~/.claude/CLAUDE.md
 cp -r ~/src/dotfiles/Dotfiles/claude/reference/. ~/.claude/reference/
 cp -r ~/src/dotfiles/Dotfiles/claude/agents/. ~/.claude/agents/
 cp -r ~/src/dotfiles/Dotfiles/claude/commands/. ~/.claude/commands/
