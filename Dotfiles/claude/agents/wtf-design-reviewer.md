@@ -29,7 +29,7 @@ command *does*; do not invoke it. Ordinary read-only git is fine — `git diff`,
 
 If the task names a scope (a ref, a branch, a path), use it. Otherwise:
 uncommitted changes if there are any, else the branch against its merge-base
-with master or main, else `git show HEAD`. State what you settled on at the top
+with main or master, else `git show HEAD`. State what you settled on at the top
 of your report.
 
 Read the repo's stated rules before judging shape — `CLAUDE.md` at every level
