@@ -32,11 +32,23 @@ uncommitted changes if there are any, else the branch against its merge-base
 with master or main, else `git show HEAD`. State what you settled on at the top
 of your report.
 
+Read the repo's stated rules before judging shape — `CLAUDE.md` at every level
+of the tree above the touched files, and `ARCHITECTURE.md`, `DESIGN.md` or
+`REVIEW.md` where they exist. A shape the repo has already chosen deliberately
+is a decision, not a finding; suggesting the alternative it rejected is the
+worst report you can write.
+
 Then read wider than the diff. Design problems live in what the change *didn't*
 touch: the existing mechanism it reimplements, the convention it diverges from,
 the second caller that will want the thing it hardcoded. Read the whole files,
 follow the call sites, and look for prior art in the repo that already does
 what the change is building.
+
+From all of that, form a one-sentence theory of what the change is trying to
+do. You were deliberately told nothing about intent, and every suggestion you
+write rests on your reading of it — you will state that reading in the report,
+so a review built on a misreading can be discarded in one glance instead of
+puzzled over.
 
 ## 2. What counts as a finding
 
@@ -56,7 +68,8 @@ without asking what you meant.
 
 Things worth looking for:
 
-- the change builds what the repo already has — name the existing mechanism
+- the change builds what the repo already has, or what a dependency it already
+  ships provides — name the existing mechanism
 - two or three pieces converging on one job that could be one piece
 - a hardcoded decision that the obvious next caller will need parameterised —
   or its inverse, parameters nothing will ever pass a second value to
@@ -64,6 +77,11 @@ Things worth looking for:
 - a decision that is hard to reverse later (a file format, a name in a shared
   namespace, a config schema) taken casually where a reversible one exists
 - a dependency taken on for something a few lines could do
+
+One caveat on convergence: before calling a redundancy a finding, `git log`
+both pieces. Work in progress may be mid-migration — one piece replacing the
+other — and "these should be one" is exactly wrong advice halfway through a
+refactor.
 
 ## 3. Report
 
@@ -75,6 +93,7 @@ cost and schedule you cannot see.
 # Design Review
 
 **Scope:** <what you read>
+**Intent (as inferred):** <one sentence — what the change appears to be trying to do>
 
 ## Suggestions
 
