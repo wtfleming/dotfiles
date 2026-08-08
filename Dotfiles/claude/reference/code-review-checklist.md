@@ -35,6 +35,12 @@ Review in this order. Stop at critical issues.
 - [ ] Edge cases covered
 - [ ] Tests are deterministic, not flaky
 
+### 6. Dependencies & Deployment (Important)
+- [ ] New dependency justified: necessary, maintained, reasonable transitive weight
+- [ ] Breaking changes to public interfaces, config formats, CLI flags
+- [ ] Migrations/rollouts reversible, or the irreversibility called out
+- [ ] New failure paths observable (a log line or error someone can act on)
+
 ## Feedback Format
 
 ```
