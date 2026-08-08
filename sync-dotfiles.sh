@@ -5,6 +5,34 @@ set -e
 # it might make more sense to create symlinks instead of copying the files?
 # Also could use something like GNU Stow, but for now just doing this
 
+usage() {
+    echo "Usage: $(basename "$0") [-q|--quiet]"
+    echo
+    echo "Copies the dotfiles in this repo into \$HOME, printing each command"
+    echo "as it runs."
+    echo
+    echo "  -q, --quiet   only print errors"
+    echo "  -h, --help    show this help"
+}
+
+quiet=0
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -q|--quiet) quiet=1 ;;
+        -h|--help) usage; exit 0 ;;
+        *) echo "Error: unknown option: $1" >&2; usage >&2; exit 1 ;;
+    esac
+    shift
+done
+
+# Print a command, then run it. Globs are already expanded by the time we get
+# here, so the words printed are the ones that run. Arguments are joined with
+# spaces and not re-quoted, so a path containing spaces would print ambiguously.
+run() {
+    [ "$quiet" -eq 1 ] || echo "+ $*"
+    "$@"
+}
+
 if [ ! -d ~/bin ]; then
     echo "Error: ~/bin directory does not exist" >&2
     exit 1
@@ -16,95 +44,97 @@ if [ ! -d ~/src/dotfiles ]; then
 fi
 
 # Shell scripts
-cp ~/src/dotfiles/bin/* ~/bin/.
+run cp ~/src/dotfiles/bin/* ~/bin/.
 
 
 # Git
-cp ~/src/dotfiles/Dotfiles/git-completion.bash ~/.git-completion.bash
-cp ~/src/dotfiles/Dotfiles/git-completion.zsh ~/.git-completion.zsh
-cp ~/src/dotfiles/Dotfiles/git-prompt.sh ~/.git-prompt.sh
-cp ~/src/dotfiles/Dotfiles/gitexcludes ~/.gitexcludes
+run cp ~/src/dotfiles/Dotfiles/git-completion.bash ~/.git-completion.bash
+run cp ~/src/dotfiles/Dotfiles/git-completion.zsh ~/.git-completion.zsh
+run cp ~/src/dotfiles/Dotfiles/git-prompt.sh ~/.git-prompt.sh
+run cp ~/src/dotfiles/Dotfiles/gitexcludes ~/.gitexcludes
 # TODO on a work computer I likely have my email address in .gitconfig set to
 # my work email, don't want to copy over if that is the case?
 # Find a better way of handling this
 #  one thing I could do is cd /path/to/repo && git config --local github.email EMAIL
 #  for work repos
-cp ~/src/dotfiles/Dotfiles/gitconfig ~/.gitconfig
+run cp ~/src/dotfiles/Dotfiles/gitconfig ~/.gitconfig
 
 # tmux
-cp ~/src/dotfiles/Dotfiles/tmux.conf ~/.tmux.conf
+run cp ~/src/dotfiles/Dotfiles/tmux.conf ~/.tmux.conf
 
 # zsh
-cp ~/src/dotfiles/Dotfiles/zshrc ~/.zshrc
+run cp ~/src/dotfiles/Dotfiles/zshrc ~/.zshrc
 
 # ssh
 if [ ! -d ~/.ssh ]; then
-    mkdir ~/.ssh
+    run mkdir ~/.ssh
 fi
-cp ~/src/dotfiles/Dotfiles/ssh/config ~/.ssh/config
+run cp ~/src/dotfiles/Dotfiles/ssh/config ~/.ssh/config
 
 # emacs
 if [ ! -d ~/.emacs.d ]; then
-    mkdir ~/.emacs.d
+    run mkdir ~/.emacs.d
 fi
 
 if [ ! -d ~/.emacs.d/wtf-elisp ]; then
-    mkdir ~/.emacs.d/wtf-elisp
+    run mkdir ~/.emacs.d/wtf-elisp
 fi
 
-cp ~/src/dotfiles/Dotfiles/emacs.d/early-init.el ~/.emacs.d/.
-cp ~/src/dotfiles/Dotfiles/emacs.d/init.el ~/.emacs.d/.
+run cp ~/src/dotfiles/Dotfiles/emacs.d/early-init.el ~/.emacs.d/.
+run cp ~/src/dotfiles/Dotfiles/emacs.d/init.el ~/.emacs.d/.
 
 # vendored assets for markdown-preview styling and syntax highlighting
 # (see markdown-css-paths and markdown-xhtml-header-content in init.el)
-cp ~/src/dotfiles/Dotfiles/emacs.d/github-markdown.css ~/.emacs.d/.
-cp ~/src/dotfiles/Dotfiles/emacs.d/highlight-github.css ~/.emacs.d/.
-cp ~/src/dotfiles/Dotfiles/emacs.d/highlight.min.js ~/.emacs.d/.
-cp ~/src/dotfiles/Dotfiles/emacs.d/lisp.min.js ~/.emacs.d/.
+run cp ~/src/dotfiles/Dotfiles/emacs.d/github-markdown.css ~/.emacs.d/.
+run cp ~/src/dotfiles/Dotfiles/emacs.d/highlight-github.css ~/.emacs.d/.
+run cp ~/src/dotfiles/Dotfiles/emacs.d/highlight.min.js ~/.emacs.d/.
+run cp ~/src/dotfiles/Dotfiles/emacs.d/lisp.min.js ~/.emacs.d/.
 
 # init.el adds this dir to load-path
-cp ~/src/dotfiles/Dotfiles/emacs.d/wtf-elisp/*.el ~/.emacs.d/wtf-elisp/.
+run cp ~/src/dotfiles/Dotfiles/emacs.d/wtf-elisp/*.el ~/.emacs.d/wtf-elisp/.
 
 # This file will always be empty in git, but might have local changes that
 # we do not want to overwrite
-touch ~/src/dotfiles/Dotfiles/emacs.d/my-customized.el
+run touch ~/src/dotfiles/Dotfiles/emacs.d/my-customized.el
 
 # init.el loads this file, so make sure it exists in ~/.emacs.d on a fresh
 # machine. Never cp it — the deployed copy holds machine-local customizations.
-touch ~/.emacs.d/my-customized.el
+run touch ~/.emacs.d/my-customized.el
 
 # claude code
 if [ ! -d ~/.claude ]; then
-    mkdir ~/.claude
+    run mkdir ~/.claude
 fi
 if [ ! -d ~/.claude/hooks ]; then
-    mkdir ~/.claude/hooks
+    run mkdir ~/.claude/hooks
 fi
 if [ ! -d ~/.claude/skills ]; then
-    mkdir ~/.claude/skills
+    run mkdir ~/.claude/skills
 fi
 if [ ! -d ~/.claude/scripts ]; then
-    mkdir ~/.claude/scripts
+    run mkdir ~/.claude/scripts
 fi
 if [ ! -d ~/.claude/reference ]; then
-    mkdir ~/.claude/reference
+    run mkdir ~/.claude/reference
 fi
 if [ ! -d ~/.claude/agents ]; then
-    mkdir ~/.claude/agents
+    run mkdir ~/.claude/agents
 fi
 if [ ! -d ~/.claude/commands ]; then
-    mkdir ~/.claude/commands
+    run mkdir ~/.claude/commands
 fi
 
-cp ~/src/dotfiles/Dotfiles/claude/settings.json ~/.claude/settings.json
-cp -r ~/src/dotfiles/Dotfiles/claude/hooks/. ~/.claude/hooks/
-cp -r ~/src/dotfiles/Dotfiles/claude/skills/. ~/.claude/skills/
-cp -r ~/src/dotfiles/Dotfiles/claude/scripts/. ~/.claude/scripts/
-cp ~/src/dotfiles/Dotfiles/claude/CLAUDE.global.md ~/.claude/CLAUDE.md
-cp -r ~/src/dotfiles/Dotfiles/claude/reference/. ~/.claude/reference/
-cp -r ~/src/dotfiles/Dotfiles/claude/agents/. ~/.claude/agents/
-cp -r ~/src/dotfiles/Dotfiles/claude/commands/. ~/.claude/commands/
+run cp ~/src/dotfiles/Dotfiles/claude/settings.json ~/.claude/settings.json
+run cp -r ~/src/dotfiles/Dotfiles/claude/hooks/. ~/.claude/hooks/
+run cp -r ~/src/dotfiles/Dotfiles/claude/skills/. ~/.claude/skills/
+run cp -r ~/src/dotfiles/Dotfiles/claude/scripts/. ~/.claude/scripts/
+run cp ~/src/dotfiles/Dotfiles/claude/CLAUDE.global.md ~/.claude/CLAUDE.md
+run cp -r ~/src/dotfiles/Dotfiles/claude/reference/. ~/.claude/reference/
+run cp -r ~/src/dotfiles/Dotfiles/claude/agents/. ~/.claude/agents/
+run cp -r ~/src/dotfiles/Dotfiles/claude/commands/. ~/.claude/commands/
 
 
-echo "Successfully synced dotfiles."
-echo "If this is a work computer ensure that the correct email is being used in .gitconfig"
+if [ "$quiet" -eq 0 ]; then
+    echo "Successfully synced dotfiles."
+    echo "If this is a work computer ensure that the correct email is being used in .gitconfig"
+fi

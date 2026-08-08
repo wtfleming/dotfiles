@@ -16,7 +16,9 @@ home directory. Key consequences to keep in mind:
 - The repo is the source of truth. Edits made to deployed files in `$HOME` do **not**
   flow back — change the file under `Dotfiles/` and re-run the sync.
 - **If you add a new config file under `Dotfiles/`, you must also add a copy step to
-  `sync-dotfiles.sh`**, or it will never be deployed.
+  `sync-dotfiles.sh`**, or it will never be deployed. Write the step as
+  `run cp ...`, not bare `cp` — `run` echoes the command so the sync's output
+  accounts for every file. A bare `cp` still copies, it just goes unreported.
 - **Deleting or renaming a file here does not remove the deployed copy** — `cp` only
   ever adds. Delete it from `$HOME` by hand as well, in the same change. Skipping that
   leaves a file nothing in the repo accounts for, which later reads as untracked local
