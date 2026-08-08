@@ -81,8 +81,8 @@ run it too — a formatting diff is a Warning, not a Critical.
 ## 4. Review the diff
 
 Work through `~/.claude/reference/code-review-checklist.md` in its priority
-order: correctness, security, maintainability, performance, testing. Read it
-before you start.
+order: correctness, security, maintainability, performance, testing,
+dependencies. Read it before you start.
 
 If the project states its own review rules, they win over the generic checklist
 where they conflict. Look for `REVIEW.md` at the repo root — that is the name

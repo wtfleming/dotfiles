@@ -41,14 +41,14 @@ mandate to refactor — and leave committing to them.
 
 ## With `--deep`
 
-One reviewer covering five dimensions gives some of them a shallower pass than
+One reviewer covering six dimensions gives some of them a shallower pass than
 the others. This adds a dedicated pass per dimension, over the same diff the
 reviewer just read.
 
 Say up front how many agents you are about to spawn, so the cost is the user's
 to refuse before it is spent rather than after.
 
-Dispatch these five `wtf-lens` subagents **in parallel**, each with the scope and
+Dispatch these six `wtf-lens` subagents **in parallel**, each with the scope and
 its own rubric and nothing else:
 
 | Lens | Looks for |
@@ -56,16 +56,20 @@ its own rubric and nothing else:
 | `correctness` | logic errors, off-by-one, wrong operator, null/empty/zero/max edges, races, unhandled promises, missing await |
 | `security` | unvalidated input at boundaries, hardcoded secrets, injection, sensitive data in logs and errors, authz gaps |
 | `tests` | new branches with no test, uncovered edge cases, tests that cannot fail, flakiness, fixtures that hide the bug |
-| `maintainability` | unclear names, duplicated logic, functions doing several things, unactionable error messages, comments explaining *what* |
+| `maintainability` | unclear names, duplicated logic, functions doing several things, unactionable error messages, comments explaining *what*, changes bundling unrelated concerns |
 | `performance` | N+1 queries, work inside loops that belongs outside, resource leaks, blocking calls in async paths, unbounded growth |
+| `dependencies` | new dependencies (necessity, maintenance, transitive weight), breaking changes to public interfaces, config formats or CLI flags, irreversible migrations, new failure paths nothing logs |
 
 There is deliberately no linter lens. The reviewer already ran the project's real
 linter and reported it; a model imitating static analysis is strictly worse than
 the tool that does it exactly.
 
+The `tests` lens judges coverage by ROI: a new branch with no test is a finding;
+trivial code without one is not.
+
 ### Synthesise
 
-Merge the five reports with the reviewer's own. Deduplicate on file and line —
+Merge the six reports with the reviewer's own. Deduplicate on file and line —
 where two agents found the same thing, keep the more specific statement and drop
 the other, rather than listing it twice with different wording. Where they
 disagree on tier, take the higher and say both lenses saw it.
@@ -76,7 +80,7 @@ are about to be retracted should not get a first airing.
 ### Verify
 
 Every finding so far was judged by the agent that wrote it, which is the
-position it is worst placed to judge from — and under `--deep` there are five
+position it is worst placed to judge from — and under `--deep` there are six
 agents each under quiet pressure to justify their dispatch, which is exactly the
 pressure that produces plausible findings that are not real.
 
@@ -112,7 +116,7 @@ Suggestion format. Then:
 - how many findings were refuted, and why — a dropped finding is reported, not
   hidden
 - which lenses returned nothing; a silent lens is information, and hiding it
-  makes five agents look like one
+  makes six agents look like one
 - if everything was refuted, say so plainly and treat it as a result worth
   doubting rather than a clean bill of health — that is also what a gate that
   never bites looks like

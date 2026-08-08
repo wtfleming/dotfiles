@@ -22,8 +22,8 @@ reviews the diff against the checklist, and prints findings as Critical, Warning
 or Suggestion — then stops. The reviewer has no `Edit` or `Write`, so a review
 cannot change anything.
 
-`--deep` adds five `wtf-lens` agents in parallel, one per dimension: correctness,
-security, tests, maintainability, performance. Their reports are merged and
+`--deep` adds six `wtf-lens` agents in parallel, one per dimension: correctness,
+security, tests, maintainability, performance, dependencies. Their reports are merged and
 deduplicated with the reviewer's, then verified before printing: one
 `wtf-refuter` per Critical and Warning finding, each told to argue the finding
 is *wrong* and to answer refuted when unsure. Suggestions arrive marked
@@ -40,7 +40,7 @@ never commits.
 | Agent | Role |
 |---|---|
 | `wtf-change-reviewer` | scope, tests, lint, the full review |
-| `wtf-lens` | one dimension only; dispatched five times by `--deep` |
+| `wtf-lens` | one dimension only; dispatched six times by `--deep` |
 | `wtf-refuter` | tries to kill a single finding |
 
 All three are read-only — no `Edit`, no `Write`, and no ability to spawn an agent
@@ -53,12 +53,12 @@ that has them. Edits only ever happen in the main session, one approval at a tim
   without touching an agent definition.
 - A project's own `REVIEW.md`, `AGENTS.md` or `CLAUDE.md` wins where it conflicts.
   `REVIEW.md` is the name Anthropic's own code review reads.
-- The five `--deep` rubrics live in the command, not in `wtf-lens`, so they can be
+- The six `--deep` rubrics live in the command, not in `wtf-lens`, so they can be
   retuned without editing an agent.
 
 ### Cost
 
-`--deep` spawns one reviewer, five lenses, and one refuter per verified finding —
+`--deep` spawns one reviewer, six lenses, and one refuter per verified finding —
 tens of agents on a real branch. It announces each fan-out before spawning it, so
 the spend can be refused. For very large diffs, the built-in `/code-review ultra`
 is the maintained alternative.
