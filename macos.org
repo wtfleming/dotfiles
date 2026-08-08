@@ -573,7 +573,7 @@ macOS ships similar software and installing in parallel causes trouble. That is
 why the registration step above is required and not optional.
 
 *** PATH
-The old notes say to =echo ... >> ~/.zshrc=. Do not: sync-dotfiles.sh:38 copies
+The old notes say to =echo ... >> ~/.zshrc=. Do not: sync-dotfiles.sh copies
 Dotfiles/zshrc over ~/.zshrc, so that gets wiped on the next sync. Put it in
 =Dotfiles/zshrc= and re-sync.
 
@@ -677,7 +677,7 @@ eval "$(mise activate zsh)"
 then re-run ./sync-dotfiles.sh and open a new shell.
 
 This is the important correction to the old notes below, which say
-=echo 'eval "$(mise activate zsh)"' >> ~/.zshrc=. sync-dotfiles.sh:38 does
+=echo 'eval "$(mise activate zsh)"' >> ~/.zshrc=. sync-dotfiles.sh does
 =cp ~/src/dotfiles/Dotfiles/zshrc ~/.zshrc=, so anything appended to ~/.zshrc
 directly is silently wiped the next time the dotfiles are synced.
 

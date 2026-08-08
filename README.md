@@ -20,6 +20,10 @@ no symlinks. The repo is the source of truth: edits made to the deployed
 copies in `$HOME` do not flow back. Change the file under `Dotfiles/` and
 re-run the sync.
 
+It prints each command as it runs. The recursive copies into `~/.claude/` print
+as a single line each, so the output is a trace of commands rather than a
+per-file listing. Pass `-q` / `--quiet` to silence it and print only errors.
+
 If you add a new config file under `Dotfiles/`, also add a copy step to
 `sync-dotfiles.sh`, or it will never be deployed.
 
