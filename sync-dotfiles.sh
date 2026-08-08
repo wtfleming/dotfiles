@@ -26,14 +26,11 @@ while [ $# -gt 0 ]; do
 done
 
 # Print a command, then run it. Globs are already expanded by the time we get
-# here, so what is printed is exactly what runs.
+# here, so the words printed are the ones that run. Arguments are joined with
+# spaces and not re-quoted, so a path containing spaces would print ambiguously.
 run() {
     [ "$quiet" -eq 1 ] || echo "+ $*"
     "$@"
-}
-
-say() {
-    [ "$quiet" -eq 1 ] || echo "$@"
 }
 
 if [ ! -d ~/bin ]; then
@@ -137,5 +134,7 @@ run cp -r ~/src/dotfiles/Dotfiles/claude/agents/. ~/.claude/agents/
 run cp -r ~/src/dotfiles/Dotfiles/claude/commands/. ~/.claude/commands/
 
 
-say "Successfully synced dotfiles."
-say "If this is a work computer ensure that the correct email is being used in .gitconfig"
+if [ "$quiet" -eq 0 ]; then
+    echo "Successfully synced dotfiles."
+    echo "If this is a work computer ensure that the correct email is being used in .gitconfig"
+fi
