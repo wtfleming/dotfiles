@@ -13,6 +13,9 @@ Review in this order. Stop at critical issues.
 - [ ] Data flow: correct inputs → correct outputs
 
 ### 2. Security (Critical)
+Frame this pass with the OWASP Top 10 and CWE Top 25 categories — knowledge you
+already have; don't fetch the documents. The lists are a floor, not a filter: a
+security issue that fits neither list still gets reported.
 - [ ] Input validation at system boundaries
 - [ ] No hardcoded secrets or credentials
 - [ ] SQL/command injection possible?
