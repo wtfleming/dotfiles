@@ -985,6 +985,9 @@ org-roam-db-sync in throwaway processes emacsclient can never reach."
     (notes . ("~/org-mode/org-roam-notes" . "~/.emacs.d/org-roam.db")))
   "org-roam graphs to switch between, as NAME -> (DIRECTORY . DB-LOCATION).")
 
+(defvar wtf-org-roam-default-graph 'wiki
+  "The graph in `wtf-org-roam-graphs' org-roam starts on.")
+
 (defun wtf-org-roam-graph (name)
   "Return (DIRECTORY . DB-LOCATION) for the graph NAME, both expanded."
   (let ((entry (or (alist-get name wtf-org-roam-graphs)
@@ -1049,8 +1052,8 @@ both; the caller can retitle or edit the existing page."
   :pin melpa-stable
   :ensure t
   :custom
-  (org-roam-directory (car (wtf-org-roam-graph 'wiki)))
-  (org-roam-db-location (cdr (wtf-org-roam-graph 'wiki)))
+  (org-roam-directory (car (wtf-org-roam-graph wtf-org-roam-default-graph)))
+  (org-roam-db-location (cdr (wtf-org-roam-graph wtf-org-roam-default-graph)))
   (org-roam-completion-everywhere t)
   (org-roam-capture-templates
    '(("d" "default" plain

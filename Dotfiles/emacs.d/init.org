@@ -1059,14 +1059,18 @@ Deja Vu Serif
 #+end_src
 ** org-roam
 
-Two separate graphs, each with its own database — they share =~/.emacs.d/org-roam.db=
-otherwise and overwrite each other's index. =wiki= is the default; =C-c n G= switches.
+Two separate graphs, each with its own database — otherwise they would both use
+=~/.emacs.d/org-roam.db=, and whichever synced last would overwrite the other's
+index. =wiki= is the default; =C-c n G= switches.
 
 #+begin_src emacs-lisp
   (defvar wtf-org-roam-graphs
     '((wiki  . ("~/src/wtf-wiki/wiki"       . "~/.emacs.d/org-roam-wtf-wiki.db"))
       (notes . ("~/org-mode/org-roam-notes" . "~/.emacs.d/org-roam.db")))
     "org-roam graphs to switch between, as NAME -> (DIRECTORY . DB-LOCATION).")
+
+  (defvar wtf-org-roam-default-graph 'wiki
+    "The graph in `wtf-org-roam-graphs' org-roam starts on.")
 
   (defun wtf-org-roam-graph (name)
     "Return (DIRECTORY . DB-LOCATION) for the graph NAME, both expanded."
@@ -1132,8 +1136,8 @@ otherwise and overwrite each other's index. =wiki= is the default; =C-c n G= swi
     :pin melpa-stable
     :ensure t
     :custom
-    (org-roam-directory (car (wtf-org-roam-graph 'wiki)))
-    (org-roam-db-location (cdr (wtf-org-roam-graph 'wiki)))
+    (org-roam-directory (car (wtf-org-roam-graph wtf-org-roam-default-graph)))
+    (org-roam-db-location (cdr (wtf-org-roam-graph wtf-org-roam-default-graph)))
     (org-roam-completion-everywhere t)
     (org-roam-capture-templates
      '(("d" "default" plain
@@ -1192,15 +1196,6 @@ otherwise and overwrite each other's index. =wiki= is the default; =C-c n G= swi
     )
 
 #+end_src
-
-Its value is
-(("d" "default" plain "%?" :target (file+head
-                                    "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}
-")
-  :unnarrowed t))
-
-  
-
 
 * macOS
 #+begin_src emacs-lisp

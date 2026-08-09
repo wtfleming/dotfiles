@@ -72,18 +72,18 @@ can reach a running Emacs:
   `server-running-p` opens a real connection, so it reports nil and the next
   `server-start` unlinks the leftover itself. `M-x server-force-delete` is for
   the other case — a *live* Emacs holding the name that you want to displace.
-- **`emacsclient` is not on `PATH` here.** This is a from-source Emacs, which
-  ships it next to the binary rather than installing it:
-  `~/bin/emacs-30.2/lib-src/emacsclient`.
+- **`emacsclient` comes from the from-source build.** It is not installed
+  alongside the binary, so `Dotfiles/zshrc` puts its `lib-src` directory on
+  `PATH` next to the `src` one. Both carry the Emacs version, so a new build
+  means editing those two adjacent lines and nothing else.
 
 ### Working with it
 
 ```sh
-EC=~/bin/emacs-30.2/lib-src/emacsclient
-"$EC" --eval t             # is a server up? prints t
-"$EC" -n FILE              # open FILE in the running Emacs, return immediately
-"$EC" FILE                 # ...and block until you finish with C-x #
-"$EC" --eval '(org-roam-db-sync)'
+emacsclient --eval t       # is a server up? prints t
+emacsclient -n FILE        # open FILE in the running Emacs, return immediately
+emacsclient FILE           # ...and block until you finish with C-x #
+emacsclient --eval '(org-roam-db-sync)'
 ```
 
 Without `-n`, `emacsclient` waits — that is what makes it usable as an `$EDITOR`.
