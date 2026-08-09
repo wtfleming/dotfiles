@@ -1,12 +1,13 @@
 #!/bin/bash
 
 # Status line: model | repo:branch | PR | context bar | rate limit | lines changed
-# Runs on every assistant message, so it makes exactly two forks: one jq, one git.
+# Runs on every assistant message, so the normal path spends exactly two child
+# processes: one jq, one git. A detached HEAD costs one more git.
 
 # Longest branch name shown before it is clipped to a leading fragment.
 MAX_BRANCH=20
 
-data=$(cat)
+data=$(</dev/stdin)
 
 # One jq pass for every field we need, one per line in a fixed order. Absent or
 # null becomes "" so the segments below can test for emptiness. Read with an
@@ -15,7 +16,7 @@ data=$(cat)
 # trailing "END" absorbs command substitution stripping trailing newlines.
 fields=()
 while IFS= read -r line; do fields+=("$line"); done <<EOF
-$(echo "$data" | jq -r '
+$(jq -r '
   [ .model.display_name // .model.id // "unknown",
     .context_window.context_window_size // 200000,
     .context_window.used_percentage // "",
@@ -26,7 +27,7 @@ $(echo "$data" | jq -r '
     .cost.total_lines_added // 0,
     .cost.total_lines_removed // 0,
     "END"
-  ] | .[] | tostring')
+  ] | .[] | tostring' <<<"$data")
 EOF
 
 model=${fields[0]}
@@ -50,8 +51,9 @@ RESET='\033[0m'
 # line 1 is the repo root, line 2 the branch (literal "HEAD" when detached).
 git_info=""
 if git_out=$(git -C "$cwd" rev-parse --show-toplevel --abbrev-ref HEAD 2>/dev/null); then
-    repo=$(basename "$(echo "$git_out" | sed -n 1p)")
-    branch=$(echo "$git_out" | sed -n 2p)
+    repo_root=${git_out%%$'\n'*}
+    repo=${repo_root##*/}
+    branch=${git_out#*$'\n'}
     if [ "$branch" = "HEAD" ]; then
         branch=$(git -C "$cwd" rev-parse --short HEAD 2>/dev/null || echo "detached")
     fi
@@ -107,10 +109,16 @@ else
     context_info="${bar} ${used_k}k/${max_k}k"
 fi
 
-# Rate limit: subscriber-only, and only worth the space once it climbs.
+# Rate limit: subscriber-only, and only worth the space once it climbs. The API
+# returns this fractional (23.5), and test -ge errors out on a decimal operand,
+# so round first - otherwise the segment vanishes at exactly the values it exists
+# to warn about.
 rl_info=""
-if [ -n "$rl_pct" ] && [ "$rl_pct" -ge 50 ] 2>/dev/null; then
-    rl_info=" | ${RED}rl ${rl_pct}%${RESET}"
+if [ -n "$rl_pct" ]; then
+    rl_whole=$(printf "%.0f" "$rl_pct" 2>/dev/null || echo 0)
+    if [ "$rl_whole" -ge 50 ] 2>/dev/null; then
+        rl_info=" | ${RED}rl ${rl_whole}%${RESET}"
+    fi
 fi
 
 # Lines changed this session, once there are any.
