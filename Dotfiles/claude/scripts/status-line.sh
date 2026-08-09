@@ -21,7 +21,6 @@ $(echo "$data" | jq -r '
     .context_window.total_input_tokens // 0,
     .workspace.current_dir // .cwd // ".",
     .pr.number // "",
-    .pr.review_state // "",
     .rate_limits.five_hour.used_percentage // "",
     .cost.total_lines_added // 0,
     .cost.total_lines_removed // 0,
@@ -35,10 +34,9 @@ used_pct=${fields[2]}
 in_tok=${fields[3]}
 cwd=${fields[4]}
 pr_num=${fields[5]}
-pr_state=${fields[6]}
-rl_pct=${fields[7]}
-lines_add=${fields[8]}
-lines_del=${fields[9]}
+rl_pct=${fields[6]}
+lines_add=${fields[7]}
+lines_del=${fields[8]}
 
 # Color codes
 BLUE='\033[34m'
@@ -59,17 +57,10 @@ if git_out=$(git -C "$cwd" rev-parse --show-toplevel --abbrev-ref HEAD 2>/dev/nu
     git_info=" | ${repo}:${branch}"
 fi
 
-# Open PR for this branch. Claude Code drops .pr once the PR merges or closes,
-# and .review_state can be absent even when .number is present.
+# Open PR for this branch. Claude Code drops .pr once the PR merges or closes.
 pr_info=""
 if [ -n "$pr_num" ]; then
-    case "$pr_state" in
-        approved)          pr_info=" | #${pr_num} ✓" ;;
-        changes_requested) pr_info=" | #${pr_num} ✗" ;;
-        pending)           pr_info=" | #${pr_num} ~" ;;
-        draft)             pr_info=" | #${pr_num} draft" ;;
-        *)                 pr_info=" | #${pr_num}" ;;
-    esac
+    pr_info=" | #${pr_num}"
 fi
 
 # --- line 2 -----------------------------------------------------------------
