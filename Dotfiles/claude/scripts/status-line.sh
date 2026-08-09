@@ -1,20 +1,17 @@
 #!/bin/bash
 
-# Status line: model | repo:branch | context bar | rate limit | lines changed
-# No PR segment - Claude Code's own footer badge already shows it, as a link.
-# Runs on every assistant message, so the normal path spends exactly two child
-# processes: one jq, one git. A detached HEAD costs one more git.
+# Status line: model | repo:branch | context bar | rate limit | lines changed.
+# Runs on every assistant message: two child processes, one jq and one git.
 
 # Longest branch name shown before it is clipped to a leading fragment.
 MAX_BRANCH=20
 
 data=$(</dev/stdin)
 
-# One jq pass for every field we need, one per line in a fixed order. Absent or
-# null becomes "" so the segments below can test for emptiness. Read with an
-# empty IFS so blank lines stay blank: with IFS=$'\n' a run of empty fields
-# collapses into one delimiter and every later value shifts up by a slot. The
-# trailing "END" absorbs command substitution stripping trailing newlines.
+# One jq pass, one field per line, absent or null becoming "". Read with an empty
+# IFS: under IFS=$'\n' a run of empty fields collapses into a single delimiter and
+# every later value shifts up a slot. "END" keeps a trailing empty field, should a
+# later one ever be able to produce it, from being stripped.
 fields=()
 while IFS= read -r line; do fields+=("$line"); done <<EOF
 $(jq -r '
@@ -44,8 +41,6 @@ BLUE='\033[34m'
 RED='\033[31m'
 RESET='\033[0m'
 
-# --- line 1 -----------------------------------------------------------------
-
 # Git repo and branch, if we're in a repo at all. One rev-parse gives both:
 # line 1 is the repo root, line 2 the branch (literal "HEAD" when detached).
 git_info=""
@@ -62,13 +57,14 @@ if git_out=$(git -C "$cwd" rev-parse --show-toplevel --abbrev-ref HEAD 2>/dev/nu
     git_info=" | ${repo}:${branch}"
 fi
 
-# --- line 2 -----------------------------------------------------------------
-
 if [ -z "$used_pct" ]; then
     # Loading state - empty circles
     context_info="○○○○○○○○○○ loading..."
 else
-    pct=$(printf "%.0f" "$used_pct" 2>/dev/null || echo "$used_pct")
+    # Percentages can arrive fractional. %%.* drops the fraction without a
+    # subshell, and unlike printf it does not care what LC_NUMERIC says a
+    # decimal point looks like.
+    pct=${used_pct%%.*}
     [ "$pct" -gt 100 ] 2>/dev/null && pct=100
 
     # Prefer the exact token count. It is 0 before the first API response and
@@ -102,16 +98,11 @@ else
     context_info="${bar} ${used_k}k/${max_k}k"
 fi
 
-# Rate limit: subscriber-only, and only worth the space once it climbs. The API
-# returns this fractional (23.5), and test -ge errors out on a decimal operand,
-# so round first - otherwise the segment vanishes at exactly the values it exists
-# to warn about.
+# Rate limit: subscriber-only, and only worth the space once it climbs.
 rl_info=""
-if [ -n "$rl_pct" ]; then
-    rl_whole=$(printf "%.0f" "$rl_pct" 2>/dev/null || echo 0)
-    if [ "$rl_whole" -ge 50 ] 2>/dev/null; then
-        rl_info=" | ${RED}rl ${rl_whole}%${RESET}"
-    fi
+rl_whole=${rl_pct%%.*}
+if [ -n "$rl_whole" ] && [ "$rl_whole" -ge 50 ] 2>/dev/null; then
+    rl_info=" | ${RED}rl ${rl_whole}%${RESET}"
 fi
 
 # Lines changed this session, once there are any.
