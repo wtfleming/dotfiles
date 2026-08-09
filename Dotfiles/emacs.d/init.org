@@ -373,11 +373,30 @@ Deja Vu Serif
 
   ;; ------- server -------
   ;; Run the emacs server so emacsclient can reach this emacs
-  ;; (~/src/wtf-wiki/bin/sync-emacs needs it). Starting a second server deletes
-  ;; the first one's socket, so only start one if none is up.
+  ;; (~/src/wtf-wiki/bin/sync-emacs needs it).
+  ;;
+  ;; The guard only keeps *Warnings* clean: server-start on a name another emacs
+  ;; already serves warns and leaves server-process nil, it does not take the
+  ;; socket over. The failure worth guarding against is the opposite one --
+  ;; whichever emacs owns the socket deletes it on the way out, and every emacs
+  ;; that skipped server-start at startup is left serving nothing, with no
+  ;; retry. A commit-message emacs (GIT_EDITOR, see Dotfiles/zshrc) that happens
+  ;; to start first is enough to cause it, and sync-emacs then reports no server
+  ;; and exits 0 forever. So re-check when idle and take the socket back.
   (require 'server)
-  (unless (server-running-p)
-    (server-start))
+
+  (defun wtf-claim-emacs-server ()
+    "Serve emacsclient from this emacs unless another emacs already does.
+  Also preloads org-roam on a short idle timer, but only in the emacs that took
+  the socket: sync-emacs reaches that one and no other, and it needs org-roam
+  loaded to see the graph at all.  Preloading everywhere would run a full
+  org-roam-db-sync in throwaway processes emacsclient can never reach."
+    (unless (server-running-p)
+      (server-start)
+      (run-with-idle-timer 2 nil (lambda () (require 'org-roam)))))
+
+  (wtf-claim-emacs-server)
+  (run-with-idle-timer 30 t #'wtf-claim-emacs-server)
 
   ;; Enable uppercasing and lowercasing on regions
   (put 'downcase-region 'disabled nil)
@@ -1067,20 +1086,47 @@ otherwise and overwrite each other's index. =wiki= is the default; =C-c n G= swi
       (setq org-roam-directory (car graph)
             org-roam-db-location (cdr graph))
       (org-roam-db-autosync-mode 1)
+      ;; Enabling the mode installs global hooks and syncs, but the per-buffer
+      ;; save-updater and completion functions hang off find-file-hook, so
+      ;; buffers already visiting the graph we just switched *to* never got
+      ;; them -- edits there would not reach the database. Arm them by hand.
+      ;; (Disabling does strip them, from the graph we are leaving, because the
+      ;; -1 above runs before the setq.)
+      (dolist (buf (org-roam-buffer-list))
+        (with-current-buffer buf
+          (org-roam-db-autosync--setup-file-h)))
       (message "org-roam graph: %s" org-roam-directory)))
 
   ;; wtf-wiki names its pages in kebab-case; org-roam's own ${slug} uses
-  ;; underscores. org-roam-format-template resolves ${foo} by calling `foo' on
-  ;; the node when that function exists, which is what makes ${wtf-wiki-slug}
-  ;; below work.
+  ;; underscores.
   (defun wtf-wiki-slug (node)
-    "Return NODE's title as a lowercase kebab-case slug."
+    "Return NODE's title as a lowercase kebab-case slug.
+  May be empty -- a title with no alphanumerics leaves nothing to build from."
     (string-trim
      (replace-regexp-in-string
       "-\\{2,\\}" "-"
       (replace-regexp-in-string "[^[:alnum:]]" "-"
                                 (downcase (org-roam-node-title node))))
      "-+" "-+"))
+
+  (defun wtf-wiki-capture-target ()
+    "Return the file the wiki node being captured should be created in.
+  A slug is not unique: \"C++\", \"C#\" and \"C\" all reduce to \"c\", and a
+  title with no alphanumerics reduces to nothing.  org-roam accepts both without
+  complaint -- file+head writes its header only when creating the file, so a
+  colliding title captures into an existing, unrelated page and adopts that
+  page's :ID:, while an empty slug quietly produces a hidden \".org\".  Refuse
+  both; the caller can retitle or edit the existing page."
+    (let* ((title (org-roam-node-title org-roam-capture--node))
+           (slug (wtf-wiki-slug org-roam-capture--node)))
+      (when (string-empty-p slug)
+        (user-error "No wiki filename can be built from the title %S" title))
+      (let ((path (expand-file-name (concat slug ".org")
+                                    (car (wtf-org-roam-graph 'wiki)))))
+        (when (file-exists-p path)
+          (user-error "%s already exists -- retitle, or edit that page instead"
+                      (abbreviate-file-name path)))
+        path)))
 
   (use-package org-roam
     :pin melpa-stable
@@ -1090,20 +1136,20 @@ otherwise and overwrite each other's index. =wiki= is the default; =C-c n G= swi
     (org-roam-db-location (cdr (wtf-org-roam-graph 'wiki)))
     (org-roam-completion-everywhere t)
     (org-roam-capture-templates
-     `(("d" "default" plain
+     '(("d" "default" plain
         "%?"
         :target (file+head
                  "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}
   ")
         :unnarrowed t)
-       ;; Pinned to the wiki by absolute path, so it files a page there whichever
-       ;; graph happens to be selected. See ~/src/wtf-wiki/CLAUDE.md for the page
-       ;; format; the :ID: drawer is org-roam's own doing.
+       ;; wtf-wiki-capture-target returns an absolute path in the wiki, so this
+       ;; files a page there whichever graph happens to be selected. See
+       ;; ~/src/wtf-wiki/CLAUDE.md for the page format; the :ID: drawer is
+       ;; org-roam's own doing.
        ("w" "wtf-wiki page" plain
         "%?"
         :target (file+head
-                 ,(expand-file-name "${wtf-wiki-slug}.org"
-                                    (car (wtf-org-roam-graph 'wiki)))
+                 wtf-wiki-capture-target
                  "#+title: ${title}\n#+filetags: :concept:\n\n")
         :unnarrowed t)))
 
@@ -1118,15 +1164,26 @@ otherwise and overwrite each other's index. =wiki= is the default; =C-c n G= swi
            :map org-mode-map
            ("C-M-i" . completion-at-point)
            )
-    :init
+    :config
     ;; The :bind autoloads above defer org-roam until a command needs it, which
     ;; leaves both org-roam-db-autosync-mode and ~/src/wtf-wiki/bin/sync-emacs
     ;; inert in a session that has not opened the graph yet -- sync-emacs sees
-    ;; org-roam-directory unbound and skips. Load it off the critical path
-    ;; instead, so startup stays fast but the database is being kept current.
-    (run-with-idle-timer 2 nil (lambda () (require 'org-roam)))
+    ;; org-roam-directory unbound and skips. wtf-claim-emacs-server preloads it
+    ;; off the critical path, in the one emacs sync-emacs can actually reach.
 
-    :config
+    ;; Indexing a file means visiting it, and org-roam-with-file calls
+    ;; hack-local-variables without binding enable-local-variables. The wiki
+    ;; graph is written by tooling summarising external sources, so a page can
+    ;; carry an `eval:' trailer it never meant to -- and the sync runs from a
+    ;; timer, so the prompt arrives detached from any file the user opened.
+    ;; Index without file-locals; org-roam forces org-mode anyway.
+    (defun wtf-org-roam-without-local-variables (fn &rest args)
+      "Apply FN to ARGS with file-local variables disabled."
+      (let ((enable-local-variables nil))
+        (apply fn args)))
+    (advice-add 'org-roam-db-update-file :around
+                #'wtf-org-roam-without-local-variables)
+
     ;; If you're using a vertical completion framework, you might want a more informative completion interface
     ;; (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
     (org-roam-db-autosync-mode)

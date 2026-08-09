@@ -40,27 +40,38 @@ would clobber it).
 can reach a running Emacs:
 
 ```elisp
-(require 'server)
-(unless (server-running-p)
-  (server-start))
-```
+(defun wtf-claim-emacs-server ()
+  (unless (server-running-p)
+    (server-start)
+    (run-with-idle-timer 2 nil (lambda () (require 'org-roam)))))
 
-The guard matters: `server-start` in a second Emacs would delete the first one's
-socket and take over the name.
+(wtf-claim-emacs-server)
+(run-with-idle-timer 30 t #'wtf-claim-emacs-server)
+```
 
 ### Implications
 
 - **One server per user, and the first Emacs to start owns it.** Later Emacs
   processes see the socket and skip `server-start`, so `emacsclient` always talks
   to the *first* Emacs — not necessarily the window you are looking at.
+- **Ownership can be lost, which is why the timer is there.** The owner deletes
+  the socket when it exits, and an Emacs that skipped `server-start` at startup
+  would otherwise serve nothing for the rest of its life. `GIT_EDITOR=emacs`
+  makes that easy to hit: a commit-message Emacs that starts first claims the
+  socket, then takes it away on exit. The idle re-check reclaims it.
+- **The guard is not what stops a second Emacs stealing the socket** — nothing
+  steals it. `server-start` on a name another Emacs already serves warns, leaves
+  `server-process` nil, and changes nothing. The guard just keeps `*Warnings*`
+  clean.
 - **The socket is a remote-eval channel.** It lives at
   `$TMPDIR/emacs$UID/server` with owner-only permissions on both the socket and
   its directory. Anything that can open it can evaluate arbitrary Elisp in your
   Emacs, with your privileges. Don't loosen those permissions and don't switch to
   a TCP socket.
-- **A crash can strand the socket.** `server-running-p` then reports a server
-  that isn't there and nothing starts. Clear it with `M-x server-force-delete`,
-  then `M-x server-start`.
+- **A socket stranded by a crash needs no cleanup.** For a local socket
+  `server-running-p` opens a real connection, so it reports nil and the next
+  `server-start` unlinks the leftover itself. `M-x server-force-delete` is for
+  the other case — a *live* Emacs holding the name that you want to displace.
 - **`emacsclient` is not on `PATH` here.** This is a from-source Emacs, which
   ships it next to the binary rather than installing it:
   `~/bin/emacs-30.2/lib-src/emacsclient`.
@@ -81,9 +92,10 @@ commit; point it at `emacsclient` if you would rather reuse the running one.
 
 The server is a prerequisite for `~/src/wtf-wiki/bin/sync-emacs`, which refreshes
 org-roam's database after files are edited outside Emacs. Because org-roam is
-lazy-loaded, `init.org` also pulls it in on a 2-second idle timer — otherwise
-`org-roam-directory` is unbound in a fresh session and `sync-emacs` skips rather
-than syncing.
+lazy-loaded, claiming the server also pulls it in on a 2-second idle timer —
+otherwise `org-roam-directory` is unbound in a fresh session and `sync-emacs`
+skips rather than syncing. That preload is deliberately tied to claiming the
+socket: it is wasted work in any Emacs `emacsclient` cannot reach.
 
 ## Claude Code
 
