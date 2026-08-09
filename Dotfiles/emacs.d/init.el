@@ -298,6 +298,19 @@
 ;; Ask before exiting emacs
 (setopt confirm-kill-emacs #'y-or-n-p)
 
+;; Re-read buffers whose file changed on disk. Tools outside emacs edit files
+;; underneath open buffers -- ~/src/wtf-wiki/bin/sync-emacs updates org-roam's
+;; database after Claude edits wiki pages, but the database is not the buffer.
+(global-auto-revert-mode 1)
+
+;; ------- server -------
+;; Run the emacs server so emacsclient can reach this emacs
+;; (~/src/wtf-wiki/bin/sync-emacs needs it). Starting a second server deletes
+;; the first one's socket, so only start one if none is up.
+(require 'server)
+(unless (server-running-p)
+  (server-start))
+
 ;; Enable uppercasing and lowercasing on regions
 (put 'downcase-region 'disabled nil)
 (put 'upcase-region 'disabled nil)
@@ -942,18 +955,67 @@
     1 'org-checkbox-done-text prepend))
  'append)
 
+(defvar wtf-org-roam-graphs
+  '((wiki  . ("~/src/wtf-wiki/wiki"       . "~/.emacs.d/org-roam-wtf-wiki.db"))
+    (notes . ("~/org-mode/org-roam-notes" . "~/.emacs.d/org-roam.db")))
+  "org-roam graphs to switch between, as NAME -> (DIRECTORY . DB-LOCATION).")
+
+(defun wtf-org-roam-graph (name)
+  "Return (DIRECTORY . DB-LOCATION) for the graph NAME, both expanded."
+  (let ((entry (or (alist-get name wtf-org-roam-graphs)
+                   (user-error "Unknown org-roam graph: %s" name))))
+    (cons (file-truename (car entry)) (expand-file-name (cdr entry)))))
+
+(defun wtf-org-roam-switch-graph (name)
+  "Point org-roam at the graph NAME and re-sync its database."
+  (interactive (list (intern (completing-read "org-roam graph: "
+                                              (mapcar #'car wtf-org-roam-graphs)
+                                              nil t))))
+  (let ((graph (wtf-org-roam-graph name)))
+    ;; autosync watches org-roam-directory, so it has to be cycled to notice
+    ;; the new one; re-enabling it also syncs the newly selected database.
+    (org-roam-db-autosync-mode -1)
+    (setq org-roam-directory (car graph)
+          org-roam-db-location (cdr graph))
+    (org-roam-db-autosync-mode 1)
+    (message "org-roam graph: %s" org-roam-directory)))
+
+;; wtf-wiki names its pages in kebab-case; org-roam's own ${slug} uses
+;; underscores. org-roam-format-template resolves ${foo} by calling `foo' on
+;; the node when that function exists, which is what makes ${wtf-wiki-slug}
+;; below work.
+(defun wtf-wiki-slug (node)
+  "Return NODE's title as a lowercase kebab-case slug."
+  (string-trim
+   (replace-regexp-in-string
+    "-\\{2,\\}" "-"
+    (replace-regexp-in-string "[^[:alnum:]]" "-"
+                              (downcase (org-roam-node-title node))))
+   "-+" "-+"))
+
 (use-package org-roam
   :pin melpa-stable
   :ensure t
   :custom
-  (org-roam-directory (file-truename "~/org-mode/org-roam-notes"))
+  (org-roam-directory (car (wtf-org-roam-graph 'wiki)))
+  (org-roam-db-location (cdr (wtf-org-roam-graph 'wiki)))
   (org-roam-completion-everywhere t)
   (org-roam-capture-templates
-   '(("d" "default" plain
+   `(("d" "default" plain
       "%?"
       :target (file+head
                "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}
 ")
+      :unnarrowed t)
+     ;; Pinned to the wiki by absolute path, so it files a page there whichever
+     ;; graph happens to be selected. See ~/src/wtf-wiki/CLAUDE.md for the page
+     ;; format; the :ID: drawer is org-roam's own doing.
+     ("w" "wtf-wiki page" plain
+      "%?"
+      :target (file+head
+               ,(expand-file-name "${wtf-wiki-slug}.org"
+                                  (car (wtf-org-roam-graph 'wiki)))
+               "#+title: ${title}\n#+filetags: :concept:\n\n")
       :unnarrowed t)))
 
   :bind (("C-c n l" . org-roam-buffer-toggle)
@@ -961,11 +1023,20 @@
          ("C-c n g" . org-roam-graph)
          ("C-c n i" . org-roam-node-insert)
          ("C-c n c" . org-roam-capture)
+         ("C-c n G" . wtf-org-roam-switch-graph)
          ;; Dailies
          ("C-c n j" . org-roam-dailies-capture-today)
          :map org-mode-map
          ("C-M-i" . completion-at-point)
          )
+  :init
+  ;; The :bind autoloads above defer org-roam until a command needs it, which
+  ;; leaves both org-roam-db-autosync-mode and ~/src/wtf-wiki/bin/sync-emacs
+  ;; inert in a session that has not opened the graph yet -- sync-emacs sees
+  ;; org-roam-directory unbound and skips. Load it off the critical path
+  ;; instead, so startup stays fast but the database is being kept current.
+  (run-with-idle-timer 2 nil (lambda () (require 'org-roam)))
+
   :config
   ;; If you're using a vertical completion framework, you might want a more informative completion interface
   ;; (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
