@@ -143,7 +143,7 @@ Do something to crash and don't start emacs?
   ;; (set-face-attribute 'variable-pitch nil :family "Fira Code")
   ;; (set-face-attribute 'fixed-pitch nil :family "Fira Code")
   ;; (add-hook 'text-mode-hook #'variable-pitch-mode)
-    
+
   ;; Use a larger font on bigger monitors
   (if (> (display-pixel-width) 1440)
       (set-face-attribute 'default nil :height 200)
@@ -365,6 +365,46 @@ Deja Vu Serif
 
   ;; Ask before exiting emacs
   (setopt confirm-kill-emacs #'y-or-n-p)
+
+  ;; Re-read buffers whose file changed on disk. Tools outside emacs edit files
+  ;; underneath open buffers -- ~/src/wtf-wiki/bin/sync-emacs updates org-roam's
+  ;; database after Claude edits wiki pages, but the database is not the buffer.
+  (global-auto-revert-mode 1)
+
+  ;; Use the kqueue watches this build has rather than waking every 5 seconds
+  ;; forever to map over every buffer -- the server makes this a long-lived
+  ;; process, so that timer would otherwise never stop. Polling still happens
+  ;; once to install the watches, and is re-armed whenever a watch is missing
+  ;; or reports itself stopped. Caveat: a file on a macOS network mount under
+  ;; /Volumes gets a watch that may never fire, and polling no longer covers it.
+  (setopt auto-revert-avoid-polling t)
+
+  ;; ------- server -------
+  ;; Run the emacs server so emacsclient can reach this emacs
+  ;; (~/src/wtf-wiki/bin/sync-emacs needs it).
+  ;;
+  ;; The guard only keeps *Warnings* clean: server-start on a name another emacs
+  ;; already serves warns and leaves server-process nil, it does not take the
+  ;; socket over. The failure worth guarding against is the opposite one --
+  ;; whichever emacs owns the socket deletes it on the way out, and every emacs
+  ;; that skipped server-start at startup is left serving nothing, with no
+  ;; retry. A commit-message emacs (GIT_EDITOR, see Dotfiles/zshrc) that happens
+  ;; to start first is enough to cause it, and sync-emacs then reports no server
+  ;; and exits 0 forever. So re-check when idle and take the socket back.
+  (require 'server)
+
+  (defun wtf-claim-emacs-server ()
+    "Serve emacsclient from this emacs unless another emacs already does.
+  Also preloads org-roam on a short idle timer, but only in the emacs that took
+  the socket: sync-emacs reaches that one and no other, and it needs org-roam
+  loaded to see the graph at all.  Preloading everywhere would run a full
+  org-roam-db-sync in throwaway processes emacsclient can never reach."
+    (unless (server-running-p)
+      (server-start)
+      (run-with-idle-timer 2 nil (lambda () (require 'org-roam)))))
+
+  (wtf-claim-emacs-server)
+  (run-with-idle-timer 30 t #'wtf-claim-emacs-server)
 
   ;; Enable uppercasing and lowercasing on regions
   (put 'downcase-region 'disabled nil)
@@ -866,7 +906,7 @@ Deja Vu Serif
     "c" #'org-capture
     "l" #'org-store-link
     "s" #'org-babel-execute-src-block)
-    
+
   (defvar-keymap wtf-org-mode-prefix-map
     :doc "My prefix key map."
     "o" wtf-prefix-org-mode-global-map)
@@ -909,10 +949,16 @@ Deja Vu Serif
 
   ;; ------- Org Capture -------
   (setopt org-default-notes-file (concat org-directory "/notes.org"))
+  ;; Targets are relative filenames: org-capture-expand-file resolves those
+  ;; against org-directory itself. A (concat org-directory ...) form would not
+  ;; work here -- the list is quoted, so it never gets evaluated, and
+  ;; org-capture-expand-file has no branch for a form despite what its
+  ;; docstring says. It returns nil and capture fails with
+  ;; "Invalid file location: nil".
   (setopt org-capture-templates
-          '(("t" "Todo" entry (file+headline (concat org-directory "/gtd.org") "Tasks")
+          '(("t" "Todo" entry (file+headline "gtd.org" "Tasks")
              "* TODO %?\n %i\n")
-            ("l" "Link" plain (file (concat org-directory "/links.org"))
+            ("l" "Link" plain (file "links.org")
              "- %?\n %x\n")))
 #+end_src
 
@@ -1021,12 +1067,87 @@ Deja Vu Serif
 #+end_src
 ** org-roam
 
+Two separate graphs, each with its own database — otherwise they would both use
+=~/.emacs.d/org-roam.db=, and whichever synced last would overwrite the other's
+index. =wiki= is the default; =C-c n s= switches.
+
 #+begin_src emacs-lisp
+  (defvar wtf-org-roam-graphs
+    '((wiki  . ("~/src/wtf-wiki/wiki"       . "~/.emacs.d/org-roam-wtf-wiki.db"))
+      (notes . ("~/org-mode/org-roam-notes" . "~/.emacs.d/org-roam.db")))
+    "org-roam graphs to switch between, as NAME -> (DIRECTORY . DB-LOCATION).")
+
+  (defvar wtf-org-roam-default-graph 'wiki
+    "The graph in `wtf-org-roam-graphs' org-roam starts on.")
+
+  (defun wtf-org-roam-graph-paths (name)
+    "Return (DIRECTORY . DB-LOCATION) for the graph NAME, both expanded.
+  Named -paths to keep it distinct from `org-roam-graph', which draws the graph
+  rather than locating one."
+    (let ((entry (or (alist-get name wtf-org-roam-graphs)
+                     (user-error "Unknown org-roam graph: %s" name))))
+      (cons (file-truename (car entry)) (expand-file-name (cdr entry)))))
+
+  (defun wtf-org-roam-switch-graph (name)
+    "Point org-roam at the graph NAME and re-sync its database."
+    (interactive (list (intern (completing-read "org-roam graph: "
+                                                (mapcar #'car wtf-org-roam-graphs)
+                                                nil t))))
+    (let ((graph (wtf-org-roam-graph-paths name)))
+      ;; autosync watches org-roam-directory, so it has to be cycled to notice
+      ;; the new one; re-enabling it also syncs the newly selected database.
+      (org-roam-db-autosync-mode -1)
+      (setq org-roam-directory (car graph)
+            org-roam-db-location (cdr graph))
+      (org-roam-db-autosync-mode 1)
+      ;; Enabling the mode installs global hooks and syncs, but the per-buffer
+      ;; save-updater and completion functions hang off find-file-hook, so
+      ;; buffers already visiting the graph we just switched *to* never got
+      ;; them -- edits there would not reach the database. Arm them by hand.
+      ;; (Disabling does strip them, from the graph we are leaving, because the
+      ;; -1 above runs before the setq.)
+      (dolist (buf (org-roam-buffer-list))
+        (with-current-buffer buf
+          (org-roam-db-autosync--setup-file-h)))
+      (message "org-roam graph: %s" org-roam-directory)))
+
+  ;; wtf-wiki names its pages in kebab-case; org-roam's own ${slug} uses
+  ;; underscores.
+  (defun wtf-wiki-slug (node)
+    "Return NODE's title as a lowercase kebab-case slug.
+  May be empty -- a title with no alphanumerics leaves nothing to build from."
+    (string-trim
+     (replace-regexp-in-string
+      "-\\{2,\\}" "-"
+      (replace-regexp-in-string "[^[:alnum:]]" "-"
+                                (downcase (org-roam-node-title node))))
+     "-+" "-+"))
+
+  (defun wtf-wiki-capture-target ()
+    "Return the file the wiki node being captured should be created in.
+  A slug is not unique: \"C++\", \"C#\" and \"C\" all reduce to \"c\", and a
+  title with no alphanumerics reduces to nothing.  org-roam accepts both without
+  complaint -- file+head writes its header only when creating the file, so a
+  colliding title captures into an existing, unrelated page and adopts that
+  page's :ID:, while an empty slug quietly produces a hidden \".org\".  Refuse
+  both; the caller can retitle or edit the existing page."
+    (let* ((title (org-roam-node-title org-roam-capture--node))
+           (slug (wtf-wiki-slug org-roam-capture--node)))
+      (when (string-empty-p slug)
+        (user-error "No wiki filename can be built from the title %S" title))
+      (let ((path (expand-file-name (concat slug ".org")
+                                    (car (wtf-org-roam-graph-paths 'wiki)))))
+        (when (file-exists-p path)
+          (user-error "%s already exists -- retitle, or edit that page instead"
+                      (abbreviate-file-name path)))
+        path)))
+
   (use-package org-roam
     :pin melpa-stable
     :ensure t
     :custom
-    (org-roam-directory (file-truename "~/org-mode/org-roam-notes"))
+    (org-roam-directory (car (wtf-org-roam-graph-paths wtf-org-roam-default-graph)))
+    (org-roam-db-location (cdr (wtf-org-roam-graph-paths wtf-org-roam-default-graph)))
     (org-roam-completion-everywhere t)
     (org-roam-capture-templates
      '(("d" "default" plain
@@ -1034,6 +1155,16 @@ Deja Vu Serif
         :target (file+head
                  "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}
   ")
+        :unnarrowed t)
+       ;; wtf-wiki-capture-target returns an absolute path in the wiki, so this
+       ;; files a page there whichever graph happens to be selected. See
+       ;; ~/src/wtf-wiki/CLAUDE.md for the page format; the :ID: drawer is
+       ;; org-roam's own doing.
+       ("w" "wtf-wiki page" plain
+        "%?"
+        :target (file+head
+                 wtf-wiki-capture-target
+                 "#+title: ${title}\n#+filetags: :concept:\n\n")
         :unnarrowed t)))
 
     :bind (("C-c n l" . org-roam-buffer-toggle)
@@ -1041,12 +1172,62 @@ Deja Vu Serif
            ("C-c n g" . org-roam-graph)
            ("C-c n i" . org-roam-node-insert)
            ("C-c n c" . org-roam-capture)
+           ;; Not C-c n G: C-c n g is org-roam-graph, which draws a picture of
+           ;; the graph. Switching which one is live should not be a shift away
+           ;; from that.
+           ("C-c n s" . wtf-org-roam-switch-graph)
            ;; Dailies
            ("C-c n j" . org-roam-dailies-capture-today)
            :map org-mode-map
            ("C-M-i" . completion-at-point)
            )
     :config
+    ;; The :bind autoloads above defer org-roam until a command needs it, which
+    ;; leaves both org-roam-db-autosync-mode and ~/src/wtf-wiki/bin/sync-emacs
+    ;; inert in a session that has not opened the graph yet -- sync-emacs sees
+    ;; org-roam-directory unbound and skips. wtf-claim-emacs-server preloads it
+    ;; off the critical path, in the one emacs sync-emacs can actually reach.
+
+    ;; Indexing a file means visiting it, and org-roam-with-file calls
+    ;; hack-local-variables without binding enable-local-variables. The wiki
+    ;; graph is written by tooling summarising external sources, so a page can
+    ;; carry an `eval:' trailer it never meant to -- and the sync runs from a
+    ;; timer, so the prompt arrives detached from any file the user opened.
+    ;; Index without file-locals; org-roam forces org-mode anyway.
+    (defun wtf-org-roam-without-local-variables (fn &rest args)
+      "Apply FN to ARGS with file-local variables disabled."
+      (let ((enable-local-variables nil))
+        (apply fn args)))
+    (advice-add 'org-roam-db-update-file :around
+                #'wtf-org-roam-without-local-variables)
+
+    ;; org-roam-dailies-directory is relative to org-roam-directory, so making
+    ;; the wiki the default graph would silently move the journal into the wiki
+    ;; repo, whose pages are a concept-per-file schema a daily note does not
+    ;; fit. Dailies belong to the personal notes graph whichever graph is
+    ;; selected. Both variables have to be bound: org-roam-dailies--capture
+    ;; rebinds org-roam-directory itself but leaves org-roam-db-location alone,
+    ;; which would file the note in one graph and record it in the other's
+    ;; database.
+    (defun wtf-org-roam-dailies-in-notes-graph (fn &rest args)
+      "Apply FN to ARGS with org-roam pointed at the notes graph."
+      (let* ((graph (wtf-org-roam-graph-paths 'notes))
+             (org-roam-directory (car graph))
+             (org-roam-db-location (cdr graph)))
+        (apply fn args)))
+
+    ;; Every capture command routes through org-roam-dailies--capture, but the
+    ;; navigation commands do not: find-directory expands
+    ;; org-roam-dailies-directory against org-roam-directory itself, and
+    ;; goto-next-note reaches it through --daily-note-p and --list-files. Left
+    ;; alone they would open the wiki's dailies directory, or refuse a note in
+    ;; the notes graph as "not a daily-note". goto-previous-note needs no advice
+    ;; of its own -- it delegates to goto-next-note.
+    (dolist (fn '(org-roam-dailies--capture
+                  org-roam-dailies-find-directory
+                  org-roam-dailies-goto-next-note))
+      (advice-add fn :around #'wtf-org-roam-dailies-in-notes-graph))
+
     ;; If you're using a vertical completion framework, you might want a more informative completion interface
     ;; (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
     (org-roam-db-autosync-mode)
@@ -1055,15 +1236,6 @@ Deja Vu Serif
     )
 
 #+end_src
-
-Its value is
-(("d" "default" plain "%?" :target (file+head
-                                    "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}
-")
-  :unnarrowed t))
-
-  
-
 
 * macOS
 #+begin_src emacs-lisp
@@ -2022,7 +2194,7 @@ Its value is
 #+end_src
 
 ** mcp.el
-    
+
 #+begin_src emacs-lisp
   (use-package mcp
     :ensure t
@@ -2051,7 +2223,7 @@ More mcp servers to look at:
                                      :GRAPHLIT_ORGANIZATION_ID "your-organization-id"
                                      :GRAPHLIT_ENVIRONMENT_ID "your-environment-id"
                                      :GRAPHLIT_JWT_SECRET "your-jwt-secret"))))
-    
+
 
 ** Setup package
 #+begin_src emacs-lisp
