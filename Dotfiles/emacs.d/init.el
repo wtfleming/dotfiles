@@ -851,10 +851,16 @@
 
 ;; ------- Org Capture -------
 (setopt org-default-notes-file (concat org-directory "/notes.org"))
+;; Targets are relative filenames: org-capture-expand-file resolves those
+;; against org-directory itself. A (concat org-directory ...) form would not
+;; work here -- the list is quoted, so it never gets evaluated, and
+;; org-capture-expand-file has no branch for a form despite what its
+;; docstring says. It returns nil and capture fails with
+;; "Invalid file location: nil".
 (setopt org-capture-templates
-        '(("t" "Todo" entry (file+headline (concat org-directory "/gtd.org") "Tasks")
+        '(("t" "Todo" entry (file+headline "gtd.org" "Tasks")
            "* TODO %?\n %i\n")
-          ("l" "Link" plain (file (concat org-directory "/links.org"))
+          ("l" "Link" plain (file "links.org")
            "- %?\n %x\n")))
 
 ;; ------- Org agenda-------
