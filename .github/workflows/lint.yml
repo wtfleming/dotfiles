@@ -16,3 +16,22 @@ jobs:
 
       - name: validate claude settings.json
         run: jq empty Dotfiles/claude/settings.json
+
+      # init.el is generated from init.org but is the file sync-dotfiles.sh
+      # deploys, so a forgotten tangle ships a config the source no longer
+      # describes. Re-tangle and fail if anything moved.
+      #
+      # Delete the generated files first: tangling overwrites, so without this a
+      # target dropped from init.org would sit there stale and unnoticed. Stage
+      # before diffing, because plain `git diff` ignores untracked files -- a
+      # newly added :tangle target that was never committed would otherwise
+      # generate cleanly in CI and pass. Only these two files are removed;
+      # Dotfiles/emacs.d/ also holds hand-maintained assets.
+      - name: init.el and early-init.el match init.org
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq emacs-nox
+          rm -f Dotfiles/emacs.d/init.el Dotfiles/emacs.d/early-init.el
+          emacs -Q --batch -l ob-tangle --eval '(org-babel-tangle-file "Dotfiles/emacs.d/init.org")'
+          git add -A -- Dotfiles/emacs.d/
+          git diff --cached --exit-code -- Dotfiles/emacs.d/

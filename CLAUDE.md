@@ -38,6 +38,18 @@ home directory. Key consequences to keep in mind:
 - Work on a branch and open a PR to `main`; don't commit to `main` directly.
   Automated code review runs only on PRs, so a direct push gets no review. (The
   `lint` workflow runs on every push either way.)
+- **When you act on a review comment, reply to it on the PR saying what you did,
+  and resolve the thread.** A pushed fix with no reply leaves the reviewer — and
+  anyone reading the PR later — to diff the branch and guess which comment it
+  answered. Reply on the comment thread itself, not as a new top-level comment.
+  - Verify a finding before acting on it; automated reviewers are wrong often
+    enough that "it was reported" is not a reason to change code. Say in the
+    reply how it was verified, not just that it was fixed.
+  - Declining is a legitimate outcome. Reply with the reason and leave the
+    thread **open** for a human to weigh in — resolving is for comments actually
+    addressed, and self-resolving a disagreement hides it.
+  - Replies are public on this repo. Say what changed and why; don't paste
+    internal reasoning, paths outside the repo, or machine-specific output.
 
 ## Conventions
 
