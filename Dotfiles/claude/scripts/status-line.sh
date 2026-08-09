@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# Status line: model | repo:branch | PR | context bar | rate limit | lines changed
+# Status line: model | repo:branch | context bar | rate limit | lines changed
+# No PR segment - Claude Code's own footer badge already shows it, as a link.
 # Runs on every assistant message, so the normal path spends exactly two child
 # processes: one jq, one git. A detached HEAD costs one more git.
 
@@ -22,7 +23,6 @@ $(jq -r '
     .context_window.used_percentage // "",
     .context_window.total_input_tokens // 0,
     .workspace.current_dir // .cwd // ".",
-    .pr.number // "",
     .rate_limits.five_hour.used_percentage // "",
     .cost.total_lines_added // 0,
     .cost.total_lines_removed // 0,
@@ -35,10 +35,9 @@ max_ctx=${fields[1]}
 used_pct=${fields[2]}
 in_tok=${fields[3]}
 cwd=${fields[4]}
-pr_num=${fields[5]}
-rl_pct=${fields[6]}
-lines_add=${fields[7]}
-lines_del=${fields[8]}
+rl_pct=${fields[5]}
+lines_add=${fields[6]}
+lines_del=${fields[7]}
 
 # Color codes
 BLUE='\033[34m'
@@ -61,12 +60,6 @@ if git_out=$(git -C "$cwd" rev-parse --show-toplevel --abbrev-ref HEAD 2>/dev/nu
         branch="${branch:0:$((MAX_BRANCH - 1))}…"
     fi
     git_info=" | ${repo}:${branch}"
-fi
-
-# Open PR for this branch. Claude Code drops .pr once the PR merges or closes.
-pr_info=""
-if [ -n "$pr_num" ]; then
-    pr_info=" | #${pr_num}"
 fi
 
 # --- line 2 -----------------------------------------------------------------
@@ -127,4 +120,4 @@ if [ "$lines_add" -gt 0 ] 2>/dev/null || [ "$lines_del" -gt 0 ] 2>/dev/null; the
     lines_info=" | +${lines_add}/-${lines_del}"
 fi
 
-printf '%b\n' "${model}${git_info}${pr_info} | ${context_info}${rl_info}${lines_info}"
+printf '%b\n' "${model}${git_info} | ${context_info}${rl_info}${lines_info}"
