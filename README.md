@@ -13,6 +13,12 @@ cd ~/src/dotfiles
 ./sync-dotfiles.sh                # copy configs into $HOME
 ```
 
+The Emacs config also expects the `wtf-wiki` repo at `~/src/wtf-wiki` — that is
+org-roam's default graph (see [Emacs server](#emacs-server) below). Clone it
+there too. Without it org-roam comes up pointing at a directory that does not
+exist, which reports nothing and simply looks like an empty graph; `C-c n s`
+switches to the personal notes graph in the meantime.
+
 ## How the sync works
 
 `sync-dotfiles.sh` **copies** files from this repo into the home directory —

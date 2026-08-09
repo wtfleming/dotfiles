@@ -95,7 +95,7 @@
 ;; (set-face-attribute 'variable-pitch nil :family "Fira Code")
 ;; (set-face-attribute 'fixed-pitch nil :family "Fira Code")
 ;; (add-hook 'text-mode-hook #'variable-pitch-mode)
-  
+
 ;; Use a larger font on bigger monitors
 (if (> (display-pixel-width) 1440)
     (set-face-attribute 'default nil :height 200)
@@ -302,6 +302,14 @@
 ;; underneath open buffers -- ~/src/wtf-wiki/bin/sync-emacs updates org-roam's
 ;; database after Claude edits wiki pages, but the database is not the buffer.
 (global-auto-revert-mode 1)
+
+;; Use the kqueue watches this build has rather than waking every 5 seconds
+;; forever to map over every buffer -- the server makes this a long-lived
+;; process, so that timer would otherwise never stop. Polling still happens
+;; once to install the watches, and is re-armed whenever a watch is missing
+;; or reports itself stopped. Caveat: a file on a macOS network mount under
+;; /Volumes gets a watch that may never fire, and polling no longer covers it.
+(setopt auto-revert-avoid-polling t)
 
 ;; ------- server -------
 ;; Run the emacs server so emacsclient can reach this emacs
@@ -827,7 +835,7 @@ org-roam-db-sync in throwaway processes emacsclient can never reach."
   "c" #'org-capture
   "l" #'org-store-link
   "s" #'org-babel-execute-src-block)
-  
+
 (defvar-keymap wtf-org-mode-prefix-map
   :doc "My prefix key map."
   "o" wtf-prefix-org-mode-global-map)
@@ -988,8 +996,10 @@ org-roam-db-sync in throwaway processes emacsclient can never reach."
 (defvar wtf-org-roam-default-graph 'wiki
   "The graph in `wtf-org-roam-graphs' org-roam starts on.")
 
-(defun wtf-org-roam-graph (name)
-  "Return (DIRECTORY . DB-LOCATION) for the graph NAME, both expanded."
+(defun wtf-org-roam-graph-paths (name)
+  "Return (DIRECTORY . DB-LOCATION) for the graph NAME, both expanded.
+Named -paths to keep it distinct from `org-roam-graph', which draws the graph
+rather than locating one."
   (let ((entry (or (alist-get name wtf-org-roam-graphs)
                    (user-error "Unknown org-roam graph: %s" name))))
     (cons (file-truename (car entry)) (expand-file-name (cdr entry)))))
@@ -999,7 +1009,7 @@ org-roam-db-sync in throwaway processes emacsclient can never reach."
   (interactive (list (intern (completing-read "org-roam graph: "
                                               (mapcar #'car wtf-org-roam-graphs)
                                               nil t))))
-  (let ((graph (wtf-org-roam-graph name)))
+  (let ((graph (wtf-org-roam-graph-paths name)))
     ;; autosync watches org-roam-directory, so it has to be cycled to notice
     ;; the new one; re-enabling it also syncs the newly selected database.
     (org-roam-db-autosync-mode -1)
@@ -1042,7 +1052,7 @@ both; the caller can retitle or edit the existing page."
     (when (string-empty-p slug)
       (user-error "No wiki filename can be built from the title %S" title))
     (let ((path (expand-file-name (concat slug ".org")
-                                  (car (wtf-org-roam-graph 'wiki)))))
+                                  (car (wtf-org-roam-graph-paths 'wiki)))))
       (when (file-exists-p path)
         (user-error "%s already exists -- retitle, or edit that page instead"
                     (abbreviate-file-name path)))
@@ -1052,8 +1062,8 @@ both; the caller can retitle or edit the existing page."
   :pin melpa-stable
   :ensure t
   :custom
-  (org-roam-directory (car (wtf-org-roam-graph wtf-org-roam-default-graph)))
-  (org-roam-db-location (cdr (wtf-org-roam-graph wtf-org-roam-default-graph)))
+  (org-roam-directory (car (wtf-org-roam-graph-paths wtf-org-roam-default-graph)))
+  (org-roam-db-location (cdr (wtf-org-roam-graph-paths wtf-org-roam-default-graph)))
   (org-roam-completion-everywhere t)
   (org-roam-capture-templates
    '(("d" "default" plain
@@ -1078,7 +1088,10 @@ both; the caller can retitle or edit the existing page."
          ("C-c n g" . org-roam-graph)
          ("C-c n i" . org-roam-node-insert)
          ("C-c n c" . org-roam-capture)
-         ("C-c n G" . wtf-org-roam-switch-graph)
+         ;; Not C-c n G: C-c n g is org-roam-graph, which draws a picture of
+         ;; the graph. Switching which one is live should not be a shift away
+         ;; from that.
+         ("C-c n s" . wtf-org-roam-switch-graph)
          ;; Dailies
          ("C-c n j" . org-roam-dailies-capture-today)
          :map org-mode-map
@@ -1103,6 +1116,23 @@ both; the caller can retitle or edit the existing page."
       (apply fn args)))
   (advice-add 'org-roam-db-update-file :around
               #'wtf-org-roam-without-local-variables)
+
+  ;; org-roam-dailies-directory is relative to org-roam-directory, so making
+  ;; the wiki the default graph would silently move the journal into the wiki
+  ;; repo, whose pages are a concept-per-file schema a daily note does not
+  ;; fit. Dailies belong to the personal notes graph whichever graph is
+  ;; selected. Both variables have to be bound: org-roam-dailies--capture
+  ;; rebinds org-roam-directory itself but leaves org-roam-db-location alone,
+  ;; which would file the note in one graph and record it in the other's
+  ;; database. Every dailies capture and goto command routes through here.
+  (defun wtf-org-roam-dailies-in-notes-graph (fn &rest args)
+    "Apply FN to ARGS with org-roam pointed at the notes graph."
+    (let* ((graph (wtf-org-roam-graph-paths 'notes))
+           (org-roam-directory (car graph))
+           (org-roam-db-location (cdr graph)))
+      (apply fn args)))
+  (advice-add 'org-roam-dailies--capture :around
+              #'wtf-org-roam-dailies-in-notes-graph)
 
   ;; If you're using a vertical completion framework, you might want a more informative completion interface
   ;; (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))

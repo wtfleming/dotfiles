@@ -16,3 +16,13 @@ jobs:
 
       - name: validate claude settings.json
         run: jq empty Dotfiles/claude/settings.json
+
+      # init.el is generated from init.org but is the file sync-dotfiles.sh
+      # deploys, so a forgotten tangle ships a config the source no longer
+      # describes. Re-tangle and fail if anything moved.
+      - name: init.el and early-init.el match init.org
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq emacs-nox
+          emacs -Q --batch -l ob-tangle --eval '(org-babel-tangle-file "Dotfiles/emacs.d/init.org")'
+          git diff --exit-code -- Dotfiles/emacs.d/
