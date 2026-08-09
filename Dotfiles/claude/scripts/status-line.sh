@@ -1,9 +1,10 @@
 #!/bin/bash
 
-# Two-line status line.
-#   line 1: model | repo:branch | PR
-#   line 2: context bar | rate limit | lines changed
+# Status line: model | repo:branch | PR | context bar | rate limit | lines changed
 # Runs on every assistant message, so it makes exactly two forks: one jq, one git.
+
+# Longest branch name shown before it is clipped to a leading fragment.
+MAX_BRANCH=20
 
 data=$(cat)
 
@@ -53,6 +54,9 @@ if git_out=$(git -C "$cwd" rev-parse --show-toplevel --abbrev-ref HEAD 2>/dev/nu
     branch=$(echo "$git_out" | sed -n 2p)
     if [ "$branch" = "HEAD" ]; then
         branch=$(git -C "$cwd" rev-parse --short HEAD 2>/dev/null || echo "detached")
+    fi
+    if [ ${#branch} -gt $MAX_BRANCH ]; then
+        branch="${branch:0:$((MAX_BRANCH - 1))}…"
     fi
     git_info=" | ${repo}:${branch}"
 fi
@@ -115,5 +119,4 @@ if [ "$lines_add" -gt 0 ] 2>/dev/null || [ "$lines_del" -gt 0 ] 2>/dev/null; the
     lines_info=" | +${lines_add}/-${lines_del}"
 fi
 
-printf '%b\n' "${model}${git_info}${pr_info}"
-printf '%b\n' "${context_info}${rl_info}${lines_info}"
+printf '%b\n' "${model}${git_info}${pr_info} | ${context_info}${rl_info}${lines_info}"
