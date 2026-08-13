@@ -78,6 +78,7 @@ brew install tree-sitter
 # Runtime helpers for my config
 brew install ispell    # flyspell needs a spell checker
 brew install pandoc    # markdown-mode uses this to preview markdown
+brew install graphviz  # org-roam-graph shells out to dot
 #+end_src
 
 Verify before going further. This must print a 0.25.x version with no
