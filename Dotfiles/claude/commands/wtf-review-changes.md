@@ -43,20 +43,22 @@ mandate to refactor — and leave committing to them.
 
 One reviewer covering six dimensions gives some of them a shallower pass than
 the others. This adds a dedicated pass per dimension, over the same diff the
-reviewer just read.
+reviewer just read — plus `reuse`, which the reviewer's checklist does not cover
+at all.
 
 Say up front how many agents you are about to spawn, so the cost is the user's
 to refuse before it is spent rather than after.
 
-Dispatch these six `wtf-lens` subagents **in parallel**, each with the scope and
-its own rubric and nothing else:
+Dispatch these seven `wtf-lens` subagents **in parallel**, each with the scope
+and its own rubric and nothing else:
 
 | Lens | Looks for |
 |---|---|
 | `correctness` | logic errors, off-by-one, wrong operator, null/empty/zero/max edges, races, unhandled promises, missing await |
 | `security` | unvalidated input at boundaries, hardcoded secrets, injection, sensitive data in logs and errors, authz gaps |
 | `tests` | new branches with no test, uncovered edge cases, tests that cannot fail, flakiness, fixtures that hide the bug |
-| `maintainability` | unclear names, duplicated logic, functions doing several things, unactionable error messages, comments explaining *what*, changes bundling unrelated concerns |
+| `maintainability` | unclear names, functions doing several things, unactionable error messages, comments explaining *what*, changes bundling unrelated concerns |
+| `reuse` | logic the repo already implements elsewhere, a second copy of something within the diff itself, a hand-rolled version of what a dependency already in the manifest provides, a new abstraction where an existing one would have served — and the reverse: code shared between two things that only look alike |
 | `performance` | N+1 queries, work inside loops that belongs outside, resource leaks, blocking calls in async paths, unbounded growth |
 | `dependencies` | new dependencies (necessity, maintenance, transitive weight), breaking changes to public interfaces, config formats or CLI flags, irreversible migrations, new failure paths nothing logs |
 
@@ -67,9 +69,17 @@ the tool that does it exactly.
 The `tests` lens judges coverage by ROI: a new branch with no test is a finding;
 trivial code without one is not.
 
+The `reuse` lens is the one lens that must search outside the diff to do its job
+at all — the duplicate it is looking for is, by definition, in code the change
+did not touch. Tell it that a finding names the existing implementation by
+`file:line`; "something like this probably already exists" is the shape this lens
+fails in, and it is not reportable. Duplication is also the finding most often
+worth leaving alone, so it judges by whether the two copies have to change
+together, not by how alike they look.
+
 ### Synthesise
 
-Merge the six reports with the reviewer's own. Deduplicate on file and line —
+Merge the seven reports with the reviewer's own. Deduplicate on file and line —
 where two agents found the same thing, keep the more specific statement and drop
 the other, rather than listing it twice with different wording. Where they
 disagree on tier, take the higher and say both lenses saw it.
@@ -80,7 +90,7 @@ are about to be retracted should not get a first airing.
 ### Verify
 
 Every finding so far was judged by the agent that wrote it, which is the
-position it is worst placed to judge from — and under `--deep` there are six
+position it is worst placed to judge from — and under `--deep` there are seven
 agents each under quiet pressure to justify their dispatch, which is exactly the
 pressure that produces plausible findings that are not real.
 
@@ -116,7 +126,7 @@ Suggestion format. Then:
 - how many findings were refuted, and why — a dropped finding is reported, not
   hidden
 - which lenses returned nothing; a silent lens is information, and hiding it
-  makes six agents look like one
+  makes seven agents look like one
 - if everything was refuted, say so plainly and treat it as a result worth
   doubting rather than a clean bill of health — that is also what a gate that
   never bites looks like
