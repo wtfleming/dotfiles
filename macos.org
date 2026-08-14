@@ -493,6 +493,13 @@ machine api.anthropic.com login apikey password <api key goes here>
   # YAML language server
   brew install yaml-language-server
 
+  # TypeScript language server
+  # Claude Code's typescript-lsp plugin needs this binary on PATH and does not install it
+  brew install typescript-language-server
+
+  # Structural search over a tree-sitter AST
+  brew install ast-grep
+
   # Glow is a terminal based markdown reader
   brew install glow
 

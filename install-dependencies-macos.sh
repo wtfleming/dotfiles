@@ -20,6 +20,16 @@ brew install shellcheck
 # YAML language server
 brew install yaml-language-server
 
+# TypeScript language server. Claude Code's typescript-lsp plugin needs this
+# binary on PATH and does not install it; without it the plugin loads with an
+# "Executable not found in $PATH" error and Claude falls back to grep for
+# finding definitions and references.
+brew install typescript-language-server
+
+# Structural search over a tree-sitter AST. Used by hand for review questions grep
+# is bad at, such as "does this shape already exist elsewhere" -- see todo.org.
+brew install ast-grep
+
 brew install awscli
 
 brew install curl git
