@@ -1,0 +1,240 @@
+* Read-only structural tooling for code review
+
+Ideas for tooling the review agents could call to answer questions they currently
+answer by grepping and guessing. Notes only -- nothing here is built.
+
+** Why this class of tooling fits the review agents specifically
+
+~wtf-lens~ and ~wtf-change-reviewer~ are forbidden from running the project's
+tests, linter or anything like ~knip~ (see the rules in
+Dotfiles/claude/agents/wtf-lens.md). The reason is that a review often runs
+against a branch that is not your own work, and executing that branch's config
+and plugins once per lens multiplies the exposure by eight.
+
+A parser does not execute the code it reads. So tree-sitter-class tooling is the
+one way to give the lenses mechanical precision without touching that rule. That
+is the whole argument for building any of this: not "more accurate" but
+"accurate in the one way that stays safe on someone else's branch".
+
+** Substrate: ast-grep, not tree-sitter directly
+
+~ast-grep~ is already installed (/opt/homebrew/bin/ast-grep, also as ~sg~). It is
+tree-sitter underneath, ships grammars for TS/TSX/Python/Go/Rust, and takes
+patterns that look like code rather than S-expressions:
+
+#+begin_src sh
+  ast-grep run -p 'await fetch($URL)' -l ts
+#+end_src
+
+The ~tree-sitter~ CLI is *not* on PATH on this machine even though
+install-dependencies-macos.sh asks for it, so going to raw tree-sitter means
+wrangling grammars for strictly less capability.
+
+Two loose ends:
+- ~ast-grep~ is an undeclared dependency -- installed here, absent from
+  install-dependencies-macos.sh.
+- The ~ast-grep@ast-grep-marketplace~ plugin is installed and unused.
+
+** TODO diff -> changed symbols
+
+Map each diff hunk's line range to its enclosing named node, so a lens is handed
+"these 7 functions, 2 classes and 1 exported const changed" instead of raw hunks.
+
+Least exciting, highest leverage: it is the input the other tools key off, and it
+improves scoping for all eight lenses rather than serving one.
+
+#+begin_src text
+  Write a read-only script at Dotfiles/claude/scripts/diff-symbols.sh that takes a
+  git range or path, and for every changed line uses ast-grep to find the smallest
+  enclosing named declaration (function, method, class, exported const). Print one
+  line per symbol: kind, name, file:startLine-endLine, and whether it is exported.
+  Deduplicate. Handle ts, tsx, js, py. If a file's language has no grammar
+  available, print it under a separate "not analyzed" heading rather than omitting
+  it silently. Keep it shellcheck-clean; CI lints Dotfiles/claude/scripts/*.sh.
+#+end_src
+
+** TODO structural clone detection
+
+For the ~reuse~ lens. Normalize AST subtrees (strip identifier names and
+literals), hash them, compare each function the diff adds against the rest of the
+repo. Textbook type-2 clone detection.
+
+This is the biggest upgrade available to any current lens, because duplication is
+the one question where the model's method is genuinely bad -- it can only grep for
+a name it has to guess.
+
+#+begin_src text
+  Write a read-only script that, given a git range, extracts each function the diff
+  adds, normalizes it (identifiers and literals replaced by placeholders, formatting
+  discarded), hashes it, and reports any function elsewhere in the repo with a
+  matching or near-matching hash. Output file:line for both copies plus the shared
+  shape. Require a minimum node count so one-line wrappers do not match everything.
+  Cap at the 10 largest matches and say how many were dropped.
+#+end_src
+
+** TODO public API surface diff
+
+For the ~dependencies~ lens. Extract exported declarations and their signatures at
+base and at head, diff the two sets. Drudgery for a model on a large diff, trivial
+mechanically.
+
+#+begin_src text
+  Write a read-only script that takes two git refs, extracts every exported
+  declaration and its signature from each side with ast-grep, and prints removed,
+  added and changed exports as three lists. Do not judge severity -- just report the
+  surface delta with file:line.
+#+end_src
+
+** TODO candidate finders for the resilience lens
+
+ast-grep patterns for empty ~catch~, ~catch~ returning a default, ~.then()~ with
+no ~.catch()~, client calls with no timeout or signal.
+
+Important framing: these surface *candidates for the lens to judge*, never
+violations. The "no linter lens" rule in the command is about not imitating a
+linter's verdicts; a query that lists sites while the model decides which matter
+stays on the right side of it.
+
+#+begin_src text
+  Assemble a set of ast-grep patterns for TypeScript that find: empty catch blocks,
+  catch blocks whose only statement returns a default or logs, fetch and axios calls
+  with a single argument (no options, so no signal or timeout), and promise chains
+  with .then and no .catch. Put them in an inline rules file, not one loaded from the
+  repo under review. Print matches as file:line plus the matched snippet, grouped by
+  pattern, with a per-pattern count.
+#+end_src
+
+** TODO changed symbol -> test mention
+
+For the ~tests~ lens. For each new exported symbol, does its name appear
+structurally in any test file? "New export, nothing in a test file references it"
+is a cheap strong signal and much better than a model's impression of coverage.
+
+** TODO env and config surface
+
+For the ~dependencies~ lens. New ~process.env.X~ reads in the diff versus what is
+present in .env.example and the deploy manifests. Catches the works-on-my-machine
+class of breakage.
+
+** Design decisions to settle before writing code
+
+*** Run it once, share the digest
+
+Eight lenses each parsing a monorepo is eight times the cost for identical output.
+Copy the shape the design already has: ~wtf-change-reviewer~ runs tests and lint
+once and the lenses read the results. The reviewer should build the index; the
+lenses consume it.
+
+*** Return evidence, never verdicts
+
+Output is file:line plus a snippet the agent can cite, because a lens must state a
+concrete failure. A tool that emits "3 issues found" has only relocated the
+fabrication risk from the model into the script.
+
+*** Be asymmetric about trust
+
+These tools are strong evidence for the positive -- here *is* a structural twin,
+here *is* a caller -- and weak for the negative. "No matches" can mean the grammar
+did not load, the extension was not handled, or the pattern was wrong.
+
+*** Distinguish "no matches" from "could not analyze", loudly
+
+The single most important constraint. A silent empty result is how a tool teaches
+an agent to state a confident false negative, which is the exact failure the
+orphan clause and the ~reuse~ note already guard against in prose. Same shape as
+the LSP findReferences bug (anthropics/claude-code#44767).
+
+*** Have findings carry the command that produced them
+
+Then a ~wtf-refuter~ can re-run the query instead of reasoning about the claim.
+Deterministic evidence collapses the verification step, which is the most
+expensive fan-out in a --deep run.
+
+*** Do not auto-load rule files from the branch under review
+
+If ast-grep picks up an sgconfig.yml from the branch being reviewed, that branch
+shapes its own review. Pass patterns inline from config we control.
+
+*** Cap and rank output
+
+A clone detector emitting 200 candidates will either be ignored or laundered into
+200 Suggestions. Top-N with a size floor, and log what was dropped.
+
+** Where it should live
+
+Start as scripts in Dotfiles/claude/scripts/, invoked via Bash: that is the
+existing precedent (status-line.sh), it is already deployed by a sync step, and CI
+shellchecks that directory.
+
+Promote to a small read-only MCP server only when we want it callable without
+Bash, or want per-tool descriptions and per-lens tool grants via agent
+frontmatter. Not the place to start -- MCP tool descriptions cost context in every
+session, including the ones not reviewing anything.
+
+If any of it stops being shell, note this repo has no test infrastructure and CI
+only shellchecks, so a Node implementation arrives unlinted and untested unless
+the workflow is extended.
+
+** Deliberately not building
+
+Complexity metrics, nesting depth, function length. Mechanizable, but they
+generate exactly the nitpicking the Suggestion tier already overproduces, and
+nobody needed a tool to notice a 300-line function.
+
+** First experiment -- done, 2026-08-14, against a large private TypeScript monorepo
+
+Ran the resilience patterns by hand with ast-grep 0.45.1 to see whether the hit
+lists read like findings or like noise. They read like noise, for two reasons
+worth knowing before building anything.
+
+*** Results
+
+| pattern                              | hits (ts + tsx)      |
+|--------------------------------------+----------------------|
+| try/catch with a structurally empty catch | 26 raw, 25 excluding tests |
+| ... of those, with an explanatory comment | 25 of 25             |
+| ... bare, no explanation             | 0                    |
+| catch that discards the error and returns a fallback | 58 sites in 50 files |
+| fetch with a single argument (no options, so no signal) | 1                |
+| fetch calls in total (control)       | 18                   |
+
+*** Lesson 1: scope to the diff, not the repo
+
+58 discard-and-return sites is not a candidate list, it is an inventory of a
+codebase. None of those sites are necessarily in the change under review, and a
+lens reporting pre-existing conditions is noise however precise the query was.
+
+This makes "diff -> changed symbols" a hard prerequisite rather than the boring
+first step: every pattern sweep has to intersect the changed line ranges before
+its output is worth a lens's attention.
+
+*** Lesson 2: precision is not yield
+
+Every one of the 25 empty catches carries a comment explaining why it is empty --
+which API can throw, why the failure is survivable, what the fallback behaviour
+is. The shape, written out generically:
+
+#+begin_src text
+  } catch {
+    // <the specific reason this call can fail> -- ignoring it is safe because
+    // <what happens instead>.
+  }
+#+end_src
+
+So the pattern was exactly right and found nothing worth reporting. Two things
+follow:
+
+- Filter out test, spec and e2e files. They were a visible fraction of the raw hits.
+- Comment presence inside the matched block is a strong "intentional" signal and a
+  cheap ranking heuristic. ast-grep's JSON carries the matched text, so this is a
+  ~jq~ filter, not more pattern work.
+
+*** Lesson 3: the control query is what makes an empty result trustworthy
+
+~fetch($URL)~ returned 1 hit, which could mean "this codebase always passes
+options" or "the pattern is broken". Running ~fetch($$$)~ as a control returned
+18, which settles it: the near-zero result is real.
+
+That is the "no matches vs could not analyze" note above, in practice. Any sweep
+we ship should carry its own control query and report both numbers, so an empty
+result arrives with evidence that the query works.
