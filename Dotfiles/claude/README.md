@@ -33,19 +33,23 @@ deliberately no linter lens — the reviewer already runs the real one.
 
 `reuse` and `resilience` are the two lenses with no counterpart in the checklist.
 
-`reuse` is also the only one that has to search outside the diff: the duplicate it
-hunts for lives in code the change did not touch. It reports a duplicate only by
-citing the existing implementation's `file:line`, and judges by whether the two
-copies have to change together rather than by how alike they look. The same bar
-applies to the orphan clause in `maintainability` — code the change left with no
-callers — since a wrong "nothing uses this" invites a deletion.
+`reuse` is also the only one whose subject sits outside the diff — both the
+duplicate it hunts for and the code the change orphaned live in files the change
+did not touch — which is why it owns both halves rather than splitting the orphan
+case into `maintainability`. One lens, one evidence bar: search before asserting an
+absence, cite what you found by `file:line`, and judge duplication by whether the
+two copies have to change together rather than by how alike they look.
 
 `resilience` asks what happens when something the code *calls* fails, hangs or
 half-succeeds: missing timeouts, retries without backoff, failures swallowed into
 a default that reads as success, half-completed work that leaves inconsistent
-state. `correctness` keeps the question of whether the code computes the right
-answer from the inputs it was given; the command spells out the boundary so the
-two do not merge.
+state.
+
+Both of its neighbours get an explicit boundary in the command, since a lens that
+bleeds into the one beside it produces the same finding twice in different words.
+`correctness` keeps whether the code computes the right answer from the inputs it
+was given. `performance` and `resilience` divide by path — the cost of the happy
+path against the behaviour of the failure path.
 
 There is no fix mode. The report lands in the conversation, so to act on it,
 say which findings — "fix the first two" — and the fixes happen in the main

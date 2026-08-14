@@ -57,11 +57,11 @@ and its own rubric and nothing else:
 | `correctness` | logic errors, off-by-one, wrong operator, null/empty/zero/max edges, races, unhandled promises, missing await |
 | `security` | unvalidated input at boundaries, hardcoded secrets, injection, sensitive data in logs and errors, authz gaps |
 | `tests` | new branches with no test, uncovered edge cases, tests that cannot fail, flakiness, fixtures that hide the bug |
-| `maintainability` | unclear names, functions doing several things, unactionable error messages, comments explaining *what*, changes bundling unrelated concerns, code the change orphaned but did not remove — a function whose last caller went away, a config key nothing reads, a flag now permanently on with its dead branch intact |
-| `resilience` | outbound calls with no timeout, retries with no backoff or no cap, a failure swallowed into a default that reads as success, multi-step work that leaves inconsistent state when it fails halfway, a retried write that is not idempotent, a call the code assumes cannot fail |
-| `reuse` | logic the repo already implements elsewhere, a second copy of something within the diff itself, a hand-rolled version of what a dependency already in the manifest provides, a new abstraction where an existing one would have served — and the reverse: code shared between two things that only look alike |
+| `maintainability` | unclear names, functions doing several things, unactionable error messages, comments explaining *what*, changes bundling unrelated concerns |
+| `resilience` | outbound calls with no timeout, retries with no backoff or no cap, a failure swallowed into a default that reads as success, multi-step work that leaves inconsistent state when it fails halfway, a retried write that is not idempotent, a call the code assumes cannot fail, a new failure path nothing logs |
+| `reuse` | logic the repo already implements elsewhere, a second copy of something within the diff itself, a hand-rolled version of what a dependency already in the manifest provides, a new abstraction where an existing one would have served, code shared between two things that only look alike — and code the change orphaned but did not remove: a function whose last caller went away, a config key nothing reads, a flag now permanently on with its dead branch intact |
 | `performance` | N+1 queries, work inside loops that belongs outside, resource leaks, blocking calls in async paths, unbounded growth |
-| `dependencies` | new dependencies (necessity, maintenance, transitive weight), breaking changes to public interfaces, config formats or CLI flags, irreversible migrations, new failure paths nothing logs |
+| `dependencies` | new dependencies (necessity, maintenance, transitive weight), breaking changes to public interfaces, config formats or CLI flags, irreversible migrations |
 
 There is deliberately no linter lens. The reviewer already ran the project's real
 linter and reported it; a model imitating static analysis is strictly worse than
@@ -70,16 +70,25 @@ the tool that does it exactly.
 The `tests` lens judges coverage by ROI: a new branch with no test is a finding;
 trivial code without one is not.
 
-The `reuse` lens is the one lens that must search outside the diff to do its job
-at all — the duplicate it is looking for is, by definition, in code the change
-did not touch. Tell it that a finding anchors at the changed code and cites the
-existing implementation by `file:line` in the finding itself — the anchor is the
-line the reader has to act on, and anchoring at the pre-existing copy instead
-would collapse two added duplicates into one finding when the reports are
-deduplicated below. "Something like this probably already exists" is the shape
-this lens fails in, and it is not reportable. Duplication is also the finding most often
-worth leaving alone, so it judges by whether the two copies have to change
-together, not by how alike they look.
+`reuse` is the one lens whose subject sits outside the diff: both the duplicate it
+looks for and the code the change orphaned live in files the change did not touch.
+Every finding it writes is therefore an assertion about code nobody in this run
+has been asked to read, which sets its evidence bar. Search before asserting an
+absence, and count re-exports, string-keyed lookups and dynamic dispatch as
+callers. "Something like this probably already exists" and "nothing uses this any
+more" are the two shapes this lens fails in, and neither is reportable without the
+search behind it. The orphan half is the more dangerous, because a wrong claim
+there invites a deletion.
+
+The two halves anchor differently. A duplication finding anchors at the changed
+code and cites the existing implementation by `file:line` in the finding itself —
+the anchor is the line the reader has to act on, and anchoring at the pre-existing
+copy instead would collapse two added duplicates into one finding when the reports
+are deduplicated below. An orphan finding anchors at the orphaned code, since that
+is the line that gets deleted.
+
+Duplication is also the finding most often worth leaving alone, so it judges by
+whether the two copies have to change together, not by how alike they look.
 
 `correctness` and `resilience` are next to each other and must not merge.
 `correctness` asks whether the code computes the right answer from the inputs it
@@ -87,11 +96,13 @@ was handed; `resilience` asks what happens when something the code *calls* fails
 hangs or half-succeeds. A missing `await` stays with `correctness` — it is wrong
 regardless of whether the callee misbehaves.
 
-The orphan clause in `maintainability` is a claim about code outside the diff, so
-it carries the same bar as `reuse`: search for the remaining callers before
-saying there are none, and count re-exports, string-keyed lookups and dynamic
-dispatch as callers. A wrong "nothing uses this any more" invites a deletion, so
-this is the one `maintainability` finding that can cause damage.
+`performance` and `resilience` divide by path, not by subject. `performance` owns
+the happy path — what this costs when it works and the input is large.
+`resilience` owns the failure path. A leaked handle belongs to whichever path
+leaks it: not closed on the way through is `performance`, skipped because an
+exception jumped over the cleanup is `resilience`. A retry that hammers a
+struggling dependency is `resilience`; the loop that makes each attempt expensive
+is `performance`.
 
 ### Synthesise
 
