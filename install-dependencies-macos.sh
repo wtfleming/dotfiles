@@ -26,6 +26,10 @@ brew install yaml-language-server
 # finding definitions and references.
 brew install typescript-language-server
 
+# Structural search over a tree-sitter AST. Used by hand for review questions grep
+# is bad at, such as "does this shape already exist elsewhere" -- see todo.org.
+brew install ast-grep
+
 brew install awscli
 
 brew install curl git

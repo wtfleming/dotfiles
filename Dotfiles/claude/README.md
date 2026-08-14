@@ -22,7 +22,7 @@ reviews the diff against the checklist, and prints findings as Critical, Warning
 or Suggestion — then stops. The reviewer has no `Edit` or `Write`, so a review
 cannot change anything.
 
-`--deep` adds eight `wtf-lens` agents in parallel, one per dimension: correctness,
+`--deep` adds eight `wtf-lens` agents in parallel, one per lens: correctness,
 security, tests, maintainability, performance, dependencies, reuse, resilience. Their reports are
 merged and
 deduplicated with the reviewer's, then verified before printing: one

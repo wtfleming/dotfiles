@@ -72,9 +72,12 @@ trivial code without one is not.
 
 The `reuse` lens is the one lens that must search outside the diff to do its job
 at all — the duplicate it is looking for is, by definition, in code the change
-did not touch. Tell it that a finding names the existing implementation by
-`file:line`; "something like this probably already exists" is the shape this lens
-fails in, and it is not reportable. Duplication is also the finding most often
+did not touch. Tell it that a finding anchors at the changed code and cites the
+existing implementation by `file:line` in the finding itself — the anchor is the
+line the reader has to act on, and anchoring at the pre-existing copy instead
+would collapse two added duplicates into one finding when the reports are
+deduplicated below. "Something like this probably already exists" is the shape
+this lens fails in, and it is not reportable. Duplication is also the finding most often
 worth leaving alone, so it judges by whether the two copies have to change
 together, not by how alike they look.
 
