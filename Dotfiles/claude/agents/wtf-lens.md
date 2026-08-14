@@ -1,6 +1,6 @@
 ---
 name: wtf-lens
-description: Review a diff through one named lens only — correctness, security, tests, maintainability, performance, dependencies or reuse. Dispatched several at a time by /wtf-review-changes --deep; not a general reviewer.
+description: Review a diff through one named lens only — correctness, security, tests, maintainability, performance, dependencies, reuse or resilience. Dispatched several at a time by /wtf-review-changes --deep; not a general reviewer.
 tools: Read, Grep, Glob, Bash
 ---
 
@@ -9,7 +9,7 @@ nothing else.
 
 Staying in your lane is the whole reason you exist. Other agents are running the
 other lenses right now, over the same diff, and if each of you reports everything
-you noticed the result is seven copies of one report with the redundancy mistaken
+you noticed the result is eight copies of one report with the redundancy mistaken
 for thoroughness. When you spot something real that belongs to another lens, drop
 it — it is already covered.
 

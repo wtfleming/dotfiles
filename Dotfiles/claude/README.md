@@ -22,19 +22,30 @@ reviews the diff against the checklist, and prints findings as Critical, Warning
 or Suggestion — then stops. The reviewer has no `Edit` or `Write`, so a review
 cannot change anything.
 
-`--deep` adds seven `wtf-lens` agents in parallel, one per dimension: correctness,
-security, tests, maintainability, performance, dependencies, reuse. Their reports are merged and
+`--deep` adds eight `wtf-lens` agents in parallel, one per dimension: correctness,
+security, tests, maintainability, performance, dependencies, reuse, resilience. Their reports are
+merged and
 deduplicated with the reviewer's, then verified before printing: one
 `wtf-refuter` per Critical and Warning finding, each told to argue the finding
 is *wrong* and to answer refuted when unsure. Suggestions arrive marked
 `(unverified)` rather than spending an agent apiece on nits. There is
 deliberately no linter lens — the reviewer already runs the real one.
 
-`reuse` is the only lens with no counterpart in the checklist, and the only one
-that has to search outside the diff: the duplicate it hunts for lives in code the
-change did not touch. It reports a duplicate only by citing the existing
-implementation's `file:line`, and judges by whether the two copies have to change
-together rather than by how alike they look.
+`reuse` and `resilience` are the two lenses with no counterpart in the checklist.
+
+`reuse` is also the only one that has to search outside the diff: the duplicate it
+hunts for lives in code the change did not touch. It reports a duplicate only by
+citing the existing implementation's `file:line`, and judges by whether the two
+copies have to change together rather than by how alike they look. The same bar
+applies to the orphan clause in `maintainability` — code the change left with no
+callers — since a wrong "nothing uses this" invites a deletion.
+
+`resilience` asks what happens when something the code *calls* fails, hangs or
+half-succeeds: missing timeouts, retries without backoff, failures swallowed into
+a default that reads as success, half-completed work that leaves inconsistent
+state. `correctness` keeps the question of whether the code computes the right
+answer from the inputs it was given; the command spells out the boundary so the
+two do not merge.
 
 There is no fix mode. The report lands in the conversation, so to act on it,
 say which findings — "fix the first two" — and the fixes happen in the main
@@ -66,7 +77,7 @@ allowed to be red — and it does not hunt bugs.
 | Agent | Role |
 |---|---|
 | `wtf-change-reviewer` | scope, tests, lint, the full review |
-| `wtf-lens` | one dimension only; dispatched seven times by `--deep` |
+| `wtf-lens` | one dimension only; dispatched eight times by `--deep` |
 | `wtf-refuter` | tries to kill a single finding |
 | `wtf-design-reviewer` | shape of the change, Suggestion-only; dispatched by `/wtf-design-review` |
 
@@ -80,12 +91,12 @@ that has them. Edits only ever happen in the main session, one approval at a tim
   without touching an agent definition.
 - A project's own `REVIEW.md`, `AGENTS.md` or `CLAUDE.md` wins where it conflicts.
   `REVIEW.md` is the name Anthropic's own code review reads.
-- The seven `--deep` rubrics live in the command, not in `wtf-lens`, so they can be
+- The eight `--deep` rubrics live in the command, not in `wtf-lens`, so they can be
   retuned without editing an agent.
 
 ### Cost
 
-`--deep` spawns one reviewer, seven lenses, and one refuter per verified finding —
+`--deep` spawns one reviewer, eight lenses, and one refuter per verified finding —
 tens of agents on a real branch. It announces each fan-out before spawning it, so
 the spend can be refused. For very large diffs, the built-in `/code-review ultra`
 is the maintained alternative.
