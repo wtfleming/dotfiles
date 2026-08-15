@@ -17,6 +17,7 @@
   var hoverDistrict = null;
   var pointer = { down: false, x: 0, y: 0, moved: 0 };
   var pinch = null;
+  var flyTarget = null;   // chip-click destination, held until the camera lands
   var viewW = 0, viewH = 0;
 
   World.build();
@@ -105,6 +106,7 @@
   function defaultScale() { return viewW <= 900 ? 0.85 : 1.15; }
 
   function fitWorld() {
+    flyTarget = null;
     var w = (World.GW + World.GH) * Iso.TW;
     var h = (World.GW + World.GH) * Iso.TH + 160;
     var r = availableRect();
@@ -134,6 +136,7 @@
   }
 
   function zoomAt(mx, my, factor) {
+    flyTarget = null;   /* a deliberate zoom also cancels a fly-to */
     var px = (mx - cam.ox) / cam.scale, py = (my - cam.oy) / cam.scale;
     /* the low end has to reach far enough for the whole town to fit a phone */
     cam.scale = clamp(cam.scale * factor, 0.12, 2.4);
@@ -162,6 +165,7 @@
   /* ----------------------------------------------------------------- input */
 
   canvas.addEventListener('pointerdown', function (e) {
+    flyTarget = null;   /* the reader taking the camera cancels a fly-to */
     canvas.setPointerCapture(e.pointerId);
     pointer.down = true;
     pointer.x = e.clientX;
@@ -311,13 +315,19 @@
 
     Sim.update(dt);
 
-    var target = UI.takeFlyTo();
-    if (target) {
-      var p = Iso.project(target.x, target.y, 0);
-      cam.x += (p.x - cam.x) * 0.5;
-      cam.y += (p.y - cam.y) * 0.5;
-      cam.scale += (1.15 - cam.scale) * 0.5;
-      setFollow(false);
+    /* takeFlyTo() hands the target over once; keep it until the camera has
+       actually arrived, or a chip click moves the camera exactly one frame
+       and strands it halfway to the district. */
+    var requested = UI.takeFlyTo();
+    if (requested) { flyTarget = requested; setFollow(false); }
+    if (flyTarget) {
+      var p = Iso.project(flyTarget.x, flyTarget.y, 0);
+      var fk = 1 - Math.pow(0.02, dt);
+      cam.x += (p.x - cam.x) * fk;
+      cam.y += (p.y - cam.y) * fk;
+      cam.scale += (1.15 - cam.scale) * fk;
+      if (Math.hypot(p.x - cam.x, p.y - cam.y) < 1 &&
+          Math.abs(1.15 - cam.scale) < 0.01) flyTarget = null;
     } else if (follow) {
       var lp = vanTarget();
       /* ~0.3 s time constant: reads as a camera easing along rather than a

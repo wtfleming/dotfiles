@@ -25,7 +25,7 @@ Open `index.html` in a browser. That's it.
 If you'd rather serve it:
 
 ```
-python3 -m http.server 8000
+python3 -m http.server --bind 127.0.0.1 8000
 # → http://localhost:8000
 ```
 
@@ -142,9 +142,17 @@ van you are meant to be watching.
 # One file at a time: `node --check js/*.js` only checks the first one.
 fail=0; for f in js/*.js; do node --check "$f" || fail=1; done; test "$fail" -eq 0
 
-# Then serve it and run the skill's smoke test against the URL.
-python3 -m http.server 8000 &
-node path/to/wtf-explainer/scripts/smoke.mjs http://localhost:8000/
+# Then serve it and run the skill's smoke test against the URL. Check the
+# bind and kill the server after — a stale listener from an earlier run
+# answers on the same port and the smoke test passes against the wrong code.
+python3 -m http.server --bind 127.0.0.1 8000 & pid=$!
+sleep 1
+if kill -0 "$pid" 2>/dev/null; then
+  node path/to/wtf-explainer/scripts/smoke.mjs http://localhost:8000/
+  kill "$pid"
+else
+  echo "FAIL: server did not start (port 8000 busy?)" >&2
+fi
 ```
 
 The smoke test fails on any console error, steps the van through every station,

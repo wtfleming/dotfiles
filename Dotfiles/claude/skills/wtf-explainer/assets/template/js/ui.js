@@ -207,7 +207,10 @@
     lastPaint = now;
 
     var s = Sim.state;
-    var plan = s.plan || Sim.planNow();
+    /* Always the live plan: paid bars prefer s.charged, so recomputing is
+       safe, and a slider dragged mid-stop must move the un-charged bars
+       now, not at the next station. */
+    var plan = Sim.planNow();
 
     el['play-glyph'].textContent = s.paused || s.finished ? '▶' : '❚❚';
 
@@ -303,7 +306,13 @@
     run: function () { Sim.run(); paint(true); },
     resetAll: function () { Sim.replayTour(); Sim.run(); paint(true); },
     showDistrict: showDistrict,
-    unpin: function () { pinnedDistrict = null; updateChips(); },
+    unpin: function () {
+      pinnedDistrict = null;
+      /* on a finished run no station event will re-fire, so restore the
+         done card here or the reader is stranded on the stale write-up */
+      if (Sim.state.finished) writeDone();
+      updateChips();
+    },
     activeDistrict: function () { return pinnedDistrict || activeDistrict; },
     takeFlyTo: function () { var f = flyTo; flyTo = null; return f; },
     el: el

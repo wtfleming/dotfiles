@@ -54,6 +54,16 @@ const out = flag('out', 'smoke.png');
 const maxSteps = Number(flag('steps', 60));
 const dpr = Number(flag('dpr', 1));
 
+/* page.evaluate has no timeout, so a page whose main thread is wedged — an
+   unbounded loop in the first animation frame gets past goto's load event —
+   blocks the first evaluate forever and the gate hangs instead of failing.
+   The margin covers goto (30s), the step loop and the screenshot; unref()
+   keeps a clean finish from waiting on it. */
+setTimeout(() => {
+  console.error(`FAIL: smoke timed out — is the page's main thread wedged?`);
+  process.exit(1);
+}, 1000 * maxSteps + 60_000).unref();
+
 const fail = [];
 const browser = await chromium.launch();
 const page = await browser.newPage({

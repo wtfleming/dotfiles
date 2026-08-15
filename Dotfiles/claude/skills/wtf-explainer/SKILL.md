@@ -116,7 +116,7 @@ Copy the working template, then replace the domain:
 
 ```bash
 cp -r <skill-dir>/assets/template my-explainer
-cd my-explainer && python3 -m http.server 8000
+cd my-explainer && python3 -m http.server --bind 127.0.0.1 8000
 ```
 
 The template is **PacketPost**, a complete small explainer of what a web
@@ -139,8 +139,18 @@ a clean-looking page. Always run this before reporting done:
 fail=0; for f in js/*.js; do node --check "$f" || fail=1; done; test "$fail" -eq 0
 
 # console errors, every station, and a screenshot. Needs a served URL.
-python3 -m http.server 8000 &
-node "$SKILL_DIR/scripts/smoke.mjs" http://localhost:8000/
+# Loopback only, check the bind, and kill the server after: a stale listener
+# from an earlier run answers on the same port and smoke tests the wrong
+# project — every project from this skill exposes the same globals, so that
+# false PASS looks exactly like a real one.
+python3 -m http.server --bind 127.0.0.1 8000 & pid=$!
+sleep 1
+if kill -0 "$pid" 2>/dev/null; then
+  node "$SKILL_DIR/scripts/smoke.mjs" http://localhost:8000/
+  kill "$pid"
+else
+  echo "FAIL: server did not start (port 8000 busy?)" >&2
+fi
 ```
 
 `$SKILL_DIR` is wherever this skill is installed — use `${CLAUDE_SKILL_DIR}`,
@@ -193,5 +203,8 @@ Each of these cost someone an afternoon. The references explain them properly.
 ---
 
 Adapted from [learnscape](https://github.com/LaurentiuGabriel/learnscape) by
-Laurentiu Gabriel (MIT — see `LICENSE`); the template and engine files are
-vendored unchanged.
+Laurentiu Gabriel (MIT — see `LICENSE`). The template is vendored from
+upstream **with local fixes** — `main.js`, `sim.js`, `ui.js`, `index.html`
+and the template README have diverged where review found defects, so do not
+"refresh" them from upstream: that silently reverts the fixes. The skill
+directory's git history is the divergence record.

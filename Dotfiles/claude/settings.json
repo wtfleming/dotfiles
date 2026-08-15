@@ -44,7 +44,7 @@
       "Bash(pnpm lint)",
       "Bash(pnpm test:*)",
       "Bash(pnpm why:*)",
-      "Bash(python3 -m http.server:*)",
+      "Bash(python3 -m http.server --bind 127.0.0.1:*)",
       "Bash(readlink *)",
       "Bash(realpath *)",
       "Bash(rg:*)",

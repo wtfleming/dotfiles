@@ -118,10 +118,15 @@ or "visualise this pipeline"; a single chart is `dataviz`'s job and a static
 diagram is `artifact-diagramming`'s.
 
 Adapted from [learnscape](https://github.com/LaurentiuGabriel/learnscape)
-(MIT). The engine files and the PacketPost template under `assets/template/`
-are vendored unchanged — the skill's build order has projects copy them
-rather than rewrite them. Local changes: a generalized SKILL.md, a
-knowledge-base phase before any code (`NOTES.md`, reviewed for accuracy,
-feeding the fidelity ledger), the flat-schematic form
+(MIT). The PacketPost template under `assets/template/` is vendored from
+upstream **with local fixes** where review found defects — `main.js`
+(browser-shortcut and pinch guards, fly-to that arrives), `sim.js` (tour
+completion aware of the cache-hit branch), `ui.js` (pinned card and live
+plan), `index.html` (ledger wording) — so refreshing those files from
+upstream silently reverts the fixes; the skill directory's git history is
+the divergence record. The skill's build order still has projects copy the
+engine files rather than rewrite them. Local additions: a generalized
+SKILL.md, a knowledge-base phase before any code (`NOTES.md`, reviewed for
+accuracy, feeding the fidelity ledger), the flat-schematic form
 (`references/flat-format.md`), and a verification fallback via the
 chrome-devtools MCP for machines without Playwright.
