@@ -171,6 +171,7 @@
   });
 
   canvas.addEventListener('pointermove', function (e) {
+    if (pinch) return; /* two fingers are a zoom; nothing pans or hovers */
     if (pointer.down) {
       var dx = e.clientX - pointer.x, dy = e.clientY - pointer.y;
       pointer.moved += Math.abs(dx) + Math.abs(dy);
@@ -216,6 +217,10 @@
 
   canvas.addEventListener('touchstart', function (e) {
     if (e.touches.length === 2) {
+      /* the second finger turns the gesture into a zoom; end the pan the
+         first finger started, or both transforms fight over the camera */
+      pointer.down = false;
+      canvas.classList.remove('dragging');
       pinch = {
         d: touchDist(e.touches),
         x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
@@ -260,6 +265,8 @@
 
   document.addEventListener('keydown', function (e) {
     if (e.target.tagName === 'INPUT') return;
+    /* leave browser shortcuts alone: Cmd+R must reload, not reset the town */
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
     switch (e.key.toLowerCase()) {
       case ' ': e.preventDefault(); Sim.toggle(); UI.paint(true); break;
       case 's': Sim.step(); break;

@@ -191,9 +191,19 @@
       charge('render');
       state.requests++;
       state.lastTotal = state.elapsedMs;
-      /* One complete trip visits every district, so the tour is over. */
-      tour.done = true;
-      state.tourDone = true;
+      /* The tour is over once every district has been explained — not merely
+         once a trip has finished, because a cache-hit trip skips Origin Works
+         and Records Hall. `render` is the station firing right now; update()
+         marks it seen only after this op returns, so count it here. */
+      var allSeen = true;
+      for (var i = 0; i < World.districts.length; i++) {
+        var did = World.districts[i].id;
+        if (did !== 'render' && !tour.seen[did]) { allSeen = false; break; }
+      }
+      if (allSeen) {
+        tour.done = true;
+        state.tourDone = true;
+      }
       /* Everything a browser keeps between requests is now warm. This is the
          whole reason a second page view is faster than the first. */
       state.warmDns = true;

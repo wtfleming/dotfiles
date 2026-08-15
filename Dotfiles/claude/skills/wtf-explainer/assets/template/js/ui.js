@@ -144,7 +144,8 @@
       var d = World.districtById[id];
       if (d) writeCard(d, station);
     }
-    if (station === 'done') writeDone();
+    /* a pinned write-up survives the end of the run, same as any station */
+    if (station === 'done' && !pinnedDistrict) writeDone();
     paint(true);
   }
 
