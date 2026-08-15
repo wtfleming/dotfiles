@@ -63,6 +63,12 @@ to point their attention.
 
 ## Also worth naming
 
+Two supplementary labels. They do not replace the four buckets — every
+mechanism quantity still sorts into exactly one of the four — but a ledger may
+add them, and a bucket with nothing in it may be omitted, knowingly.
+PacketPost's ledger, for instance, has an Indicative section and no
+Deliberately-faked one, because nothing in it is faked.
+
 **Indicative** — dimensions of machinery, part counts, tolerances quoted in
 write-ups, anything that is plausible rather than sourced.
 

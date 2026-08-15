@@ -159,7 +159,7 @@
        each round. Time to first byte, the completion time, the round-trip count and the
        latency-bound / bandwidth-bound verdict all fall out of that arithmetic. It is all in
        <code>js/model.js</code>, about 120 lines.</p>
-    <p><strong>Assumed:</strong> that the resolver sits as far away as the server; that the
+    <p><strong>Assumed:</strong> that the resolver sits as far away as the edge; that the
        origin sits twice as far as the edge; that headers cost 800 bytes compressed; that one
        connection carries everything (a real page opens several and fetches dozens of files
        over them).</p>

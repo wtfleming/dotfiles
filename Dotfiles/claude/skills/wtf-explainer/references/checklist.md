@@ -99,8 +99,9 @@ at the end of `references/flat-format.md`.
 
 ## Verification
 
-- [ ] `for f in js/*.js; do node --check "$f"; done` passes — a loop, because
-      `node --check` only checks its first argument.
+- [ ] `fail=0; for f in js/*.js; do node --check "$f" || fail=1; done;
+      test "$fail" -eq 0` passes — a loop, because `node --check` only checks
+      its first argument, and a flag, so one failure fails the whole block.
 - [ ] `scripts/smoke.mjs` reports zero console errors and zero page errors.
 - [ ] The smoke test reaches every station and finishes the run.
 - [ ] **The screenshot has been looked at.** Occlusion and label collisions raise

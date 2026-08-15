@@ -12,7 +12,7 @@ nothing about the network changed between them.
 
 Pure static site. No build step, no dependencies, no network calls.
 
-> **This is the reference example for the `isometric-explainer` skill.** It is a
+> **This is the reference example for the `wtf-explainer` skill.** It is a
 > complete, working explainer, not a scaffold. Copy the directory and replace
 > `js/model.js`, `js/world.js`, the landmark functions in `js/render.js` and the
 > panels in `js/ui.js` with your own subject. `js/iso.js`, `js/sim.js` and
@@ -25,7 +25,7 @@ Open `index.html` in a browser. That's it.
 If you'd rather serve it:
 
 ```
-python -m http.server 8000
+python3 -m http.server 8000
 # → http://localhost:8000
 ```
 
@@ -58,7 +58,7 @@ because the arithmetic moved.
 It is built to be read, not raced. The first time the van reaches a station it
 stops for 9–26 seconds, scaled to the length of that station's write-up, and a
 progress bar under the panel text shows how much of the stop is left. The first
-request therefore takes about **two and a half minutes**: that is the guided tour.
+request therefore takes about **four minutes**: that is the guided tour.
 
 After every station has been explained there is nothing new to read, so the town
 switches to a watchable pace, and the warm second and third requests run faster
@@ -140,11 +140,11 @@ van you are meant to be watching.
 
 ```
 # One file at a time: `node --check js/*.js` only checks the first one.
-for f in js/*.js; do node --check "$f" || echo "FAIL $f"; done
+fail=0; for f in js/*.js; do node --check "$f" || fail=1; done; test "$fail" -eq 0
 
 # Then serve it and run the skill's smoke test against the URL.
-python -m http.server 8000 &
-node path/to/isometric-explainer/scripts/smoke.mjs http://localhost:8000/
+python3 -m http.server 8000 &
+node path/to/wtf-explainer/scripts/smoke.mjs http://localhost:8000/
 ```
 
 The smoke test fails on any console error, steps the van through every station,

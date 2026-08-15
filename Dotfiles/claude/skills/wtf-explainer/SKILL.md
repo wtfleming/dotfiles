@@ -87,9 +87,10 @@ decided there, not in the rendering.
 
 ## Layout
 
-Seven files, in dependency order. Keep these names and this split — it is the
+Nine files, in dependency order. Keep these names and this split — it is the
 same shape in every project built from this skill, and the whole skill assumes
-it. (The flat form drops `iso.js`; see `references/flat-format.md`.)
+it. (The flat form drops `iso.js`, leaving eight; see
+`references/flat-format.md`.)
 
 ```
 index.html          markup, controls, the About modal with the fidelity ledger
@@ -133,8 +134,9 @@ a clean-looking page. Always run this before reporting done:
 
 ```bash
 # syntax. A loop, because `node --check` takes ONE file — `node --check js/*.js`
-# checks js/iso.js and silently treats the other six as arguments.
-for f in js/*.js; do node --check "$f" || echo "FAIL $f"; done
+# checks js/iso.js and silently treats the other six as arguments. The flag
+# makes the whole block exit non-zero if any file fails, so it can gate.
+fail=0; for f in js/*.js; do node --check "$f" || fail=1; done; test "$fail" -eq 0
 
 # console errors, every station, and a screenshot. Needs a served URL.
 python3 -m http.server 8000 &
