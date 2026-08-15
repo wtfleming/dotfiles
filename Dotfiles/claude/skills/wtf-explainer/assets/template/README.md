@@ -145,13 +145,17 @@ fail=0; for f in js/*.js; do node --check "$f" || fail=1; done; test "$fail" -eq
 # Then serve it and run the skill's smoke test against the URL. Check the
 # bind and kill the server after — a stale listener from an earlier run
 # answers on the same port and the smoke test passes against the wrong code.
+# The trap does the killing so the block's status is the smoke test's own,
+# and the URL is the bound address: `localhost` can resolve to ::1 first and
+# miss an IPv4-only listener.
 python3 -m http.server --bind 127.0.0.1 8000 & pid=$!
+trap 'kill "$pid" 2>/dev/null' EXIT
 sleep 1
 if kill -0 "$pid" 2>/dev/null; then
-  node path/to/wtf-explainer/scripts/smoke.mjs http://localhost:8000/
-  kill "$pid"
+  node path/to/wtf-explainer/scripts/smoke.mjs http://127.0.0.1:8000/
 else
   echo "FAIL: server did not start (port 8000 busy?)" >&2
+  false
 fi
 ```
 

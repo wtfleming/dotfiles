@@ -143,13 +143,18 @@ fail=0; for f in js/*.js; do node --check "$f" || fail=1; done; test "$fail" -eq
 # from an earlier run answers on the same port and smoke tests the wrong
 # project — every project from this skill exposes the same globals, so that
 # false PASS looks exactly like a real one.
+# The trap does the killing, so the block's exit status is the smoke test's
+# own — a bare `kill` on the last line would report 0 over a failed run. The
+# URL is the bound address, not `localhost`, which can resolve to ::1 first
+# and miss an IPv4-only listener.
 python3 -m http.server --bind 127.0.0.1 8000 & pid=$!
+trap 'kill "$pid" 2>/dev/null' EXIT
 sleep 1
 if kill -0 "$pid" 2>/dev/null; then
-  node "$SKILL_DIR/scripts/smoke.mjs" http://localhost:8000/
-  kill "$pid"
+  node "$SKILL_DIR/scripts/smoke.mjs" http://127.0.0.1:8000/
 else
   echo "FAIL: server did not start (port 8000 busy?)" >&2
+  false
 fi
 ```
 
