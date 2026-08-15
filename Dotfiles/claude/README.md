@@ -104,3 +104,24 @@ that has them. Edits only ever happen in the main session, one approval at a tim
 tens of agents on a real branch. It announces each fan-out before spawning it, so
 the spend can be refused. For very large diffs, the built-in `/code-review ultra`
 is the maintained alternative.
+
+## Interactive explainers
+
+`wtf-explainer` builds interactive, self-narrating explainers of complex
+technical systems — a real simulation underneath, station-by-station narration
+on top, in one dependency-free static page. Two forms: an isometric town a
+vehicle drives through (the RollerCoaster-Tycoon-style tour), and a flat 2D
+schematic with a focus ring for architectures where many things move at once.
+
+It triggers on requests like "build an interactive explainer for how X works"
+or "visualise this pipeline"; a single chart is `dataviz`'s job and a static
+diagram is `artifact-diagramming`'s.
+
+Adapted from [learnscape](https://github.com/LaurentiuGabriel/learnscape)
+(MIT). The engine files and the PacketPost template under `assets/template/`
+are vendored unchanged — the skill's build order has projects copy them
+rather than rewrite them. Local changes: a generalized SKILL.md, a
+knowledge-base phase before any code (`NOTES.md`, reviewed for accuracy,
+feeding the fidelity ledger), the flat-schematic form
+(`references/flat-format.md`), and a verification fallback via the
+chrome-devtools MCP for machines without Playwright.
