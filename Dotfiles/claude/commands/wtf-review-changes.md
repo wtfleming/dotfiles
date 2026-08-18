@@ -160,3 +160,30 @@ Suggestion format. Then:
 
 Then stop. The same close as above: the findings are the user's to triage, fixes
 happen only if they ask, and committing is theirs.
+
+## If the findings go to GitHub
+
+A later message may ask for these findings to be posted on a PR — as inline
+review comments, as a review body, or as a single comment. When it does, **every
+finding carries its tier with it, whether or not the user asked for severities.**
+Someone reading a comment on GitHub cannot see the report it came from, so an
+unlabelled finding arrives with no way to tell whether it blocks the merge or is
+a naming nit.
+
+Lead each posted comment with its tier, then the finding as it was written:
+
+```markdown
+**Critical** — Token expiry compared with `>` instead of `>=`, so a token
+expiring exactly now is accepted. Use `>=`.
+```
+
+Where one comment covers several findings, group them under the same Critical /
+Warning / Suggestion headings the report used instead of tagging each line.
+
+Carry the qualifiers across too. **(unverified)** and **(pre-existing)** change
+what the reader should do about a finding as much as the tier does, and a
+suggestion nothing refuted should not land on the PR looking as settled as one
+that survived a refuter.
+
+Do not re-rank on the way out. The tier that gets posted is the tier the review
+gave it, including any you would have scored differently.
