@@ -63,3 +63,9 @@ export KERL_BUILD_DOCS="yes"
 
 # Enable shell history in iex and erl
 export ERL_AFLAGS="-kernel shell_history enabled -kernel shell_history_file_bytes 1024000"
+
+# Claude Code: force the classic renderer so the conversation stays in the
+# terminal's native scrollback (tmux copy mode / Cmd+F work as usual).
+# Works around the v2.1.89+ regression where the default renderer's
+# flicker-free rendering truncates scrollback.
+export CLAUDE_CODE_DISABLE_ALTERNATE_SCREEN=1
