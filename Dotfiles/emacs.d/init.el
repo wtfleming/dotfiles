@@ -1004,11 +1004,36 @@ rather than locating one."
                    (user-error "Unknown org-roam graph: %s" name))))
     (cons (file-truename (car entry)) (expand-file-name (cdr entry)))))
 
+(defun wtf-org-roam-graph-available-p (name)
+  "Return non-nil if the graph NAME is checked out on this machine.
+Only the directory is checked: the database is org-roam's to create, and an
+absent one just means the graph has not been indexed here yet."
+  (file-directory-p (car (wtf-org-roam-graph-paths name))))
+
+(defun wtf-org-roam-active-graph ()
+  "Return the graph org-roam should start on.
+`wtf-org-roam-default-graph' when it is checked out here, otherwise the first
+graph in `wtf-org-roam-graphs' that is.  Falls back to the default when none
+of them are, so `org-roam-directory' is always a coherent path rather than
+nil -- callers that go on to touch the filesystem test
+`wtf-org-roam-graph-available-p' first."
+  (or (seq-find #'wtf-org-roam-graph-available-p
+                (cons wtf-org-roam-default-graph
+                      (mapcar #'car wtf-org-roam-graphs)))
+      wtf-org-roam-default-graph))
+
 (defun wtf-org-roam-switch-graph (name)
   "Point org-roam at the graph NAME and re-sync its database."
   (interactive (list (intern (completing-read "org-roam graph: "
                                               (mapcar #'car wtf-org-roam-graphs)
                                               nil t))))
+  ;; Every graph is offered whichever machine this is -- the list is what
+  ;; graphs mean, not what happens to be cloned -- so refuse the missing one
+  ;; here, by name. Left to org-roam it surfaces as "Opening directory" from
+  ;; somewhere inside the sync, after autosync has already been torn down.
+  (unless (wtf-org-roam-graph-available-p name)
+    (user-error "Graph %s is not checked out here: no %s" name
+                (abbreviate-file-name (car (wtf-org-roam-graph-paths name)))))
   (let ((graph (wtf-org-roam-graph-paths name)))
     ;; autosync watches org-roam-directory, so it has to be cycled to notice
     ;; the new one; re-enabling it also syncs the newly selected database.
@@ -1047,6 +1072,14 @@ complaint -- file+head writes its header only when creating the file, so a
 colliding title captures into an existing, unrelated page and adopts that
 page's :ID:, while an empty slug quietly produces a hidden \".org\".  Refuse
 both; the caller can retitle or edit the existing page."
+  ;; Whether the wiki is even here does not depend on the title, so it is
+  ;; checked first -- otherwise a title like "!!!" on a machine without the
+  ;; wiki reports the slug it could not build, which is the lesser of the two
+  ;; problems and sends you off retitling something that was never the issue.
+  (unless (wtf-org-roam-graph-available-p 'wiki)
+    (user-error "The wiki is not checked out here: no %s"
+                (abbreviate-file-name
+                 (car (wtf-org-roam-graph-paths 'wiki)))))
   (let* ((title (org-roam-node-title org-roam-capture--node))
          (slug (wtf-wiki-slug org-roam-capture--node)))
     (when (string-empty-p slug)
@@ -1062,8 +1095,8 @@ both; the caller can retitle or edit the existing page."
   :pin melpa-stable
   :ensure t
   :custom
-  (org-roam-directory (car (wtf-org-roam-graph-paths wtf-org-roam-default-graph)))
-  (org-roam-db-location (cdr (wtf-org-roam-graph-paths wtf-org-roam-default-graph)))
+  (org-roam-directory (car (wtf-org-roam-graph-paths (wtf-org-roam-active-graph))))
+  (org-roam-db-location (cdr (wtf-org-roam-graph-paths (wtf-org-roam-active-graph))))
   (org-roam-completion-everywhere t)
   (org-roam-capture-templates
    '(("d" "default" plain
@@ -1146,7 +1179,15 @@ both; the caller can retitle or edit the existing page."
 
   ;; If you're using a vertical completion framework, you might want a more informative completion interface
   ;; (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
-  (org-roam-db-autosync-mode)
+  ;; Autosync indexes org-roam-directory on the spot, so starting it against a
+  ;; directory that is not there fails the whole :config block -- which is how
+  ;; a machine without the wiki lost every org-roam binding to one "Opening
+  ;; directory" error. wtf-org-roam-active-graph already prefers a graph that
+  ;; exists; this is the machine that has none of them.
+  (if (file-directory-p org-roam-directory)
+      (org-roam-db-autosync-mode)
+    (message "org-roam: no graph checked out at %s, leaving autosync off"
+             (abbreviate-file-name org-roam-directory)))
   ;; If using org-roam-protocol
   ;; (require 'org-roam-protocol)
   )

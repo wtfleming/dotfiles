@@ -29,15 +29,27 @@ home directory. Key consequences to keep in mind:
   sync only `touch`es it so it stays empty in git.
 - `Dotfiles/emacs.d/init.org` is the org source that generates `init.el`. It is
   edited and tangled in the repo and is intentionally **not** synced to `$HOME`.
+  **Nothing verifies the two agree** — CI used to re-tangle and diff, but it did
+  so with whatever `emacs-nox` Ubuntu ships (29.3, against 30.2 locally), so a
+  green check only meant a different Org version agreed. Re-tangle by hand
+  (`M-x org-babel-tangle`) and commit `init.el` in the same change; a forgotten
+  tangle ships a config the source no longer describes, silently.
 - `Dotfiles/claude/CLAUDE.global.md` is deployed to `~/.claude/CLAUDE.md` — it is the
   global memory file, not documentation for this repo.
+  - Its "command line tools available" list and the `brew install` lines in
+    `install-dependencies-macos.sh` are a pair, and nothing checks one against the
+    other. The list is deliberately **not** a mirror of the script: it carries only
+    tools Claude would otherwise fail to discover or would invoke under the wrong
+    name, so installing something new rarely earns a list entry — but removing or
+    renaming a listed tool must prune the list in the same change, or Claude is
+    told to reach for a binary that isn't there.
 - `old-scripts/` is archived and deliberately **not** deployed.
 
 ## Workflow
 
 - Work on a branch and open a PR to `main`; don't commit to `main` directly.
   Automated code review runs only on PRs, so a direct push gets no review. (The
-  `lint` workflow runs on every push either way.)
+  `lint` workflow runs either way — on every PR, and on pushes to `main`.)
 - **When you act on a review comment, reply to it on the PR saying what you did,
   and resolve the thread.** A pushed fix with no reply leaves the reviewer — and
   anyone reading the PR later — to diff the branch and guess which comment it

@@ -6,7 +6,11 @@ brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake
 
 # ---------- Build emacs on an ARM Mac from source
 # Note: if building for emacs 29 need to brew install jansson, but not for 30 and newer
-brew install gcc libgccjit make gnutls texinfo autoconf pkg-config tree-sitter tree-sitter-cli
+# Note: tree-sitter is pinned to @0.25 because the emacs binary built here links
+# libtree-sitter.0.25.dylib by soname. Plain `tree-sitter` is 0.26 upstream now;
+# installing it repoints /opt/homebrew/opt/tree-sitter and emacs then fails to
+# start on the missing dylib. Bump this only together with an emacs rebuild.
+brew install gcc libgccjit make gnutls texinfo autoconf pkg-config tree-sitter@0.25 tree-sitter-cli
 
 brew install ispell
 
@@ -47,7 +51,12 @@ brew install jq
 brew install ollama
 
 # Tools the global claude CLAUDE.md advertises as available
-brew install imagemagick node gh
+brew install imagemagick
+
+# Not advertised to Claude, but depended on anyway, so do not prune these along
+# with that list: Dotfiles/claude/settings.json allowlists `node --check` and
+# `gh pr merge`, and Dotfiles/emacs.d/wtf-elisp/wtf-github.el shells out to gh.
+brew install node gh
 
 # Docker Desktop (provides the docker CLI). Guarded so re-running the script
 # doesn't fail on a machine where Docker.app was installed manually.
