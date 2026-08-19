@@ -36,8 +36,7 @@ negotiating with it.
 
 **Without `--deep`, stop here.** The findings are the user's to triage, and the
 close matters: do not launch into fixing anything. If the user replies asking
-for fixes, make only the edits the named findings describe — a review is not a
-mandate to refactor — and leave committing to them.
+for fixes, follow **If the user asks for fixes** below.
 
 ## With `--deep`
 
@@ -158,8 +157,46 @@ Suggestion format. Then:
   doubting rather than a clean bill of health — that is also what a gate that
   never bites looks like
 
-Then stop. The same close as above: the findings are the user's to triage, fixes
-happen only if they ask, and committing is theirs.
+Then stop. The same close as above: the findings are the user's to triage, and
+fixes happen only if they ask — when they do, follow the next section.
+
+## If the user asks for fixes
+
+Make only the edits the named findings describe — a review is not a mandate to
+refactor — and leave committing to the user.
+
+Then have the fixes checked, because of who wrote them. Everything above is
+built on the author being the worst-placed judge of their own work, and the
+fixes were just written here, in the conversation the reviewer was deliberately
+kept out of. The original diff got a cold reviewer; the edits repairing it get
+nothing unless you dispatch it.
+
+Spawn one `wtf-refuter` per fixed Critical and Warning finding, in parallel,
+with the finding **as the review wrote it** and nothing else — not the fix, not
+which lines it touched, not that a fix exists. The finding's `file:line` may
+have drifted under the edits; locating the code in the tree as it now stands is
+the refuter's job, not a reason to annotate the dispatch. Say how many refuters
+that is before spawning them. The verdicts read inverted from the verify pass:
+the refuter argues the code is correct, so against the fixed tree `refuted`
+means the problem is gone and `stands` means the fix did not take.
+
+A finding that still stands goes back to the user with the refuter's reasoning
+verbatim. Do not quietly take another swing and re-verify — a fix that failed
+its check once is a fix a human should look at.
+
+What this check does not cover, so it is not mistaken for more than it is:
+
+- A refuter confirms the finding is resolved, not that the fix broke nothing
+  else. Re-run the tests the reviewer's report named and give the result
+  alongside the verdicts.
+- Fixed Suggestions go unverified — the same economics as the verify pass —
+  and are reported as such.
+- The refuter defaults to `refuted` when it cannot decide, and that default now
+  lands in the fix's favour. Relay a verdict whose reasoning looks thin as
+  exactly that.
+- A fix that reached beyond the finding's own hunk has changed code no refuter
+  was pointed at. Offer a fresh `/wtf-review-changes` for it instead of
+  presenting the verdicts as if they covered it.
 
 ## If the findings go to GitHub
 
