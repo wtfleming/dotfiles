@@ -217,6 +217,47 @@ each override knocked out another flag, which then had to be restored by hand as
 CPPFLAGS, then LDFLAGS, then TREE_SITTER_LIBS. PKG_CONFIG_PATH avoids the whole
 chain and does not hardcode Cellar paths that go stale on the next upgrade.
 
+***** The opt/tree-sitter shim, and the upgrade that can clobber it
+On the machine this recipe was verified on, /opt/homebrew/opt/tree-sitter is a
+symlink to another *opt* symlink rather than into the Cellar:
+#+begin_src sh
+# /opt/homebrew/opt/tree-sitter      -> /opt/homebrew/opt/tree-sitter@0.25
+# /opt/homebrew/opt/tree-sitter@0.25 -> ../Cellar/tree-sitter@0.25/0.25.10
+#+end_src
+Both links carry the same date, so this is most likely left behind by homebrew
+migrating the then-unversioned install into the versioned keg. Nothing in this
+repo creates it and a fresh machine will not have it, so it is worth recognising
+rather than relying on.
+
+While it exists, =brew install tree-sitter= fails outright:
+#+begin_src
+Error: tree-sitter: /opt/homebrew/opt/tree-sitter@0.25 is not a valid keg
+#+end_src
+brew resolves an opt path with a single readlink hop, so it lands on the second
+symlink, whose grandparent is the prefix rather than the Cellar, and rejects it.
+=realpath= follows both hops, which is why pkg-config and the compiler are
+perfectly happy and only brew trips over it. Under =set -e= that takes every
+later install in the script with it.
+
+The bigger problem is that an emacs built before the migration links the library
+*through* that path:
+#+begin_src sh
+otool -L ~/bin/emacs-30.2/src/emacs | grep tree-sitter
+#   /opt/homebrew/opt/tree-sitter/lib/libtree-sitter.0.25.dylib
+#+end_src
+So anything that repoints =opt/tree-sitter= at the unversioned keg -- a plain
+=brew install tree-sitter=, or a =brew upgrade= that pulls it in as some other
+formula's dependency -- leaves that binary unable to start, because 0.26 ships
+=libtree-sitter.0.26.dylib= and nothing at the old name.
+
+Building with PKG_CONFIG_PATH set, as step 1 now does, is what removes the
+dependency: the keg records its own install_name as
+=/opt/homebrew/opt/tree-sitter@0.25/lib/libtree-sitter.0.25.dylib=, so a fresh
+link picks up the versioned opt path, which brew owns and keeps pointing at the
+right keg. Check an existing binary with the otool line above -- if it names
+=opt/tree-sitter= rather than =opt/tree-sitter@0.25=, it is still leaning on the
+shim and wants a rebuild.
+
 **** 2. brew upgrade gcc can break native compilation
 emacs links against a specific libgccjit. After upgrading gcc, NATIVE_COMP will
 still appear in system-configuration-features (it was compiled in) while
