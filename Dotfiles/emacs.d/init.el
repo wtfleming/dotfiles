@@ -1072,14 +1072,18 @@ complaint -- file+head writes its header only when creating the file, so a
 colliding title captures into an existing, unrelated page and adopts that
 page's :ID:, while an empty slug quietly produces a hidden \".org\".  Refuse
 both; the caller can retitle or edit the existing page."
+  ;; Whether the wiki is even here does not depend on the title, so it is
+  ;; checked first -- otherwise a title like "!!!" on a machine without the
+  ;; wiki reports the slug it could not build, which is the lesser of the two
+  ;; problems and sends you off retitling something that was never the issue.
+  (unless (wtf-org-roam-graph-available-p 'wiki)
+    (user-error "The wiki is not checked out here: no %s"
+                (abbreviate-file-name
+                 (car (wtf-org-roam-graph-paths 'wiki)))))
   (let* ((title (org-roam-node-title org-roam-capture--node))
          (slug (wtf-wiki-slug org-roam-capture--node)))
     (when (string-empty-p slug)
       (user-error "No wiki filename can be built from the title %S" title))
-    (unless (wtf-org-roam-graph-available-p 'wiki)
-      (user-error "The wiki is not checked out here: no %s"
-                  (abbreviate-file-name
-                   (car (wtf-org-roam-graph-paths 'wiki)))))
     (let ((path (expand-file-name (concat slug ".org")
                                   (car (wtf-org-roam-graph-paths 'wiki)))))
       (when (file-exists-p path)
