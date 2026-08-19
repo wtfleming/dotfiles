@@ -51,10 +51,12 @@ bleeds into the one beside it produces the same finding twice in different words
 was given. `performance` and `resilience` divide by path — the cost of the happy
 path against the behaviour of the failure path.
 
-There is no fix mode. The report lands in the conversation, so to act on it,
-say which findings — "fix the first two" — and the fixes happen in the main
-session, which knows what you were trying to do. The command never edits and
-never commits.
+There is no fix flag; the review itself never edits. The report lands in the
+conversation, so to act on it, say which findings — "fix the first two" — and
+the fixes happen in the main session, which knows what you were trying to do.
+Each fixed Critical or Warning is then checked by one fresh `wtf-refuter`
+arguing against the fixed tree, so the fixes get the same independent
+verification the findings did. Committing stays yours.
 
 ### Design review, earlier in the cycle
 
@@ -101,8 +103,9 @@ that has them. Edits only ever happen in the main session, one approval at a tim
 ### Cost
 
 `--deep` spawns one reviewer, eight lenses, and one refuter per verified finding —
-tens of agents on a real branch. It announces each fan-out before spawning it, so
-the spend can be refused. For very large diffs, the built-in `/code-review ultra`
+tens of agents on a real branch — and asking for fixes afterwards adds one more
+refuter per fixed Critical or Warning. It announces each fan-out before spawning
+it, so the spend can be refused. For very large diffs, the built-in `/code-review ultra`
 is the maintained alternative.
 
 ## Interactive explainers

@@ -1,7 +1,7 @@
 ---
 description: Independent code review of recent changes in a fresh context — diff, tests, lint, structured report. Pass --deep to add a verified parallel per-dimension pass.
 argument-hint: "[ref, branch or path — defaults to uncommitted, else the branch, else HEAD] [--deep]"
-allowed-tools: Agent, Task, Read, Grep, Glob, Bash(git:*)
+allowed-tools: Agent, Read, Grep, Glob, Bash(git:*)
 ---
 
 Arguments: $ARGUMENTS
@@ -17,7 +17,9 @@ conversation where their intent lives — not here.
 
 Launch the `wtf-change-reviewer` subagent on the scope. Dispatch it with the
 Agent tool, `subagent_type: "wtf-change-reviewer"`, and wait for it
-(`run_in_background: false`).
+(`run_in_background: false`) — except under `--deep` with a named scope, where
+this dispatch is held for the batched launch described below so the lenses do
+not serialise behind it.
 
 The whole point is that the reviewer starts cold. So the prompt you send it
 contains **only** the scope. Do not include:
@@ -30,9 +32,15 @@ If you wrote the code under review, that is exactly the bias this exists to
 avoid. Hand over the scope and nothing else. If the scope is empty, say so and
 let the agent work out its own.
 
-Print the report verbatim when it returns. Do not re-rank the findings, soften
-them, or defend the code — you are relaying an independent review, not
-negotiating with it.
+Without `--deep`, print the report verbatim when it returns. Do not re-rank the
+findings, soften them, or defend the code — you are relaying an independent
+review, not negotiating with it.
+
+Under `--deep`, do not print it yet. Its findings are about to enter a verify
+pass that may retract some of them, and a finding that is about to be retracted
+should not get a first airing here any more than in the merged report below.
+Say that the reviewer returned and how many findings it brought, and hold the
+rest. The relaying rule still applies to the report you eventually print.
 
 **Without `--deep`, stop here.** The findings are the user's to triage, and the
 close matters: do not launch into fixing anything. If the user replies asking
@@ -42,14 +50,28 @@ for fixes, follow **If the user asks for fixes** below.
 
 One reviewer covering six dimensions gives some of them a shallower pass than
 the others. This adds a dedicated pass per dimension, over the same diff the
-reviewer just read — plus `reuse` and `resilience`, which the reviewer's
-checklist does not cover at all.
+reviewer reads — plus `reuse` and `resilience`, which the reviewer's checklist
+does not cover at all.
 
 Say up front how many agents you are about to spawn, so the cost is the user's
 to refuse before it is spent rather than after.
 
 Dispatch these eight `wtf-lens` subagents **in parallel**, each with the scope
-and its own rubric and nothing else:
+and its own rubric and nothing else. Unlike the reviewer, a lens cannot derive
+its own scope, and eight agents each guessing one is how "the same diff" stops
+being true — so where the scope comes from depends on what the user gave:
+
+- **The user named a scope:** every lens gets it verbatim, and nothing a lens
+  does depends on the reviewer's output — so launch all eight *alongside* the
+  reviewer, in the same batch, rather than after it. The reviewer's test run is
+  the long pole of the whole pass; serialising nine agents behind it buys
+  nothing.
+- **The scope is empty:** the reviewer has to settle it first. Wait for its
+  report and hand each lens the scope stated at the top of it. That is data,
+  not opinion — passing it breaks no cold-start rule. What must never ride
+  along with it is anything the reviewer concluded.
+
+The lenses and their rubrics:
 
 | Lens | Looks for |
 |---|---|
@@ -105,10 +127,12 @@ is `performance`.
 
 ### Synthesise
 
-Merge the eight reports with the reviewer's own. Deduplicate on file and line —
-where two agents found the same thing, keep the more specific statement and drop
-the other, rather than listing it twice with different wording. Where they
-disagree on tier, take the higher and say both lenses saw it.
+Merge the eight reports with the reviewer's own. Deduplicate on the underlying
+defect, not the exact line — two agents describing the same problem routinely
+anchor a few lines apart. Where they found the same thing, keep the more
+specific statement and drop the other, rather than listing it twice with
+different wording. Where they disagree on tier, take the higher and say both
+lenses saw it.
 
 Do not print the merged report yet — it has not been verified, and findings that
 are about to be retracted should not get a first airing.
@@ -137,17 +161,26 @@ spawn them, and say what it brings the run's total to. The count that scales
 with the diff is the one worth disclosing, and it is the one the user has not
 already agreed to.
 
-**Send it the finding verbatim and nothing else.** Not why you think it might be
-wrong, not where you would look first, not that you already checked something.
-This is the same rule as the reviewer dispatch above and it exists for the same
-reason: if you wrote the code, a hint about where the refutation lies is you
-arguing your own case through an agent spawned to judge it. A refuter you
-steered has told you nothing.
+**Send it the finding verbatim, plus the scope, and nothing else.** The scope
+rides along for the same reason it rides to the lenses — it is data, not
+opinion: a refuter reads the working tree unless told otherwise, so on a scope
+that is not checked out it would judge every finding against the wrong files
+and kill the real ones. Name the ref or tree the findings are about, and when
+that tree is not the user's own work — a fetched PR, a contributor's branch —
+say that too, because the refuter's decision to run a cited command depends on
+it. What still must not ride along: why you think it might be wrong, where you
+would look first, that you already checked something. This is the same rule as
+the reviewer dispatch above and it exists for the same reason: if you wrote the
+code, a hint about where the refutation lies is you arguing your own case
+through an agent spawned to judge it. A refuter you steered has told you
+nothing.
 
 ### Report
 
 Print the merged report of what survived, in the reviewer's Critical / Warning /
-Suggestion format. Then:
+Suggestion format, keeping its Scope / Tests / Lint header lines — the test
+result is the most load-bearing line in the report, and under `--deep` this is
+its only airing. Then:
 
 - how many findings were refuted, and why — a dropped finding is reported, not
   hidden
@@ -176,9 +209,17 @@ with the finding **as the review wrote it** and nothing else — not the fix, no
 which lines it touched, not that a fix exists. The finding's `file:line` may
 have drifted under the edits; locating the code in the tree as it now stands is
 the refuter's job, not a reason to annotate the dispatch. Say how many refuters
-that is before spawning them. The verdicts read inverted from the verify pass:
-the refuter argues the code is correct, so against the fixed tree `refuted`
-means the problem is gone and `stands` means the fix did not take.
+that is before spawning them. Re-run the tests the reviewer's report named in
+the same batch — neither depends on the other, and serialising the suite behind
+the verdicts buys nothing — and report the result alongside them, `not run:
+reason` when it cannot happen.
+
+The verdicts read inverted from the verify pass: the refuter argues the code is
+correct, so against the fixed tree `refuted` means the problem is gone and
+`stands` means the fix did not take. Relay them to the user in fix terms —
+**resolved** and **fix did not take**, with the raw verdict in parentheses if
+fidelity matters — because a user who asked for fixes and reads "3 refuted"
+will hear the fixes failing.
 
 A finding that still stands goes back to the user with the refuter's reasoning
 verbatim. Do not quietly take another swing and re-verify — a fix that failed
@@ -187,13 +228,15 @@ its check once is a fix a human should look at.
 What this check does not cover, so it is not mistaken for more than it is:
 
 - A refuter confirms the finding is resolved, not that the fix broke nothing
-  else. Re-run the tests the reviewer's report named and give the result
-  alongside the verdicts.
+  else. The test re-run above is the only check that covers regressions, which
+  is why its result — `not run: reason` included — belongs in the report.
 - Fixed Suggestions go unverified — the same economics as the verify pass —
   and are reported as such.
-- The refuter defaults to `refuted` when it cannot decide, and that default now
-  lands in the fix's favour. Relay a verdict whose reasoning looks thin as
-  exactly that.
+- The refuter defaults to `refuted` when the evidence is ambiguous, and that
+  default now lands in the fix's favour — relay a verdict whose reasoning looks
+  thin as exactly that. A `stands` whose reasoning says the check was blocked
+  (the refuter declined to run the decisive command) is not the fix failing:
+  relay it as **could not verify**.
 - A fix that reached beyond the finding's own hunk has changed code no refuter
   was pointed at. Offer a fresh `/wtf-review-changes` for it instead of
   presenting the verdicts as if they covered it.
