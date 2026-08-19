@@ -63,13 +63,11 @@ brew install gcc libgccjit make gnutls texinfo autoconf pkg-config
 # tree-sitter. The version has to match what the emacs version expects:
 #   emacs 30.2 -> tree-sitter 0.25.x
 #   emacs 31+  -> will probably want something newer
-# Prefer the unversioned formula while it is still on the right version: it is
-# not keg-only, so pkg-config finds it with zero extra configuration.
-brew install tree-sitter
-
-# Only if mainline has moved on and you need to pin. This one IS keg-only, which
-# is the source of all the pain in the older notes below -- see gotcha #1.
-# brew install tree-sitter@0.25
+# Mainline has moved on, so the pin is no longer optional: the unversioned
+# formula is 0.26, which removed ts_language_version and cannot build 30.2 at
+# all. The versioned formula IS keg-only, which is the source of all the pain in
+# the older notes below -- see gotcha #1.
+brew install tree-sitter@0.25
 
 # emacs 29 only: jansson, for --with-json. Not needed from emacs 30 on, which
 # ships its own JSON parser.
@@ -81,9 +79,13 @@ brew install pandoc    # markdown-mode uses this to preview markdown
 brew install graphviz  # org-roam-graph shells out to dot
 #+end_src
 
-Verify before going further. This must print a 0.25.x version with no
-PKG_CONFIG_PATH set:
+Because the keg is not symlinked into the prefix, pkg-config finds it only with
+PKG_CONFIG_PATH set. Export it in the shell you will run ./configure from, and
+keep that shell for step 3. Verify before going further -- this must print a
+0.25.x version:
 #+begin_src sh
+export PKG_CONFIG_PATH="$(brew --prefix tree-sitter@0.25)/lib/pkgconfig"
+
 pkg-config --modversion tree-sitter
 #+end_src
 If it says "not found in the pkg-config search path", stop and read gotcha #1.
@@ -113,7 +115,10 @@ the build tree" route in step 5, this directory is where the binary lives.
     --with-xwidgets
 #+end_src
 
-That is the whole thing. No environment variable overrides.
+That is the whole thing. No flag overrides -- no CFLAGS, CPPFLAGS, LDFLAGS or
+TREE_SITTER_*. The one variable that must be set is PKG_CONFIG_PATH from step 1,
+which tells pkg-config where to look rather than overriding what it reports; if
+this is a fresh shell, export it again before configuring.
 
 What the flags do:
 - --with-native-compilation :: bare (= "yes") natively compiles the preloaded lisp
