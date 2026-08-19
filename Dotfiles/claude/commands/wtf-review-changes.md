@@ -131,8 +131,8 @@ Merge the eight reports with the reviewer's own. Deduplicate on the underlying
 defect, not the exact line — two agents describing the same problem routinely
 anchor a few lines apart. Where they found the same thing, keep the more
 specific statement and drop the other, rather than listing it twice with
-different wording. Where they disagree on tier, take the higher and say both
-lenses saw it.
+different wording. Where they disagree on tier, take the higher and say which
+reports saw it.
 
 Do not print the merged report yet — it has not been verified, and findings that
 are about to be retracted should not get a first airing.
@@ -165,10 +165,11 @@ already agreed to.
 rides along for the same reason it rides to the lenses — it is data, not
 opinion: a refuter reads the working tree unless told otherwise, so on a scope
 that is not checked out it would judge every finding against the wrong files
-and kill the real ones. Name the ref or tree the findings are about, and when
-that tree is not the user's own work — a fetched PR, a contributor's branch —
-say that too, because the refuter's decision to run a cited command depends on
-it. What still must not ride along: why you think it might be wrong, where you
+and kill the real ones. Name the ref or tree the findings are about, and whose
+work it is — stated both ways, because the refuter treats silence as untrusted:
+an ordinary review of the user's own branch says so plainly, and a fetched PR
+or a contributor's branch is named as such. The refuter's decision to run a
+cited command depends on it. What still must not ride along: why you think it might be wrong, where you
 would look first, that you already checked something. This is the same rule as
 the reviewer dispatch above and it exists for the same reason: if you wrote the
 code, a hint about where the refutation lies is you arguing your own case
@@ -205,10 +206,12 @@ kept out of. The original diff got a cold reviewer; the edits repairing it get
 nothing unless you dispatch it.
 
 Spawn one `wtf-refuter` per fixed Critical and Warning finding, in parallel,
-with the finding **as the review wrote it** and nothing else — not the fix, not
-which lines it touched, not that a fix exists. The finding's `file:line` may
-have drifted under the edits; locating the code in the tree as it now stands is
-the refuter's job, not a reason to annotate the dispatch. Say how many refuters
+with the finding **as the review wrote it**, plus the same scope-and-provenance
+data the verify pass sends — here that is the working tree, where the fixes
+landed, and whose work it is — and nothing else: not the fix, not which lines
+it touched, not that a fix exists. The finding's `file:line` may have drifted
+under the edits; locating the code in the tree as it now stands is the
+refuter's job, not a reason to annotate the dispatch. Say how many refuters
 that is before spawning them. Re-run the tests the reviewer's report named in
 the same batch — neither depends on the other, and serialising the suite behind
 the verdicts buys nothing — and report the result alongside them, `not run:
