@@ -1071,6 +1071,11 @@ Two separate graphs, each with its own database — otherwise they would both us
 =~/.emacs.d/org-roam.db=, and whichever synced last would overwrite the other's
 index. =wiki= is the default; =C-c n s= switches.
 
+Not every machine checks out both — the wiki is a separate repo, and some
+machines will never have it. org-roam therefore starts on the first graph that
+actually exists on disk, and leaves its database autosync off entirely if none
+of them do.
+
 #+begin_src emacs-lisp
   (defvar wtf-org-roam-graphs
     '((wiki  . ("~/src/wtf-wiki/wiki"       . "~/.emacs.d/org-roam-wtf-wiki.db"))
@@ -1088,11 +1093,36 @@ index. =wiki= is the default; =C-c n s= switches.
                      (user-error "Unknown org-roam graph: %s" name))))
       (cons (file-truename (car entry)) (expand-file-name (cdr entry)))))
 
+  (defun wtf-org-roam-graph-available-p (name)
+    "Return non-nil if the graph NAME is checked out on this machine.
+  Only the directory is checked: the database is org-roam's to create, and an
+  absent one just means the graph has not been indexed here yet."
+    (file-directory-p (car (wtf-org-roam-graph-paths name))))
+
+  (defun wtf-org-roam-active-graph ()
+    "Return the graph org-roam should start on.
+  `wtf-org-roam-default-graph' when it is checked out here, otherwise the first
+  graph in `wtf-org-roam-graphs' that is.  Falls back to the default when none
+  of them are, so `org-roam-directory' is always a coherent path rather than
+  nil -- callers that go on to touch the filesystem test
+  `wtf-org-roam-graph-available-p' first."
+    (or (seq-find #'wtf-org-roam-graph-available-p
+                  (cons wtf-org-roam-default-graph
+                        (mapcar #'car wtf-org-roam-graphs)))
+        wtf-org-roam-default-graph))
+
   (defun wtf-org-roam-switch-graph (name)
     "Point org-roam at the graph NAME and re-sync its database."
     (interactive (list (intern (completing-read "org-roam graph: "
                                                 (mapcar #'car wtf-org-roam-graphs)
                                                 nil t))))
+    ;; Every graph is offered whichever machine this is -- the list is what
+    ;; graphs mean, not what happens to be cloned -- so refuse the missing one
+    ;; here, by name. Left to org-roam it surfaces as "Opening directory" from
+    ;; somewhere inside the sync, after autosync has already been torn down.
+    (unless (wtf-org-roam-graph-available-p name)
+      (user-error "Graph %s is not checked out here: no %s" name
+                  (abbreviate-file-name (car (wtf-org-roam-graph-paths name)))))
     (let ((graph (wtf-org-roam-graph-paths name)))
       ;; autosync watches org-roam-directory, so it has to be cycled to notice
       ;; the new one; re-enabling it also syncs the newly selected database.
@@ -1135,6 +1165,10 @@ index. =wiki= is the default; =C-c n s= switches.
            (slug (wtf-wiki-slug org-roam-capture--node)))
       (when (string-empty-p slug)
         (user-error "No wiki filename can be built from the title %S" title))
+      (unless (wtf-org-roam-graph-available-p 'wiki)
+        (user-error "The wiki is not checked out here: no %s"
+                    (abbreviate-file-name
+                     (car (wtf-org-roam-graph-paths 'wiki)))))
       (let ((path (expand-file-name (concat slug ".org")
                                     (car (wtf-org-roam-graph-paths 'wiki)))))
         (when (file-exists-p path)
@@ -1146,8 +1180,8 @@ index. =wiki= is the default; =C-c n s= switches.
     :pin melpa-stable
     :ensure t
     :custom
-    (org-roam-directory (car (wtf-org-roam-graph-paths wtf-org-roam-default-graph)))
-    (org-roam-db-location (cdr (wtf-org-roam-graph-paths wtf-org-roam-default-graph)))
+    (org-roam-directory (car (wtf-org-roam-graph-paths (wtf-org-roam-active-graph))))
+    (org-roam-db-location (cdr (wtf-org-roam-graph-paths (wtf-org-roam-active-graph))))
     (org-roam-completion-everywhere t)
     (org-roam-capture-templates
      '(("d" "default" plain
@@ -1230,7 +1264,15 @@ index. =wiki= is the default; =C-c n s= switches.
 
     ;; If you're using a vertical completion framework, you might want a more informative completion interface
     ;; (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
-    (org-roam-db-autosync-mode)
+    ;; Autosync indexes org-roam-directory on the spot, so starting it against a
+    ;; directory that is not there fails the whole :config block -- which is how
+    ;; a machine without the wiki lost every org-roam binding to one "Opening
+    ;; directory" error. wtf-org-roam-active-graph already prefers a graph that
+    ;; exists; this is the machine that has none of them.
+    (if (file-directory-p org-roam-directory)
+        (org-roam-db-autosync-mode)
+      (message "org-roam: no graph checked out at %s, leaving autosync off"
+               (abbreviate-file-name org-roam-directory)))
     ;; If using org-roam-protocol
     ;; (require 'org-roam-protocol)
     )
