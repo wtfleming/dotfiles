@@ -16,11 +16,24 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# The repo default is a write-capable token, which neither job needs -- they read
+# the tree, lint it and diff it, and never push. Declared here so both jobs
+# inherit it.
+permissions:
+  contents: read
+
+# Both jobs check out with the same pinned action. It names the commit v7
+# resolves to rather than the tag, because a tag can be repointed at other code
+# and this workflow runs on every push; .github/dependabot.yml is what keeps the
+# pin from going stale. persist-credentials: false because nothing after checkout
+# uses the token -- tangle's git calls are local, and neither job pushes.
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       # shellcheck and jq are preinstalled on ubuntu-latest runners
       - name: shellcheck
@@ -37,7 +50,9 @@ jobs:
   tangle:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       # init.el is generated from init.org but is the file sync-dotfiles.sh
       # deploys, so a forgotten tangle ships a config the source no longer

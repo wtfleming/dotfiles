@@ -1,0 +1,9 @@
+# Exists so the commit-pinned actions in workflows/ do not silently go stale.
+# Pinning to a SHA is what stops a repointed tag running unreviewed code; it also
+# means nothing updates the pin on its own, which is what this file is for.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
