@@ -51,7 +51,12 @@ brew install jq
 brew install ollama
 
 # Tools the global claude CLAUDE.md advertises as available
-brew install imagemagick node gh
+brew install imagemagick
+
+# Not advertised to Claude, but depended on anyway, so do not prune these along
+# with that list: Dotfiles/claude/settings.json allowlists `node --check` and
+# `gh pr merge`, and Dotfiles/emacs.d/wtf-elisp/wtf-github.el shells out to gh.
+brew install node gh
 
 # Docker Desktop (provides the docker CLI). Guarded so re-running the script
 # doesn't fail on a machine where Docker.app was installed manually.
