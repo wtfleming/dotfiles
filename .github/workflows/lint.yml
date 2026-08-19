@@ -1,8 +1,20 @@
 name: lint
 
+# A push to a PR branch matches both triggers, which started two identical runs
+# on the same commit. Limiting push to main leaves branch pushes to the
+# pull_request run, and keeps direct pushes to main covered.
 on:
   push:
+    branches: [main]
   pull_request:
+
+# Supersede a PR's own earlier runs: a follow-up commit makes the previous
+# verdict irrelevant, and these jobs are slow enough to still be queued when it
+# lands. Pushes to main are never cancelled, so every commit there keeps a
+# verdict of its own.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   lint:
@@ -16,6 +28,16 @@ jobs:
 
       - name: validate claude settings.json
         run: jq empty Dotfiles/claude/settings.json
+
+  # Its own job because it installs emacs, which takes minutes and dwarfs
+  # everything in `lint` -- the tangle it exists to run takes about a second.
+  # Separated so shellcheck reports in seconds rather than behind an apt-get, and
+  # so a stale init.el is distinguishable from a lint failure without opening the
+  # log.
+  tangle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
 
       # init.el is generated from init.org but is the file sync-dotfiles.sh
       # deploys, so a forgotten tangle ships a config the source no longer
