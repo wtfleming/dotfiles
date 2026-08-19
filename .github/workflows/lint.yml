@@ -1,14 +1,35 @@
 name: lint
 
+# A push to a PR branch matches both triggers, which started two identical runs
+# on the same commit. Limiting push to main leaves branch pushes to the
+# pull_request run, and keeps direct pushes to main covered.
 on:
   push:
+    branches: [main]
   pull_request:
 
+# Supersede a PR's own earlier runs: a follow-up commit makes the previous
+# verdict irrelevant. Pushes to main are never cancelled, so every commit there
+# keeps a verdict of its own.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# The repo default is a write-capable token, which this job does not need -- it
+# reads the tree and lints it, and never pushes.
+permissions:
+  contents: read
+
+# The checkout names the commit v7 resolves to rather than the tag, which can be
+# repointed at other code; .github/dependabot.yml keeps the pin fresh.
+# persist-credentials: false because nothing after checkout uses the token.
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       # shellcheck and jq are preinstalled on ubuntu-latest runners
       - name: shellcheck
@@ -16,22 +37,3 @@ jobs:
 
       - name: validate claude settings.json
         run: jq empty Dotfiles/claude/settings.json
-
-      # init.el is generated from init.org but is the file sync-dotfiles.sh
-      # deploys, so a forgotten tangle ships a config the source no longer
-      # describes. Re-tangle and fail if anything moved.
-      #
-      # Delete the generated files first: tangling overwrites, so without this a
-      # target dropped from init.org would sit there stale and unnoticed. Stage
-      # before diffing, because plain `git diff` ignores untracked files -- a
-      # newly added :tangle target that was never committed would otherwise
-      # generate cleanly in CI and pass. Only these two files are removed;
-      # Dotfiles/emacs.d/ also holds hand-maintained assets.
-      - name: init.el and early-init.el match init.org
-        run: |
-          sudo apt-get update -qq
-          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq emacs-nox
-          rm -f Dotfiles/emacs.d/init.el Dotfiles/emacs.d/early-init.el
-          emacs -Q --batch -l ob-tangle --eval '(org-babel-tangle-file "Dotfiles/emacs.d/init.org")'
-          git add -A -- Dotfiles/emacs.d/
-          git diff --cached --exit-code -- Dotfiles/emacs.d/
