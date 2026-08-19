@@ -31,6 +31,13 @@ home directory. Key consequences to keep in mind:
   edited and tangled in the repo and is intentionally **not** synced to `$HOME`.
 - `Dotfiles/claude/CLAUDE.global.md` is deployed to `~/.claude/CLAUDE.md` — it is the
   global memory file, not documentation for this repo.
+  - Its "command line tools available" list and the `brew install` lines in
+    `install-dependencies-macos.sh` are a pair, and nothing checks one against the
+    other. The list is deliberately **not** a mirror of the script: it carries only
+    tools Claude would otherwise fail to discover or would invoke under the wrong
+    name, so installing something new rarely earns a list entry — but removing or
+    renaming a listed tool must prune the list in the same change, or Claude is
+    told to reach for a binary that isn't there.
 - `old-scripts/` is archived and deliberately **not** deployed.
 
 ## Workflow
