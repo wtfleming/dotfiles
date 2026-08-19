@@ -44,7 +44,9 @@ home directory. Key consequences to keep in mind:
 
 - Work on a branch and open a PR to `main`; don't commit to `main` directly.
   Automated code review runs only on PRs, so a direct push gets no review. (The
-  `lint` workflow runs on every push either way.)
+  `lint` workflow runs either way — on every PR, and on pushes to `main`. The
+  `tangle` workflow runs on the same events but only when a file it checks
+  changes, so most pushes will show no `tangle` result at all.)
 - **When you act on a review comment, reply to it on the PR saying what you did,
   and resolve the thread.** A pushed fix with no reply leaves the reviewer — and
   anyone reading the PR later — to diff the branch and guess which comment it
