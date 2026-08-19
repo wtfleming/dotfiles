@@ -6,7 +6,11 @@ brew install tmux wget htop watchman coreutils p7zip tree ncdu ripgrep cmake
 
 # ---------- Build emacs on an ARM Mac from source
 # Note: if building for emacs 29 need to brew install jansson, but not for 30 and newer
-brew install gcc libgccjit make gnutls texinfo autoconf pkg-config tree-sitter tree-sitter-cli
+# Note: tree-sitter is pinned to @0.25 because the emacs binary built here links
+# libtree-sitter.0.25.dylib by soname. Plain `tree-sitter` is 0.26 upstream now;
+# installing it repoints /opt/homebrew/opt/tree-sitter and emacs then fails to
+# start on the missing dylib. Bump this only together with an emacs rebuild.
+brew install gcc libgccjit make gnutls texinfo autoconf pkg-config tree-sitter@0.25 tree-sitter-cli
 
 brew install ispell
 
