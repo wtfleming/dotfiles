@@ -29,6 +29,11 @@ home directory. Key consequences to keep in mind:
   sync only `touch`es it so it stays empty in git.
 - `Dotfiles/emacs.d/init.org` is the org source that generates `init.el`. It is
   edited and tangled in the repo and is intentionally **not** synced to `$HOME`.
+  **Nothing verifies the two agree** — CI used to re-tangle and diff, but it did
+  so with whatever `emacs-nox` Ubuntu ships (29.3, against 30.2 locally), so a
+  green check only meant a different Org version agreed. Re-tangle by hand
+  (`M-x org-babel-tangle`) and commit `init.el` in the same change; a forgotten
+  tangle ships a config the source no longer describes, silently.
 - `Dotfiles/claude/CLAUDE.global.md` is deployed to `~/.claude/CLAUDE.md` — it is the
   global memory file, not documentation for this repo.
   - Its "command line tools available" list and the `brew install` lines in
@@ -44,9 +49,7 @@ home directory. Key consequences to keep in mind:
 
 - Work on a branch and open a PR to `main`; don't commit to `main` directly.
   Automated code review runs only on PRs, so a direct push gets no review. (The
-  `lint` workflow runs either way — on every PR, and on pushes to `main`. The
-  `tangle` workflow runs on the same events but only when a file it checks
-  changes, so most pushes will show no `tangle` result at all.)
+  `lint` workflow runs either way — on every PR, and on pushes to `main`.)
 - **When you act on a review comment, reply to it on the PR saying what you did,
   and resolve the thread.** A pushed fix with no reply leaves the reviewer — and
   anyone reading the PR later — to diff the branch and guess which comment it
