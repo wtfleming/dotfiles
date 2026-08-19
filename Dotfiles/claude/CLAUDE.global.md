@@ -4,8 +4,8 @@ These are installed on this machine. Use them rather than asking whether they
 are available or hand-rolling a substitute:
 
 - `magick` — image conversion, resizing and inspection. ImageMagick v7, so drive
-  it as `magick in.png out.jpg`. The v6 `convert` alias is also installed but is
-  deprecated upstream; prefer `magick`.
+  it as `magick in.png out.jpg`. IMv7 still ships a `convert`, but warns that it
+  is deprecated; prefer `magick`.
 - `ast-grep` — structural search over a tree-sitter AST. Use for questions grep
   is bad at, such as "does this shape already exist elsewhere?"
 - `shellcheck` — lint any shell script before proposing it.
