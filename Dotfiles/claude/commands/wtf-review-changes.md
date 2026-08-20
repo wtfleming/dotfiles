@@ -169,7 +169,9 @@ and kill the real ones. Name the ref or tree the findings are about, and whose
 work it is — stated both ways, because the refuter treats silence as untrusted:
 an ordinary review of the user's own branch says so plainly, and a fetched PR
 or a contributor's branch is named as such. The refuter's decision to run a
-cited command depends on it. What still must not ride along: why you think it might be wrong, where you
+cited command depends on it. When the tree is untrusted, the refuter will not
+run a cited command unless the dispatch says the user explicitly sanctioned
+that — so relay the sanction when the user has given it, and never otherwise. What still must not ride along: why you think it might be wrong, where you
 would look first, that you already checked something. This is the same rule as
 the reviewer dispatch above and it exists for the same reason: if you wrote the
 code, a hint about where the refutation lies is you arguing your own case
