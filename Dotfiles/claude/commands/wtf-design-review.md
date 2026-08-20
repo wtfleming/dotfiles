@@ -1,7 +1,7 @@
 ---
 description: Early design review of work in progress, in a fresh context — is this the right shape? Suggestion-only; every finding names a concrete, smaller alternative. Run it mid-work, before polishing; /wtf-review-changes is the pre-PR gate.
 argument-hint: "[ref, branch or path — defaults to uncommitted, else the branch, else HEAD]"
-allowed-tools: Agent, Task
+allowed-tools: Agent
 ---
 
 Arguments: $ARGUMENTS

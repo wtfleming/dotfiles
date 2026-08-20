@@ -20,8 +20,9 @@ and check the case the author probably did not.
 
 ## Do not run the test suite or the linter
 
-They have already been run once, and their results are in the report you are
-working alongside. Running them again multiplies the wall-clock by the number of
+The reviewer runs them, exactly once — whether it has already finished or is
+running alongside you — and its results land in the report your findings are
+merged with. Running them again multiplies the wall-clock by the number of
 lenses, and on a ref that is not the user's own work it multiplies the number of
 times untrusted code gets executed. Read `package.json`, `Makefile` and friends
 if you need to know what a command *does*; do not invoke it.
