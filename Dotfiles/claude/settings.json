@@ -53,9 +53,6 @@
       "Bash(tail:*)"
     ],
     "deny": [
-      "Bash(cargo owner:*)",
-      "Bash(cargo publish:*)",
-      "Bash(cargo yank:*)",
       "Bash(dd *)",
       "Bash(diskutil *)",
       "Bash(mkfs *)",
@@ -79,14 +76,16 @@
       "Bash(cargo install:*)",
       "Bash(cargo login:*)",
       "Bash(cargo logout:*)",
+      "Bash(cargo owner:*)",
+      "Bash(cargo publish:*)",
       "Bash(cargo remove:*)",
       "Bash(cargo uninstall:*)",
       "Bash(cargo update:*)",
+      "Bash(cargo yank:*)",
       "Bash(docker push *)",
       "Bash(gh pr merge *)",
       "Bash(git push:*)",
-      "Bash(npm publish *)",
-      "Bash(rm:*)"
+      "Bash(npm publish *)"
     ]
   },
   "hooks": {
