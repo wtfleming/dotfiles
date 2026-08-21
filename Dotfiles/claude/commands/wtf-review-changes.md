@@ -348,7 +348,10 @@ Inline anchoring only works within the PR's diff hunks — GitHub rejects a
 comment on a line the diff does not touch. Fetch the PR's actual hunks (`gh pr
 diff` or the per-file `patch` from the PR's files) and check each finding's
 `file:line` against them *before* posting, rather than discovering the
-rejection from a failed call.
+rejection from a failed call. Anchor each comment with `path` and `line` +
+`side` — not the deprecated `position` — and set the review's `commit_id` to
+the PR's current head SHA, so a comment doesn't silently land against a stale
+commit.
 
 - A finding whose line falls inside a hunk goes up as its own inline comment,
   tier-led as above.
