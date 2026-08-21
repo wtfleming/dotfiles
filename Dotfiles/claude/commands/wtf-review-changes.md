@@ -42,9 +42,55 @@ should not get a first airing here any more than in the merged report below.
 Say that the reviewer returned and how many findings it brought, and hold the
 rest. The relaying rule still applies to the report you eventually print.
 
+Then, below the report, add the **Suggestion triage** described under
+**Triage the Suggestions** — the one place this command adds an opinion of its
+own, and it goes after the report rather than into it.
+
 **Without `--deep`, stop here.** The findings are the user's to triage, and the
 close matters: do not launch into fixing anything. If the user replies asking
 for fixes, follow **If the user asks for fixes** below.
+
+## Triage the Suggestions
+
+Suggestions are the most numerous tier and the least sorted: a rename worth
+two minutes sits next to a style nit nobody should spend time on, in the same
+list, in the same voice. Sorting them is cheap and leaves the user to read only
+the ones that matter, so after every report print one more section:
+
+```markdown
+## Suggestion triage
+
+**Worth doing**
+- `src/api.ts:12` — <one line: what the suggestion buys>
+
+**Not worth doing**
+- `src/util.ts:30` — <one line: why — no reader is confused, style matches the file, churn outweighs the gain>
+```
+
+Every Suggestion in the report lands in exactly one list, cited by the same
+`file:line` so the two can be matched, with a one-line reason each. This is a
+judgement, not a verification: nothing is dispatched to check a Suggestion, and
+the triage says so in a closing line. It is also not a licence to drop one —
+the report above still carries all of them verbatim.
+
+One shape does not belong in either list. A Suggestion whose content describes
+something that *breaks* — a specific input and a wrong result, a leak, an
+unhandled failure, a new branch with no test, a perf trap — is a Warning by the
+reviewer's own definitions, filed a tier low. Tier follows the content, not the
+label the finding arrived with:
+
+- under `--deep`, it is promoted to Warning *before* the verify pass and refuted
+  with the rest — see **Verify**. The report lists it under Warning marked
+  **(promoted from Suggestion)**, and it does not reappear in the triage.
+- without `--deep`, there is no refuter to send it to. Leave it in the report
+  as written, and list it in the triage under a third heading,
+  **Reads as a Warning (unverified)**, so it is not mistaken for a nit.
+
+Promotion is the one exception to the relaying rule, and it is narrow: a
+finding moves only when it states a concrete failure that the Warning
+definition covers. "Could be cleaner" does not move. When unsure, do not
+promote — a wrongly promoted nit costs a refuter; a wrongly kept one is still
+in the triage for the user to see.
 
 ## With `--deep`
 
@@ -144,8 +190,14 @@ position it is worst placed to judge from — and under `--deep` there are eight
 agents each under quiet pressure to justify their dispatch, which is exactly the
 pressure that produces plausible findings that are not real.
 
-Refute the Critical and Warning findings; carry Suggestions through marked
-**(unverified)** and say how many went unchecked. Suggestions are the most
+First sort the Suggestions for misfiled Warnings, as **Triage the Suggestions**
+describes: a Suggestion that states a concrete failure is promoted to Warning
+here, before anything is spawned, so it gets a refuter rather than a pass. Say
+how many moved.
+
+Refute the Critical and Warning findings — promoted ones included; carry the
+remaining Suggestions through marked **(unverified)** and say how many went
+unchecked. Suggestions are the most
 numerous tier, and one agent apiece to verify a naming nit is the bulk of the
 spend for the least of the value. Never drop one silently to save the spawn — an
 unverified finding the reader knows is unverified is honest; one that disappears
@@ -189,9 +241,14 @@ its only airing. Then:
   hidden
 - which lenses returned nothing; a silent lens is information, and hiding it
   makes eight agents look like one
+- which findings were promoted from Suggestion to Warning and how each fared
+  — a promotion is this command's own re-tiering, so it is disclosed alongside
+  the refutations rather than folded into the reviewer's count
 - if everything was refuted, say so plainly and treat it as a result worth
   doubting rather than a clean bill of health — that is also what a gate that
   never bites looks like
+
+Then the **Suggestion triage**, over the Suggestions that remain.
 
 Then stop. The same close as above: the findings are the user's to triage, and
 fixes happen only if they ask — when they do, follow the next section.
@@ -265,7 +322,8 @@ expiring exactly now is accepted. Use `>=`.
 Where one comment covers several findings, group them under the same Critical /
 Warning / Suggestion headings the report used instead of tagging each line.
 
-Carry the qualifiers across too. **(unverified)** and **(pre-existing)** change
+Carry the qualifiers across too. **(unverified)**, **(pre-existing)** and
+**(promoted from Suggestion)** change
 what the reader should do about a finding as much as the tier does, and a
 suggestion nothing refuted should not land on the PR looking as settled as one
 that survived a refuter.
