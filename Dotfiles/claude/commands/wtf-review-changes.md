@@ -314,12 +314,11 @@ What this check does not cover, so it is not mistaken for more than it is:
 
 ## If the findings go to GitHub
 
-A later message may ask for these findings to be posted on a PR — as inline
-review comments, as a review body, or as a single comment. When it does, **every
-finding carries its tier with it, whether or not the user asked for severities.**
-Someone reading a comment on GitHub cannot see the report it came from, so an
-unlabelled finding arrives with no way to tell whether it blocks the merge or is
-a naming nit.
+A later message may ask for these findings to be posted on a PR. When it does,
+**every finding carries its tier with it, whether or not the user asked for
+severities.** Someone reading a comment on GitHub cannot see the report it came
+from, so an unlabelled finding arrives with no way to tell whether it blocks
+the merge or is a naming nit.
 
 Lead each posted comment with its tier, then the finding as it was written:
 
@@ -328,14 +327,40 @@ Lead each posted comment with its tier, then the finding as it was written:
 expiring exactly now is accepted. Use `>=`.
 ```
 
-Where one comment covers several findings, group them under the same Critical /
-Warning / Suggestion headings the report used instead of tagging each line.
-
 Carry the qualifiers across too. **(unverified)**, **(pre-existing)** and
-**(promoted from Suggestion)** change
-what the reader should do about a finding as much as the tier does, and a
-suggestion nothing refuted should not land on the PR looking as settled as one
-that survived a refuter.
+**(promoted from Suggestion)** change what the reader should do about a finding
+as much as the tier does, and a suggestion nothing refuted should not land on
+the PR looking as settled as one that survived a refuter.
 
 Do not re-rank on the way out. The tier that gets posted is the tier the review
 gave it, including any you would have scored differently.
+
+### How to post
+
+Default to one inline review comment per finding, anchored at its `file:line`
+— it puts each finding where the reader is already looking when they open that
+line, and is more GitHub-native than a wall of text. Post them as a single PR
+review rather than one API call per comment (a `POST .../pulls/{number}/reviews`
+with a `comments` array, or the `gh` equivalent), so they land together as one
+review instead of trickling in as separate notifications.
+
+Inline anchoring only works within the PR's diff hunks — GitHub rejects a
+comment on a line the diff does not touch. Fetch the PR's actual hunks (`gh pr
+diff` or the per-file `patch` from the PR's files) and check each finding's
+`file:line` against them *before* posting, rather than discovering the
+rejection from a failed call.
+
+- A finding whose line falls inside a hunk goes up as its own inline comment,
+  tier-led as above.
+- A finding whose line does not — unchanged context the diff doesn't cover, a
+  file touched only indirectly, a `file:line` that drifted — cannot anchor.
+  Collect all such findings into the review's body instead, grouped under the
+  same Critical / Warning / Suggestion headings the report used, the same way
+  a fully-grouped review would be written.
+- Say, when posting, how many went inline and how many fell back to the body,
+  so the split is visible rather than silently mixed.
+
+If the user asks for a different shape instead — a single review comment for
+everything, or inline for everything with no fallback — do that instead; this
+default is what to do absent other instructions, not a rule to argue for over
+an explicit request.
