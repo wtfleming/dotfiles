@@ -60,15 +60,24 @@ the ones that matter, so after every report print one more section:
 ```markdown
 ## Suggestion triage
 
+**Definitely worth doing**
+- `src/api.ts:12` — <one line: what it buys, and why now — the fix is small and the cost of leaving it compounds>
+
 **Worth doing**
-- `src/api.ts:12` — <one line: what the suggestion buys>
+- `src/api.ts:40` — <one line: what the suggestion buys>
 
 **Not worth doing**
 - `src/util.ts:30` — <one line: why — no reader is confused, style matches the file, churn outweighs the gain>
 ```
 
 Every Suggestion in the report lands in exactly one list, cited by the same
-`file:line` so the two can be matched, with a one-line reason each. This is a
+`file:line` so the lists can be matched to the report, with a one-line reason
+each. **Definitely worth doing** is for the few a reader should not skip: the
+change is small and the payoff is clear and durable — a misleading name on
+something public, dead code that will be mistaken for live, a comment that
+states something false. **Worth doing** is the rest of the genuine
+improvements — right to take, fine to defer. Keep the top list short; if most
+Suggestions land there, it is not sorting anything. This is a
 judgement, not a verification: nothing is dispatched to check a Suggestion, and
 the triage says so in a closing line. It is also not a licence to drop one —
 the report above still carries all of them verbatim.
