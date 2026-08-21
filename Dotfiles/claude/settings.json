@@ -108,5 +108,6 @@
     "skill-creator@claude-plugins-official": false
   },
   "agentPushNotifEnabled": true,
-  "tui": "default"
+  "tui": "default",
+  "model": "opus[1m]"
 }
