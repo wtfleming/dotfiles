@@ -16,8 +16,8 @@ conversation where their intent lives — not here.
 ## Review
 
 Launch the `wtf-change-reviewer` subagent on the scope. Dispatch it with the
-Agent tool, `subagent_type: "wtf-change-reviewer"`, and wait for it
-(`run_in_background: false`) — except under `--deep` with a named scope, where
+Agent tool, `subagent_type: "wtf-change-reviewer"`, and wait for it to
+complete — except under `--deep` with a named scope, where
 this dispatch is held for the batched launch described below so the lenses do
 not serialise behind it.
 

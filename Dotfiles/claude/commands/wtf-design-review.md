@@ -14,8 +14,8 @@ polished. It reviews the approach; it does not hunt bugs, and it does not fix.
 For the defect review, use `/wtf-review-changes` when the work is done.
 
 Launch the `wtf-design-reviewer` subagent on the scope. Dispatch it with the
-Agent tool, `subagent_type: "wtf-design-reviewer"`, and wait for it
-(`run_in_background: false`).
+Agent tool, `subagent_type: "wtf-design-reviewer"`, and wait for it to
+complete.
 
 The reviewer starts cold — that is the whole point. The prompt you send it
 contains **only** the scope. Do not include:
