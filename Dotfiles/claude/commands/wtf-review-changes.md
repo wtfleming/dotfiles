@@ -201,8 +201,8 @@ pressure that produces plausible findings that are not real.
 
 First sort the Suggestions for misfiled Warnings, as **Triage the Suggestions**
 describes: a Suggestion that states a concrete failure is promoted to Warning
-here, before anything is spawned, so it gets a refuter rather than a pass. Say
-how many moved.
+here, before any `wtf-refuter` is spawned, so it gets a refuter rather than an
+unverified pass. Say how many moved.
 
 Refute the Critical and Warning findings — promoted ones included; carry the
 remaining Suggestions through marked **(unverified)** and say how many went
