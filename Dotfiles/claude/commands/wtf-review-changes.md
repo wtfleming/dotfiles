@@ -351,7 +351,8 @@ diff` or the per-file `patch` from the PR's files) and check each finding's
 rejection from a failed call. Anchor each comment with `path` and `line` +
 `side` — not the deprecated `position` — and set the review's `commit_id` to
 the PR's current head SHA, so a comment doesn't silently land against a stale
-commit.
+commit. A finding's `file:line` always names code that still exists in the
+tree being reviewed, never a deleted line, so `side` is always `RIGHT`.
 
 - A finding whose line falls inside a hunk goes up as its own inline comment,
   tier-led as above.
