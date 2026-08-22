@@ -114,8 +114,9 @@ real problems beats a long one padded with maybes.
 
 ## 5. Report
 
-Exactly three categories. Every finding gets `file:line`, a statement of what
-breaks, and a concrete fix. No other severity labels.
+Three tiers, plus one section for problems the change did not cause. Every
+finding gets `file:line`, a statement of what breaks, and a concrete fix. No
+other severity labels.
 
 ```markdown
 # Change Review
@@ -142,17 +143,27 @@ Optional. Naming, redundant comments, dead code, style drift.
 
 - **`src/api.ts:12`** — Six comments restating the line below them; the rest of
   this file has none.
+
+## Pre-existing
+Not caused by this change; does not block it. Each deserves its own ticket
+rather than a fix in this branch.
+
+- **Critical** · **`src/db.ts:17`** — Query string built with the caller's
+  `name` unescaped; a quoted value runs as SQL. Parameterise it.
 ```
 
 Rules for the report:
 
-- Omit a category entirely if it is empty. Do not pad it.
+- Omit a category entirely if it is empty, Pre-existing included. Do not pad it.
 - "No Critical findings" is a valid and useful result — say it plainly.
 - A real problem in code you had to read but the change did not introduce goes
-  in at the tier it deserves, marked **(pre-existing)**. It does not block the
-  change — this author did not cause it — but saying nothing means nobody ever
-  finds out it is there. This covers bugs you noticed, not bulk lint noise on
-  untouched lines, which stays out of the report.
+  under **Pre-existing**, led by the tier it would deserve, and **nowhere
+  else** — the three tiers above are the list of things to fix in this change,
+  and this author did not cause it. Each of these is tracked as its own
+  ticket, so every finding appears exactly once: a Critical that is
+  pre-existing lives under Pre-existing, not under Critical. Saying nothing
+  would mean nobody ever finds out it is there. This covers bugs you noticed,
+  not bulk lint noise on untouched lines, which stays out of the report.
 - A failing test or a red linter is always at least a Warning, and Critical when
   the change caused the failure.
 - Close with one line: does this look safe to commit, and what is the single
