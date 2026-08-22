@@ -74,7 +74,8 @@ Every Suggestion in the report lands in exactly one list, cited by the same
 `file:line` so the lists can be matched to the report, with a one-line reason
 each. Findings under **Pre-existing** are not triaged, whatever tier they carry
 — they are tickets, not work for this change, and they appear in the report
-once. **Definitely worth doing** is for the few a reader should not skip: the
+once. The promotion rule below still applies to them: tier follows content
+there as anywhere, and the section does not change that. **Definitely worth doing** is for the few a reader should not skip: the
 change is small and the payoff is clear and durable — a misleading name on
 something public, dead code that will be mistaken for live, a comment that
 states something false. **Worth doing** is the rest of the genuine
@@ -92,10 +93,13 @@ label the finding arrived with:
 
 - under `--deep`, it is promoted to Warning *before* the verify pass and refuted
   with the rest — see **Verify**. The report lists it under Warning marked
-  **(promoted from Suggestion)**, and it does not reappear in the triage.
+  **(promoted from Suggestion)**, and it does not reappear in the triage. A
+  Pre-existing one stays in its section with the new tier leading it, marked
+  the same way.
 - without `--deep`, there is no refuter to send it to. Leave it in the report
   as written, and list it in the triage under a third heading,
-  **Reads as a Warning (unverified)**, so it is not mistaken for a nit.
+  **Reads as a Warning (unverified)**, so it is not mistaken for a nit — a
+  Pre-existing one included, the only time that section appears in the triage.
 
 Promotion is the one exception to the relaying rule, and it is narrow: a
 finding moves only when it states a concrete failure that the Warning

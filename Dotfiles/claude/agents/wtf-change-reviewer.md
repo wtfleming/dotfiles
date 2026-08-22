@@ -154,14 +154,15 @@ rather than a fix in this branch.
 
 Rules for the report:
 
-- Omit a category entirely if it is empty, Pre-existing included. Do not pad it.
+- Omit a tier entirely if it is empty, and likewise the Pre-existing section. Do
+  not pad it.
 - "No Critical findings" is a valid and useful result — say it plainly.
 - A real problem in code you had to read but the change did not introduce goes
   under **Pre-existing**, led by the tier it would deserve, and **nowhere
   else** — the three tiers above are the list of things to fix in this change,
-  and this author did not cause it. Each of these is tracked as its own
-  ticket, so every finding appears exactly once: a Critical that is
-  pre-existing lives under Pre-existing, not under Critical. Saying nothing
+  and this author did not cause it. Each of these deserves its own ticket,
+  so every finding appears exactly once: a Critical that is pre-existing
+  lives under Pre-existing, not under Critical. Saying nothing
   would mean nobody ever finds out it is there. This covers bugs you noticed,
   not bulk lint noise on untouched lines, which stays out of the report.
 - A failing test or a red linter is always at least a Warning, and Critical when
