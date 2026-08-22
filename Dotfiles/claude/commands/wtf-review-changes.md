@@ -72,13 +72,14 @@ the ones that matter, so after every report print one more section:
 
 Every Suggestion in the report lands in exactly one list, cited by the same
 `file:line` so the lists can be matched to the report, with a one-line reason
-each. Findings under **Pre-existing** are not triaged, whatever tier they carry
-— they are tickets, not work for this change, and they appear in the report
-once. The promotion rule below still applies to them: tier follows content
-there as anywhere, and the section does not change that. **Definitely worth doing** is for the few a reader should not skip: the
-change is small and the payoff is clear and durable — a misleading name on
-something public, dead code that will be mistaken for live, a comment that
-states something false. **Worth doing** is the rest of the genuine
+each. Findings under **Pre-existing** are not sorted into these lists, whatever
+tier they carry — they are tickets, not work for this change, and they appear
+in the report once. The promotion rule below still applies to them: tier
+follows content there as anywhere, and the section does not change that.
+**Definitely worth doing** is for the few a reader should not skip: the change
+is small and the payoff is clear and durable — a misleading name on something
+public, dead code that will be mistaken for live, a comment that states
+something false. **Worth doing** is the rest of the genuine
 improvements — right to take, fine to defer. Keep the top list short; if most
 Suggestions land there, it is not sorting anything. This is a
 judgement, not a verification: nothing is dispatched to check a Suggestion, and
