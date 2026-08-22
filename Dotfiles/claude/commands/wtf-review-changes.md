@@ -72,10 +72,14 @@ the ones that matter, so after every report print one more section:
 
 Every Suggestion in the report lands in exactly one list, cited by the same
 `file:line` so the lists can be matched to the report, with a one-line reason
-each. **Definitely worth doing** is for the few a reader should not skip: the
-change is small and the payoff is clear and durable — a misleading name on
-something public, dead code that will be mistaken for live, a comment that
-states something false. **Worth doing** is the rest of the genuine
+each. Findings under **Pre-existing** are not sorted into these lists, whatever
+tier they carry — they are tickets, not work for this change, and they appear
+in the report once. The promotion rule below still applies to them: tier
+follows content there as anywhere, and the section does not change that.
+**Definitely worth doing** is for the few a reader should not skip: the change
+is small and the payoff is clear and durable — a misleading name on something
+public, dead code that will be mistaken for live, a comment that states
+something false. **Worth doing** is the rest of the genuine
 improvements — right to take, fine to defer. Keep the top list short; if most
 Suggestions land there, it is not sorting anything. This is a
 judgement, not a verification: nothing is dispatched to check a Suggestion, and
@@ -90,10 +94,13 @@ label the finding arrived with:
 
 - under `--deep`, it is promoted to Warning *before* the verify pass and refuted
   with the rest — see **Verify**. The report lists it under Warning marked
-  **(promoted from Suggestion)**, and it does not reappear in the triage.
+  **(promoted from Suggestion)**, and it does not reappear in the triage. A
+  Pre-existing one stays in its section with the new tier leading it, marked
+  the same way.
 - without `--deep`, there is no refuter to send it to. Leave it in the report
   as written, and list it in the triage under a third heading,
-  **Reads as a Warning (unverified)**, so it is not mistaken for a nit.
+  **Reads as a Warning (unverified)**, so it is not mistaken for a nit — a
+  Pre-existing one included, the only time that section appears in the triage.
 
 Promotion is the one exception to the relaying rule, and it is narrow: a
 finding moves only when it states a concrete failure that the Warning
@@ -187,7 +194,10 @@ defect, not the exact line — two agents describing the same problem routinely
 anchor a few lines apart. Where they found the same thing, keep the more
 specific statement and drop the other, rather than listing it twice with
 different wording. Where they disagree on tier, take the higher and say which
-reports saw it.
+reports saw it. A lens marks a problem the change did not cause
+**(pre-existing)** inline; in the merged report it goes under the reviewer's
+**Pre-existing** section with that tier leading it, and not under the tier
+itself — if any report filed it both ways, Pre-existing wins.
 
 Do not print the merged report yet — it has not been verified, and findings that
 are about to be retracted should not get a first airing.
@@ -204,9 +214,10 @@ describes: a Suggestion that states a concrete failure is promoted to Warning
 here, before any `wtf-refuter` is spawned, so it gets a refuter rather than an
 unverified pass. Say how many moved.
 
-Refute the Critical and Warning findings — promoted ones included; carry the
-remaining Suggestions through marked **(unverified)** and say how many went
-unchecked. Suggestions are the most
+Refute the Critical and Warning findings — promoted ones included, and
+Pre-existing ones at those tiers, since a ticket for a bug that is not there
+costs as much as a fix for one; carry the remaining Suggestions through marked
+**(unverified)** and say how many went unchecked. Suggestions are the most
 numerous tier, and one agent apiece to verify a naming nit is the bulk of the
 spend for the least of the value. Never drop one silently to save the spawn — an
 unverified finding the reader knows is unverified is honest; one that disappears
@@ -242,9 +253,9 @@ nothing.
 ### Report
 
 Print the merged report of what survived, in the reviewer's Critical / Warning /
-Suggestion format, keeping its Scope / Tests / Lint header lines — the test
-result is the most load-bearing line in the report, and under `--deep` this is
-its only airing. Then:
+Suggestion / Pre-existing format, keeping its Scope / Tests / Lint header lines
+— the test result is the most load-bearing line in the report, and under
+`--deep` this is its only airing. Then:
 
 - how many findings were refuted, and why — a dropped finding is reported, not
   hidden
@@ -265,7 +276,9 @@ fixes happen only if they ask — when they do, follow the next section.
 ## If the user asks for fixes
 
 Make only the edits the named findings describe — a review is not a mandate to
-refactor — and leave committing to the user.
+refactor — and leave committing to the user. "Fix everything" means the three
+tiers; a **Pre-existing** finding is fixed only if the user names it, because
+it belongs to a ticket, not to this branch.
 
 Then have the fixes checked, because of who wrote them. Everything above is
 built on the author being the worst-placed judge of their own work, and the
@@ -327,10 +340,13 @@ Lead each posted comment with its tier, then the finding as it was written:
 expiring exactly now is accepted. Use `>=`.
 ```
 
-Carry the qualifiers across too. **(unverified)**, **(pre-existing)** and
+Carry the qualifiers across too. **(unverified)** and
 **(promoted from Suggestion)** change what the reader should do about a finding
 as much as the tier does, and a suggestion nothing refuted should not land on
-the PR looking as settled as one that survived a refuter.
+the PR looking as settled as one that survived a refuter. A **Pre-existing**
+finding posts as its tier followed by **(pre-existing)** —
+`**Warning (pre-existing)** — …` — because the section heading that said so
+does not travel with it.
 
 Do not re-rank on the way out. The tier that gets posted is the tier the review
 gave it, including any you would have scored differently.
@@ -359,8 +375,8 @@ tree being reviewed, never a deleted line, so `side` is always `RIGHT`.
 - A finding whose line does not — unchanged context the diff doesn't cover, a
   file touched only indirectly, a `file:line` that drifted — cannot anchor.
   Collect all such findings into the review's body instead, grouped under the
-  same Critical / Warning / Suggestion headings the report used, the same way
-  a fully-grouped review would be written.
+  same Critical / Warning / Suggestion / Pre-existing headings the report
+  used, the same way a fully-grouped review would be written.
 - Say, when posting, how many went inline and how many fell back to the body,
   so the split is visible rather than silently mixed.
 
