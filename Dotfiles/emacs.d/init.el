@@ -2182,7 +2182,9 @@ Can be used with the `gptel-post-response-functions' hook."
 (defvar wtf-gptel-litellm-host nil
   "Host of a LiteLLM proxy, with no scheme and no path, or nil for none.")
 (defvar wtf-gptel-litellm-models nil
-  "Model aliases, as symbols, served by `wtf-gptel-litellm-host'.")
+  "Model aliases served by `wtf-gptel-litellm-host', symbols or strings.
+The first is the default model.  Use a string for an alias that isn't
+readable as a bare symbol, such as \"glm-5.2 [1m]\".")
 
 ;; On a machine with a proxy configured LiteLLM becomes the default, using
 ;; the first alias in the list. Claude stays registered and is still
@@ -2192,14 +2194,17 @@ Can be used with the `gptel-post-response-functions' hook."
 ;; The line should look like this:
 ;; machine <litellm-host> login apikey password <api-key>
 (when (and wtf-gptel-litellm-host wtf-gptel-litellm-models)
-  (setopt
-   gptel-model (car wtf-gptel-litellm-models)
-   gptel-backend (gptel-make-openai "LiteLLM"
-                   :host wtf-gptel-litellm-host
-                   :stream t
-                   :key (lambda ()
-                          (gptel-api-key-from-auth-source wtf-gptel-litellm-host))
-                   :models wtf-gptel-litellm-models)))
+  (setopt gptel-backend (gptel-make-openai "LiteLLM"
+                          :host wtf-gptel-litellm-host
+                          :stream t
+                          :key (lambda ()
+                                 (gptel-api-key-from-auth-source wtf-gptel-litellm-host))
+                          :models wtf-gptel-litellm-models))
+  ;; Read the default back off the backend instead of taking the car of
+  ;; wtf-gptel-litellm-models: gptel interns model names, so this is a symbol
+  ;; even for an alias work.el had to write as a string -- and some have to
+  ;; be, since an alias like "glm-5.2 [1m]" isn't readable as a bare symbol.
+  (setopt gptel-model (car (gptel-backend-models gptel-backend))))
 
 (use-package gptel-quick
   :ensure t
