@@ -2170,6 +2170,37 @@ Can be used with the `gptel-post-response-functions' hook."
   (push 'claude-sonnet-4-5-20250929
     (gptel-backend-models (gptel-get-backend "Claude")))
 
+;; Work LiteLLM proxy. The hostname is an internal identifier and the model
+;; names are proxy aliases, so both come from ~/.local/emacs/work.el, which
+;; isn't in git. That file is loaded early in init, long before gptel exists,
+;; so it must only set these variables -- it can't call gptel-make-openai
+;; itself. Its presence is also what marks this as a work machine: with no
+;; work.el nothing below runs and Claude stays the default.
+;;
+;; These are defvar rather than setopt on purpose -- defvar leaves an
+;; already-bound value alone, so what work.el set at startup survives.
+(defvar wtf-gptel-litellm-host nil
+  "Host of a LiteLLM proxy, with no scheme and no path, or nil for none.")
+(defvar wtf-gptel-litellm-models nil
+  "Model aliases, as symbols, served by `wtf-gptel-litellm-host'.")
+
+;; On a machine with a proxy configured LiteLLM becomes the default, using
+;; the first alias in the list. Claude stays registered and is still
+;; selectable from gptel-menu.
+;;
+;; Fetches key from ~/.authinfo, same as Claude above.
+;; The line should look like this:
+;; machine <litellm-host> login apikey password <api-key>
+(when (and wtf-gptel-litellm-host wtf-gptel-litellm-models)
+  (setopt
+   gptel-model (car wtf-gptel-litellm-models)
+   gptel-backend (gptel-make-openai "LiteLLM"
+                   :host wtf-gptel-litellm-host
+                   :stream t
+                   :key (lambda ()
+                          (gptel-api-key-from-auth-source wtf-gptel-litellm-host))
+                   :models wtf-gptel-litellm-models)))
+
 (use-package gptel-quick
   :ensure t
   :vc (modus-themes :url "https://github.com/karthink/gptel-quick"
