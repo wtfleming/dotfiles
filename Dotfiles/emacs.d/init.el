@@ -2202,8 +2202,7 @@ readable as a bare symbol, such as \"glm-5.2 [1m]\".")
                           :models wtf-gptel-litellm-models))
   ;; Read the default back off the backend instead of taking the car of
   ;; wtf-gptel-litellm-models: gptel interns model names, so this is a symbol
-  ;; even for an alias work.el had to write as a string -- and some have to
-  ;; be, since an alias like "glm-5.2 [1m]" isn't readable as a bare symbol.
+  ;; even for an alias work.el had to write as a string.
   (setopt gptel-model (car (gptel-backend-models gptel-backend))))
 
 (use-package gptel-quick
@@ -2303,7 +2302,9 @@ readable as a bare symbol, such as \"glm-5.2 [1m]\".")
 (gptel-make-preset 'fetch
   :description "Fetches a web page and answers questions about its content"
   :backend "Claude"
-  ;; :model 'claude-3-7-sonnet-20250219.1
+  ;; Pin the model too: a preset's :backend sets gptel-backend and leaves
+  ;; gptel-model alone, so otherwise the ambient model follows the backend.
+  :model 'claude-sonnet-4-5-20250929
   :system "You are an expert at explaining information from the web. Cite your sources"
   :tools '("mcp-fetch"))
 
