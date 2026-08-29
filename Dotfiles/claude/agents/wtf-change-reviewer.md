@@ -75,6 +75,16 @@ Critical finding instead of running it.
 Run it. Capture failures verbatim — name, file, assertion. Do not summarise a
 failure into a paraphrase.
 
+On a subject scope, run the same discovered command. Do not construct a narrowed
+invocation: the discovery order above exists because a command the project did
+not document is a command you guessed, and guessing which tests cover which
+files under-reports silently. What changes is not the run, it is the reporting —
+the same split section 3 makes for the linter, which also runs whole and reports
+narrow. A whole-suite result here is a fact about the repo, not about the code
+you were asked to review, and printed unqualified it borrows the authority of
+the revision case, where `Tests: pass` means the change broke nothing. Say which
+one the reader has, per the **Tests** rule in section 5.
+
 If no test command exists, or the run cannot complete (missing deps, needs a
 database, needs credentials), say so explicitly and move on. Never report tests
 as passing when you did not observe them pass.
@@ -179,6 +189,13 @@ Rules for the report:
 - On a subject scope the **Scope** line names the subject and what you read —
   `<subject> — <N> files read` — with no `+<A>/-<B>`, because nothing was
   diffed.
+- On a subject scope the **Tests** line is marked `repo-wide` and carries the
+  in-scope count as well as the total —
+  `<command> → 3 failed (repo-wide; 1 in files under review)`. "The suite is
+  red" and "the area you were asked about is broken" are different findings,
+  the second is not recoverable from the first, and the tier rule below turns
+  on which one you have. `0 in files under review` is worth printing too: it is
+  what tells the reader a red suite is not this area's problem.
 - "No Critical findings" is a valid and useful result — say it plainly.
 - A real problem in code you had to read but the change did not introduce goes
   under **Pre-existing**, led by the tier it would deserve, and **nowhere
@@ -195,9 +212,10 @@ Rules for the report:
 - A failing test or a red linter is always at least a Warning, and Critical when
   the change caused the failure. On a subject scope there is no change to have
   caused it, so that route to Critical is closed and the rule would cap a red
-  suite at Warning; instead, a failing test among the files you settled on is
-  Critical there — it is the strongest evidence the area is not sound, which is
-  what the closing line asks you for.
+  suite at Warning. There, what makes it Critical is the in-scope count on the
+  **Tests** line: a failure among the files you settled on is the strongest
+  evidence the area is not sound, which is what the closing line asks you for. A
+  red suite with none of its failures in those files stays a Warning.
 - A finding about a hardcoded credential cites `file:line` and names the key,
   never the value. The report quotes code inline, findings are posted to GitHub
   as written, and a subject scope has you reading whole config files rather than
