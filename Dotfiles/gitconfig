@@ -16,3 +16,14 @@
 #        insteadOf = https://github.com/
 #[url "git@github.com:"]
 #        insteadOf = https://github.com/
+
+# Work machines: keep work identity out of this public repo and out of personal
+# commits. Check work repos out under ~/src/work/ and put the work identity in
+# ~/.gitconfig-work, which is deliberately not synced from here:
+#         [user]
+#                 email = you@employer.example
+# Anything outside ~/src/work/ keeps the personal identity above, so a commit to
+# this repo stays personal even on a work machine. A missing ~/.gitconfig-work is
+# silently ignored, so this is a no-op on personal machines.
+[includeIf "gitdir:~/src/work/"]
+        path = ~/.gitconfig-work

@@ -35,10 +35,33 @@ If you add a new config file under `Dotfiles/`, also add a copy step to
 
 ## Work machines
 
-`Dotfiles/gitconfig` hardcodes personal identity (name, email). On a work
-machine, override it after syncing — e.g. with a local include that is not
-tracked here — rather than editing the deployed `~/.gitconfig` (a re-sync
-would clobber it).
+`Dotfiles/gitconfig` carries the personal identity and ends with a path-scoped
+include:
+
+```ini
+[includeIf "gitdir:~/src/work/"]
+        path = ~/.gitconfig-work
+```
+
+Check work repos out under `~/src/work/`, and put the work identity in
+`~/.gitconfig-work`:
+
+```ini
+[user]
+        email = <work address>
+```
+
+That file is deliberately not tracked here and not synced, so the sync's
+overwrite of `~/.gitconfig` cannot clobber it. Don't add it to this repo.
+
+Only repos under `~/src/work/` pick it up. Everything else — this repo
+included — keeps the personal identity, so a commit here stays personal even on
+a work machine. Git ignores the include silently while the file is absent, so
+personal machines need nothing.
+
+Don't override identity machine-wide instead. An unconditional include applies
+the work email to personal repos too, and editing the deployed `~/.gitconfig`
+directly is clobbered on the next sync.
 
 ## Emacs server
 

@@ -52,11 +52,9 @@ run cp ~/src/dotfiles/Dotfiles/git-completion.bash ~/.git-completion.bash
 run cp ~/src/dotfiles/Dotfiles/git-completion.zsh ~/.git-completion.zsh
 run cp ~/src/dotfiles/Dotfiles/git-prompt.sh ~/.git-prompt.sh
 run cp ~/src/dotfiles/Dotfiles/gitexcludes ~/.gitexcludes
-# TODO on a work computer I likely have my email address in .gitconfig set to
-# my work email, don't want to copy over if that is the case?
-# Find a better way of handling this
-#  one thing I could do is cd /path/to/repo && git config --local github.email EMAIL
-#  for work repos
+# gitconfig carries the personal identity and an includeIf for ~/src/work/, so
+# work identity lives in the un-synced ~/.gitconfig-work and this overwrite is
+# safe on a work computer.
 run cp ~/src/dotfiles/Dotfiles/gitconfig ~/.gitconfig
 
 # tmux
@@ -136,5 +134,5 @@ run cp -r ~/src/dotfiles/Dotfiles/claude/commands/. ~/.claude/commands/
 
 if [ "$quiet" -eq 0 ]; then
     echo "Successfully synced dotfiles."
-    echo "If this is a work computer ensure that the correct email is being used in .gitconfig"
+    echo "If this is a work computer, work identity belongs in ~/.gitconfig-work (see Dotfiles/gitconfig)"
 fi
