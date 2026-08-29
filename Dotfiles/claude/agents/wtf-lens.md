@@ -1,6 +1,6 @@
 ---
 name: wtf-lens
-description: Review a diff through one named lens only — correctness, security, tests, maintainability, performance, dependencies, reuse or resilience. Dispatched several at a time by /wtf-review-changes --deep; not a general reviewer.
+description: Review a diff through one named lens only — correctness, security, tests, maintainability, performance, dependencies, reuse or resilience. Dispatched several at a time by /wtf-code-review --deep; not a general reviewer.
 tools: Read, Grep, Glob, Bash
 ---
 
@@ -38,6 +38,41 @@ You are given a scope. Diff it, and read the full current contents of every file
 it touches. If the scope is a range, `git diff <range>`; if it is a path, diff
 the working tree for that path. State what you settled on in one line.
 
+## If your lens has no surface here
+
+Some scopes have nothing for some lenses. A `dependencies` pass over a change
+that adds no import, alters no exported signature, touches no config key and
+adds no migration has nothing to govern; a scope that is not code at all leaves
+most lenses with nothing.
+
+Once you have diffed the scope and read the files it touches, you may stop there
+and answer `## Lens: <name> — not applicable.` with one line naming what you
+looked for and found no surface for. Do the scope read first: this is a
+conclusion you reach from the files, never from what the scope is called.
+
+That is not the same answer as no findings, and the difference is the whole
+reason it exists:
+
+- **not applicable** — there is nothing here your lens governs.
+- **no findings** — your lens governs something here, and it is clean.
+
+A reader judging how much the pass actually covered has to tell those apart.
+When in doubt, run the pass and report no findings — a lens that reviewed a thin
+surface costs a line, a lens that waved off a surface it did have costs the
+finding.
+
+**Three lenses must not take this exit for a missing subject**, because the
+missing subject is what they are looking for:
+
+- `tests` — a new branch with no test is the finding, not grounds to stand down.
+- `reuse` — its subject sits outside the diff by design: the existing duplicate
+  and the code the change orphaned both live in files it did not touch.
+- `resilience` — a call with no timeout, a failure nothing logs, and a retry
+  with no cap are absences too.
+
+For those three, not applicable means the scope holds no code they could govern
+at all — not that the thing they hunt is absent.
+
 ## Before you write a finding
 
 Try to refute it. Open the file, trace the caller, check whether the guard you
@@ -64,4 +99,6 @@ Warning should be fixed, Suggestion is optional. Mark a real problem your lens
 found that the change did not introduce as **(pre-existing)** — it does not block
 the change, but the reader should still learn it is there.
 
-If you found nothing, say `## Lens: <name> — no findings.` and stop.
+If you found nothing, say `## Lens: <name> — no findings.` and stop. If your
+lens had no surface here at all, say `## Lens: <name> — not applicable.`
+instead, per the section above.

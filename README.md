@@ -128,7 +128,7 @@ socket: it is wasted work in any Emacs `emacsclient` cannot reach.
 
 ## Claude Code
 
-`Dotfiles/claude/` deploys to `~/.claude/` and includes `/wtf-review-changes`, a
+`Dotfiles/claude/` deploys to `~/.claude/` and includes `/wtf-code-review`, a
 fresh-context code review. See [`Dotfiles/claude/README.md`](Dotfiles/claude/README.md).
 
 ## Layout

@@ -7,14 +7,14 @@ repo and is deliberately not synced.
 
 ## Code review
 
-`/wtf-review-changes` reviews recent changes in a **fresh context** — a subagent
+`/wtf-code-review` reviews recent changes in a **fresh context** — a subagent
 that never sees the conversation which wrote the code, so it cannot inherit the
 author's assumptions about it.
 
 ```
-/wtf-review-changes                  # uncommitted, else the branch, else HEAD
-/wtf-review-changes HEAD~3           # any ref, branch or path
-/wtf-review-changes main --deep      # add a verified parallel pass per dimension
+/wtf-code-review                     # uncommitted, else the branch, else HEAD
+/wtf-code-review HEAD~3              # any ref, branch or path
+/wtf-code-review main --deep         # add a verified parallel pass per dimension
 ```
 
 Without `--deep` it settles the scope, runs the project's test suite and linter,
@@ -62,7 +62,7 @@ verification the findings did. Committing stays yours.
 
 `/wtf-design-review` asks a different question at a different time: *is this
 change the right shape?* Run it mid-work, while changing course is still cheap —
-`/wtf-review-changes` is the pre-PR gate, and design feedback that arrives at
+`/wtf-code-review` is the pre-PR gate, and design feedback that arrives at
 the gate arrives after the sunk cost.
 
 ```

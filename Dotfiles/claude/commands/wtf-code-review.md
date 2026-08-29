@@ -259,8 +259,11 @@ Suggestion / Pre-existing format, keeping its Scope / Tests / Lint header lines
 
 - how many findings were refuted, and why — a dropped finding is reported, not
   hidden
-- which lenses returned nothing; a silent lens is information, and hiding it
-  makes eight agents look like one
+- which lenses returned nothing, and — listed separately — which returned **not
+  applicable**. A lens that governed something and found it clean and a lens that
+  had no surface to review are different facts about how far the pass reached,
+  and collapsing them overstates one or the other. Both are information, and
+  hiding either makes eight agents look like one
 - which findings were promoted from Suggestion to Warning and how each fared
   — a promotion is this command's own re-tiering, so it is disclosed alongside
   the refutations rather than folded into the reviewer's count
@@ -322,7 +325,7 @@ What this check does not cover, so it is not mistaken for more than it is:
   (the refuter declined to run the decisive command) is not the fix failing:
   relay it as **could not verify**.
 - A fix that reached beyond the finding's own hunk has changed code no refuter
-  was pointed at. Offer a fresh `/wtf-review-changes` for it instead of
+  was pointed at. Offer a fresh `/wtf-code-review` for it instead of
   presenting the verdicts as if they covered it.
 
 ## If the findings go to GitHub

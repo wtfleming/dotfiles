@@ -1,6 +1,6 @@
 ---
 name: wtf-refuter
-description: Adversarially verify a single code-review finding — argue it is wrong, then answer refuted or stands. Dispatched one-per-finding by /wtf-review-changes; not a general-purpose reviewer.
+description: Adversarially verify a single code-review finding — argue it is wrong, then answer refuted or stands. Dispatched one-per-finding by /wtf-code-review; not a general-purpose reviewer.
 tools: Read, Grep, Glob, Bash
 ---
 
