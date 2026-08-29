@@ -58,7 +58,7 @@ that adds no import, alters no exported signature, touches no config key and
 adds no migration has nothing to govern; a scope that is not code at all leaves
 most lenses with nothing.
 
-Once you have diffed the scope and read the files it touches, you may stop there
+Once you have read the scope — diffed it, or read the files a subject names — you may stop there
 and answer `## Lens: <name> — not applicable.` with one line naming what you
 looked for and found no surface for. Do the scope read first: this is a
 conclusion you reach from the files, never from what the scope is called.
@@ -75,18 +75,13 @@ surface costs a line, a lens that waved off a surface it did have costs the
 finding.
 
 **Four lenses must not take this exit because the thing they hunt is absent** —
-for them that absence *is* the finding. ("Subject" here means the scope shape
-above; what a lens hunts is its *target*, and a missing target is not a missing
-subject.)
+`tests`, `reuse`, `resilience` and `security`. For them that absence *is* the
+finding. ("Subject" here means the scope shape above; what a lens hunts is its
+*target*, and a missing target is not a missing subject.)
 
-- `tests` — a new branch with no test is the finding, not grounds to stand down.
-- `reuse` — its target sits outside the diff by design: the existing duplicate
-  and the code the change orphaned both live in files it did not touch.
-- `resilience` — a call with no timeout, a failure nothing logs, and a retry
-  with no cap are absences too.
-- `security` — half its rubric is absences: unvalidated input at a boundary and
-  a missing authz check are the same shape as the missing timeout. A handler
-  with no guard on it is the finding, not an empty surface.
+Your rubric arrives with the dispatch and says what you hunt; restating the four
+here would leave you holding two descriptions of your own job, to drift apart the
+next time one is retuned. Read yours and decide from it.
 
 For those four, not applicable means the scope holds no code they could govern
 at all — not that the thing they hunt is absent.
@@ -105,7 +100,7 @@ than your silence would.
 
 ```markdown
 ## Lens: <name>
-**Scope:** <what you diffed>
+**Scope:** <what you diffed, or the subject and the files you read>
 
 - **Critical** · `file.ts:42` — what breaks, and the fix.
 - **Warning** · `file.ts:88` — what breaks, and the fix.
