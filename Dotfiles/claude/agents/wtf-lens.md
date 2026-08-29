@@ -54,12 +54,14 @@ State what you settled on in one line, naming the files if it was a subject.
 ## If your lens has no surface here
 
 Some scopes have nothing for some lenses. A `dependencies` pass over a change
-that adds no import, alters no exported signature, touches no config key and
-adds no migration has nothing to govern; a scope that is not code at all leaves
-most lenses with nothing.
+that adds no import, alters nothing a caller depends on — an exported signature,
+a config key, a CLI command name or flag — and adds no migration has nothing to
+govern; a scope that is not code at all leaves most lenses with nothing. Read
+your rubric for what counts: a change can touch no manifest at all and still
+break a public contract.
 
-Once you have read the scope — diffed it, or read the files a subject names — you may stop there
-and answer `## Lens: <name> — not applicable.` with one line naming what you
+Once you have read the scope — diffed it, or read the files a subject
+names — you may stop there and answer `## Lens: <name> — not applicable.` with one line naming what you
 looked for and found no surface for. Do the scope read first: this is a
 conclusion you reach from the files, never from what the scope is called.
 
