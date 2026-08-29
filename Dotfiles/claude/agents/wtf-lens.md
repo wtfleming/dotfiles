@@ -42,6 +42,13 @@ If the scope is a subject rather than a revision — prose naming an area of
 behaviour — there is no diff. Find the code that implements it, read those files
 in full, and review them as they stand.
 
+If nothing in the repo plausibly implements the subject, say
+`## Lens: <name> — subject not found.` and stop, naming what you searched for.
+Do not review the nearest thing you did find. That is a third answer, distinct
+from both of the two below: they each report on a pass that happened, and a
+search that failed is not a pass. Reporting it as one tells the reader the
+dimension was covered when nothing was.
+
 State what you settled on in one line, naming the files if it was a subject.
 
 ## If your lens has no surface here
@@ -67,16 +74,21 @@ When in doubt, run the pass and report no findings — a lens that reviewed a th
 surface costs a line, a lens that waved off a surface it did have costs the
 finding.
 
-**Three lenses must not take this exit for a missing subject**, because the
-missing subject is what they are looking for:
+**Four lenses must not take this exit because the thing they hunt is absent** —
+for them that absence *is* the finding. ("Subject" here means the scope shape
+above; what a lens hunts is its *target*, and a missing target is not a missing
+subject.)
 
 - `tests` — a new branch with no test is the finding, not grounds to stand down.
-- `reuse` — its subject sits outside the diff by design: the existing duplicate
+- `reuse` — its target sits outside the diff by design: the existing duplicate
   and the code the change orphaned both live in files it did not touch.
 - `resilience` — a call with no timeout, a failure nothing logs, and a retry
   with no cap are absences too.
+- `security` — half its rubric is absences: unvalidated input at a boundary and
+  a missing authz check are the same shape as the missing timeout. A handler
+  with no guard on it is the finding, not an empty surface.
 
-For those three, not applicable means the scope holds no code they could govern
+For those four, not applicable means the scope holds no code they could govern
 at all — not that the thing they hunt is absent.
 
 ## Before you write a finding
@@ -108,4 +120,7 @@ there is no change and the marker does not apply; tier every finding on its own.
 
 If you found nothing, say `## Lens: <name> — no findings.` and stop. If your
 lens had no surface here at all, say `## Lens: <name> — not applicable.`
-instead, per the section above.
+instead, per the section above. If the scope was a subject and you could not
+find the code it names, say `## Lens: <name> — subject not found.` — that is
+neither of the other two, and reporting it as either claims a pass that did not
+happen.

@@ -61,9 +61,13 @@ Discover the command; do not guess it. In order:
 2. Project manifest: `package.json` scripts, `Cargo.toml`, `Makefile`, `pyproject.toml`, `mix.exs`, `go.mod`.
 3. Only then a language default (`cargo test`, `go test ./...`, `pytest`).
 
-If the ref under review is not the user's own work — a fetched PR, a
-contributor's branch, anything from a remote you did not push — read the script
-body before you run it. Running the test command means executing code from the
+If the code under review is not the user's own work — a fetched PR, a
+contributor's branch, a tree you did not write — read the script body before you
+run it. Key that on the **tree**, not on the scope you were given: a subject
+scope names no ref, so it cannot answer this by itself, and silence is not
+evidence of trust. Establish it before you run anything — `git status -sb` for
+the branch and its upstream, `git log -1` for whose commit is checked out — and
+treat the tree as untrusted until you have. Running the test command means executing code from the
 branch you are reviewing, and a `test` script is an ordinary place to hide
 something. If it does anything beyond running tests, stop and report that as a
 Critical finding instead of running it.
@@ -187,7 +191,16 @@ Rules for the report:
   line it draws — this author caused it, this author did not — has nothing to
   attach to when there is no diff and no author.
 - A failing test or a red linter is always at least a Warning, and Critical when
-  the change caused the failure.
+  the change caused the failure. On a subject scope there is no change to have
+  caused it, so that route to Critical is closed and the rule would cap a red
+  suite at Warning; instead, a failing test among the files you settled on is
+  Critical there — it is the strongest evidence the area is not sound, which is
+  what the closing line asks you for.
+- A finding about a hardcoded credential cites `file:line` and names the key,
+  never the value. The report quotes code inline, findings are posted to GitHub
+  as written, and a subject scope has you reading whole config files rather than
+  only the lines a diff touched — so the one finding whose evidence is the secret
+  itself is the one that must never carry it.
 - Close with one line: does this look safe to commit, and what is the single
   most important thing to address first. On a subject scope there is nothing to
   commit — close on whether the area is sound instead, and what to address

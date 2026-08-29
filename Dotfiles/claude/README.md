@@ -37,7 +37,7 @@ deliberately no linter lens — the reviewer already runs the real one.
 
 `reuse` and `resilience` are the two lenses with no counterpart in the checklist.
 
-`reuse` is also the only one whose subject sits outside the diff — both the
+`reuse` is also the only one whose target sits outside the diff — both the
 duplicate it hunts for and the code the change orphaned live in files the change
 did not touch — which is why it owns both halves rather than splitting the orphan
 case into `maintainability`. One lens, one evidence bar: search before asserting an
