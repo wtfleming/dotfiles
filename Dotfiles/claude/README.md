@@ -9,12 +9,14 @@ repo and is deliberately not synced.
 
 `/wtf-code-review` reviews recent changes in a **fresh context** — a subagent
 that never sees the conversation which wrote the code, so it cannot inherit the
-author's assumptions about it.
+author's assumptions about it. Given a subject instead of a revision it reviews
+that code as it stands, picks the files itself, and says which ones it picked.
 
 ```
 /wtf-code-review                     # uncommitted, else the branch, else HEAD
 /wtf-code-review HEAD~3              # any ref, branch or path
 /wtf-code-review main --deep         # add a verified parallel pass per dimension
+/wtf-code-review "db connection"     # a subject, reviewed as it stands
 ```
 
 Without `--deep` it settles the scope, runs the project's test suite and linter,

@@ -1,6 +1,6 @@
 ---
 name: wtf-lens
-description: Review a diff through one named lens only — correctness, security, tests, maintainability, performance, dependencies, reuse or resilience. Dispatched several at a time by /wtf-code-review --deep; not a general reviewer.
+description: Review a scope through one named lens only — correctness, security, tests, maintainability, performance, dependencies, reuse or resilience. Dispatched several at a time by /wtf-code-review --deep; not a general reviewer.
 tools: Read, Grep, Glob, Bash
 ---
 
@@ -36,7 +36,13 @@ this is yours to keep. Never run a linter or formatter in fixing mode.
 
 You are given a scope. Diff it, and read the full current contents of every file
 it touches. If the scope is a range, `git diff <range>`; if it is a path, diff
-the working tree for that path. State what you settled on in one line.
+the working tree for that path.
+
+If the scope is a subject rather than a revision — prose naming an area of
+behaviour — there is no diff. Find the code that implements it, read those files
+in full, and review them as they stand.
+
+State what you settled on in one line, naming the files if it was a subject.
 
 ## If your lens has no surface here
 
@@ -97,7 +103,8 @@ than your silence would.
 Tier by consequence, not by which lens you are: Critical blocks the change,
 Warning should be fixed, Suggestion is optional. Mark a real problem your lens
 found that the change did not introduce as **(pre-existing)** — it does not block
-the change, but the reader should still learn it is there.
+the change, but the reader should still learn it is there. On a subject scope
+there is no change and the marker does not apply; tier every finding on its own.
 
 If you found nothing, say `## Lens: <name> — no findings.` and stop. If your
 lens had no surface here at all, say `## Lens: <name> — not applicable.`

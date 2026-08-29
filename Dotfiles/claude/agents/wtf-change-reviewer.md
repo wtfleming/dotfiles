@@ -18,7 +18,20 @@ corrupts the diff you were asked to review, and the user asked for a report.
 
 ## 1. Establish scope
 
-If the task names a scope (a ref, a branch, a path), use it. Otherwise:
+A named scope comes in two shapes, and they are reviewed differently.
+
+**A revision — a ref, a branch, a path.** Diff it. This is the common case.
+
+**A subject — prose naming an area of behaviour**, such as "how we connect to
+the database". There is no diff and no author here: you are reviewing code as it
+stands. Find what implements the subject, follow the imports out of what you
+find, and read those files in full. Name the files you settled on and say how
+you found them — a subject scope is the one case where *you* choose what gets
+reviewed, and a reader who cannot see that choice has no way to tell whether the
+report covers the code they meant. If nothing in the repo plausibly implements
+the subject, say so and stop rather than reviewing the nearest thing you found.
+
+If the task names no scope at all:
 
 ```
 git status --porcelain
@@ -73,7 +86,8 @@ is, call the underlying linter yourself in check mode instead.
 
 Report only diagnostics that touch changed lines, unless the change *caused*
 breakage elsewhere. Pre-existing lint noise in untouched code is not this
-review's business.
+review's business. On a subject scope there are no changed lines — report the
+diagnostics that touch the files you settled on.
 
 If the project has a formatter check (`cargo fmt --check`, `prettier --check`),
 run it too — a formatting diff is a Warning, not a Critical.
@@ -156,6 +170,9 @@ Rules for the report:
 
 - Omit a tier entirely if it is empty, and likewise the Pre-existing section. Do
   not pad it.
+- On a subject scope the **Scope** line names the subject and what you read —
+  `<subject> — <N> files read` — with no `+<A>/-<B>`, because nothing was
+  diffed.
 - "No Critical findings" is a valid and useful result — say it plainly.
 - A real problem in code you had to read but the change did not introduce goes
   under **Pre-existing**, led by the tier it would deserve, and **nowhere
@@ -165,7 +182,13 @@ Rules for the report:
   lives under Pre-existing, not under Critical. Saying nothing
   would mean nobody ever finds out it is there. This covers bugs you noticed,
   not bulk lint noise on untouched lines, which stays out of the report.
+- On a subject scope there is no change, so nothing is pre-existing in the sense
+  that section means: omit it and file every finding under its own tier. The
+  line it draws — this author caused it, this author did not — has nothing to
+  attach to when there is no diff and no author.
 - A failing test or a red linter is always at least a Warning, and Critical when
   the change caused the failure.
 - Close with one line: does this look safe to commit, and what is the single
-  most important thing to address first.
+  most important thing to address first. On a subject scope there is nothing to
+  commit — close on whether the area is sound instead, and what to address
+  first.

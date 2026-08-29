@@ -1,6 +1,6 @@
 ---
-description: Independent code review of recent changes in a fresh context — diff, tests, lint, structured report. Pass --deep to add a verified parallel per-dimension pass.
-argument-hint: "[ref, branch or path — defaults to uncommitted, else the branch, else HEAD] [--deep]"
+description: Independent code review in a fresh context — recent changes, or a named subject. Diff, tests, lint, structured report. Pass --deep to add a verified parallel per-dimension pass.
+argument-hint: "[ref, branch, path or subject — defaults to uncommitted, else the branch, else HEAD] [--deep]"
 allowed-tools: Agent, Read, Grep, Glob, Bash(git:*)
 ---
 
@@ -111,7 +111,7 @@ in the triage for the user to see.
 ## With `--deep`
 
 One reviewer covering six dimensions gives some of them a shallower pass than
-the others. This adds a dedicated pass per dimension, over the same diff the
+the others. This adds a dedicated pass per dimension, over the same scope the
 reviewer reads — plus `reuse` and `resilience`, which the reviewer's checklist
 does not cover at all.
 
@@ -120,7 +120,7 @@ to refuse before it is spent rather than after.
 
 Dispatch these eight `wtf-lens` subagents **in parallel**, each with the scope
 and its own rubric and nothing else. Unlike the reviewer, a lens cannot derive
-its own scope, and eight agents each guessing one is how "the same diff" stops
+its own scope, and eight agents each guessing one is how "the same scope" stops
 being true — so where the scope comes from depends on what the user gave:
 
 - **The user named a scope:** every lens gets it verbatim, and nothing a lens
