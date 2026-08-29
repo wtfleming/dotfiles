@@ -42,6 +42,12 @@ If the scope is a subject rather than a revision — prose naming an area of
 behaviour — there is no diff. Find the code that implements it, read those files
 in full, and review them as they stand.
 
+A subject may reach you with its files already settled, as a list rather than as
+prose. It is still a subject: read those files and do not diff them. Go by the
+label you were given and not by the shape of what came with it — a resolved
+subject and a path scope both arrive as a list of files, and diffing a resolved
+subject reviews an empty diff and calls it a pass.
+
 If nothing in the repo plausibly implements the subject, say
 `## Lens: <name> — subject not found.` and stop, naming what you searched for.
 Do not review the nearest thing you did find. That is a third answer, distinct

@@ -163,9 +163,18 @@ being true — so where the scope comes from depends on what the user gave:
   agents behind it buys nothing.
 - **The user named a subject, or named nothing at all:** the reviewer has to
   settle it first. Wait for its report and hand each lens the scope stated at
-  the top of it — for a subject, the *file list* it settled on, not the prose.
-  That is data, not opinion — passing it breaks no cold-start rule. What must
-  never ride along with it is anything the reviewer concluded.
+  the top of it — for a subject, the *file list* it settled on, labelled as a
+  subject and carrying the subject line with it. The list is what the lens
+  reads; the label is what stops it diffing. A bare file list is path-shaped,
+  and a lens handed a path diffs the working tree for it — which on a subject
+  is empty, so the pass reads nothing and marks whatever it does find
+  pre-existing. Named nothing at all is the other half of this branch and is
+  *not* a subject: the reviewer resolves it to a revision — the uncommitted
+  changes, the branch, or `HEAD` — so hand that over as the Scope line states
+  it and let the lens diff it as usual. Labelling that one a subject would
+  suppress the diff it exists to read. The list and the label are both data,
+  not opinion, and passing them breaks no cold-start rule. What must never
+  ride along is anything the reviewer concluded.
 
 A subject belongs in the second branch for the reason the paragraph above
 opens with: prose is not something a lens can pin files with, so eight lenses
@@ -316,8 +325,8 @@ Suggestion / Pre-existing format, keeping its Scope / Tests / Lint header lines
   pass reached, and collapsing any of them into another overstates coverage. The
   third is the one that most looks like the first: an agent that failed is not a
   dimension that came back clean, and counting it as one is how a broken pass
-  reads as a passing one. All three are information, and hiding any of them
-  makes eight agents look like one
+  reads as a passing one. All three are worth printing, and hiding any of
+  them makes eight agents look like one
 - which findings were promoted from Suggestion to Warning and how each fared
   — a promotion is this command's own re-tiering, so it is disclosed alongside
   the refutations rather than folded into the reviewer's count
