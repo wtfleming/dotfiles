@@ -21,7 +21,9 @@ that code as it stands, picks the files itself, and says which ones it picked.
 
 Without `--deep` it settles the scope, runs the project's test suite and linter,
 reviews the diff against the checklist, and prints findings as Critical, Warning
-or Suggestion — then stops. The reviewer has no `Edit` or `Write`, so a review
+or Suggestion — then stops. Any Critical is checked by a `wtf-refuter` before the
+report prints, since a false Critical stops work that should not stop; most runs
+have none and so spend nothing. Warnings arrive marked `(unverified)`. The reviewer has no `Edit` or `Write`, so a review
 cannot change anything.
 
 `--deep` adds eight `wtf-lens` agents in parallel, one per lens: correctness,

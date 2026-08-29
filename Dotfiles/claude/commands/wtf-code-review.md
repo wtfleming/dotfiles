@@ -32,9 +32,10 @@ If you wrote the code under review, that is exactly the bias this exists to
 avoid. Hand over the scope and nothing else. If the scope is empty, say so and
 let the agent work out its own.
 
-Without `--deep`, print the report verbatim when it returns. Do not re-rank the
-findings, soften them, or defend the code — you are relaying an independent
-review, not negotiating with it.
+Without `--deep`, print the report verbatim when it returns — unless it carries
+a Critical, in which case hold it and follow **Verify the Criticals** first. Do
+not re-rank the findings, soften them, or defend the code — you are relaying an
+independent review, not negotiating with it.
 
 Under `--deep`, do not print it yet. Its findings are about to enter a verify
 pass that may retract some of them, and a finding that is about to be retracted
@@ -49,6 +50,37 @@ own, and it goes after the report rather than into it.
 **Without `--deep`, stop here.** The findings are the user's to triage, and the
 close matters: do not launch into fixing anything. If the user replies asking
 for fixes, follow **If the user asks for fixes** below.
+
+## Verify the Criticals
+
+Without `--deep` the reviewer's findings reach the user checked by nobody, and
+the bias that objection rests on does not depend on how many agents ran: the
+agent that wrote a finding is the worst-placed to judge it, alone or in a crowd
+of nine.
+
+Verifying all of them here would cost what `--deep` costs on the path chosen for
+being cheap — and unlike a lens, a refuter cannot ride along in the reviewer's
+batch, because a finding has to exist before anything can argue against it. So
+this path verifies **Critical findings only**:
+
+- Critical is the tier that claims to block the commit, so a false one is the
+  most expensive finding in the report: it stops work that should not stop.
+- It is rare. Most runs carry none and spawn nothing, which is what keeps this
+  path as fast as the reviewer alone.
+
+Spawn one `wtf-refuter` per Critical, in parallel, dispatched exactly as
+**Verify** describes under `--deep` — the finding verbatim, plus the scope and
+whose work it is, and nothing else. Say how many before you spawn them.
+
+Then print the report with the refuted Criticals removed, and say how many were
+refuted and why; a dropped finding is reported, not hidden. If every Critical
+was refuted, say so plainly and treat it as a result worth doubting rather than
+a clean bill of health.
+
+Warnings and Suggestions go through unchecked. Mark each Warning
+**(unverified)** so no reader mistakes an unchecked finding for a checked one,
+and leave the Suggestions to the triage below, which already says it verifies
+nothing.
 
 ## Triage the Suggestions
 
@@ -97,7 +129,8 @@ label the finding arrived with:
   **(promoted from Suggestion)**, and it does not reappear in the triage. A
   Pre-existing one stays in its section with the new tier leading it, marked
   the same way.
-- without `--deep`, there is no refuter to send it to. Leave it in the report
+- without `--deep`, there is no refuter to send it to: that path verifies
+  Criticals only, and a promotion never reaches Critical. Leave it in the report
   as written, and list it in the triage under a third heading,
   **Reads as a Warning (unverified)**, so it is not mistaken for a nit — a
   Pre-existing one included, the only time that section appears in the triage.
