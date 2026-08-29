@@ -38,7 +38,7 @@ If you add a new config file under `Dotfiles/`, also add a copy step to
 `Dotfiles/gitconfig` carries the personal identity and ends with a path-scoped
 include:
 
-```
+```ini
 [includeIf "gitdir:~/src/work/"]
         path = ~/.gitconfig-work
 ```
@@ -46,7 +46,7 @@ include:
 Check work repos out under `~/src/work/`, and put the work identity in
 `~/.gitconfig-work`:
 
-```
+```ini
 [user]
         email = <work address>
 ```
