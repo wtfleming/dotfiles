@@ -80,6 +80,13 @@ home directory. Key consequences to keep in mind:
 - `reference/`, `hooks/` and `scripts/` are reached by explicit path from
   `CLAUDE.md` and `settings.json`, so they share no namespace and are not prefixed.
 - Don't hardcode secrets or work-specific identity. Personal identity lives in
-  `Dotfiles/gitconfig`; work machines should override via an un-synced include.
+  `Dotfiles/gitconfig`, which ends with an `includeIf "gitdir:~/src/work/"` pointing
+  at `~/.gitconfig-work`. That file is **not** in this repo and must never be added
+  to it — it is the one place a work email is allowed to live. Work repos checked
+  out under `~/src/work/` pick it up; everything else, this repo included, keeps the
+  personal identity, so a commit here stays personal even on a work machine. Git
+  ignores the include silently when the file is absent, so personal machines need
+  nothing. The `~/src/work/` prefix is the convention the config keys on — a work
+  checkout outside it silently gets the personal identity instead.
 - This is a **public** repo — don't commit credentials, tokens, internal hostnames,
   or work email addresses.
