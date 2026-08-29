@@ -168,9 +168,13 @@ being true — so where the scope comes from depends on what the user gave:
   reads; the label is what stops it diffing. A bare file list is path-shaped,
   and a lens handed a path diffs the working tree for it — which on a subject
   is empty, so the pass reads nothing and marks whatever it does find
-  pre-existing. Both are data, not opinion, and passing them breaks no
-  cold-start rule. What must never ride along is anything the reviewer
-  concluded.
+  pre-existing. Named nothing at all is the other half of this branch and is
+  *not* a subject: the reviewer resolves it to a revision — the uncommitted
+  changes, the branch, or `HEAD` — so hand that over as the Scope line states
+  it and let the lens diff it as usual. Labelling that one a subject would
+  suppress the diff it exists to read. The list and the label are both data,
+  not opinion, and passing them breaks no cold-start rule. What must never
+  ride along is anything the reviewer concluded.
 
 A subject belongs in the second branch for the reason the paragraph above
 opens with: prose is not something a lens can pin files with, so eight lenses
