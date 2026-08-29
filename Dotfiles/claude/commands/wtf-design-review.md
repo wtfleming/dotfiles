@@ -1,5 +1,5 @@
 ---
-description: Early design review of work in progress, in a fresh context — is this the right shape? Suggestion-only; every finding names a concrete, smaller alternative. Run it mid-work, before polishing; /wtf-review-changes is the pre-PR gate.
+description: Early design review of work in progress, in a fresh context — is this the right shape? Suggestion-only; every finding names a concrete, smaller alternative. Run it mid-work, before polishing; /wtf-code-review is the pre-PR gate.
 argument-hint: "[ref, branch or path — defaults to uncommitted, else the branch, else HEAD]"
 allowed-tools: Agent
 ---
@@ -11,7 +11,7 @@ That is the scope, and it may be empty.
 This command runs *early*, on work in progress — the point is to hear "there is
 a simpler shape" while changing course is still cheap, not after the code is
 polished. It reviews the approach; it does not hunt bugs, and it does not fix.
-For the defect review, use `/wtf-review-changes` when the work is done.
+For the defect review, use `/wtf-code-review` when the work is done.
 
 Launch the `wtf-design-reviewer` subagent on the scope. Dispatch it with the
 Agent tool, `subagent_type: "wtf-design-reviewer"`, and wait for it to

@@ -33,6 +33,11 @@ per-file listing. Pass `-q` / `--quiet` to silence it and print only errors.
 If you add a new config file under `Dotfiles/`, also add a copy step to
 `sync-dotfiles.sh`, or it will never be deployed.
 
+The sync only ever copies; it never deletes. Renaming or removing a file here
+leaves the old copy deployed in `$HOME`, so delete that by hand in the same
+change — for `commands/`, `agents/` and `skills/` the stale copy stays
+registered under its old name and goes on working.
+
 ## Work machines
 
 `Dotfiles/gitconfig` carries the personal identity and ends with a path-scoped
@@ -128,7 +133,7 @@ socket: it is wasted work in any Emacs `emacsclient` cannot reach.
 
 ## Claude Code
 
-`Dotfiles/claude/` deploys to `~/.claude/` and includes `/wtf-review-changes`, a
+`Dotfiles/claude/` deploys to `~/.claude/` and includes `/wtf-code-review`, a
 fresh-context code review. See [`Dotfiles/claude/README.md`](Dotfiles/claude/README.md).
 
 ## Layout

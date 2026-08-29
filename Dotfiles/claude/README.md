@@ -7,19 +7,23 @@ repo and is deliberately not synced.
 
 ## Code review
 
-`/wtf-review-changes` reviews recent changes in a **fresh context** — a subagent
+`/wtf-code-review` reviews recent changes in a **fresh context** — a subagent
 that never sees the conversation which wrote the code, so it cannot inherit the
-author's assumptions about it.
+author's assumptions about it. Given a subject instead of a revision it reviews
+that code as it stands, picks the files itself, and says which ones it picked.
 
 ```
-/wtf-review-changes                  # uncommitted, else the branch, else HEAD
-/wtf-review-changes HEAD~3           # any ref, branch or path
-/wtf-review-changes main --deep      # add a verified parallel pass per dimension
+/wtf-code-review                     # uncommitted, else the branch, else HEAD
+/wtf-code-review HEAD~3              # any ref, branch or path
+/wtf-code-review main --deep         # add a verified parallel pass per dimension
+/wtf-code-review "db connection"     # a subject, reviewed as it stands
 ```
 
 Without `--deep` it settles the scope, runs the project's test suite and linter,
 reviews the diff against the checklist, and prints findings as Critical, Warning
-or Suggestion — then stops. The reviewer has no `Edit` or `Write`, so a review
+or Suggestion — then stops. Any Critical is checked by a `wtf-refuter` before the
+report prints, since a false Critical stops work that should not stop; most runs
+have none and so spend nothing. Warnings arrive marked `(unverified)`. The reviewer has no `Edit` or `Write`, so a review
 cannot change anything.
 
 `--deep` adds eight `wtf-lens` agents in parallel, one per lens: correctness,
@@ -33,7 +37,7 @@ deliberately no linter lens — the reviewer already runs the real one.
 
 `reuse` and `resilience` are the two lenses with no counterpart in the checklist.
 
-`reuse` is also the only one whose subject sits outside the diff — both the
+`reuse` is also the only one whose target sits outside the diff — both the
 duplicate it hunts for and the code the change orphaned live in files the change
 did not touch — which is why it owns both halves rather than splitting the orphan
 case into `maintainability`. One lens, one evidence bar: search before asserting an
@@ -62,7 +66,7 @@ verification the findings did. Committing stays yours.
 
 `/wtf-design-review` asks a different question at a different time: *is this
 change the right shape?* Run it mid-work, while changing course is still cheap —
-`/wtf-review-changes` is the pre-PR gate, and design feedback that arrives at
+`/wtf-code-review` is the pre-PR gate, and design feedback that arrives at
 the gate arrives after the sunk cost.
 
 ```

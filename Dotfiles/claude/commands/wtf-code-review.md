@@ -1,6 +1,6 @@
 ---
-description: Independent code review of recent changes in a fresh context — diff, tests, lint, structured report. Pass --deep to add a verified parallel per-dimension pass.
-argument-hint: "[ref, branch or path — defaults to uncommitted, else the branch, else HEAD] [--deep]"
+description: Independent code review in a fresh context — recent changes, or a named subject. Diff, tests, lint, structured report. Pass --deep to add a verified parallel per-dimension pass.
+argument-hint: "[ref, branch, path or subject — defaults to uncommitted, else the branch, else HEAD] [--deep]"
 allowed-tools: Agent, Read, Grep, Glob, Bash(git:*)
 ---
 
@@ -17,7 +17,7 @@ conversation where their intent lives — not here.
 
 Launch the `wtf-change-reviewer` subagent on the scope. Dispatch it with the
 Agent tool, `subagent_type: "wtf-change-reviewer"`, and wait for it to
-complete — except under `--deep` with a named scope, where
+complete — except under `--deep` with a named revision, where
 this dispatch is held for the batched launch described below so the lenses do
 not serialise behind it.
 
@@ -32,9 +32,10 @@ If you wrote the code under review, that is exactly the bias this exists to
 avoid. Hand over the scope and nothing else. If the scope is empty, say so and
 let the agent work out its own.
 
-Without `--deep`, print the report verbatim when it returns. Do not re-rank the
-findings, soften them, or defend the code — you are relaying an independent
-review, not negotiating with it.
+Without `--deep`, print the report verbatim when it returns — unless it carries
+a Critical, in which case hold it and follow **Verify the Criticals** first. Do
+not re-rank the findings, soften them, or defend the code — you are relaying an
+independent review, not negotiating with it.
 
 Under `--deep`, do not print it yet. Its findings are about to enter a verify
 pass that may retract some of them, and a finding that is about to be retracted
@@ -49,6 +50,37 @@ own, and it goes after the report rather than into it.
 **Without `--deep`, stop here.** The findings are the user's to triage, and the
 close matters: do not launch into fixing anything. If the user replies asking
 for fixes, follow **If the user asks for fixes** below.
+
+## Verify the Criticals
+
+Without `--deep` the reviewer's findings reach the user checked by nobody, and
+the bias that objection rests on does not depend on how many agents ran: the
+agent that wrote a finding is the worst-placed to judge it, alone or in a crowd
+of nine.
+
+Verifying all of them here would cost what `--deep` costs on the path chosen for
+being cheap — and unlike a lens, a refuter cannot ride along in the reviewer's
+batch, because a finding has to exist before anything can argue against it. So
+this path verifies **Critical findings only**:
+
+- Critical is the tier that claims to block the commit, so a false one is the
+  most expensive finding in the report: it stops work that should not stop.
+- It is rare. Most runs carry none and spawn nothing, which is what keeps this
+  path as fast as the reviewer alone.
+
+Spawn one `wtf-refuter` per Critical, in parallel, dispatched exactly as
+**Verify** describes under `--deep` — the finding verbatim, plus the scope and
+whose work it is, and nothing else. Say how many before you spawn them.
+
+Then print the report with the refuted Criticals removed, and say how many were
+refuted and why; a dropped finding is reported, not hidden. If every Critical
+was refuted, say so plainly and treat it as a result worth doubting rather than
+a clean bill of health.
+
+Warnings and Suggestions go through unchecked. Mark each Warning
+**(unverified)** so no reader mistakes an unchecked finding for a checked one,
+and leave the Suggestions to the triage below, which already says it verifies
+nothing.
 
 ## Triage the Suggestions
 
@@ -97,7 +129,8 @@ label the finding arrived with:
   **(promoted from Suggestion)**, and it does not reappear in the triage. A
   Pre-existing one stays in its section with the new tier leading it, marked
   the same way.
-- without `--deep`, there is no refuter to send it to. Leave it in the report
+- without `--deep`, there is no refuter to send it to: that path verifies
+  Criticals only, and a promotion never reaches Critical. Leave it in the report
   as written, and list it in the triage under a third heading,
   **Reads as a Warning (unverified)**, so it is not mistaken for a nit — a
   Pre-existing one included, the only time that section appears in the triage.
@@ -111,7 +144,7 @@ in the triage for the user to see.
 ## With `--deep`
 
 One reviewer covering six dimensions gives some of them a shallower pass than
-the others. This adds a dedicated pass per dimension, over the same diff the
+the others. This adds a dedicated pass per dimension, over the same scope the
 reviewer reads — plus `reuse` and `resilience`, which the reviewer's checklist
 does not cover at all.
 
@@ -120,18 +153,34 @@ to refuse before it is spent rather than after.
 
 Dispatch these eight `wtf-lens` subagents **in parallel**, each with the scope
 and its own rubric and nothing else. Unlike the reviewer, a lens cannot derive
-its own scope, and eight agents each guessing one is how "the same diff" stops
+its own scope, and eight agents each guessing one is how "the same scope" stops
 being true — so where the scope comes from depends on what the user gave:
 
-- **The user named a scope:** every lens gets it verbatim, and nothing a lens
-  does depends on the reviewer's output — so launch all eight *alongside* the
-  reviewer, in the same batch, rather than after it. The reviewer's test run is
-  the long pole of the whole pass; serialising nine agents behind it buys
-  nothing.
-- **The scope is empty:** the reviewer has to settle it first. Wait for its
-  report and hand each lens the scope stated at the top of it. That is data,
-  not opinion — passing it breaks no cold-start rule. What must never ride
-  along with it is anything the reviewer concluded.
+- **The user named a revision — a ref, a branch, a path:** every lens gets it
+  verbatim, and nothing a lens does depends on the reviewer's output — so launch
+  all eight *alongside* the reviewer, in the same batch, rather than after it.
+  The reviewer's test run is the long pole of the whole pass; serialising nine
+  agents behind it buys nothing.
+- **The user named a subject, or named nothing at all:** the reviewer has to
+  settle it first. Wait for its report and hand each lens the scope stated at
+  the top of it — for a subject, the *file list* it settled on, not the prose.
+  That is data, not opinion — passing it breaks no cold-start rule. What must
+  never ride along with it is anything the reviewer concluded.
+
+A subject belongs in the second branch for the reason the paragraph above
+opens with: prose is not something a lens can pin files with, so eight lenses
+each resolving it on their own is precisely the eight-guesses failure, and the
+merged Scope line would then name a file set that several findings did not come
+from. It costs the batched launch — say so when you announce the agents, since
+a subject scope is the one shape where the pass runs in two rounds rather than
+one.
+
+That ordering also settles what happens when the reviewer finds nothing: if it
+comes back saying nothing in the repo implements the subject, it stopped at step
+1, so there is no report and no Scope / Tests / Lint lines. No lens has been
+dispatched yet, and none should be. Relay what the reviewer said, say that the
+lenses were not launched, and stop — do not synthesise a report around a header
+you cannot fill.
 
 The lenses and their rubrics:
 
@@ -153,7 +202,7 @@ the tool that does it exactly.
 The `tests` lens judges coverage by ROI: a new branch with no test is a finding;
 trivial code without one is not.
 
-`reuse` is the one lens whose subject sits outside the diff: both the duplicate it
+`reuse` is the one lens whose target sits outside the diff: both the duplicate it
 looks for and the code the change orphaned live in files the change did not touch.
 Every finding it writes is therefore an assertion about code nobody in this run
 has been asked to read, which sets its evidence bar. Search before asserting an
@@ -259,7 +308,15 @@ Suggestion / Pre-existing format, keeping its Scope / Tests / Lint header lines
 
 - how many findings were refuted, and why — a dropped finding is reported, not
   hidden
-- which lenses returned nothing; a silent lens is information, and hiding it
+- which lenses returned nothing, and — listed separately — which returned **not
+  applicable**, and — listed separately again — which returned **no usable
+  report** because they errored, timed out or came back unparseable. A lens that
+  governed something and found it clean, a lens that had no surface to review,
+  and a lens that never reported are three different facts about how far the
+  pass reached, and collapsing any of them into another overstates coverage. The
+  third is the one that most looks like the first: an agent that failed is not a
+  dimension that came back clean, and counting it as one is how a broken pass
+  reads as a passing one. All three are information, and hiding any of them
   makes eight agents look like one
 - which findings were promoted from Suggestion to Warning and how each fared
   — a promotion is this command's own re-tiering, so it is disclosed alongside
@@ -322,7 +379,7 @@ What this check does not cover, so it is not mistaken for more than it is:
   (the refuter declined to run the decisive command) is not the fix failing:
   relay it as **could not verify**.
 - A fix that reached beyond the finding's own hunk has changed code no refuter
-  was pointed at. Offer a fresh `/wtf-review-changes` for it instead of
+  was pointed at. Offer a fresh `/wtf-code-review` for it instead of
   presenting the verdicts as if they covered it.
 
 ## If the findings go to GitHub
