@@ -72,7 +72,6 @@
       "Read(~/.ssh/**)"
     ],
     "ask": [
-      "Bash(cargo add:*)",
       "Bash(cargo install:*)",
       "Bash(cargo login:*)",
       "Bash(cargo logout:*)",
@@ -80,11 +79,9 @@
       "Bash(cargo publish:*)",
       "Bash(cargo remove:*)",
       "Bash(cargo uninstall:*)",
-      "Bash(cargo update:*)",
       "Bash(cargo yank:*)",
       "Bash(docker push *)",
       "Bash(gh pr merge *)",
-      "Bash(git push:*)",
       "Bash(npm publish *)"
     ]
   },
