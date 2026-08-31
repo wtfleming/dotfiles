@@ -85,6 +85,42 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
+## 5. Comments Earn Their Place
+
+**Explain the WHY, only where it isn't already obvious. Default to no comment.**
+
+The common failure is not the obviously useless comment — it is the *true,
+well-reasoned* one that costs more to read than the code it sits above.
+
+- Never restate the code, the type, or the symbol name. `// Props for the
+  scale diagram` above `ScaleDiagramProps` is pure noise.
+- Length must fit the code, not the thinking that produced it. A one-line
+  constant does not get a five-line justification, however accurate. If the
+  reason needs a paragraph, the paragraph belongs in the PR description or
+  commit message; the code keeps the one line a reader needs at that spot.
+- State a shared reason once. If several adjacent declarations turn on the same
+  invariant, put one comment above the group — not the same rationale reworded
+  on each. Repeating it teaches readers to skim past the block entirely.
+- Don't restate above what you already said below (or vice versa) in the same
+  file.
+- Never write a claim you have not checked against the implementation. A stale
+  or wrong comment is worse than none: it outlives the code and misleads.
+- **Do** comment regex and bitwise expressions — one line on what it matches or
+  does. These are the cases a human genuinely cannot read at a glance.
+
+```ts
+// ❌ true, and still too much for what it guards
+// SendGrid can redeliver the same event; a crash between commit and the
+// job-complete ack can also redeliver it. Either way the unique constraint
+// on (provider_type, prov_event_id) rolls the whole transaction back, and
+// we treat that as a successful no-op rather than a failure.
+if (isUniqueViolation(error)) {
+
+// ✅ same point, one line
+// Ingestion is idempotent, so a duplicate is a no-op rather than a failure.
+if (isUniqueViolation(error)) {
+```
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
