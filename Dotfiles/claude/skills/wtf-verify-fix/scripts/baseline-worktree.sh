@@ -312,6 +312,12 @@ add_tree() {
   echo "    linking .env files"
   while IFS= read -r env_file; do
     relative="${env_file#"$main"/}"
+    # A tracked .env is part of the code under test, and this commit's own copy is
+    # already checked out -- overwriting it would run the baseline on HEAD's config.
+    if git -C "$wt" ls-files --error-unmatch "$relative" >/dev/null 2>&1; then
+      echo "    skipped $relative (tracked at this commit — the worktree has its own)"
+      continue
+    fi
     mkdir -p "$wt/$(dirname "$relative")"
     ln -sf "$env_file" "$wt/$relative"
   done < <(find "$main" -name ".env" -not -path "*/node_modules/*" -not -path "*/.git/*" \

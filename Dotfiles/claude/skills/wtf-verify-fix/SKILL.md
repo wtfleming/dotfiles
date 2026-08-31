@@ -112,6 +112,11 @@ The differential still applies: the new test must fail in the baseline worktree 
 pass on HEAD. A new test that passes on both is the clearest possible signal that it
 does not test the bug.
 
+The baseline predates the test, so the file is not there — copy it in before running,
+and copy it rather than editing it into a commit, so the baseline stays the code as it
+was. If the baseline run reports no such test or no such file, that is §8's invalid
+probe, not a reproduction: the test never ran, so it measured nothing.
+
 Write it as a test unless the symptom needs a live environment. If you decide it
 cannot be, say which tier-0 boundary it crosses.
 
