@@ -41,6 +41,9 @@ brew install curl git
 # Rust
 brew install rust-analyzer
 
+# Runtime version manager; Dotfiles/zshrc activates it when it is present
+brew install mise
+
 # Used by the Claude Code hooks (Dotfiles/claude/hooks/*.sh)
 brew install terminal-notifier
 
