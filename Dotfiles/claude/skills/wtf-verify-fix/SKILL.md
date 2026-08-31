@@ -37,8 +37,10 @@ Two things to do before starting:
 - Say which tier you intend to use and roughly what it will cost, then start. If the
   probe needs tier 2 or 3 — booting services, driving a browser — ask first rather
   than assuming the user wants to spend that.
-- Check the change is committed. The baseline is `git merge-base HEAD <base>`, so
-  uncommitted work is invisible to the comparison and the script will refuse.
+- Commit the change first. By default the "after" side is your working checkout, so
+  uncommitted edits are live in the head run but absent from the baseline — they would
+  be credited to the change and never reach the PR. `create` refuses a dirty tree for
+  that reason; stash it, or name the change with `--head <ref>` instead.
 
 ## 1. State the claim as an observable
 

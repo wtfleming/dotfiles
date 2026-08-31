@@ -70,6 +70,24 @@ worktree_path() {
   esac
 }
 
+# Registration lives in .git/worktrees, not in the directory, and $TMPDIR is purged on
+# a timer -- so a worktree is routinely registered with nothing on disk, which blocks
+# `git worktree add` until something prunes it. Pruning first is what makes the plain
+# directory test below sufficient: it drops exactly the registrations that have no
+# directory, so the two states agree afterwards.
+worktree_present() {
+  local main=$1 wt=$2
+  git -C "$main" worktree prune
+  [ -d "$wt" ]
+}
+
+# Either half can be the one that survived, so clear both and prune what git kept.
+worktree_destroy() {
+  local main=$1 wt=$2
+  git -C "$main" worktree remove --force "$wt" 2>/dev/null || rm -rf "$wt"
+  git -C "$main" worktree prune
+}
+
 # A repo may legitimately be several of these at once.
 detect_ecosystems() {
   local root=$1 found=()
@@ -177,11 +195,12 @@ build_for() {
         # skips the dependency graph, so upstream artifacts and codegen never run
         # and the build fails with resolution errors that look like code defects.
         if [ -n "$OPT_FILTER" ]; then
-          run_in "$wt" "$pm" exec turbo run build --filter="$OPT_FILTER"
+          run_in "$wt" "$pm" exec -- turbo run build --filter="$OPT_FILTER"
         else
-          run_in "$wt" "$pm" exec turbo run build
+          run_in "$wt" "$pm" exec -- turbo run build
         fi
       elif grep -q '"build"' "$main/package.json" 2>/dev/null; then
+        [ -n "$OPT_FILTER" ] && echo "    (--filter $OPT_FILTER ignored: no turbo.json, so the build is not scoped)"
         run_in "$wt" "$pm" run build
       else
         echo "    (no node build step found)"
@@ -219,7 +238,7 @@ copy_if_ignored() {
   case $rc in
     0)
       mkdir -p "$(dirname "$dest")"
-      cp "$main/$relative" "$dest"
+      cp -R "$main/$relative" "$dest"
       echo "    copied $relative"
       ;;
     1)
@@ -287,6 +306,9 @@ add_tree() {
   mkdir -p "$(dirname "$wt")"
   (cd "$main" && git worktree add --detach "$wt" "$commit")
 
+  # Symlinked, not copied: .env holds the machine's real credentials, and a copy in a
+  # temp worktree outlives the run. The cache concern above is about build inputs the
+  # tool hashes; .env is read at run time.
   echo "    linking .env files"
   while IFS= read -r env_file; do
     relative="${env_file#"$main"/}"
@@ -298,7 +320,7 @@ add_tree() {
   if [ ${#OPT_COPIES[@]} -gt 0 ]; then
     echo "    copying generated artifacts"
     for relative in "${OPT_COPIES[@]}"; do
-      if [ -f "$main/$relative" ]; then
+      if [ -e "$main/$relative" ]; then
         copy_if_ignored "$main" "$relative" "$wt/$relative"
       else
         echo "warn: $relative does not exist in the main checkout; skipped" >&2
@@ -337,7 +359,12 @@ cmd_create() {
     case "$1" in
       --base) base="${2:?--base needs a ref}"; shift 2 ;;
       --head) head_ref="${2:?--head needs a ref}"; shift 2 ;;
-      --ecosystem) ECOSYSTEMS+=("${2:?--ecosystem needs a name}"); shift 2 ;;
+      --ecosystem)
+        case "${2:?--ecosystem needs a name}" in
+          node|rust|elixir|erlang|elisp) ECOSYSTEMS+=("$2") ;;
+          *) die "unknown ecosystem: $2 (expected node|rust|elixir|erlang|elisp)" ;;
+        esac
+        shift 2 ;;
       --filter) OPT_FILTER="${2:?--filter needs a package}"; shift 2 ;;
       --copy) OPT_COPIES+=("${2:?--copy needs a path}"); shift 2 ;;
       --install-cmd) OPT_INSTALL_CMD="${2:?--install-cmd needs a command}"; shift 2 ;;
@@ -360,6 +387,12 @@ cmd_create() {
   else
     after="$(git -C "$main" rev-parse HEAD)"
     after_label="your working checkout"
+  fi
+
+  # Without --head the working checkout is the head side, so uncommitted edits run on
+  # one side of the comparison and not the other -- they would pass as the change.
+  if [ -z "$head_ref" ] && ! git -C "$main" diff --quiet HEAD; then
+    die "the working checkout is dirty, and without --head it is the head side of the comparison. Uncommitted edits would be credited to the change. Commit or stash them, or name the change with --head <ref>."
   fi
 
   merge_base="$(git -C "$main" merge-base "$after" "$base")" \
@@ -390,12 +423,12 @@ cmd_create() {
     done
   fi
 
-  [ -d "$wt" ] && existing+=("$wt")
-  if [ -n "$head_ref" ] && [ -d "$wt_head" ]; then existing+=("$wt_head"); fi
+  worktree_present "$main" "$wt" && existing+=("$wt")
+  if [ -n "$head_ref" ] && worktree_present "$main" "$wt_head"; then existing+=("$wt_head"); fi
   if [ ${#existing[@]} -gt 0 ]; then
     if [ "$force" -eq 1 ]; then
       local e
-      for e in "${existing[@]}"; do (cd "$main" && git worktree remove --force "$e"); done
+      for e in "${existing[@]}"; do worktree_destroy "$main" "$e"; done
     else
       die "${existing[*]} already exists. Reuse it, or pass --force to recreate."
     fi
@@ -432,8 +465,8 @@ cmd_remove() {
   main="$(main_root)"
   for which in baseline head; do
     wt="$(worktree_path "$which")"
-    if [ -d "$wt" ]; then
-      (cd "$main" && git worktree remove --force "$wt")
+    if worktree_present "$main" "$wt"; then
+      worktree_destroy "$main" "$wt"
       echo "removed $wt"
       removed=1
     fi
