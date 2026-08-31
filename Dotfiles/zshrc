@@ -53,6 +53,9 @@ export PATH="/usr/local/opt/openjdk/bin:$PATH"
 # https://github.com/asdf-vm/asdf
 # . "$HOME/.asdf/asdf.sh"
 
+# https://github.com/jdx/mise — absent on some machines this zshrc is deployed to
+command -v mise > /dev/null && eval "$(mise activate zsh)"
+
 # If a file named .work exists in the home directory, source it
 [ -f ~/.work ] && source ~/.work
 
