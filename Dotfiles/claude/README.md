@@ -137,3 +137,19 @@ SKILL.md, a knowledge-base phase before any code (`NOTES.md`, reviewed for
 accuracy, feeding the fidelity ledger), the flat-schematic form
 (`references/flat-format.md`), and a verification fallback via the
 chrome-devtools MCP for machines without Playwright.
+
+## Verifying a fix
+
+`wtf-verify-fix` proves a change does what it claims, by running one probe
+against the merge-base — where it must fail — and against HEAD, where it must
+pass, then reporting both with raw output. A test that only passes on the branch
+proves nothing; the claim in a PR body is a difference, so the evidence has to
+be one too.
+
+It is deliberately expensive and deliberately rare: it builds and bootstraps a
+second worktree via `scripts/baseline-worktree.sh`, takes minutes, and is meant
+to run once per branch just before the PR opens — not per commit, and not as a
+substitute for running tests normally.
+
+`references/environments.md` covers how to get the thing running per tier and
+per language; `references/evidence.md` is the template for the PR section.
