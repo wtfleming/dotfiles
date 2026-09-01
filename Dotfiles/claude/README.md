@@ -26,8 +26,11 @@ report prints, since a false Critical stops work that should not stop; most runs
 have none and so spend nothing. Warnings arrive marked `(unverified)`. The reviewer has no `Edit` or `Write`, so a review
 cannot change anything.
 
-`--deep` adds eight `wtf-lens` agents in parallel, one per lens: correctness,
-security, tests, maintainability, performance, dependencies, reuse, resilience. Their reports are
+`--deep` adds up to eight `wtf-lens` agents in parallel, one per lens: correctness,
+security, tests, maintainability, performance, dependencies, reuse, resilience. A
+change that touches only prose skips the four lenses with no surface there
+(tests, resilience, performance, dependencies), decided from the file list alone
+and disclosed in the report. Their reports are
 merged and
 deduplicated with the reviewer's, then verified before printing: one
 `wtf-refuter` per Critical and Warning finding, each told to argue the finding
@@ -87,7 +90,7 @@ allowed to be red — and it does not hunt bugs.
 | Agent | Role |
 |---|---|
 | `wtf-change-reviewer` | scope, tests, lint, the full review |
-| `wtf-lens` | one dimension only; dispatched eight times by `--deep` |
+| `wtf-lens` | one dimension only; dispatched up to eight times by `--deep` |
 | `wtf-refuter` | tries to kill a single finding |
 | `wtf-design-reviewer` | shape of the change, Suggestion-only; dispatched by `/wtf-design-review` |
 
@@ -106,7 +109,7 @@ that has them. Edits only ever happen in the main session, one approval at a tim
 
 ### Cost
 
-`--deep` spawns one reviewer, eight lenses, and one refuter per verified finding —
+`--deep` spawns one reviewer, up to eight lenses, and one refuter per verified finding —
 tens of agents on a real branch — and asking for fixes afterwards adds one more
 refuter per fixed Critical or Warning. It announces each fan-out before spawning
 it, so the spend can be refused. For very large diffs, the built-in `/code-review ultra`
