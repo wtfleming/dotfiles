@@ -388,7 +388,11 @@ Suggestion / Pre-existing format, keeping its Scope / Tests / Lint header lines
   them makes the lenses look like one. Then — separately again — which
   lenses were **not dispatched** by **Pick the lenses**, each with the check
   that excluded it, so a reader can tell a lens this command skipped from one
-  that looked and found no surface
+  that looked and found no surface. And, should it happen, which returned
+  **subject not found**: on a subject the lenses are handed the file list the
+  reviewer settled, so a lens that still could not find the subject disagreed
+  with the reviewer about what implements it. Print it as its own line, never
+  as no findings — that lens reviewed nothing
 - which findings were promoted from Suggestion to Warning and how each fared
   — a promotion is this command's own re-tiering, so it is disclosed alongside
   the refutations rather than folded into the reviewer's count
