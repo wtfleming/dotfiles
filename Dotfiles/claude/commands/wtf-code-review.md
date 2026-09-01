@@ -204,9 +204,15 @@ the files the lenses will diff, in the shape the scope takes:
 ```sh
 git diff --name-status <merge-base>...<branch>   # a branch; merge-base with the default branch
 git diff --name-status <ref>^!                   # a single commit, HEAD included
-git diff --name-status HEAD                      # uncommitted, staged or not
-git diff --name-status HEAD -- <path>            # a path
+git diff --name-status HEAD                      # uncommitted, staged or not,
+git ls-files --others --exclude-standard         # plus untracked, which diff omits
+git diff --name-status HEAD -- <path>            # a path, again with untracked
+git ls-files --others --exclude-standard -- <path>
 ```
+
+The two working-tree shapes need both commands: an untracked file is
+uncommitted work that `git diff` never lists, and a new source file beside a
+Markdown edit is exactly the change that would otherwise pass as prose.
 
 A range the user typed is used as typed. When the scope came from the
 reviewer — the second branch above — run this on the revision its Scope line
