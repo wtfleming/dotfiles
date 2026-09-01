@@ -149,16 +149,20 @@ reviewer reads — plus `reuse` and `resilience`, which the reviewer's checklist
 does not cover at all.
 
 Say up front how many agents you are about to spawn, so the cost is the user's
-to refuse before it is spent rather than after.
+to refuse before it is spent rather than after. Not every scope has a surface
+for every lens, so the number comes from **Pick the lenses** below — a few git
+commands, run before anything is dispatched — and the announcement names the
+lenses being skipped alongside the ones being launched.
 
-Dispatch these eight `wtf-lens` subagents **in parallel**, each with the scope
-and its own rubric and nothing else. Unlike the reviewer, a lens cannot derive
+Dispatch one `wtf-lens` subagent per lens that survives that check, **in
+parallel**, each with the scope and its own rubric and nothing else. Unlike the
+reviewer, a lens cannot derive
 its own scope, and eight agents each guessing one is how "the same scope" stops
 being true — so where the scope comes from depends on what the user gave:
 
 - **The user named a revision — a ref, a branch, a path:** every lens gets it
   verbatim, and nothing a lens does depends on the reviewer's output — so launch
-  all eight *alongside* the reviewer, in the same batch, rather than after it.
+  them all *alongside* the reviewer, in the same batch, rather than after it.
   The reviewer's test run is the long pole of the whole pass; serialising nine
   agents behind it buys nothing.
 - **The user named a subject, or named nothing at all:** the reviewer has to
@@ -190,6 +194,53 @@ comes back saying nothing in the repo implements the subject, it stopped at step
 dispatched yet, and none should be. Relay what the reviewer said, say that the
 lenses were not launched, and stop — do not synthesise a report around a header
 you cannot fill.
+
+### Pick the lenses
+
+A lens with no surface still costs a dispatch: it reads the whole scope before
+it can say **not applicable**. Some of those absences are visible from the diff
+without reading it, and the ones that are can be skipped before the spawn. Run
+these against the same diff the lenses will read — `<scope>` is the range, or
+`-- <path>` for a path scope:
+
+```sh
+git diff --stat <scope>                    # which files, and any renames
+git diff --numstat <scope>                 # deletions per file
+git diff --stat -G'(^|[^A-Za-z_])(import|require|use)([^A-Za-z_]|$)' <scope>
+```
+
+The `-G` pattern lists files whose changed lines add or remove an import,
+loosely — it takes POSIX ERE only, so no `\b`, and it matches the word `use` in
+prose as readily as in Rust. Loose is the right direction: a false match only
+means a lens runs.
+
+Skip a lens only when one of these holds, and say which:
+
+- **`dependencies`** — the stat lists no manifest, lockfile or migration
+  (`package.json`, `Cargo.toml`, `go.mod`, `pyproject.toml`, `Gemfile`,
+  `mix.exs`, their lockfiles, a `migrations/` path, and their equivalents), the
+  `-G` run lists no file, numstat shows no deletions, and the stat shows no
+  rename or removed file. The rubric is wider than manifests — a changed
+  exported signature, config key or CLI flag is a breaking change with no
+  manifest in sight — and the deletion check is what covers that half: a purely
+  additive diff breaks no contract that existed before it.
+- **`tests`, `resilience`, `performance`, `dependencies`** — every file in the
+  stat is prose: Markdown, plain text, documentation. Not config, not a script,
+  not a prompt an agent executes — a file that reads as instructions to a
+  machine is code for this purpose. `correctness`, `security`, `maintainability`
+  and `reuse` still run on prose: a doc can state something false, leak a
+  secret, or duplicate a passage that now has to change in step with the
+  original.
+
+A subject scope has no diff to check; dispatch all eight and say so.
+
+This is a check on the file list and the commands' output, not a reading of the
+change. Do not open the diff to decide, and never skip a lens because the
+change *looks* like it has nothing for it — if you wrote the code, that is the
+author waving off a reviewer, and the pass exists to stop exactly that. When
+the commands leave it unclear, dispatch: the lens still has its own
+**not applicable** exit, and a lens that read a thin surface costs a line where
+one that was never sent costs the finding.
 
 The lenses and their rubrics:
 
@@ -247,7 +298,7 @@ is `performance`.
 
 ### Synthesise
 
-Merge the eight reports with the reviewer's own. Deduplicate on the underlying
+Merge the lens reports with the reviewer's own. Deduplicate on the underlying
 defect, not the exact line — two agents describing the same problem routinely
 anchor a few lines apart. Where they found the same thing, keep the more
 specific statement and drop the other, rather than listing it twice with
@@ -326,7 +377,10 @@ Suggestion / Pre-existing format, keeping its Scope / Tests / Lint header lines
   third is the one that most looks like the first: an agent that failed is not a
   dimension that came back clean, and counting it as one is how a broken pass
   reads as a passing one. All three are worth printing, and hiding any of
-  them makes eight agents look like one
+  them makes eight agents look like one. Then — separately again — which
+  lenses were **not dispatched** by **Pick the lenses**, each with the check
+  that excluded it, so a reader can tell a lens this command skipped from one
+  that looked and found no surface
 - which findings were promoted from Suggestion to Warning and how each fared
   — a promotion is this command's own re-tiering, so it is disclosed alongside
   the refutations rather than folded into the reviewer's count
