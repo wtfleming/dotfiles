@@ -55,8 +55,7 @@ for fixes, follow **If the user asks for fixes** below.
 
 Without `--deep` the reviewer's findings reach the user checked by nobody, and
 the bias that objection rests on does not depend on how many agents ran: the
-agent that wrote a finding is the worst-placed to judge it, alone or in a crowd
-of nine.
+agent that wrote a finding is the worst-placed to judge it, alone or in a crowd.
 
 Verifying all of them here would cost what `--deep` costs on the path chosen for
 being cheap — and unlike a lens, a refuter cannot ride along in the reviewer's
@@ -149,18 +148,22 @@ reviewer reads — plus `reuse` and `resilience`, which the reviewer's checklist
 does not cover at all.
 
 Say up front how many agents you are about to spawn, so the cost is the user's
-to refuse before it is spent rather than after.
+to refuse before it is spent rather than after. Not every scope has a surface
+for every lens, so the number comes from **Pick the lenses** below — one git
+command, run before any *lens* is dispatched — and the announcement names the
+lenses being skipped alongside the ones being launched.
 
-Dispatch these eight `wtf-lens` subagents **in parallel**, each with the scope
-and its own rubric and nothing else. Unlike the reviewer, a lens cannot derive
-its own scope, and eight agents each guessing one is how "the same scope" stops
-being true — so where the scope comes from depends on what the user gave:
+Dispatch one `wtf-lens` subagent per lens that survives that check, **in
+parallel**, each with the scope and its own rubric and nothing else. Unlike the
+reviewer, a lens cannot derive its own scope, and several agents each guessing
+one is how "the same scope" stops being true — so where the scope comes from
+depends on what the user gave:
 
 - **The user named a revision — a ref, a branch, a path:** every lens gets it
   verbatim, and nothing a lens does depends on the reviewer's output — so launch
-  all eight *alongside* the reviewer, in the same batch, rather than after it.
-  The reviewer's test run is the long pole of the whole pass; serialising nine
-  agents behind it buys nothing.
+  them all *alongside* the reviewer, in the same batch, rather than after it.
+  The reviewer's test run is the long pole of the whole pass; serialising the
+  lenses behind it buys nothing.
 - **The user named a subject, or named nothing at all:** the reviewer has to
   settle it first. Wait for its report and hand each lens the scope stated at
   the top of it — for a subject, the *file list* it settled on, labelled as a
@@ -190,6 +193,62 @@ comes back saying nothing in the repo implements the subject, it stopped at step
 dispatched yet, and none should be. Relay what the reviewer said, say that the
 lenses were not launched, and stop — do not synthesise a report around a header
 you cannot fill.
+
+### Pick the lenses
+
+A lens with no surface still costs a dispatch: it reads the whole scope before
+it can say **not applicable**. One absence is visible from the file list alone —
+a change that touches no code — and it can be skipped before the spawn. List
+the files the lenses will diff, in the shape the scope takes:
+
+```sh
+git diff --name-status <merge-base>...<branch>   # a branch; merge-base with the default branch
+git diff --name-status <ref>^!                   # a single commit, HEAD included
+git diff --name-status HEAD                      # uncommitted, staged or not,
+git ls-files --others --exclude-standard         # plus untracked, which diff omits
+git diff --name-status HEAD -- <path>            # a path, again with untracked
+git ls-files --others --exclude-standard -- <path>
+```
+
+The two working-tree shapes need both commands: an untracked file is
+uncommitted work that `git diff` never lists, and a new source file beside a
+Markdown edit is exactly the change that would otherwise pass as prose.
+
+A range the user typed is used as typed. When the scope came from the
+reviewer — the second branch above — run this on the revision its Scope line
+states; a subject has no diff to list, so skip the check and dispatch all
+eight, and say so.
+
+An empty listing means the check did not run — a scope shape not covered
+above, or a diff with nothing in it — not that every file is prose. Dispatch
+all eight and say so.
+
+Skip `tests`, `resilience`, `performance` and `dependencies` when every path
+in the listing is prose, and say so. Prose is an allowlist, not a judgement:
+`.md`, `.markdown`, `.rst`, `.adoc`, `.txt`, and the extensionless `README`,
+`LICENSE`, `CHANGELOG` and `NOTICE`. Anything else — config, a script, an
+extension not listed, a file with none — is code. So is a Markdown file that is
+an agent's instructions: `CLAUDE.md`, `AGENTS.md`, `SKILL.md`, or anything
+under a `claude/`, `.claude/`, `agents/`, `commands/` or `skills/` directory.
+Those are executed, and a change to one is a change to what an agent does.
+
+`correctness`, `security`, `maintainability` and `reuse` still run on prose: a
+doc can state something false, leak a secret, or duplicate a passage that now
+has to change in step with the original.
+
+No other lens has a mechanical skip. `dependencies` is the tempting one — no
+manifest changed, so nothing to govern — but half its rubric is breaking
+changes to exported signatures, config keys and CLI flags, and a purely
+additive diff can make a flag required with no manifest, import or deletion in
+sight. Nothing in a file listing clears that, so on a code diff it runs, and
+takes its own **not applicable** exit if there is nothing there.
+
+This is a check on the listing, not a reading of the change. Do not open the
+diff to decide, and never skip a lens because the change *looks* like it has
+nothing for it — if you wrote the code, that is the author waving off a
+reviewer, and the pass exists to stop exactly that. When the listing leaves it
+unclear, dispatch: a lens that read a thin surface costs a line where one that
+was never sent costs the finding.
 
 The lenses and their rubrics:
 
@@ -247,7 +306,7 @@ is `performance`.
 
 ### Synthesise
 
-Merge the eight reports with the reviewer's own. Deduplicate on the underlying
+Merge the lens reports with the reviewer's own. Deduplicate on the underlying
 defect, not the exact line — two agents describing the same problem routinely
 anchor a few lines apart. Where they found the same thing, keep the more
 specific statement and drop the other, rather than listing it twice with
@@ -263,9 +322,9 @@ are about to be retracted should not get a first airing.
 ### Verify
 
 Every finding so far was judged by the agent that wrote it, which is the
-position it is worst placed to judge from — and under `--deep` there are eight
-agents each under quiet pressure to justify their dispatch, which is exactly the
-pressure that produces plausible findings that are not real.
+position it is worst placed to judge from — and under `--deep` there are up to
+eight agents each under quiet pressure to justify their dispatch, which is
+exactly the pressure that produces plausible findings that are not real.
 
 First sort the Suggestions for misfiled Warnings, as **Triage the Suggestions**
 describes: a Suggestion that states a concrete failure is promoted to Warning
@@ -326,7 +385,14 @@ Suggestion / Pre-existing format, keeping its Scope / Tests / Lint header lines
   third is the one that most looks like the first: an agent that failed is not a
   dimension that came back clean, and counting it as one is how a broken pass
   reads as a passing one. All three are worth printing, and hiding any of
-  them makes eight agents look like one
+  them makes the lenses look like one. Then — separately again — which
+  lenses were **not dispatched** by **Pick the lenses**, each with the check
+  that excluded it, so a reader can tell a lens this command skipped from one
+  that looked and found no surface. And, should it happen, which returned
+  **subject not found**: on a subject the lenses are handed the file list the
+  reviewer settled, so a lens that still could not find the subject disagreed
+  with the reviewer about what implements it. Print it as its own line, never
+  as no findings — that lens reviewed nothing
 - which findings were promoted from Suggestion to Warning and how each fared
   — a promotion is this command's own re-tiering, so it is disclosed alongside
   the refutations rather than folded into the reviewer's count
