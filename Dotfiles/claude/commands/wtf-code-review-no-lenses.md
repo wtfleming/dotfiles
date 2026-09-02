@@ -1,7 +1,7 @@
 ---
 description: Independent code review in a fresh context — recent changes, or a named subject. Diff, tests, lint, structured report. Pass --deep to have the one reviewer cover every dimension, verified. The single-agent variant of /wtf-code-review.
 argument-hint: "[ref, branch, path or subject — defaults to uncommitted, else the branch, else HEAD] [--deep]"
-allowed-tools: Agent, Read, Grep, Glob, Bash(git:*)
+allowed-tools: Agent, Read, Grep, Glob
 ---
 
 Arguments: $ARGUMENTS
@@ -217,9 +217,19 @@ answer. For each dimension, land on one of three:
 `tests`, `reuse`, `resilience` and `security` cannot take the **not applicable**
 exit because the thing they hunt is absent — for those four that absence *is*
 the finding. They are not applicable only when the scope holds no code they
-could govern at all. `correctness`, `security`, `maintainability` and `reuse`
-still run on prose: a doc can state something false, leak a secret, or duplicate
-a passage that now has to change in step with the original.
+could govern at all.
+
+What counts as code, since that rule turns on it: prose is an allowlist, not a
+judgement — `.md`, `.markdown`, `.rst`, `.adoc`, `.txt`, and the extensionless
+`README`, `LICENSE`, `CHANGELOG` and `NOTICE`. Anything else — config, a script,
+an extension not listed, a file with none — is code. So is a Markdown file that
+is an agent's instructions: `CLAUDE.md`, `AGENTS.md`, `SKILL.md`, or anything
+under a `claude/`, `.claude/`, `agents/`, `commands/` or `skills/` directory.
+Those are executed, and a change to one is a change to what an agent does.
+
+`correctness`, `security`, `maintainability` and `reuse` still run on prose: a
+doc can state something false, leak a secret, or duplicate a passage that now
+has to change in step with the original.
 
 Three boundaries, because they are the ones that blur:
 
@@ -347,15 +357,16 @@ Then:
 
 - how many findings were refuted, and why — a dropped finding is reported, not
   hidden
-- the reviewer's **Dimensions** section, verbatim: which dimensions came back
-  clean and — listed separately — which came back **not applicable**, each with
-  what it looked for. A dimension that governed something and found it clean and
-  one that had no surface to review are two different facts about how far the
-  pass reached, and collapsing either into the other overstates coverage. If the
-  reviewer's report has no Dimensions section, or the section omits dimensions
-  the table names, say which are missing rather than filling them in — an
-  unaccounted dimension is not a clean one, and writing `no findings` on the
-  reviewer's behalf is this command inventing coverage it did not get
+- the reviewer's **Dimensions** section, verbatim — every entry as written, in
+  the order it wrote them, `not applicable` ones keeping what they said they
+  looked for. Do not regroup it into clean and not-applicable lists: a dimension
+  that governed something and found it clean and one that had no surface to
+  review are two different facts about how far the pass reached, and the
+  reviewer already distinguishes them entry by entry. If the reviewer's report
+  has no Dimensions section, or the section omits dimensions the table names,
+  say which are missing rather than filling them in — an unaccounted dimension
+  is not a clean one, and writing `no findings` on the reviewer's behalf is this
+  command inventing coverage it did not get
 - which findings were promoted from Suggestion to Warning and how each fared
   — a promotion is this command's own re-tiering, so it is disclosed alongside
   the refutations rather than folded into the reviewer's count

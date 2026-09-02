@@ -86,8 +86,13 @@ single reviewer has to be asked for. So it asks: the reviewer closes with a
 **Dimensions** section accounting for each rubric as findings, `no findings` or
 `not applicable`, and the command relays it rather than filling in the gaps.
 
-The two are meant to be run against the same PR and compared. Keep them in step:
-a change to one that is not about the lenses belongs in both.
+The two are meant to be run against the same PR and compared, so keep them in
+step. What differs is the dispatch machinery and nothing else: spawning the
+lenses, `Pick the lenses`, and the two-round launch on a subject scope. The
+rubric table and everything downstream of it — the promotion rule, the verify
+pass, the triage, the fix and GitHub sections — belong in both, and a change to
+one of those is a change to both. Retuning a rubric row is the case to watch:
+it reads like a change about the lenses, and it is not.
 
 ### Design review, earlier in the cycle
 
@@ -128,8 +133,9 @@ that has them. Edits only ever happen in the main session, one approval at a tim
   without touching an agent definition.
 - A project's own `REVIEW.md`, `AGENTS.md` or `CLAUDE.md` wins where it conflicts.
   `REVIEW.md` is the name Anthropic's own code review reads.
-- The eight `--deep` rubrics live in the command, not in `wtf-lens`, so they can be
-  retuned without editing an agent.
+- The eight `--deep` rubrics live in the commands, not in `wtf-lens`, so they can
+  be retuned without editing an agent — but there are two copies of the table
+  now, one per command, and a retune means editing both.
 
 ### Cost
 
