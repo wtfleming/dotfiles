@@ -123,8 +123,9 @@ improvements — right to take, fine to defer. Keep the top list short; if most
 Suggestions land there, it is not sorting anything. This is a
 judgement, not a verification: nothing is dispatched to check a Suggestion, and
 the triage says so in a closing line. It is also not a licence to drop one:
-nothing above carries the Suggestions any more, so every one the reviewer wrote
-has to be here.
+nothing above carries a Suggestion except the two cases named here — a
+Pre-existing one, and one promoted to Warning — so every other one the reviewer
+wrote has to be here.
 
 One shape does not belong in either list. A Suggestion whose content describes
 something that *breaks* — a specific input and a wrong result, a leak, an
@@ -142,7 +143,9 @@ label the finding arrived with:
   under a third heading, **Reads as a Warning (unverified)**, as the reviewer
   wrote it, so it is not mistaken for a nit. A Pre-existing one is the exception
   again: it stays in its section with the new tier leading it, marked
-  **(promoted from Suggestion)**, and does not appear in the triage.
+  **(promoted from Suggestion, unverified)** — the bullet above renders a
+  promotion a refuter survived, and nothing checked this one — and does not
+  appear in the triage.
 
 Promotion is the one exception to the relaying rule, and it is narrow: a
 finding moves only when it states a concrete failure that the Warning
@@ -380,10 +383,10 @@ nothing.
 ### Report
 
 Print the merged report of what survived, in the reviewer's Critical / Warning /
-Pre-existing format — the surviving Suggestions print once, in the triage below
-— keeping its Scope / Tests / Lint header lines
-— the test result is the most load-bearing line in the report, and under
-`--deep` this is its only airing. Then:
+Pre-existing format, keeping its Scope / Tests / Lint header lines — the test
+result is the most load-bearing line in the report, and under `--deep` this is
+its only airing. The surviving Suggestions print once, in the triage below.
+Then:
 
 - how many findings were refuted, and why — a dropped finding is reported, not
   hidden
