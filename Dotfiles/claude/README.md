@@ -65,6 +65,30 @@ Each fixed Critical or Warning is then checked by one fresh `wtf-refuter`
 arguing against the fixed tree, so the fixes get the same independent
 verification the findings did. Committing stays yours.
 
+### The single-agent variant
+
+`/wtf-code-review-no-lenses` is the same command with the lenses folded back
+into the reviewer. Under `--deep` it dispatches no `wtf-lens` at all: the eight
+rubrics ride along in the reviewer's own prompt, and the one agent that already
+diffed the change and read its files works through them in one pass. It exists
+because most of a `--deep` run's tokens go on eight agents each re-reading the
+same scope before any of them writes a line.
+
+```
+/wtf-code-review-no-lenses main --deep
+```
+
+Everything downstream is unchanged — same report, same promotion rule, same
+`wtf-refuter` per Critical and Warning. What it gives up is the isolation: eight
+agents each with one rubric and a full context budget go deeper than one agent
+holding eight, and a lens that finds nothing is a fact about coverage that a
+single reviewer has to be asked for. So it asks: the reviewer closes with a
+**Dimensions** section accounting for each rubric as findings, `no findings` or
+`not applicable`, and the command relays it rather than filling in the gaps.
+
+The two are meant to be run against the same PR and compared. Keep them in step:
+a change to one that is not about the lenses belongs in both.
+
 ### Design review, earlier in the cycle
 
 `/wtf-design-review` asks a different question at a different time: *is this
