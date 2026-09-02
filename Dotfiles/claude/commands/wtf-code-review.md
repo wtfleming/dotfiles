@@ -45,7 +45,11 @@ rest. The relaying rule still applies to the report you eventually print.
 
 Then, below the report, add the **Suggestion triage** described under
 **Triage the Suggestions** — the one place this command adds an opinion of its
-own, and it goes after the report rather than into it.
+own, and it goes after the report rather than into it. It is also where the
+Suggestions themselves are printed: leave the **Suggestion** section out of the
+report and let the triage carry them, so each one appears once, in the list
+that says what to do about it. That is the only rearrangement allowed — the
+findings still go out as written, in the tier they arrived in.
 
 **Without `--deep`, stop here.** The findings are the user's to triage, and the
 close matters: do not launch into fixing anything. If the user replies asking
@@ -86,27 +90,31 @@ nothing.
 Suggestions are the most numerous tier and the least sorted: a rename worth
 two minutes sits next to a style nit nobody should spend time on, in the same
 list, in the same voice. Sorting them is cheap and leaves the user to read only
-the ones that matter, so after every report print one more section:
+the ones that matter, so after every report print one more section — and print
+the Suggestions in it rather than in the report, so a reader meets each one
+once, already classified:
 
 ```markdown
 ## Suggestion triage
 
 **Definitely worth doing**
-- `src/api.ts:12` — <one line: what it buys, and why now — the fix is small and the cost of leaving it compounds>
+- `src/api.ts:12` — <the finding as the reviewer wrote it> — <one line: what it buys, and why now — the fix is small and the cost of leaving it compounds>
 
 **Worth doing**
-- `src/api.ts:40` — <one line: what the suggestion buys>
+- `src/api.ts:40` — <the finding as the reviewer wrote it> — <one line: what the suggestion buys>
 
 **Not worth doing**
-- `src/util.ts:30` — <one line: why — no reader is confused, style matches the file, churn outweighs the gain>
+- `src/util.ts:30` — <the finding as the reviewer wrote it> — <one line: why — no reader is confused, style matches the file, churn outweighs the gain>
 ```
 
-Every Suggestion in the report lands in exactly one list, cited by the same
-`file:line` so the lists can be matched to the report, with a one-line reason
-each. Findings under **Pre-existing** are not sorted into these lists, whatever
-tier they carry — they are tickets, not work for this change, and they appear
-in the report once. The promotion rule below still applies to them: tier
-follows content there as anywhere, and the section does not change that.
+Every Suggestion lands in exactly one list, carrying its `file:line`, the
+finding as written, and any qualifier it arrived with — **(unverified)** under
+`--deep` — plus the one-line reason. This is the only place it appears, so a
+finding shortened here is shortened everywhere. Findings under **Pre-existing**
+are the exception and are not sorted into these lists, whatever tier they
+carry — they are tickets, not work for this change, and they stay in that
+section of the report, once. The promotion rule below still applies to them:
+tier follows content there as anywhere, and the section does not change that.
 **Definitely worth doing** is for the few a reader should not skip: the change
 is small and the payoff is clear and durable — a misleading name on something
 public, dead code that will be mistaken for live, a comment that states
@@ -114,8 +122,9 @@ something false. **Worth doing** is the rest of the genuine
 improvements — right to take, fine to defer. Keep the top list short; if most
 Suggestions land there, it is not sorting anything. This is a
 judgement, not a verification: nothing is dispatched to check a Suggestion, and
-the triage says so in a closing line. It is also not a licence to drop one —
-the report above still carries all of them verbatim.
+the triage says so in a closing line. It is also not a licence to drop one:
+nothing above carries the Suggestions any more, so every one the reviewer wrote
+has to be here.
 
 One shape does not belong in either list. A Suggestion whose content describes
 something that *breaks* — a specific input and a wrong result, a leak, an
@@ -129,10 +138,11 @@ label the finding arrived with:
   Pre-existing one stays in its section with the new tier leading it, marked
   the same way.
 - without `--deep`, there is no refuter to send it to: that path verifies
-  Criticals only, and a promotion never reaches Critical. Leave it in the report
-  as written, and list it in the triage under a third heading,
-  **Reads as a Warning (unverified)**, so it is not mistaken for a nit — a
-  Pre-existing one included, the only time that section appears in the triage.
+  Criticals only, and a promotion never reaches Critical. Print it in the triage
+  under a third heading, **Reads as a Warning (unverified)**, as the reviewer
+  wrote it, so it is not mistaken for a nit. A Pre-existing one is the exception
+  again: it stays in its section with the new tier leading it, marked
+  **(promoted from Suggestion)**, and does not appear in the triage.
 
 Promotion is the one exception to the relaying rule, and it is narrow: a
 finding moves only when it states a concrete failure that the Warning
@@ -370,7 +380,8 @@ nothing.
 ### Report
 
 Print the merged report of what survived, in the reviewer's Critical / Warning /
-Suggestion / Pre-existing format, keeping its Scope / Tests / Lint header lines
+Pre-existing format — the surviving Suggestions print once, in the triage below
+— keeping its Scope / Tests / Lint header lines
 — the test result is the most load-bearing line in the report, and under
 `--deep` this is its only airing. Then:
 
@@ -400,7 +411,8 @@ Suggestion / Pre-existing format, keeping its Scope / Tests / Lint header lines
   doubting rather than a clean bill of health — that is also what a gate that
   never bites looks like
 
-Then the **Suggestion triage**, over the Suggestions that remain.
+Then the **Suggestion triage**, carrying the Suggestions that remain, each
+marked **(unverified)**.
 
 Then stop. The same close as above: the findings are the user's to triage, and
 fixes happen only if they ask — when they do, follow the next section.
@@ -506,9 +518,10 @@ tree being reviewed, never a deleted line, so `side` is always `RIGHT`.
   tier-led as above.
 - A finding whose line does not — unchanged context the diff doesn't cover, a
   file touched only indirectly, a `file:line` that drifted — cannot anchor.
-  Collect all such findings into the review's body instead, grouped under the
-  same Critical / Warning / Suggestion / Pre-existing headings the report
-  used, the same way a fully-grouped review would be written.
+  Collect all such findings into the review's body instead, grouped under
+  Critical / Warning / Suggestion / Pre-existing headings, the same way a
+  fully-grouped review would be written — the Suggestions taken from the
+  triage, which is where they were printed.
 - Say, when posting, how many went inline and how many fell back to the body,
   so the split is visible rather than silently mixed.
 
