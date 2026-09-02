@@ -64,7 +64,6 @@
       "Bash(sudo rm -rf /* *)",
       "Read(//**/.aws/**)",
       "Read(//**/.terraform/**)",
-      "Read(./config/credentials.json)",
       "Read(./.env)",
       "Read(./.env.*)",
       "Read(./secrets/**)",
