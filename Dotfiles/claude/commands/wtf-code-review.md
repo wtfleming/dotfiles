@@ -493,7 +493,11 @@ as much as the tier does, and a suggestion nothing refuted should not land on
 the PR looking as settled as one that survived a refuter. A **Pre-existing**
 finding posts as its tier followed by **(pre-existing)** —
 `**Warning (pre-existing)** — …` — because the section heading that said so
-does not travel with it.
+does not travel with it. The triage's **Reads as a Warning (unverified)**
+heading is the same shape of problem and takes the same answer: it posts as
+`**Suggestion (reads as a Warning, unverified)** — …`, the heading carried as a
+qualifier. Posting it as a Warning instead would be re-ranking, which the next
+line forbids.
 
 Do not re-rank on the way out. The tier that gets posted is the tier the review
 gave it, including any you would have scored differently.
