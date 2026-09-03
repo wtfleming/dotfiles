@@ -282,6 +282,27 @@ anyone with the link, and a screenshot carries names, avatars, internal hostname
 token in the URL bar, none of which can be scrubbed by rule the way text can. Text stays
 text; a screenshot of a JSON response is unsearchable, uncopyable and undiffable.
 
+How much of that to do is decided by the base, which is the one thing that separates a PR
+in the middle of a stack from the PR that lands the work. An intermediate PR is reviewed as
+a slice, absorbed into its parent and superseded by the one that finally targets the default
+branch, so effort spent making it a finished public artifact is thrown away when the stack
+lands — visual evidence, the prose-drift pass and an embedded verification section all wait
+for the final PR. Two things stop being true mid-stack rather than merely costing more: the
+title is absorbed instead of becoming a permanent commit subject, so judging it as one is
+cargo cult; and a closing keyword is inert, because GitHub closes a linked issue only when
+the PR merges into the default branch. Inert in the way that reads as done is how a ticket
+ends up neither closed nor tracked, so the id goes on the intermediate PR and the keyword on
+the one that reaches `main`. Stack position is detected — an open PR whose head is an
+ancestor of HEAD — rather than guessed, because basing a stacked PR on the default branch
+makes it claim its parent's commits and renders the diff unreviewable.
+
+A ticket reference is found rather than invented: from the argument, the branch name, the
+commit trailers, or a template's issue line, and never inferred from the subject matter,
+since a mistyped id with a keyword in front of it closes someone else's ticket. It goes in
+both places for different reasons — the title, because that is what survives in `git log`,
+and the body, because that is the only place a closing keyword fires at all. A partial fix
+references without closing.
+
 It shows the title and body before anything is public, and stops after reporting the URL.
 
 `~/.claude/reference/github-publishing.md` holds the guards that apply to all three tools

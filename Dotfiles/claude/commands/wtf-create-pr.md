@@ -74,6 +74,21 @@ sitting beside a committed Markdown edit is the case that costs the most. List w
 there and ask whether to commit it or leave it behind. Do not decide silently in either
 direction.
 
+**Find the ticket, if there is one.** A PR that names the work item it came from lets a
+reader get to the *why* without asking, and lets the tracker close the loop by itself.
+Sources, cheapest first: whatever was passed to this command, the branch name, the commit
+subjects and any trailers on the branch, and an existing template's issue line.
+
+```sh
+git branch --show-current                    # wfleming/eng-1234-sliding-window, fix/412-…
+git log --format='%s%n%b' origin/HEAD..HEAD  # subjects and trailers
+```
+
+Take the id from what is written there; do not infer one from the subject matter. A
+fabricated or mistyped id links the reader to someone else's work and, with a closing
+keyword in front of it, closes someone else's ticket on merge. If nothing names a ticket,
+the PR has none — say so once and move on rather than hunting.
+
 **Read the repo's own instructions before writing anything.** A
 `.github/pull_request_template.md` (also `PULL_REQUEST_TEMPLATE.md`, a
 `PULL_REQUEST_TEMPLATE/` directory of variants, or the repo-root and `docs/` spellings) is
@@ -82,7 +97,58 @@ body that answers a different set of questions reads as a bypass even when it is
 prose. `CONTRIBUTING.md` and any `CLAUDE.md` PR rules bind the same way — title format,
 required sections, whether an issue link is mandatory.
 
-## 2. What has gone stale
+## 2. How much of this to do
+
+Not every PR earns the whole procedure, and what decides it is the base.
+
+A PR based on another feature branch — the middle of a stack — is reviewed as a slice,
+absorbed into its parent, and superseded by the PR that eventually targets the default
+branch. Effort spent making it a finished public artifact is thrown away when the stack
+lands. The final PR is where the change becomes permanent, so that is where the expensive
+steps pay for themselves.
+
+Detect it rather than assume it:
+
+```sh
+gh pr list --state open --json number,headRefName,baseRefName --limit 50
+# Is another open PR's head an ancestor of HEAD? Then this branch sits on top of it, and
+# that branch is the base — not the default branch.
+git merge-base --is-ancestor origin/<their-head> HEAD && echo stacked
+```
+
+Getting that wrong is the classic stacked-PR mistake: based on the default branch instead
+of the parent, the PR claims the parent's commits as its own and the diff is unreviewable.
+
+| Step | Middle of a stack | Targets the default branch |
+| ---- | ----------------- | -------------------------- |
+| Base | the parent branch, named in the body | the default branch, resolved not assumed |
+| Pre-flight | in full | in full |
+| Prose drift | skip it — docs land with the final PR | in full |
+| Review/verification drift | note it, do not chase it | in full |
+| Title | plain and descriptive; it gets absorbed | judged as a permanent commit subject |
+| Body | what this slice does, and where it sits in the stack | both directions, in full |
+| Ticket reference | mention it; leave the closing keyword off | id plus keyword |
+| Visual evidence | skip — a half-built state, in a body that will be rewritten | both gates |
+| Verification section | skip — superseded when the rest of the stack lands | quoted, per the body section |
+
+Two things no PR skips: the credential scrub, and pushing before opening.
+
+The closing keyword is worth its own line. GitHub closes a linked issue only when the PR
+merges into the repository's **default** branch, so a `Closes #412` mid-stack is inert —
+and inert in the way that reads as done, which is how a ticket ends up neither closed nor
+tracked. Reference the ticket on the intermediate PR, and put the keyword on the one that
+reaches the default branch.
+
+One expectation to check rather than trust: when the parent PR merges and its branch is
+deleted, GitHub normally retargets the open child onto the parent's base. Confirm it
+actually happened. A child left pointing at a deleted branch is a stalled PR that sends
+nobody a notification.
+
+## 3. What has gone stale
+
+**On a stacked PR, most of this section is skipped** — see the table above. Prose that has
+not caught up with a change the stack has not finished making is not drift; it is work that
+belongs to the final PR. What follows is written for a PR that targets the default branch.
 
 The checks above find something rarely. This section is where the findings actually live,
 and all of it is about drift: things that were true when they were written and quietly
@@ -103,11 +169,20 @@ review bot reporting `pass` while its own status line reads `rate limited`: a re
 genuinely happened, just not on this. Compare the SHA the review ran against to HEAD and
 say plainly which commits it did not see.
 
-**The verification artifact's freshness.** If `<scratch>/code-verify/VERIFICATION.md`
-exists it records the SHA it covers. Compare that to HEAD. If they differ, the section
-describes superseded code, and embedding it publishes a stale verdict under a heading that
-reads as current. Two honest options: re-run the verification, or embed it with the SHA it
-actually covers stated in the section itself.
+**The verification artifact.** If `<scratch>/code-verify/VERIFICATION.md` exists it records
+the SHA it covers. Compare that to HEAD. If they differ, the section describes superseded
+code, and embedding it publishes a stale verdict under a heading that reads as current.
+Two honest options: re-run the verification, or embed it with the SHA it actually covers
+stated in the section itself.
+
+A matching SHA is not the same as a true verdict, and this is the trap worth naming: a
+fresh artifact can still be wrong. Re-verifying it is not this command's job — but
+*publishing* it is, and a verdict that goes up under this PR's own heading is read as this
+PR's own attestation. So embed it as an attributed quote rather than adopting it, per the
+Body section below. And where composing the body has already shown you something that
+contradicts one of its rows — a test that fails, output you ran that disagrees — say so
+beside the quote. That is not a re-verification pass; it is declining to publish a
+contradiction you already know about.
 
 **This is not a defect hunt.** `/wtf-code-review` owns that, and a readiness check that
 starts finding bugs gets scheduled at the wrong point in the cycle and eventually skipped.
@@ -115,11 +190,24 @@ Nor is it a gate — "the bot has not reviewed the tip" is information the autho
 grounds to refuse. Report, then open.
 
 **Come back empty, quickly, when nothing has drifted.** On a two-commit branch written in
-one afternoon nothing has had time to go stale, and the honest output is a single line
-saying so. A check that manufactures a finding to look like it earned its runtime is worse
-than no check, because the next real finding arrives in the same voice as the invented one.
+one afternoon nothing has had time to go stale. A check that manufactures a finding to look
+like it earned its runtime is worse than no check, because the next real finding arrives in
+the same voice as the invented one.
 
-## 3. The title
+Empty has a shape, and it is one line naming all three axes:
+
+```
+Nothing has drifted: README updated in the same branch, no review or verification has run
+against it, no verification artifact.
+```
+
+That is the whole output for this section when the answer is nothing. The temptation, having
+just read three axes worth of instruction, is to confirm each one in its own paragraph — but
+a per-axis walkthrough of an empty result is the padding this section exists to prevent, and
+it buries the one real finding on the branch where there is one. Write the negative once,
+name what made it negative, and move on to the title.
+
+## 4. The title
 
 On a squash merge the title becomes the permanent commit subject on the default branch,
 where it outlives the PR, the branch and the review. Someone reading `git log` in a year
@@ -132,7 +220,13 @@ during the branch is not cosmetic — it is a wrong version bump. Match the repo
 style rather than importing one: read recent merged titles (`gh pr list --state merged
 --limit 20 --json title`) and follow what is actually there, prefixes or not.
 
-## 4. The body
+**Put the ticket id in the title where the repo does.** Since the title is what survives on
+the default branch, an id in it is the one durable link from a `git log` line back to the
+work item — `ENG-1234` or `#412`, in whatever position and format merged titles already
+use. Two things not to do: don't add the id if merged titles never carry one, and don't add
+the *PR* number, which GitHub appends to the squash subject by itself.
+
+## 5. The body
 
 Two directions, and it is only right when both hold:
 
@@ -144,20 +238,57 @@ simply silent about a change that is in the diff, and silence does not read as a
 so the reviewer forms a smaller picture of the change than the change actually is, and
 reviews accordingly.
 
-Carry across verbatim anything that is not a description of the change: `Closes #123`,
-checklists, template sections, screenshots already present. Dropping the issue link
-silently unlinks the issue and it will not close on merge. The full rule is in
-`~/.claude/reference/github-publishing.md`, along with what belongs in a comment instead
-of a body.
+**The ticket reference belongs here, not only in the title.** A closing keyword takes
+effect from the body — `Closes #412` in a *title* links nothing and closes nothing, which
+is a quiet failure because the id is plainly visible on the PR either way. So the body
+carries the line that does the work:
+
+- **GitHub** — `Closes #412` on its own line, or `Closes owner/repo#412` for an issue in
+  another repo, which the short form cannot reach.
+- **Linear** — the id, with a keyword if the ticket should close: `Fixes ENG-1234`. Linear
+  matches on the branch name as well as on the id in the title or body, and which of those
+  a workspace acts on is a setting rather than a given, so putting it in the body is what
+  makes the link independent of how the branch happened to be named.
+
+Where the ticket should *not* close on merge — a partial fix, one PR of several — reference
+it without a keyword (`Part of ENG-1234`, `Refs #412`). A closing keyword on a partial fix
+shuts a ticket whose work is still outstanding, and nobody notices until someone goes
+looking for the rest of it.
+
+Carry across verbatim anything that is not a description of the change: an issue line
+already present, checklists, template sections, screenshots. On a create there is nothing
+to preserve, but on the update path a regenerated body is exactly how the link above goes
+missing. The full rule is in `~/.claude/reference/github-publishing.md`, along with what
+belongs in a comment instead of a body.
 
 If `<scratch>/code-verify/VERIFICATION.md` exists from a `wtf-code-verify` run, include it
-rather than writing a new one — subject to the freshness check above, and delimited per
-the reference so a later run replaces it. **Never fabricate a verification section.** A
-body claiming "tested manually" when nothing ran is precisely the defect `wtf-code-verify`
-exists to catch, committed in the document that reports on it, where it is read as
-evidence rather than as a claim.
+rather than writing a new one — subject to the checks above, and delimited per the
+reference so a later run replaces it. Quote it under a line that says where it came from
+and what it covers, so a reader can tell a citation from a claim:
 
-## 5. Visual evidence
+```markdown
+<!-- wtf-code-verify:start -->
+> Quoted from a `wtf-code-verify` run against `5544ef1`, which is HEAD. Not re-run while
+> composing this PR.
+
+## Verification
+…the section, unedited…
+<!-- wtf-code-verify:end -->
+```
+
+The attribution is doing real work. Dropped into the body under a bare **Verified**
+heading, the verdict reads as the author's own word, and the author is then answerable for
+a claim they inherited — including a row that has since become false. With the provenance
+line, the same text says what it is: a result from a named run, at a named commit, which a
+reviewer can weigh or re-run.
+
+**Never fabricate a verification section.** A body claiming "tested manually" when nothing
+ran is precisely the defect `wtf-code-verify` exists to catch, committed in the document
+that reports on it, where it is read as evidence rather than as a claim. Writing one from
+nothing and adopting a stale one are the same error at different distances: both put a
+verdict in front of a reviewer that no run behind it supports.
+
+## 6. Visual evidence
 
 Attach before/after images or video when the change has a visual element *and* the
 rendering carries information the text cannot. When the content is text — a JSON response,
@@ -194,7 +325,7 @@ runs, and it is a fraction of the size.
 Do not escalate work to produce a picture. If a run already had the browser open, the pair
 costs seconds; opening one for the screenshot alone almost never pays.
 
-## 6. Show it before it opens
+## 7. Show it before it opens
 
 Print the title, the body verbatim, the base and head refs the PR will use, any
 attachments with their alt text, and whether it will be a draft. Then wait. This is the
@@ -207,7 +338,7 @@ or blank lines, which is most bodies worth writing. Pass `--base` explicitly, re
 in the pre-flight, rather than trusting the repository default to be what this branch
 targets.
 
-## 7. After
+## 8. After
 
 Report the URL, and note two things about what happens next. CI is now running and has not
 reported yet, so nothing here says the branch is green. And a green check from a review bot
