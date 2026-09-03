@@ -171,18 +171,45 @@ accuracy, feeding the fidelity ledger), the flat-schematic form
 (`references/flat-format.md`), and a verification fallback via the
 chrome-devtools MCP for machines without Playwright.
 
-## Verifying a fix
+## Verifying that it works
 
-`wtf-verify-fix` proves a change does what it claims, by running one probe
-against the merge-base — where it must fail — and against HEAD, where it must
-pass, then reporting both with raw output. A test that only passes on the branch
-proves nothing; the claim in a PR body is a difference, so the evidence has to
-be one too.
+`wtf-code-verify` proves that code does what it is supposed to do, by running it. The
+line against its neighbour is deliberate: **`wtf-code-review` reads the code, and
+`wtf-code-verify` executes it.** Given a scope with nothing runnable and no claim
+checkable against a running system, it says so and stops rather than sliding into a
+review.
 
-It is deliberately expensive and deliberately rare: it builds and bootstraps a
-second worktree via `scripts/baseline-worktree.sh`, takes minutes, and is meant
-to run once per branch just before the PR opens — not per commit, and not as a
-substitute for running tests normally.
+The idea it turns on is that a green check proves nothing on its own — it may have been
+green before the change, or green against code that does not work. So every probe needs
+a **discriminating partner**: the negative case that must come out different, a
+deliberate break that must go red, or the full differential against the merge base. The
+skill picks the cheapest one that carries the claim.
 
-`references/environments.md` covers how to get the thing running per tier and
-per language; `references/evidence.md` is the template for the PR section.
+Expectations are written down and shown to you *before* anything runs, in three kinds —
+positive, negative, regression — because a probe built on the wrong idea of correct runs
+cleanly, passes, and tells you nothing. The negative cases are dispatched to the
+`wtf-verify-adversary` agent, which sees only the diff: whoever wrote the code has
+already imagined the inputs it handles, and the bugs are in the ones they did not.
+
+It reports one of four verdicts. `Not verified` is neither a pass nor a defect and says
+which of the three inconclusive shapes it was; `Falsified` — a real defect, found before
+the merge — is a success for the process, and it offers to fix and re-verify rather than
+quietly rewriting history. Every report carries what went uncovered, what CI already
+runs, and what state was left behind. It ends by triaging the probes and offering to
+promote the ones worth keeping into permanent tests, in the project's own idiom, proven
+to fail without the fix.
+
+Scope can be a ref, a branch, a PR, a path, or plain prose — `/wtf-code-verify login and
+authentication` verifies an area of a running system with no diff at all, and a docs
+change is verified by treating the code as the source of truth and each written claim as
+the subject under test.
+
+It absorbed the earlier `wtf-verify-fix`, whose merge-base differential is now one
+technique among several in `references/differential.md` — the two would otherwise have
+competed for the same trigger. `scripts/baseline-worktree.sh` and
+`references/environments.md` came across with it.
+
+Deliberately expensive and deliberately rare: at the upper tiers it boots services and
+bootstraps a second worktree, so it announces the tiers it expects to need and asks
+before spending tier 2 or 3. Meant to run once on a finished branch just before the PR
+opens — not per commit, and not as a substitute for running the tests.
