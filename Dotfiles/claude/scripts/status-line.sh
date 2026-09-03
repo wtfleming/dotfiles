@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Status line: model | repo:branch | context bar | rate limit | lines changed.
+# Status line: model (effort) | repo:branch | context bar | rate limit | lines changed.
 # Runs on every assistant message: two child processes, one jq and one git.
 
 # Longest branch name shown before it is clipped to a leading fragment.
@@ -23,6 +23,7 @@ $(jq -r '
     .rate_limits.five_hour.used_percentage // "",
     .cost.total_lines_added // 0,
     .cost.total_lines_removed // 0,
+    .effort.level // "",
     "END"
   ] | .[] | tostring' <<<"$data")
 EOF
@@ -35,6 +36,7 @@ cwd=${fields[4]}
 rl_pct=${fields[5]}
 lines_add=${fields[6]}
 lines_del=${fields[7]}
+effort=${fields[8]}
 
 # Color codes
 BLUE='\033[34m'
@@ -105,10 +107,16 @@ if [ -n "$rl_whole" ] && [ "$rl_whole" -ge 50 ] 2>/dev/null; then
     rl_info=" | ${RED}rl ${rl_whole}%${RESET}"
 fi
 
+# Effort level, on the models that have one.
+effort_info=""
+if [ -n "$effort" ]; then
+    effort_info=" (${effort})"
+fi
+
 # Lines changed this session, once there are any.
 lines_info=""
 if [ "$lines_add" -gt 0 ] 2>/dev/null || [ "$lines_del" -gt 0 ] 2>/dev/null; then
     lines_info=" | +${lines_add}/-${lines_del}"
 fi
 
-printf '%b\n' "${model}${git_info} | ${context_info}${rl_info}${lines_info}"
+printf '%b\n' "${model}${effort_info}${git_info} | ${context_info}${rl_info}${lines_info}"
