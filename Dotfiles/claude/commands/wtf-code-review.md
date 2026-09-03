@@ -111,14 +111,18 @@ Every Suggestion is judged against all three of those, and the third is not
 printed: a nit nobody should act on costs a reader the same attention as one
 they should, and removing that cost is what the sorting is for. It leaves as a
 count, not silently — a dropped finding is reported, not hidden — and one line
-saying how many is the whole of it. Each Suggestion that *is* printed lands in
-exactly one list, carrying its `file:line`, the finding as written, and any
-qualifier it arrived with — **(unverified)** under `--deep` — plus the one-line
-reason. That is the only place it appears, so a finding shortened here is
-shortened everywhere. Findings under **Pre-existing** are the exception and are
-not sorted into these lists, whatever tier they carry — they are tickets, not
-work for this change, and they stay in that section of the report, once. The promotion rule below still applies to them:
-tier follows content there as anywhere, and the section does not change that.
+saying how many is the whole of it. Match that line to the number —
+`_1 Suggestion judged not worth doing and dropped._` — and omit it altogether
+when nothing was dropped, since a line reporting zero dropped findings reports
+nothing. Each Suggestion that *is* printed lands in exactly one list, carrying
+its `file:line`, the finding as written, and any qualifier it arrived with —
+**(unverified)** under `--deep` — plus the one-line reason. That is the only
+place it appears, so a finding shortened here is shortened everywhere. Findings
+under **Pre-existing** are the exception and are not sorted into these lists,
+whatever tier they carry — they are tickets, not work for this change, and they
+stay in that section of the report, once. The promotion rule below still
+applies to them: tier follows content there as anywhere, and the section does
+not change that.
 **Definitely worth doing** is for the few a reader should not skip: the change
 is small and the payoff is clear and durable — a misleading name on something
 public, dead code that will be mistaken for live, a comment that states
