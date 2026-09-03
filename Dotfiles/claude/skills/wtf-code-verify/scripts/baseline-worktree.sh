@@ -17,6 +17,11 @@
 # by walking up from the working directory, and a worktree nested under the checkout
 # gives them two plausible roots to choose between.
 #
+# --base finds the merge base, which is what isolates *your* change. --base-exact takes
+# the ref as given instead, for the deploy-window question -- what is running beside you
+# right now, which is a release tag or the base tip and usually not an ancestor. Both fill
+# the same baseline slot, one tree at a time; `remove` between them.
+#
 # Ecosystems are detected from marker files at the repo root and can be forced or
 # replaced outright. Detection is a convenience, not a contract: --install-cmd and
 # --build-cmd override everything and are the right answer for anything unusual.
@@ -24,7 +29,8 @@
 # Written for bash 3.2 (the macOS system bash), so no associative arrays, no mapfile.
 #
 # Usage:
-#   baseline-worktree.sh create [--base <ref>] [--head <ref>] [--ecosystem <name>]...
+#   baseline-worktree.sh create [--base <ref> | --base-exact <ref>] [--head <ref>]
+#                               [--ecosystem <name>]...
 #                               [--filter <pkg>] [--copy <relpath>]...
 #                               [--install-cmd <cmd>] [--build-cmd <cmd>]
 #                               [--no-build] [--force]
@@ -369,10 +375,11 @@ add_tree() {
 }
 
 cmd_create() {
-  local base="main" head_ref="" force=0 eco
+  local base="main" base_set=0 base_exact="" base_label="" head_ref="" force=0 eco
   while [ $# -gt 0 ]; do
     case "$1" in
-      --base) base="${2:?--base needs a ref}"; shift 2 ;;
+      --base) base="${2:?--base needs a ref}"; base_set=1; shift 2 ;;
+      --base-exact) base_exact="${2:?--base-exact needs a ref}"; shift 2 ;;
       --head) head_ref="${2:?--head needs a ref}"; shift 2 ;;
       --ecosystem)
         case "${2:?--ecosystem needs a name}" in
@@ -418,10 +425,21 @@ cmd_create() {
     fi
   fi
 
-  merge_base="$(git -C "$main" merge-base "$after" "$base")" \
-    || die "no merge base between $after_label and $base"
+  if [ -n "$base_exact" ]; then
+    [ "$base_set" -eq 0 ] || die "--base and --base-exact are alternatives; pass one."
+    merge_base="$(git -C "$main" rev-parse --verify "$base_exact^{commit}" 2>/dev/null)" \
+      || die "--base-exact: no such commit: $base_exact"
+    base_label="exact: $base_exact"
+  else
+    merge_base="$(git -C "$main" merge-base "$after" "$base")" \
+      || die "no merge base between $after_label and $base"
+    base_label="merge-base of $after_label and $base"
+  fi
 
-  if [ "$merge_base" = "$after" ]; then
+  # The collapse check belongs to the merge-base path only: --base-exact names a commit
+  # deliberately, and it being an ancestor, a descendant or unrelated is the caller's
+  # business rather than a mistake to catch.
+  if [ -z "$base_exact" ] && [ "$merge_base" = "$after" ]; then
     if [ -n "$head_ref" ]; then
       local fork
       fork="$(suggest_fork_point "$main" "$after" "$base")"
@@ -460,7 +478,7 @@ cmd_create() {
   echo "    ecosystems: ${ECOSYSTEMS[*]:-none detected}"
   [ ${#TOOL_PREFIX[@]} -gt 0 ] && echo "    toolchain:  $(prefix) (pinned by this project)"
 
-  add_tree "$main" "$wt" "$merge_base" "baseline (merge-base of $after_label and $base)"
+  add_tree "$main" "$wt" "$merge_base" "baseline ($base_label)"
   if [ -n "$head_ref" ]; then
     add_tree "$main" "$wt_head" "$after" "head ($head_ref)"
   fi

@@ -27,10 +27,10 @@ command *does*; do not invoke it. Ordinary read-only git is fine — `git diff`,
 
 ## 1. Establish scope
 
-If the task names a scope (a ref, a branch, a path), use it. Otherwise:
-uncommitted changes if there are any, else the branch against its merge-base
-with main or master, else `git show HEAD`. State what you settled on at the top
-of your report.
+If the task names a scope (a ref, a branch, a path), use it. Otherwise resolve one per
+`~/.claude/reference/scope-resolution.md`: uncommitted changes if there are any, else
+the branch against its merge base, else `git show HEAD`. State what you settled on at
+the top of your report.
 
 Read the repo's stated rules before judging shape — `CLAUDE.md` at every level
 of the tree above the touched files, and `ARCHITECTURE.md`, `DESIGN.md` or

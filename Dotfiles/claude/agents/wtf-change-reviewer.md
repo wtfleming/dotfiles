@@ -40,14 +40,11 @@ git diff                     # unstaged
 git diff --staged            # staged
 ```
 
-If the working tree is clean, review the branch instead:
-
-```
-git merge-base HEAD main || git merge-base HEAD master
-git diff <merge-base>...HEAD
-```
-
-If that is also empty, review `git show HEAD`.
+If the working tree is clean, review the branch against its merge base instead; if that
+is empty too, review `git show HEAD`. Follow
+`~/.claude/reference/scope-resolution.md` for both steps — resolving the default branch
+rather than assuming `main`, since the assumption fails silently on a `master` or `trunk`
+repo, and treating an empty diff as *fall through* rather than as no changes.
 
 State the scope you settled on at the top of your report. Read the full
 surrounding file for any hunk you comment on — a diff alone hides the caller,

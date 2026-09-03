@@ -68,6 +68,8 @@ dependencies fetched, `.env` symlinked, sources compiled. It knows Node, Rust, E
 Erlang and Elisp; `detect` prints what it found, and a repo can be several at once.
 Useful flags:
 
+- `--base-exact <ref>` build the baseline at that commit rather than at the merge base —
+  for the deploy-window probe in `compatibility.md`, not for a differential
 - `--head <ref>` name the "after" side explicitly instead of using your checkout
 - `--ecosystem <name>` force one when detection is wrong or the repo is mixed
 - `--filter <pkg>` scope the build to one package or crate

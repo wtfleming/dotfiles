@@ -56,23 +56,24 @@ merge base that `differential.md` argues for. Those are different questions: the
 base isolates *your* change, which is right when the claim is a difference; the deploy
 window asks what is running beside you, and on a branch that forked two weeks ago the
 merge base predates siblings that already shipped, so a failure there can belong to
-somebody else's change. `baseline-worktree.sh` cannot build this tree for you — it
-resolves `merge-base(after, base)`, so naming a release tag that is not an ancestor
-collapses straight back to the fork point. Check the deployed ref out into a worktree of
-your own (`git worktree add <dir> <tag>`) and bootstrap it by hand.
+somebody else's change. That is what `--base-exact` is for: it takes the ref as given
+rather than resolving a merge base, so the deployed tree gets the same bootstrap as any
+other — dependencies fetched, `.env` linked, sources compiled — instead of a hand-rolled
+`git worktree add` and a comment where the hard part goes.
 
 ```bash
+BW=~/.claude/skills/wtf-code-verify/scripts/baseline-worktree.sh
 DEPLOYED=$(git describe --tags --abbrev=0)   # or origin/main, whatever is actually live
-OLD=$(mktemp -d)/deployed
-git worktree add --detach "$OLD" "$DEPLOYED"
-# ... bootstrap $OLD as the project needs, then migrate the database to HEAD ...
+"$BW" create --base-exact "$DEPLOYED"
+OLD=$("$BW" path baseline)
+# ... migrate the database to HEAD ...
 (cd "$OLD" && <the old version's probe>)
-git worktree remove --force "$OLD"
 ```
 
-Note this is a worktree you make and tear down yourself, not
-`baseline-worktree.sh path baseline` — that one is always the merge base, which is the
-tree this section just ruled out.
+`--base-exact` and `--base` fill the same baseline slot, one tree at a time. If a
+differential is already up, `remove` it before building this one and rebuild it after —
+`create` refuses rather than reusing whichever tree happens to be there, so the two
+cannot be confused silently.
 
 **Expected result for both is pass**, and that is worth saying out loud before you run
 them. Every other section of this skill trains the reflex that a green baseline means a

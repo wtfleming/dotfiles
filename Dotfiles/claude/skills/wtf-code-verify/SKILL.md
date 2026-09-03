@@ -81,18 +81,12 @@ cannot see that choice has no way to tell whether the run covered the thing they
 If nothing in the repo plausibly implements the subject, say so and stop rather than
 verifying the nearest thing you found.
 
-**Nothing** — resolve it yourself, in this order: uncommitted work
-(`git status --porcelain`, `git diff`, `git diff --staged`), else the branch against its
-merge base, else `git show HEAD`.
-
-Resolve the default branch rather than hardcoding `main` (`git symbolic-ref --short
-refs/remotes/origin/HEAD`, else whichever of `main`/`master`/`trunk` exists): on a
-`master` repo `git merge-base HEAD main` fails, the substitution collapses, and the diff
-degrades silently to `HEAD...HEAD`. If none of them resolves — `origin/HEAD` unset and the
-default branch named something else — say so and ask for `--base` rather than guessing:
-falling through there would verify a single commit of a branch that has many. An empty diff
-at that step means *fall through*, not *no changes* — standing on the default branch
-produces the same empty, exit-0 result.
+**Nothing** — resolve it yourself: uncommitted work, else the branch against its merge
+base, else `git show HEAD`. Follow `~/.claude/reference/scope-resolution.md` for the
+procedure. Two things there decide whether this step is silently wrong: the default branch
+has to be resolved rather than assumed to be `main`, and an empty diff means *fall
+through*, not *no changes*. Where nothing resolves, ask for `--base` rather than
+guessing.
 
 State the scope you settled on before you run anything.
 
@@ -139,11 +133,9 @@ Three kinds, and the second is where the bugs actually are:
 - **regression** — what worked before still works. The change's blast radius.
 
 Cover a claim per meaningful area of the change rather than one probe for the whole
-thing: a five-file change with one probe leaves four areas unexercised, and the report
-reads as though it covered them. Pick the cheapest tier that can see each claim
-(§5) so breadth stays affordable. If the list runs past what the budget allows, say
-which claims you dropped and why — silently probing two of six is the failure this
-whole section is here to prevent.
+thing, and pick the cheapest tier that can see each claim (§5) so breadth stays
+affordable. `references/expectations.md` has why, and what to say when the list runs past
+what the budget allows.
 
 **Check what CI already runs before designing probes.** The probes worth building are the
 ones CI does *not* run; one that duplicates a job firing on every push has spent minutes
