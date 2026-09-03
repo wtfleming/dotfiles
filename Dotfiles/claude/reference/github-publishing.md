@@ -51,23 +51,39 @@ the next commit, or after the verdict changes. Without delimiters the second run
 a body that holds two verdicts oldest-first is how a stale "Verified" outlives the run that
 retracted it. The reader takes the first one they meet as current.
 
-Wrap the section in markers and filter the old copy out before appending the new one:
+**The marker name is `verify:start` / `verify:end`, spelled exactly that way.** One literal, named
+here, used verbatim by every tool that writes a verification section — `wtf-code-verify` and
+`/wtf-create-pr` both. A near-miss spelling is worse than a different section entirely: the
+filter below matches the full `<!-- … -->` comment, so a body delimited `foo-verify:start`
+survives the filter untouched and the new section lands underneath it. Two verdicts, oldest
+first, which is what this whole section exists to prevent.
+
+Wrap the section in those markers and filter the old copy out before appending the new one:
 
 ```bash
-gh pr view <n> --json body -q .body > "$OUT/body.raw"
-# Fail closed on a half-open marker: with a start and no end, the filter below drops
-# everything after it, which silently deletes whatever the author wrote underneath.
-[ "$(grep -c '<tool>:start' "$OUT/body.raw")" = "$(grep -c '<tool>:end' "$OUT/body.raw")" ] \
-  || { echo "unbalanced markers in the PR body — fix it by hand" >&2; exit 1; }
-awk '/<!-- <tool>:start -->/{skip=1} !skip; /<!-- <tool>:end -->/{skip=0}' \
-  "$OUT/body.raw" > "$OUT/body.md"
-{ echo '<!-- <tool>:start -->'; cat "$OUT/SECTION.md"; echo '<!-- <tool>:end -->'; } >> "$OUT/body.md"
+# Fail loudly on a failed read. The redirect truncates body.raw before gh writes a byte, so
+# an empty file is indistinguishable from a PR with an empty body — and the filter below
+# would then replace the whole description with just the generated section.
+gh pr view <n> --json body -q .body > "$OUT/body.raw" \
+  || { echo "could not read the PR body — nothing written" >&2; exit 1; }
+# Fail closed on a marker that is missing, doubled or out of order. awk decides it, not a
+# line count: counting matched pairs but not their order lets an `end` above a `start` pass,
+# and the filter then deletes every line below the start marker.
+awk '
+  /<!-- verify:start -->/ { if (skip) { bad = "nested start"; exit 1 } skip = 1; next }
+  /<!-- verify:end -->/   { if (!skip) { bad = "end before start"; exit 1 } skip = 0; next }
+  !skip
+  END { if (skip) { bad = "start with no end"; exit 1 } }
+  ' "$OUT/body.raw" > "$OUT/body.md" \
+  || { echo "unbalanced verify markers in the PR body — fix it by hand" >&2; exit 1; }
+{ echo '<!-- verify:start -->'; cat "$OUT/SECTION.md"; echo '<!-- verify:end -->'; } >> "$OUT/body.md"
 gh pr edit <n> --body-file "$OUT/body.md"
 ```
 
-The balance check is the part worth keeping. A body that lost its end marker to a hand-edit
-reads as ordinary Markdown, and the filter that trusts it deletes every line the author wrote
-below the section.
+Both guards are load-bearing, and both fail in the same direction if you drop them: the body
+that gets pushed is missing whatever the author wrote. The read check catches a rate limit, a
+502 or a mistyped PR number — each of which leaves an empty `body.raw` that a counting guard
+reads as balanced. The order check catches the hand-edit that left two half-sections behind.
 
 ## Put what cannot be regenerated in a comment
 

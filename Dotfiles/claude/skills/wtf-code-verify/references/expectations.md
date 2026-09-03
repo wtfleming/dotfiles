@@ -208,8 +208,8 @@ anything from it — a conventional-commit prefix, a changelog section, a releas
 from the wording, and say which one moved.
 
 **What a rewrite must not touch** — `Closes #123`, checklists, screenshots, template
-sections. The rule and its consequences live in `evidence.md`, beside the `gh pr edit`
-that does the rewriting.
+sections. The rule and its consequences live in `~/.claude/reference/github-publishing.md`,
+shared with the other tools that write to a PR.
 
 ## Verifying a subject with no diff
 

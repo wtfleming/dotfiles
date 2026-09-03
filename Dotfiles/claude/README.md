@@ -254,10 +254,17 @@ and a version that hunts for defects gets invoked at the wrong point in the cycl
 while the branch is still moving — while a version that gates on its own findings turns
 "open a PR" into an argument.
 
-The mechanical pre-flight is the cheap part: HEAD is not the default branch (resolved, not
-assumed), the branch is pushed and not behind, no PR already exists for it, uncommitted and
-untracked work is named rather than silently left out, and a `pull_request_template.md` is
-filled in rather than replaced. Those usually pass.
+The mechanical pre-flight is the cheap part: HEAD is a branch and not the default one
+(resolved, not assumed), the remote-tracking ref is refreshed before the branch is judged
+pushed and current, no PR already exists for it, uncommitted and untracked work is named
+rather than silently left out, and a `pull_request_template.md` is filled in rather than
+replaced. Those usually pass. Two of them are there because the failure is silent rather
+than loud: without the fetch, a branch pushed from another machine reads as in-sync while
+the remote head carries commits the body never describes; and on a detached HEAD the branch
+name is empty, which `gh pr list --head ""` treats as *no filter* rather than *no match* —
+it returns every PR in the repo, and the existing-PR check then reports a stranger's PR as
+this branch's. The push itself is named as the irreversible step, since it happens in
+pre-flight and the confirmation gate later covers only the title and body.
 
 The part that actually finds things is drift — prose that was true when it was written and
 stopped being true while the branch moved. Three axes: documentation describing the changed
@@ -307,6 +314,6 @@ It shows the title and body before anything is public, and stops after reporting
 
 `~/.claude/reference/github-publishing.md` holds the guards that apply to all three tools
 that write outward — scrubbing text, looking at every image, delimiting a generated section
-so a rerun replaces it instead of stacking a second verdict above the first, and keeping
+so a rerun replaces it instead of stacking a second verdict below the first, and keeping
 what cannot be regenerated in a comment rather than in a body that will be. Extracted
 rather than written a third time, so a fix lands once.

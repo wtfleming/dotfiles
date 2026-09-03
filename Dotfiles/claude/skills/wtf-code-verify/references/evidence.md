@@ -60,6 +60,7 @@ fifteen seconds whether the claim was actually tested, and by what.
 **Verdict.** Verified with gaps — 3 of 4 expectations met, 1 defect found and fixed in `a91c` (see below).
 
 **Scope.** `feat/archived-posts` vs merge-base `2427dfb` — 4 files
+**Verified at.** `5544ef1` — the commit the probes actually ran against
 **Environment.** Tier 2 — service from the worktree, compose dependencies (`db`, `redis`)
 
 | # | Expectation | Discriminator | Result |
@@ -92,6 +93,15 @@ result from a result that means something: it says how you know each ✅ would h
 The **Not covered** line is the most useful sentence in the section. Every probe is
 narrow; naming the gap tells a reviewer where to look, and its absence invites them to
 assume there isn't one.
+
+**Verified at** is `git rev-parse HEAD`, taken when the probes run — not the merge base,
+which **Scope** already carries and which is a different commit for a different purpose.
+Anything that reads this section later has to answer "does this still describe the code?",
+and only a head SHA answers it: `/wtf-create-pr` compares this field to HEAD before
+embedding the section in a PR body, and without it a stale verdict cannot be told from a
+current one. Where the tree was dirty when the probes ran, say so — `` `5544ef1` + uncommitted
+edits`` — because the run then corresponds to no commit anyone else can check out, which a
+bare SHA would hide.
 
 For a single-claim change a one-row table is fine, but keep all four trailing lines. They
 are short, and each one is a question a reviewer would otherwise have to ask.
@@ -146,17 +156,14 @@ expected failure" — which is why the scrub happens at this step and not the ea
 
 ```bash
 gh pr comment <n> --body-file VERIFICATION.md      # a comment, reversible
-
-# Into the body instead, with the marker filter from the reference file. The fetch alone
-# changes nothing on GitHub, so all three steps are needed.
-gh pr view <n> --json body -q .body > "$OUT/body.raw"
-[ "$(grep -c 'verify:start' "$OUT/body.raw")" = "$(grep -c 'verify:end' "$OUT/body.raw")" ] \
-  || { echo "unbalanced verify markers in the PR body — fix it by hand" >&2; exit 1; }
-awk '/<!-- verify:start -->/{skip=1} !skip; /<!-- verify:end -->/{skip=0}' \
-  "$OUT/body.raw" > "$OUT/body.md"
-{ echo '<!-- verify:start -->'; cat "$OUT/VERIFICATION.md"; echo '<!-- verify:end -->'; } >> "$OUT/body.md"
-gh pr edit <n> --body-file "$OUT/body.md"
 ```
+
+Into the body instead: use the marker recipe in `~/.claude/reference/github-publishing.md`
+verbatim, with `VERIFICATION.md` as its `SECTION.md`. It is not repeated here on purpose —
+the copy that used to sit at this spot drifted from the one in the reference, and the failure
+mode of a stale copy is a filter that deletes whatever the author wrote below the section.
+The markers are `verify:start` / `verify:end`, which the reference names and every tool that
+writes this section shares.
 
 Prefer a comment unless the user asks for the body: a verdict that a later run may retract
 is better timestamped and superseded than silently overwritten.
