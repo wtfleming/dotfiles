@@ -121,10 +121,15 @@ saying how many is the whole of it. Match that line to the number —
 `_1 Suggestion judged not worth doing and dropped._` — and omit it altogether
 when nothing was dropped, since a line reporting zero dropped findings reports
 nothing. Each Suggestion that *is* printed lands in exactly one list, carrying
-its `file:line`, the finding as written, and any qualifier it arrived with —
-**(unverified)** on a **Worth doing** one under `--deep` — plus the one-line
-reason. That is the only place it appears, so a finding shortened here is
-shortened everywhere. Findings under **Pre-existing** are the exception and are
+its `file:line`, the finding as written, any qualifier it arrived with, and the
+one-line reason. The qualifier tracks what checked the finding, not which list
+it landed in: mark it **(unverified)** unless a refuter read it and let it
+stand, which happens only to the **Definitely worth doing** list under
+`--deep`. Everything else carries the mark — both lists without `--deep`, and
+**Worth doing** with it. So a bare Suggestion means one thing everywhere,
+including on a PR comment, where the triage's closing line does not travel with
+it. That is the only place it appears, so a finding shortened here is shortened
+everywhere. Findings under **Pre-existing** are the exception and are
 not sorted into these lists, whatever tier they carry — they are tickets, not
 work for this change, and they stay in that section of the report, once. The
 promotion rule below still applies to them: tier follows content there as
@@ -146,10 +151,13 @@ the **Worth doing** list goes out unchecked. The sorting is what makes that
 affordable: it is the difference between verifying the tier and verifying the
 few findings the triage is actively steering the reader towards.
 
-The third list is the only place a Suggestion may go unprinted: nothing above
-carries one except the two cases named here — a Pre-existing one, and one
-promoted to Warning — so every other one the reviewer wrote is either in a list
-or in the dropped count.
+The third list is the only place the triage itself may leave a Suggestion
+unprinted: nothing above carries one except the two cases named here — a
+Pre-existing one, and one promoted to Warning. Under `--deep` there is one
+further route out, and it is not the triage's: a refuter kills the finding, and
+it leaves with the other refuted findings, counted in that line rather than
+this one. Every other Suggestion the reviewer wrote is either in a list or in
+the dropped count.
 
 One shape does not belong in either list. A Suggestion whose content describes
 something that *breaks* — a specific input and a wrong result, a leak, an
