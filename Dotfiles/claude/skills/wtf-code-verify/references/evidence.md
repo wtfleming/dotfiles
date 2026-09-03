@@ -186,3 +186,24 @@ Lead with the verdict in one line, then the evidence, then the path to the files
 When it did not verify, the verdict line says so first and names which case it was: green
 on the base too, red for environmental reasons, or non-deterministic. A "not verified"
 that arrives after three paragraphs of process gets read as a success.
+
+## Nothing in the report is asserted from memory
+
+The evidence table is safe by construction — each row has a probe and a discriminator
+behind it. The four trailing lines are not, because no probe produces them, and they are
+the ones a reader most relies on. Each has a command that settles it:
+
+| Line | What establishes it |
+| ---- | ------------------- |
+| **Covered / Not covered** | the probes actually run, listed from the scratch directory — not the expectation list, which is what you intended to run |
+| **CI** | reading `.github/workflows` or equivalent, this run, not from memory of the repo |
+| **Residue** | `git status --porcelain`, `docker compose ps`, `git worktree list`, and the scratch path — checked after teardown, not predicted before it |
+| **PR description** | the body re-read at the end, since your own commits may have outdated it since you looked |
+
+Counts and figures belong to the same rule. A character count taken from raw text rather
+than from a parse, a row count guessed from a fixture, a timing quoted from one run and
+reported as typical — each reads exactly like a measured value and is not one. If a figure
+is in the report, the thing that produced it should be re-runnable.
+
+Where a check was not possible, the honest form is one clause: *assumed, not checked*.
+That costs a reader nothing and tells them precisely which sentence to distrust.

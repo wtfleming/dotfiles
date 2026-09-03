@@ -309,6 +309,21 @@ and PR forms, and why each of these earns its place:
 - **PR description** — whether the title and body still describe the change, or what
   drifted. Only when the scope is a PR.
 
+**Every line in the report is either something you observed or is marked as inference.**
+The verdict has a probe behind it by construction, and the raw capture is on disk — but
+those four lines have no probe, and they are where an unbacked claim gets in. Each of them
+is a fact about the world with a command that establishes it: read `.github/workflows`
+before writing what CI covers, run `git status` and `docker ps` and
+`baseline-worktree.sh path` before writing *Residue: none*, re-read the PR body before
+saying it still describes the change, and list what the probes touched rather than what
+you meant them to touch. Where you could not check, write what you assumed and say it is
+an assumption.
+
+That is the same standard the rest of this skill applies to the code under test, turned on
+the report about it. A verification section is read as the output of a process that
+checked things; a sentence in it that was reasoned rather than run borrows that authority
+without earning it, and is indistinguishable from the ones that did.
+
 Write the PR verification section to the scratch directory with the template in
 `evidence.md`, tell the user the path, and offer to post it — appended to the PR body or
 as a comment via `gh`. Ask before posting: it is public and outward-facing, and a
