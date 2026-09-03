@@ -48,7 +48,8 @@ Then, below the report, add the **Suggestion triage** described under
 own, and it goes after the report rather than into it. It is also where the
 Suggestions themselves are printed: leave the **Suggestion** section out of the
 report and let the triage carry them, so each one appears once, in the list
-that says what to do about it. That is the only rearrangement allowed — the
+that says what to do about it — or, if it is judged not worth doing, in the
+count of the ones dropped. That is the only rearrangement allowed — the
 findings still go out as written, in the tier they arrived in.
 
 **Without `--deep`, stop here.** The findings are the user's to triage, and the
@@ -103,18 +104,25 @@ once, already classified:
 **Worth doing**
 - `src/api.ts:40` — <the finding as the reviewer wrote it> — <one line: what the suggestion buys>
 
-**Not worth doing**
-- `src/util.ts:30` — <the finding as the reviewer wrote it> — <one line: why — no reader is confused, style matches the file, churn outweighs the gain>
+_3 Suggestions judged not worth doing and dropped._
 ```
 
-Every Suggestion lands in exactly one list, carrying its `file:line`, the
-finding as written, and any qualifier it arrived with — **(unverified)** under
-`--deep` — plus the one-line reason. This is the only place it appears, so a
-finding shortened here is shortened everywhere. Findings under **Pre-existing**
-are the exception and are not sorted into these lists, whatever tier they
-carry — they are tickets, not work for this change, and they stay in that
-section of the report, once. The promotion rule below still applies to them:
-tier follows content there as anywhere, and the section does not change that.
+Every Suggestion is judged against all three of those, and the third is not
+printed: a nit nobody should act on costs a reader the same attention as one
+they should, and removing that cost is what the sorting is for. It leaves as a
+count, not silently — a dropped finding is reported, not hidden — and one line
+saying how many is the whole of it. Match that line to the number —
+`_1 Suggestion judged not worth doing and dropped._` — and omit it altogether
+when nothing was dropped, since a line reporting zero dropped findings reports
+nothing. Each Suggestion that *is* printed lands in exactly one list, carrying
+its `file:line`, the finding as written, and any qualifier it arrived with —
+**(unverified)** under `--deep` — plus the one-line reason. That is the only
+place it appears, so a finding shortened here is shortened everywhere. Findings
+under **Pre-existing** are the exception and are not sorted into these lists,
+whatever tier they carry — they are tickets, not work for this change, and they
+stay in that section of the report, once. The promotion rule below still
+applies to them: tier follows content there as anywhere, and the section does
+not change that.
 **Definitely worth doing** is for the few a reader should not skip: the change
 is small and the payoff is clear and durable — a misleading name on something
 public, dead code that will be mistaken for live, a comment that states
@@ -122,10 +130,10 @@ something false. **Worth doing** is the rest of the genuine
 improvements — right to take, fine to defer. Keep the top list short; if most
 Suggestions land there, it is not sorting anything. This is a
 judgement, not a verification: nothing is dispatched to check a Suggestion, and
-the triage says so in a closing line. It is also not a licence to drop one:
-nothing above carries a Suggestion except the two cases named here — a
-Pre-existing one, and one promoted to Warning — so every other one the reviewer
-wrote has to be here.
+the triage says so in a closing line. The third list is the only place a
+Suggestion may go unprinted: nothing above carries one except the two cases
+named here — a Pre-existing one, and one promoted to Warning — so every other
+one the reviewer wrote is either in a list or in the dropped count.
 
 One shape does not belong in either list. A Suggestion whose content describes
 something that *breaks* — a specific input and a wrong result, a leak, an
@@ -426,6 +434,11 @@ Make only the edits the named findings describe — a review is not a mandate to
 refactor — and leave committing to the user. "Fix everything" means the three
 tiers; a **Pre-existing** finding is fixed only if the user names it, because
 it belongs to a ticket, not to this branch.
+
+"Fix the suggestions" means both printed lists — **Definitely worth doing** and
+**Worth doing** — not just the top one. The ones counted as not worth doing
+stay unfixed: the triage judged the churn to outweigh the gain, and asking for
+the suggestions is not asking to reverse that.
 
 Then have the fixes checked, because of who wrote them. Everything above is
 built on the author being the worst-placed judge of their own work, and the
