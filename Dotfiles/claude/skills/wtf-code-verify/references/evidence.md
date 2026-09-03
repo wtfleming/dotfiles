@@ -135,28 +135,21 @@ median with the spread omitted.
 Offer; do not post unasked. The section is public, it carries a verdict in the user's
 name, and one landing on the wrong PR is worse than none.
 
-**Scrub the outward copy.** The capture is deliberately unfiltered, and the worktree it
-came from has the machine's real `.env` symlinked in — so the raw bytes can carry an
-`Authorization: Bearer …`, a `postgres://user:password@host`, an API key echoed by a
-verbose client, or a DSN printed by a failed connect. A GitHub comment is indexed and
-mirrored to notification email, so editing it later does not take it back. The reviewer
-agent next door already works this way for the read-only side: cite a key by name, never
-by value. Quote only the assertion-bearing lines in the posted copy, replace any
-credential with `<redacted: SESSION_TOKEN>`, and leave the unabridged capture in the
-scratch directory where it belongs. Filtering at *capture* time is still wrong — that is
-what launders a compile failure into "the expected failure" — which is exactly why the
-scrub goes here instead.
+**The guards on anything going to GitHub live in
+`~/.claude/reference/github-publishing.md`** — scrubbing the text, delimiting a generated
+section so a rerun replaces it rather than stacking a second verdict below the first, and
+what belongs in a comment instead of a body. Read it before posting. Two things it says
+land hardest here: the capture this section quotes came from a worktree with the machine's
+real `.env` symlinked in, so assume the raw bytes carry a live credential; and filtering
+at *capture* time is still wrong — that is what launders a compile failure into "the
+expected failure" — which is why the scrub happens at this step and not the earlier one.
 
 ```bash
 gh pr comment <n> --body-file VERIFICATION.md      # a comment, reversible
 
-# Into the body instead. The fetch alone changes nothing on GitHub, so all three steps
-# are needed — and the section is delimited so a rerun *replaces* it rather than stacking
-# a second one below the first. Two verdicts in one body, oldest first, is how a stale
-# "Verified" outlives the run that retracted it.
+# Into the body instead, with the marker filter from the reference file. The fetch alone
+# changes nothing on GitHub, so all three steps are needed.
 gh pr view <n> --json body -q .body > "$OUT/body.raw"
-# Fail closed on a half-open marker: with a start and no end the filter below drops
-# everything after it, which silently deletes whatever the author wrote underneath.
 [ "$(grep -c 'verify:start' "$OUT/body.raw")" = "$(grep -c 'verify:end' "$OUT/body.raw")" ] \
   || { echo "unbalanced verify markers in the PR body — fix it by hand" >&2; exit 1; }
 awk '/<!-- verify:start -->/{skip=1} !skip; /<!-- verify:end -->/{skip=0}' \
@@ -165,15 +158,13 @@ awk '/<!-- verify:start -->/{skip=1} !skip; /<!-- verify:end -->/{skip=0}' \
 gh pr edit <n> --body-file "$OUT/body.md"
 ```
 
-Prefer a comment unless the user asks for the body. A comment is timestamped, attributable
-and easy to supersede when a later run changes the verdict; an edited body silently
-replaces whatever was there, including someone else's text.
+Prefer a comment unless the user asks for the body: a verdict that a later run may retract
+is better timestamped and superseded than silently overwritten.
 
 Where the description drifted, propose the new title and body, show both, and ask before
-`gh pr edit`. Carry across everything that is not a description of the change —
-`Closes #123`, checklists, screenshots, template sections — because a regenerated body
-that loses the issue link silently stops it closing on merge. On someone else's PR,
-report the drift and stop; the wording is theirs to fix.
+`gh pr edit` — carrying the survivors across per the reference. On someone else's PR,
+report the drift and stop; the wording is theirs to fix. Composing a description from
+scratch is `/wtf-create-pr`'s job, not this one's.
 
 Re-read the verdict line before posting. Verification sections are read as endorsements,
 and a "verified with gaps" whose gaps are buried below a fold reads as an unqualified

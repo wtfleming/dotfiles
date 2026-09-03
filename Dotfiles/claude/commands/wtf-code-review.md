@@ -520,6 +520,12 @@ line forbids.
 Do not re-rank on the way out. The tier that gets posted is the tier the review
 gave it, including any you would have scored differently.
 
+The guards that apply to anything published to GitHub live in
+`~/.claude/reference/github-publishing.md`, shared with `wtf-code-verify` and
+`/wtf-create-pr` rather than restated here. The one that bites a review most
+often: a finding about a hardcoded credential names the key and never quotes
+its value, because the comment reporting the leak is itself public and indexed.
+
 ### How to post
 
 Default to one inline review comment per finding, anchored at its `file:line`

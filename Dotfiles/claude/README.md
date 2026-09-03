@@ -244,3 +244,48 @@ Deliberately expensive and deliberately rare: at the upper tiers it boots servic
 bootstraps a second worktree, so it announces the tiers it expects to need and asks
 before spending tier 2 or 3. Meant to run once on a finished branch just before the PR
 opens — not per commit, and not as a substitute for running the tests.
+
+## Opening the PR
+
+`/wtf-create-pr` composes a pull request and opens it. The line it holds is the same one
+the two tools above hold against each other: it does not review the code, does not prove
+it runs, and does not merge. A PR-opening command is tempting to load up with all three,
+and a version that hunts for defects gets invoked at the wrong point in the cycle — early,
+while the branch is still moving — while a version that gates on its own findings turns
+"open a PR" into an argument.
+
+The mechanical pre-flight is the cheap part: HEAD is not the default branch (resolved, not
+assumed), the branch is pushed and not behind, no PR already exists for it, uncommitted and
+untracked work is named rather than silently left out, and a `pull_request_template.md` is
+filled in rather than replaced. Those usually pass.
+
+The part that actually finds things is drift — prose that was true when it was written and
+stopped being true while the branch moved. Three axes: documentation describing the changed
+area, a review or verification that ran at a commit the branch has since left behind, and
+a `VERIFICATION.md` whose recorded SHA no longer matches HEAD. Each is judgement rather
+than a checklist, and each takes the same two-direction test the body gets — every claim
+true, *and* every meaningful change accounted for. The second direction is the one that
+catches things, because nothing in stale prose is false; it is wrong by omission, and an
+omission does not announce itself. On a short branch written in an afternoon nothing has
+had time to go stale, and the honest output is one line saying so: a check that
+manufactures findings to look useful spends the next real finding's credibility.
+
+None of it is a gate. "The bot has not reviewed the tip" is information for the author, not
+grounds to refuse — it reports, then opens.
+
+The title gets judged separately from its conventional-commit prefix, because on a squash
+merge it becomes the permanent commit subject on the default branch and a `fix:` that grew
+into a `feat:` during the branch is a wrong version bump rather than a wording nit. Visual
+evidence passes two gates before it is attached: is there a *before* to compare against,
+and is the repo private — GitHub serves public-repo attachments from a host readable by
+anyone with the link, and a screenshot carries names, avatars, internal hostnames and a
+token in the URL bar, none of which can be scrubbed by rule the way text can. Text stays
+text; a screenshot of a JSON response is unsearchable, uncopyable and undiffable.
+
+It shows the title and body before anything is public, and stops after reporting the URL.
+
+`~/.claude/reference/github-publishing.md` holds the guards that apply to all three tools
+that write outward — scrubbing text, looking at every image, delimiting a generated section
+so a rerun replaces it instead of stacking a second verdict above the first, and keeping
+what cannot be regenerated in a comment rather than in a body that will be. Extracted
+rather than written a third time, so a fix lands once.
