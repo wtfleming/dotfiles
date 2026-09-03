@@ -129,13 +129,6 @@ if [ ! -d ~/.claude/commands ]; then
     run mkdir ~/.claude/commands
 fi
 
-# Tombstone: wtf-verify-fix was absorbed into wtf-code-verify. The sweeps below only
-# ever add, so a machine that synced before the rename would keep the old skill
-# registered beside the new one — and their trigger phrases overlap verbatim, so the
-# model would be choosing between a live skill and its superseded predecessor. Remove
-# this line once every machine has run it.
-run rm -rf ~/.claude/skills/wtf-verify-fix
-
 run cp ~/src/dotfiles/Dotfiles/claude/settings.json ~/.claude/settings.json
 run cp -r ~/src/dotfiles/Dotfiles/claude/hooks/. ~/.claude/hooks/
 run cp -r ~/src/dotfiles/Dotfiles/claude/skills/. ~/.claude/skills/
@@ -144,6 +137,13 @@ run cp ~/src/dotfiles/Dotfiles/claude/CLAUDE.global.md ~/.claude/CLAUDE.md
 run cp -r ~/src/dotfiles/Dotfiles/claude/reference/. ~/.claude/reference/
 run cp -r ~/src/dotfiles/Dotfiles/claude/agents/. ~/.claude/agents/
 run cp -r ~/src/dotfiles/Dotfiles/claude/commands/. ~/.claude/commands/
+
+# Tombstone: wtf-verify-fix was absorbed into wtf-code-verify. The sweeps only ever add,
+# so a machine that synced before the rename would keep the old skill registered beside
+# the new one, with trigger phrases that overlap verbatim. This runs after the sweeps so
+# a failed copy leaves the old skill in place rather than neither. Remove the line once
+# every machine has run it.
+run rm -rf ~/.claude/skills/wtf-verify-fix
 
 
 if [ "$quiet" -eq 0 ]; then

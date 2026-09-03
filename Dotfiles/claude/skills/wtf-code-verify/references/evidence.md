@@ -72,7 +72,8 @@ fifteen seconds whether the claim was actually tested, and by what.
 <details><summary>Raw output</summary>
 
 ```
-<verbatim, per probe, both sides>
+<redacted, assertion-bearing excerpts only, per probe, both sides —
+the unabridged capture stays in <scratch>/code-verify/raw/>
 ```
 
 </details>

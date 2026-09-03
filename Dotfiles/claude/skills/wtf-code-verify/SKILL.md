@@ -88,8 +88,11 @@ merge base, else `git show HEAD`.
 Resolve the default branch rather than hardcoding `main` (`git symbolic-ref --short
 refs/remotes/origin/HEAD`, else whichever of `main`/`master`/`trunk` exists): on a
 `master` repo `git merge-base HEAD main` fails, the substitution collapses, and the diff
-degrades silently to `HEAD...HEAD`. An empty diff at that step means *fall through*, not
-*no changes* — standing on the default branch produces the same empty, exit-0 result.
+degrades silently to `HEAD...HEAD`. If none of them resolves — `origin/HEAD` unset and the
+default branch named something else — say so and ask for `--base` rather than guessing:
+falling through there would verify a single commit of a branch that has many. An empty diff
+at that step means *fall through*, not *no changes* — standing on the default branch
+produces the same empty, exit-0 result.
 
 State the scope you settled on before you run anything.
 
@@ -196,10 +199,14 @@ cheapest first — pick one per claim:
    result as the valid one, the code is not reading it. Free: you already wrote both.
 2. **Break it deliberately.** Corrupt the input, drop the header, flip the flag off,
    point at an id that does not exist. Confirm the probe goes red, and red for the reason
-   you expect. Seconds, no worktree — but **restore it the moment you have the capture**
-   (`git checkout -- <path>`), or make the break inside the baseline worktree instead. A
-   break left behind survives an interrupted run as an uncommitted edit nobody attributes,
-   and the next `git commit -am` ships it.
+   you expect. Seconds, no worktree — but it has to come back out, and how depends on the
+   tree. **`git checkout -- <path>` is safe only when that file had no uncommitted edits of
+   its own**; on a file the user was already working in it discards their work along with
+   the break, and §0 only requires a commit for claims that use a differential. Prefer
+   breaking inside a worktree you can throw away; failing that, capture the exact patch
+   first (`git diff -- <path> > break.patch`, then `git apply -R break.patch`). A break left
+   behind survives an interrupted run as an uncommitted edit nobody attributes, and the next
+   `git commit -am` ships it.
 3. **Run it against the base.** The full differential, and the only form that shows *the
    change* caused the difference. Costs a worktree and a bootstrap —
    `references/differential.md`.

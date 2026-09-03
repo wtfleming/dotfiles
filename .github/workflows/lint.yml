@@ -43,12 +43,20 @@ jobs:
       # jq only sees settings.json.
       - name: validate frontmatter
         run: |
+          python3 -c 'import yaml' \
+            || { echo "PyYAML missing on the runner — install it before this step" >&2; exit 1; }
           rc=0
           for f in Dotfiles/claude/skills/*/SKILL.md Dotfiles/claude/agents/*.md Dotfiles/claude/commands/*.md; do
             # Command substitution, not a pipe: a pipe would mask awk's exit status and a
             # file with no header at all would parse as empty YAML and pass.
-            header=$(awk 'NR==1 && $0 != "---" { exit 1 } NR>1 && /^---$/ { exit } NR>1' "$f") \
-              || { echo "no frontmatter block: $f" >&2; rc=1; continue; }
+            # END guards the closing delimiter: without it an unterminated block runs to
+            # EOF, awk exits 0, and a file with no closing --- passes as valid.
+            header=$(awk '
+              NR == 1 { if ($0 != "---") exit 1; next }
+              /^---$/ { closed = 1; exit }
+              { print }
+              END { if (!closed) exit 1 }
+            ' "$f") || { echo "no frontmatter block, or it is unterminated: $f" >&2; rc=1; continue; }
             printf '%s\n' "$header" \
               | python3 -c 'import sys, yaml; yaml.safe_load(sys.stdin)' \
               || { echo "invalid frontmatter: $f" >&2; rc=1; }

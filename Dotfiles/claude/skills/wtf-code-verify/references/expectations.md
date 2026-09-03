@@ -186,7 +186,11 @@ gh pr diff <n>                                     # the change as it stands
 ```
 
 Find the boundary from `createdAt` against each commit's `committedDate`, both of which
-that first call already returns, and diff from the last commit at or before it. Do not
+that first call already returns, and diff from the last commit at or before it. Treat that
+as best-effort rather than exact: a commit authored before the PR opened can be pushed
+after it, so this under-reports where the old form over-reported. It tells you where to
+look first; where the distinction decides the verdict, read the whole current diff and say
+that is what you did. Do not
 reach for `<first-commit-of-pr>..HEAD`: `A..HEAD` excludes only `A` and its ancestors, so
 a PR opened with three commits reports two of them as post-open work, and after a rebase
 the old first commit is not an ancestor at all and you get the whole branch. It

@@ -170,8 +170,12 @@ embeds its build directory differs on every refactor regardless of the code: sou
 `sources` and `sourceRoot`, Rust panic paths compiled into a binary, `_build` paths in
 Elixir `debug_info`. Build ids, embedded timestamps and unordered map output do the same.
 
-Normalise before diffing — `sed` the tree paths to a placeholder, strip timestamps, sort
-what has no defined order — and say in the report what you normalised. Do not reach for
+Normalise before diffing, but only what is provably not part of the output's meaning:
+replace the tree paths with a placeholder, and strip build ids or timestamps **from
+generated metadata**. A timestamp or an ordering a caller can observe is part of the
+contract, and normalising those turns a real behaviour change into a clean diff — this
+file's own failure, pointed the other way. Say in the report what you normalised and why
+each one was safe. Do not reach for
 the "re-run the baseline to see whether it is stable" check in `environments.md` to
 triage this: that one is for live inputs, and path noise is perfectly stable across
 re-runs, so it confirms the difference and sends you off hunting a code change that is not
