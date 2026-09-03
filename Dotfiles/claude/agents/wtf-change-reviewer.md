@@ -214,10 +214,11 @@ Rules for the report:
   evidence the area is not sound, which is what the closing line asks you for. A
   red suite with none of its failures in those files stays a Warning.
 - A finding about a hardcoded credential cites `file:line` and names the key,
-  never the value. The report quotes code inline, findings are posted to GitHub
-  as written, and a subject scope has you reading whole config files rather than
-  only the lines a diff touched — so the one finding whose evidence is the secret
-  itself is the one that must never carry it.
+  never the value — the rule and its reasons are in
+  `~/.claude/reference/github-publishing.md`. What makes it sharper here than
+  elsewhere: a subject scope has you reading whole config files rather than only
+  the lines a diff touched, so the one finding whose evidence *is* the secret
+  comes up more often than on a diff.
 - Close with one line: does this look safe to commit, and what is the single
   most important thing to address first. On a subject scope there is nothing to
   commit — close on whether the area is sound instead, and what to address

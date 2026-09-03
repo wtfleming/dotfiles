@@ -60,6 +60,7 @@ fifteen seconds whether the claim was actually tested, and by what.
 **Verdict.** Verified with gaps — 3 of 4 expectations met, 1 defect found and fixed in `a91c` (see below).
 
 **Scope.** `feat/archived-posts` vs merge-base `2427dfb` — 4 files
+**Verified at.** `5544ef1` — the commit the probes actually ran against
 **Environment.** Tier 2 — service from the worktree, compose dependencies (`db`, `redis`)
 
 | # | Expectation | Discriminator | Result |
@@ -92,6 +93,19 @@ result from a result that means something: it says how you know each ✅ would h
 The **Not covered** line is the most useful sentence in the section. Every probe is
 narrow; naming the gap tells a reviewer where to look, and its absence invites them to
 assume there isn't one.
+
+**Verified at** is `git rev-parse --short HEAD`, taken when the probes run — not the merge
+base, which **Scope** already carries and which is a different commit for a different
+purpose. The short form is deliberate and so is stating it: `/wtf-create-pr` compares this
+field against HEAD, and comparing an abbreviated SHA to a full one is unequal on every
+commit, which would age every fresh artifact as stale. Both sides abbreviate
+(`git rev-parse --short HEAD`), and a reader who wants the full hash has the branch.
+Anything that reads this section later has to answer "does this still describe the code?",
+and only a head SHA answers it: `/wtf-create-pr` compares this field to HEAD before
+embedding the section in a PR body, and without it a stale verdict cannot be told from a
+current one. Where the tree was dirty when the probes ran, say so — `` `5544ef1` + uncommitted
+edits`` — because the run then corresponds to no commit anyone else can check out, which a
+bare SHA would hide.
 
 For a single-claim change a one-row table is fine, but keep all four trailing lines. They
 are short, and each one is a question a reviewer would otherwise have to ask.
@@ -135,45 +149,33 @@ median with the spread omitted.
 Offer; do not post unasked. The section is public, it carries a verdict in the user's
 name, and one landing on the wrong PR is worse than none.
 
-**Scrub the outward copy.** The capture is deliberately unfiltered, and the worktree it
-came from has the machine's real `.env` symlinked in — so the raw bytes can carry an
-`Authorization: Bearer …`, a `postgres://user:password@host`, an API key echoed by a
-verbose client, or a DSN printed by a failed connect. A GitHub comment is indexed and
-mirrored to notification email, so editing it later does not take it back. The reviewer
-agent next door already works this way for the read-only side: cite a key by name, never
-by value. Quote only the assertion-bearing lines in the posted copy, replace any
-credential with `<redacted: SESSION_TOKEN>`, and leave the unabridged capture in the
-scratch directory where it belongs. Filtering at *capture* time is still wrong — that is
-what launders a compile failure into "the expected failure" — which is exactly why the
-scrub goes here instead.
+**The guards on anything going to GitHub live in
+`~/.claude/reference/github-publishing.md`** — scrubbing the text, delimiting a generated
+section so a rerun replaces it rather than stacking a second verdict below the first, and
+what belongs in a comment instead of a body. Read it before posting. Two things it says
+land hardest here: the capture this section quotes came from a worktree with the machine's
+real `.env` symlinked in, so assume the raw bytes carry a live credential; and filtering
+at *capture* time is still wrong — that is what launders a compile failure into "the
+expected failure" — which is why the scrub happens at this step and not the earlier one.
 
 ```bash
 gh pr comment <n> --body-file VERIFICATION.md      # a comment, reversible
-
-# Into the body instead. The fetch alone changes nothing on GitHub, so all three steps
-# are needed — and the section is delimited so a rerun *replaces* it rather than stacking
-# a second one below the first. Two verdicts in one body, oldest first, is how a stale
-# "Verified" outlives the run that retracted it.
-gh pr view <n> --json body -q .body > "$OUT/body.raw"
-# Fail closed on a half-open marker: with a start and no end the filter below drops
-# everything after it, which silently deletes whatever the author wrote underneath.
-[ "$(grep -c 'verify:start' "$OUT/body.raw")" = "$(grep -c 'verify:end' "$OUT/body.raw")" ] \
-  || { echo "unbalanced verify markers in the PR body — fix it by hand" >&2; exit 1; }
-awk '/<!-- verify:start -->/{skip=1} !skip; /<!-- verify:end -->/{skip=0}' \
-  "$OUT/body.raw" > "$OUT/body.md"
-{ echo '<!-- verify:start -->'; cat "$OUT/VERIFICATION.md"; echo '<!-- verify:end -->'; } >> "$OUT/body.md"
-gh pr edit <n> --body-file "$OUT/body.md"
 ```
 
-Prefer a comment unless the user asks for the body. A comment is timestamped, attributable
-and easy to supersede when a later run changes the verdict; an edited body silently
-replaces whatever was there, including someone else's text.
+Into the body instead: use the marker recipe in `~/.claude/reference/github-publishing.md`
+verbatim, with `VERIFICATION.md` as its `SECTION.md`. It is not repeated here on purpose —
+the copy that used to sit at this spot drifted from the one in the reference, and the failure
+mode of a stale copy is a filter that deletes whatever the author wrote below the section.
+The markers are `verify:start` / `verify:end`, which the reference names and every tool that
+writes this section shares.
+
+Prefer a comment unless the user asks for the body: a verdict that a later run may retract
+is better timestamped and superseded than silently overwritten.
 
 Where the description drifted, propose the new title and body, show both, and ask before
-`gh pr edit`. Carry across everything that is not a description of the change —
-`Closes #123`, checklists, screenshots, template sections — because a regenerated body
-that loses the issue link silently stops it closing on merge. On someone else's PR,
-report the drift and stop; the wording is theirs to fix.
+`gh pr edit` — carrying the survivors across per the reference. On someone else's PR,
+report the drift and stop; the wording is theirs to fix. Composing a description from
+scratch is `/wtf-create-pr`'s job, not this one's.
 
 Re-read the verdict line before posting. Verification sections are read as endorsements,
 and a "verified with gaps" whose gaps are buried below a fold reads as an unqualified

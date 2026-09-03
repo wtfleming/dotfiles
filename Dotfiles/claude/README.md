@@ -244,3 +244,76 @@ Deliberately expensive and deliberately rare: at the upper tiers it boots servic
 bootstraps a second worktree, so it announces the tiers it expects to need and asks
 before spending tier 2 or 3. Meant to run once on a finished branch just before the PR
 opens — not per commit, and not as a substitute for running the tests.
+
+## Opening the PR
+
+`/wtf-create-pr` composes a pull request and opens it. The line it holds is the same one
+the two tools above hold against each other: it does not review the code, does not prove
+it runs, and does not merge. A PR-opening command is tempting to load up with all three,
+and a version that hunts for defects gets invoked at the wrong point in the cycle — early,
+while the branch is still moving — while a version that gates on its own findings turns
+"open a PR" into an argument.
+
+The mechanical pre-flight is the cheap part: HEAD is a branch and not the default one
+(resolved, not assumed), the remote-tracking ref is refreshed before the branch is judged
+pushed and current, no PR already exists for it, uncommitted and untracked work is named
+rather than silently left out, and a `pull_request_template.md` is filled in rather than
+replaced. Those usually pass. Two of them are there because the failure is silent rather
+than loud: without the fetch, a branch pushed from another machine reads as in-sync while
+the remote head carries commits the body never describes; and on a detached HEAD the branch
+name is empty, which `gh pr list --head ""` treats as *no filter* rather than *no match* —
+it returns every PR in the repo, and the existing-PR check then reports a stranger's PR as
+this branch's. The push itself is named as the irreversible step, since it happens in
+pre-flight and the confirmation gate later covers only the title and body.
+
+The part that actually finds things is drift — prose that was true when it was written and
+stopped being true while the branch moved. Three axes: documentation describing the changed
+area, a review or verification that ran at a commit the branch has since left behind, and
+a `VERIFICATION.md` whose recorded SHA no longer matches HEAD. Each is judgement rather
+than a checklist, and each takes the same two-direction test the body gets — every claim
+true, *and* every meaningful change accounted for. The second direction is the one that
+catches things, because nothing in stale prose is false; it is wrong by omission, and an
+omission does not announce itself. On a short branch written in an afternoon nothing has
+had time to go stale, and the honest output is one line saying so: a check that
+manufactures findings to look useful spends the next real finding's credibility.
+
+None of it is a gate. "The bot has not reviewed the tip" is information for the author, not
+grounds to refuse — it reports, then opens.
+
+The title gets judged separately from its conventional-commit prefix, because on a squash
+merge it becomes the permanent commit subject on the default branch and a `fix:` that grew
+into a `feat:` during the branch is a wrong version bump rather than a wording nit. Visual
+evidence passes two gates before it is attached: is there a *before* to compare against,
+and is the repo private — GitHub serves public-repo attachments from a host readable by
+anyone with the link, and a screenshot carries names, avatars, internal hostnames and a
+token in the URL bar, none of which can be scrubbed by rule the way text can. Text stays
+text; a screenshot of a JSON response is unsearchable, uncopyable and undiffable.
+
+How much of that to do is decided by the base, which is the one thing that separates a PR
+in the middle of a stack from the PR that lands the work. An intermediate PR is reviewed as
+a slice, absorbed into its parent and superseded by the one that finally targets the default
+branch, so effort spent making it a finished public artifact is thrown away when the stack
+lands — visual evidence, the prose-drift pass and an embedded verification section all wait
+for the final PR. Two things stop being true mid-stack rather than merely costing more: the
+title is absorbed instead of becoming a permanent commit subject, so judging it as one is
+cargo cult; and a closing keyword is inert, because GitHub closes a linked issue only when
+the PR merges into the default branch. Inert in the way that reads as done is how a ticket
+ends up neither closed nor tracked, so the id goes on the intermediate PR and the keyword on
+the one that reaches `main`. Stack position is detected — an open PR whose head is an
+ancestor of HEAD — rather than guessed, because basing a stacked PR on the default branch
+makes it claim its parent's commits and renders the diff unreviewable.
+
+A ticket reference is found rather than invented: from the argument, the branch name, the
+commit trailers, or a template's issue line, and never inferred from the subject matter,
+since a mistyped id with a keyword in front of it closes someone else's ticket. It goes in
+both places for different reasons — the title, because that is what survives in `git log`,
+and the body, because that is the only place a closing keyword fires at all. A partial fix
+references without closing.
+
+It shows the title and body before anything is public, and stops after reporting the URL.
+
+`~/.claude/reference/github-publishing.md` holds the guards that apply to all three tools
+that write outward — scrubbing text, looking at every image, delimiting a generated section
+so a rerun replaces it instead of stacking a second verdict below the first, and keeping
+what cannot be regenerated in a comment rather than in a body that will be. Extracted
+rather than written a third time, so a fix lands once.
