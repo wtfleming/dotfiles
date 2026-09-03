@@ -193,9 +193,15 @@ symlink. To cover that case you have to take the links out of the picture — pl
 booting — and say in the report which you did.
 
 The script already closes by listing every gitignored path the main checkout has and the
-fresh tree does not. For a differential that list is a bootstrap-gap diagnostic. Here it
-*is* the finding: each entry is something your checkout has, the branch does not carry,
-and a colleague's first run will not have either.
+fresh tree does not, and it runs that check *after* install and build — so anything the
+detected steps recreate is already present and never appears. For a differential the list
+is a bootstrap-gap diagnostic. Here it *is* the finding: each entry is something your
+checkout has that the branch did not carry and the install did not produce.
+
+Two things narrow it before you report one. `--no-build` skips the build, so build output
+shows as absent when it would not otherwise. And a project whose setup includes a step the
+script does not detect will list whatever that step would have made — check the documented
+setup before calling an entry a defect.
 
 Report it on its own line rather than folding it into a probe result. "A clean tree of
 `<branch>` builds and boots" is a different claim from "the feature works", and a reader

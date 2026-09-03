@@ -148,7 +148,12 @@ scrub goes here instead.
 
 ```bash
 gh pr comment <n> --body-file VERIFICATION.md      # a comment, reversible
-gh pr view <n> --json body -q .body > body.md      # or append to the body
+
+# into the body instead: fetch, append, push back. The fetch alone changes nothing
+# on GitHub, so all three lines are needed.
+gh pr view <n> --json body -q .body > body.md
+cat VERIFICATION.md >> body.md
+gh pr edit <n> --body-file body.md
 ```
 
 Prefer a comment unless the user asks for the body. A comment is timestamped, attributable
