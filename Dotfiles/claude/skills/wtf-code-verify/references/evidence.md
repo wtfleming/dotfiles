@@ -152,9 +152,9 @@ gh pr comment <n> --body-file VERIFICATION.md      # a comment, reversible
 
 # into the body instead: fetch, append, push back. The fetch alone changes nothing
 # on GitHub, so all three lines are needed.
-gh pr view <n> --json body -q .body > body.md
-cat VERIFICATION.md >> body.md
-gh pr edit <n> --body-file body.md
+gh pr view <n> --json body -q .body > "$OUT/body.md"
+cat "$OUT/VERIFICATION.md" >> "$OUT/body.md"
+gh pr edit <n> --body-file "$OUT/body.md"
 ```
 
 Prefer a comment unless the user asks for the body. A comment is timestamped, attributable

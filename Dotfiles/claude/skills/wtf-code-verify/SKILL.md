@@ -199,12 +199,17 @@ cheapest first — pick one per claim:
    result as the valid one, the code is not reading it. Free: you already wrote both.
 2. **Break it deliberately.** Corrupt the input, drop the header, flip the flag off,
    point at an id that does not exist. Confirm the probe goes red, and red for the reason
-   you expect. Seconds, no worktree — but it has to come back out, and how depends on the
-   tree. **`git checkout -- <path>` is safe only when that file had no uncommitted edits of
-   its own**; on a file the user was already working in it discards their work along with
-   the break, and §0 only requires a commit for claims that use a differential. Prefer
-   breaking inside a worktree you can throw away; failing that, capture the exact patch
-   first (`git diff -- <path> > break.patch`, then `git apply -R break.patch`). A break left
+   you expect. Seconds, no worktree — but it has to come back out, and **every git-shaped
+   way of undoing it is wrong on a file the user was already working in.**
+   `git checkout -- <path>` discards their edits along with the break; so does
+   reverse-applying `git diff -- <path>`, because that diff contains both and `git apply -R`
+   removes the whole of it. §0 only requires a commit for claims that use a differential, so
+   a dirty file is reachable here.
+
+   Break inside a worktree you can throw away. If it genuinely has to be in place, copy the
+   file byte-for-byte before touching it and copy it back afterwards —
+   `cp <path> "$OUT/pre-break"` … `cp "$OUT/pre-break" <path>` — which restores exactly what
+   was there without asking git what it thinks the file should look like. A break left
    behind survives an interrupted run as an uncommitted edit nobody attributes, and the next
    `git commit -am` ships it.
 3. **Run it against the base.** The full differential, and the only form that shows *the
