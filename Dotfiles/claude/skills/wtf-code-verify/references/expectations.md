@@ -11,6 +11,7 @@ correct will run cleanly, pass, and tell you nothing.
 - The negative-case catalogue
 - How it fails, not just that it does
 - Verifying prose against code
+- Verifying a PR's title and description
 - Verifying a subject with no diff
 - How many expectations
 
@@ -88,6 +89,21 @@ to have tried by hand
   An auth check that fails open is a security hole; a cache that fails closed is an
   outage. The change has to pick one, and the expectation names which it picked.
 
+**Scale** — review can spot an N+1 by reading it; what running adds is the number
+
+- the request against a realistic row count, not the ten rows in the fixture
+- **query count per request, compared across the differential.** A list endpoint that
+  issued 3 queries and now issues 3 + N has a loop in it, and the count says so plainly
+  where a wall-clock reading is noise
+- a response with no upper bound: what comes back when the collection has 10,000
+  members, and does anything page it?
+- work newly done *inside* a loop — a network call, a file read, a serialization
+- memory across a long run, where the change holds something it used to release
+
+This lives here rather than under the performance variant because nobody claimed
+anything. A performance claim gets measured because someone made it; an accidental
+regression ships because every correctness probe passed on ten rows.
+
 ## How it fails, not just that it does
 
 An expectation that says only "it should error" cannot be falsified by the most common
@@ -100,6 +116,13 @@ real defect, which is erroring *wrongly*. Name the shape of the refusal:
 - nothing written on the failure path — no orphaned row, no partial file, no sent email
 - logged at a level that matches: a user's typo is not an error-level event, and a
   failing dependency is not a debug one
+
+**Could you debug it from outside?** You have already run the negative case, so this
+costs one look at the log. Read only what an on-call engineer would have — the log line,
+the metric, the error-tracker event — and ask whether it names the input, the caller and
+the operation. `Error: undefined` with no correlation id means the code is correct and
+the next incident is going to be a long one. It is the only part of the failure path that
+nobody exercises until the moment they need it.
 
 ## Verifying prose against code
 
@@ -132,6 +155,52 @@ Three pitfalls specific to prose:
 
 The highest-value finding here is the claim that is *silently* wrong — accurate-sounding,
 plausible, and producing no error when followed, just the wrong result.
+
+## Verifying a PR's title and description
+
+A description is written when the PR opens and then quietly stops being true. Review
+lands, commits follow, and the body still describes the change as first proposed — which
+is the version a future reader believes, because a squash merge turns the title into the
+permanent commit subject on `main` and the body into the message beneath it.
+
+Check it whenever the scope resolves to a PR. It is cheap: no environment, no worktree,
+and only the behavioural claims need a probe at all.
+
+**Two directions, and the second is the one that drifts.**
+
+*Claims to code* — each falsifiable statement in the body, checked as any prose claim is:
+"adds a `--dry-run` flag", "no migration needed", "behind the `archive` flag".
+
+*Code to claims* — each meaningful change in the diff, checked for whether the body
+accounts for it. Omission is what review produces: a reviewer asks for null handling, a
+commit adds it, nobody edits the body. Nothing in the body is false, so a claim-by-claim
+pass reports clean, and the description is wrong anyway — by silence. This direction is
+the whole reason to run the check.
+
+**Go straight to what arrived after it opened.** You do not need to re-verify the whole
+body, only the part the post-open commits touched.
+
+```bash
+gh pr view <n> --json title,body,createdAt,commits,reviews,comments
+gh pr diff <n>                                     # the change as it stands
+git log --oneline <first-commit-of-pr>..HEAD       # what landed after opening
+git diff <first-commit-of-pr>..HEAD                # and what it did
+```
+
+The review threads are the map. A comment asking for a change, plus a commit answering
+it, is a behaviour the body almost certainly does not mention — start there rather than
+re-reading the diff from scratch.
+
+**The title travels further than the body.** On a squash merge it becomes the subject
+line on `main`, outliving the PR, the branch and the review. Where the repo derives
+anything from it — a conventional-commit prefix, a changelog section, a release version
+— a `fix:` that has grown into a `feat:` is not cosmetic. Judge the prefix separately
+from the wording, and say which one moved.
+
+**What a rewrite must not touch.** A regenerated body that drops `Closes #123` silently
+unlinks the issue and it will not close on merge. The same holds for review checklists,
+screenshots, links to design docs, and anything a PR template put there. Rewrite the
+parts that describe the change; carry everything else across verbatim.
 
 ## Verifying a subject with no diff
 

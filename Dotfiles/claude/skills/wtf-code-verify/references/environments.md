@@ -11,6 +11,7 @@ with each tier and each language. Pick the tier in SKILL.md §5 first.
 - Per-language quick reference
 - Tier 0 — a test in one package
 - Tier 1 — headless script, CLI, or a real build
+- Does a clean tree of this branch work?
 - Containers, compose and other isolation
 - Tier 2 — the service booted, driven over its real interface
 - Tier 3 — full stack and a browser
@@ -161,6 +162,37 @@ reproducible on its own — content that changes between the two runs shows up i
 diff looking exactly like a code difference. Run both sides close together, and if a
 diff looks like content rather than structure, re-run the baseline to see whether it
 is stable.
+
+## Does a clean tree of this branch work?
+
+Every probe run in your own checkout runs against a tree carrying your uncommitted env
+var, your generated file, your locally installed dependency, and whatever else has
+accumulated since you last cloned. A change can pass all of them and still be missing a
+file nobody committed.
+
+Worth paying for when the diff touches what causes it: a dependency manifest or lockfile,
+`.env.example` or config, generated code, build configuration, a migration, a CI file, a
+toolchain pin. Skip it otherwise — a change to one resolver cannot break the build for
+anybody else.
+
+```bash
+~/.claude/skills/wtf-code-verify/scripts/baseline-worktree.sh create --head <branch>
+```
+
+`--head` builds the "after" side as its own worktree, bootstrapped from git alone.
+Install, build, boot, and run the project's own test command in it. Three things this
+catches that nothing else will: a dependency added to the lockfile but not the manifest
+or the reverse, a newly required environment variable documented nowhere, and generated
+code that is gitignored and has no generation step in the build.
+
+The script already closes by listing every gitignored path the main checkout has and the
+fresh tree does not. For a differential that list is a bootstrap-gap diagnostic. Here it
+*is* the finding: each entry is something your checkout has, the branch does not carry,
+and a colleague's first run will not have either.
+
+Report it on its own line rather than folding it into a probe result. "A clean tree of
+`<branch>` builds and boots" is a different claim from "the feature works", and a reader
+needs to know which one you checked.
 
 ## Containers, compose and other isolation
 

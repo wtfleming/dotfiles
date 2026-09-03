@@ -143,6 +143,12 @@ Prefer a comment unless the user asks for the body. A comment is timestamped, at
 and easy to supersede when a later run changes the verdict; an edited body silently
 replaces whatever was there, including someone else's text.
 
+Where the description drifted, propose the new title and body, show both, and ask before
+`gh pr edit`. Carry across everything that is not a description of the change —
+`Closes #123`, checklists, screenshots, template sections — because a regenerated body
+that loses the issue link silently stops it closing on merge. On someone else's PR,
+report the drift and stop; the wording is theirs to fix.
+
 Re-read the verdict line before posting. Verification sections are read as endorsements,
 and a "verified with gaps" whose gaps are buried below a fold reads as an unqualified
 pass.

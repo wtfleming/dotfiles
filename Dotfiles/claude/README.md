@@ -179,6 +179,13 @@ line against its neighbour is deliberate: **`wtf-code-review` reads the code, an
 checkable against a running system, it says so and stops rather than sliding into a
 review.
 
+It assumes `/wtf-code-review` has already run over the same scope, which is how it is
+normally used, so it does not re-report what a reader could have found. It starts instead
+from the review's *unverified* findings — the best expectations available, since someone
+already thought each one was suspicious and nobody settled it either way. Review produces
+hypotheses; this closes them, and a finding that turns out to be wrong is as useful to the
+author as one that turns out to be real.
+
 The idea it turns on is that a green check proves nothing on its own — it may have been
 green before the change, or green against code that does not work. So every probe needs
 a **discriminating partner**: the negative case that must come out different, a
@@ -190,6 +197,18 @@ positive, negative, regression — because a probe built on the wrong idea of co
 cleanly, passes, and tells you nothing. The negative cases are dispatched to the
 `wtf-verify-adversary` agent, which sees only the diff: whoever wrote the code has
 already imagined the inputs it handles, and the bugs are in the ones they did not.
+
+Beyond behaviour it covers the things only execution reveals. `references/compatibility.md`
+handles the window where two versions coexist — new code against the old schema and old
+code against the new one, old clients against the new server, jobs enqueued by the
+previous version, and whether the down migration has ever actually been run. It asks
+whether a clean tree of the branch still builds and boots, which catches the dependency
+in the lockfile but not the manifest and the env var documented nowhere. It measures
+scale instead of eyeballing it, since an N+1 shows up as a query count of 3 + N where
+wall-clock is noise. And on a PR it verifies the title and description in both
+directions: every claim in the body true, *and* every meaningful change accounted for —
+because what review produces is usually an omission nobody went back to write up, and a
+squash merge makes that title the permanent commit subject on `main`.
 
 It reports one of four verdicts. `Not verified` is neither a pass nor a defect and says
 which of the three inconclusive shapes it was; `Falsified` — a real defect, found before

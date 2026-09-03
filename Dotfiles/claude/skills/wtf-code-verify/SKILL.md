@@ -1,6 +1,6 @@
 ---
 name: wtf-code-verify
-description: 'Prove that code does what it is supposed to do before it merges, by executing it — derive the falsifiable expectations a change or a subject implies, probe each one including the inputs that must be refused, and report a verdict backed by raw output. Use this whenever a PR is about to be opened or changes are about to merge, and whenever the user asks to verify, prove, confirm or sanity-check that something actually works: "does this actually work", "verify the fix", "e2e test this change", "spin up the server and check it", "make sure auth still works before I merge". Takes a ref, branch, PR or a prose subject — "login and authentication" — so it also covers an area of a running system with no diff, and whether documentation or comments still match the implementation. Expensive by design — it boots services and builds a second worktree. NOT for reading code without running it (that is wtf-code-review), routine test runs, or checking unfinished work mid-development.'
+description: 'Prove that code does what it is supposed to do before it merges, by executing it — derive the falsifiable expectations a change or a subject implies, probe each one including the inputs that must be refused, and report a verdict backed by raw output. Use this whenever a PR is about to be opened or changes are about to merge, and whenever the user asks to verify, prove, confirm or sanity-check that something actually works: "does this actually work", "verify the fix", "e2e test this change", "spin up the server and check it", "make sure auth still works before I merge". Takes a ref, branch, PR or a prose subject — "login and authentication" — so it also covers an area of a running system with no diff, and whether docs, comments or a PR's own title and description still match the code. Expensive by design — it boots services and builds a second worktree. NOT for reading code without running it (that is wtf-code-review), routine test runs, or checking unfinished work mid-development.'
 argument-hint: '[ref, branch, PR, path or subject — defaults to uncommitted, else the branch] [--tier 0|1|2|3] [--base <ref>]'
 allowed-tools: Agent, Bash, Read, Edit, Write, Glob, Grep
 ---
@@ -20,9 +20,15 @@ answer instead of the code, and a report that rounds an inconclusive run up to a
 
 **This skill runs code. `wtf-code-review` reads it.** If the scope has nothing that can
 be executed and no claim that can be checked against a running system, say so and stop.
-Do not slide into reading the code and presenting that as verification — it is a
-different tool, it is one message away, and a reader cannot tell the two reports apart
-once they are written.
+Do not slide into reading the code and presenting that as verification — a reader cannot
+tell the two reports apart once they are written.
+
+Assume review has already run over this scope, because it usually has. So **do not
+re-report what a reader could have found**: the missing guard, the awkward name, the
+suspicious-looking query. Everything here has to be something only execution could tell
+you. Confirming a defect review already suspected is worth doing — that is turning a
+suspicion into a fact — but hunting for read-findable defects is work someone else
+already did, in a report the user is holding.
 
 Read each reference only when a claim calls for it:
 
@@ -30,6 +36,7 @@ Read each reference only when a claim calls for it:
 | --------- | ------------ |
 | `references/expectations.md` | working out what "correct" means — per claim type, plus the catalogue of cases that should fail |
 | `references/differential.md` | the claim *is* a difference: a bugfix, a refactor's equivalence, a perf threshold |
+| `references/compatibility.md` | the change touches persisted state, a deploy boundary, or anything another system consumes |
 | `references/environments.md` | working out how to run this particular project, at any tier, and how to isolate it |
 | `references/evidence.md` | capturing output and writing the report |
 | `references/promotion.md` | turning a probe into a permanent test |
@@ -57,7 +64,9 @@ A named scope comes in three shapes.
 
 **A revision** — a ref, a branch, a path, a PR number. Diff it. `gh pr diff <n>` and
 `gh pr view <n>` for a PR, which also gives you the body, and the body is where the
-author already wrote down what they think they did.
+author already wrote down what they think they did. On a PR that body is both context
+and a claim in its own right, verified alongside the code — it was written before review
+and is rarely updated after.
 
 **A subject** — prose naming an area of behaviour, such as `login and authentication`.
 There is no diff and no author here: you are verifying a contract as it stands. Find
@@ -87,6 +96,9 @@ different kinds — classify each one.
 | it is faster | a threshold stated in advance, met across distributions rather than a single pair of numbers | `references/differential.md` |
 | the prose is accurate | each falsifiable claim in it holds against the implementation, which is the source of truth | `references/expectations.md` |
 | a subject behaves (no diff) | the contract holds, including its refusals | `references/expectations.md` |
+| the PR describes the change | every claim in the title and body holds, *and* every meaningful change is accounted for | `references/expectations.md` |
+| it is safe to deploy | it survives the window where two versions run at once, and it can be rolled back | `references/compatibility.md` |
+| the branch is complete | a clean tree of HEAD installs, builds, boots and passes without your uncommitted state | `references/environments.md` |
 
 ## 3. Write the expectations down, then show them
 
@@ -95,6 +107,13 @@ observable — something you could show to someone who has never read the code: 
 code, a response field, an exit code, a rendered file, a log line, a pixel. "The cache
 is no longer invalidated twice" is not an observable. "The second request returns 200
 with the updated title instead of the stale one" is.
+
+**Start from the review, if there was one.** An unverified review finding is the best
+expectation available: someone already thought it was suspicious and nobody settled it
+either way. A Warning reading "this could 500 on a null slug" is a hypothesis with an
+input and a predicted observable already attached — which is exactly the shape of a line
+below. Review produces hypotheses; this is the tool that closes them, and a finding that
+turns out to be wrong is as useful to the author as one that turns out to be real.
 
 Three kinds, and the second is where the bugs actually are:
 
@@ -269,6 +288,8 @@ passing assertion:
 - **Residue** — rows, files, containers, worktrees, ports left behind, or explicitly
   nothing. Tear the worktrees down:
   `~/.claude/skills/wtf-code-verify/scripts/baseline-worktree.sh remove`.
+- **PR description** — whether the title and body still describe the change, or what
+  drifted. Only when the scope is a PR.
 
 Write the PR verification section to the scratch directory with the template in
 `evidence.md`, tell the user the path, and offer to post it — appended to the PR body or
