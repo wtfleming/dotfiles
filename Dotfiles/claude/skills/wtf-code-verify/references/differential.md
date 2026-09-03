@@ -47,7 +47,11 @@ drift with refactors and tend to be written to match the code you just read. Pre
 outermost observable that still isolates the symptom.
 
 **It must be deterministic.** Same input, same output, run twice. If it isn't, you cannot
-tell a fix from a coin flip. Run it twice on HEAD before you trust it.
+tell a fix from a coin flip. Run it twice on **each** side you draw a conclusion from.
+HEAD is the obvious one; the baseline is the one that gets skipped and the one that costs
+more, because a baseline failing only *sometimes* is not a reproduction — and read as one
+it produces the top row of the table below, **Verified**, for a change that did nothing.
+An intermittent bug is exactly the kind someone reaches for a differential to prove.
 
 **It must be narrow.** A probe that boots the whole product and eyeballs a page will find
 *something* different between two commits and invite you to call that the bug.
@@ -77,6 +81,14 @@ Useful flags:
 working checkout, so uncommitted edits are live in the head run and absent from the
 baseline. They would be credited to the change and never reach the PR. Stash them, or
 name the change with `--head <ref>` instead.
+
+In a monorepo the build is the dominant cost of the whole run, and the default is
+whole-workspace — `turbo run build` across every package from an empty `dist/`. Pass
+`--filter` for the packages the diff touches: it scopes the build only, install stays
+whole-workspace. Keep the filter **wider than what the probe exercises**, though —
+`environments.md` documents the stale-artifact hazard where package B type-checks against
+A's *built* output, and a filter narrower than the probe's reach reproduces exactly the
+broken-baseline failure this file spends its length warning about.
 
 The merge base, not the tip of `main`: you are isolating **your** change, and anything
 that landed on `main` since you branched is somebody else's variable.
@@ -151,10 +163,24 @@ the same input through both trees and diff the outputs.
 diff -r baseline-out/ head-out/
 ```
 
-Expected result is both sides passing with byte-identical output, and any difference is
-the finding. Pick an input rich enough to cover the refactored paths — an equivalence
-proof over trivial input proves the trivial case, and the report should say what the
-input covered.
+Expected result is both sides passing with byte-identical output — but only after the
+noise is normalised, and the noise is guaranteed here. The two trees sit at different
+absolute paths (the baseline under `$TMPDIR`, HEAD in your checkout), so anything that
+embeds its build directory differs on every refactor regardless of the code: sourcemap
+`sources` and `sourceRoot`, Rust panic paths compiled into a binary, `_build` paths in
+Elixir `debug_info`. Build ids, embedded timestamps and unordered map output do the same.
+
+Normalise before diffing — `sed` the tree paths to a placeholder, strip timestamps, sort
+what has no defined order — and say in the report what you normalised. Do not reach for
+the "re-run the baseline to see whether it is stable" check in `environments.md` to
+triage this: that one is for live inputs, and path noise is perfectly stable across
+re-runs, so it confirms the difference and sends you off hunting a code change that is not
+there. Note too that building both sides with `--head` does not fix it — the two trees
+land at `<repo>` and `<repo>-head`, which are siblings of *different length*.
+
+*After* normalising, any remaining difference is the finding. Pick an input rich enough to
+cover the refactored paths — an equivalence proof over trivial input proves the trivial
+case, and the report should say what the input covered.
 
 **Performance** claims a threshold, not a boolean. One run of each is noise. Take at
 least five runs per side, report median and spread, and state the threshold before

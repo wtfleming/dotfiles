@@ -179,11 +179,18 @@ anybody else.
 ~/.claude/skills/wtf-code-verify/scripts/baseline-worktree.sh create --head <branch>
 ```
 
-`--head` builds the "after" side as its own worktree, bootstrapped from git alone.
-Install, build, boot, and run the project's own test command in it. Three things this
-catches that nothing else will: a dependency added to the lockfile but not the manifest
-or the reverse, a newly required environment variable documented nowhere, and generated
-code that is gitignored and has no generation step in the build.
+`--head` builds the "after" side as its own worktree, bootstrapped from git. Install,
+build, boot, and run the project's own test command in it. Two things this catches that
+nothing else will: a dependency added to the lockfile but not the manifest or the
+reverse, and generated code that is gitignored with no generation step in the build.
+
+**It will not catch a newly required environment variable**, and the failure is silent.
+`add_tree` symlinks every untracked `.env` from your main checkout into the new tree, so
+a variable that lives only in your `.env` is present there too and the boot goes green;
+`report_missing_ignored` stays quiet as well, because its existence test follows the
+symlink. To cover that case you have to take the links out of the picture — plain
+`git worktree add` with `--install-cmd`/`--build-cmd`, or unlink the `.env` files before
+booting — and say in the report which you did.
 
 The script already closes by listing every gitignored path the main checkout has and the
 fresh tree does not. For a differential that list is a bootstrap-gap diagnostic. Here it

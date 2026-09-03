@@ -38,13 +38,16 @@ advised against, promote it as asked and say once what it will cost.
 Find the closest existing neighbour rather than working from this table; it is here for
 orientation when the tree is unfamiliar.
 
-| | Tests live in | Scoping a run |
-| --- | --- | --- |
-| **Node** | `*.test.ts` beside the source, or `test/` / `__tests__/`; browser-level in `e2e/` | `<pm> test -- <pattern>`, plus the workspace filter flag |
-| **Rust** | unit tests in-module under `#[cfg(test)]`, integration tests in `tests/` | `cargo test <name>`, `-p <crate>` in a workspace |
-| **Elixir** | `test/`, mirroring `lib/`; slow ones behind `@tag` | `mix test test/foo_test.exs:42` |
-| **Erlang** | `test/` as eunit or common_test suites | `rebar3 eunit --module=foo`, `rebar3 ct --suite=...` |
-| **Elisp** | `*-test.el` beside the source | `emacs -Q --batch -L . -l ert -l foo-test.el -f ert-run-tests-batch-and-exit` |
+| | Tests live in |
+| --- | --- |
+| **Node** | `*.test.ts` beside the source, or `test/` / `__tests__/`; browser-level in `e2e/` |
+| **Rust** | unit tests in-module under `#[cfg(test)]`, integration tests in `tests/` |
+| **Elixir** | `test/`, mirroring `lib/`; slow ones behind `@tag` |
+| **Erlang** | `test/` as eunit or common_test suites |
+| **Elisp** | `*-test.el` beside the source |
+
+`environments.md` carries the invocation for each of these — how to scope a run to one
+file, name or crate — and is the one place to change when a runner's flags move.
 
 If a test needs a database, use the project's existing isolation rather than inventing
 one — Ecto's SQL sandbox, a transactional fixture, a per-test schema. A promoted test
@@ -103,5 +106,18 @@ diff is noise a reviewer has to ask about, and a half-abandoned test file is wor
 looks like coverage. Delete what you are not promoting, and say in the report where the
 scratch directory is in case the user wants to re-run something by hand.
 
+**Confirm the default selector actually collects it.** Every check up to here has run
+the test *by name* — the baseline differential copies the file in and invokes it
+directly, and so does the command you are about to quote. None of that proves the run
+that matters picks it up. A repo whose runner globs `src/**/*.test.ts` will never collect
+a file in `test/`, which is a location the table above offers by name; named explicitly
+it passes, on every push it does not exist, and it reads as coverage forever — the exact
+failure the fail-without-the-fix check is here to prevent. So run the project's
+**unscoped** test command once and confirm the new test appears in the count. A tag that
+excludes it from the default run (`@tag :integration` and friends) counts as not
+collected: it may well be the right call, but say so rather than letting it pass as
+coverage.
+
 Promoted tests go on the branch under review, so the change and its guard land together.
-Tell the user the path and the command that runs just that test.
+Tell the user the path, the command that runs just that test, and the count that proved
+the default run collects it.

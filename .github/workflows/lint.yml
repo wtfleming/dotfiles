@@ -37,3 +37,20 @@ jobs:
 
       - name: validate claude settings.json
         run: jq empty Dotfiles/claude/settings.json
+
+      # A skill, agent or command whose YAML header does not parse registers wrong or
+      # not at all, and nothing else here would notice -- shellcheck skips markdown and
+      # jq only sees settings.json.
+      - name: validate frontmatter
+        run: |
+          rc=0
+          for f in Dotfiles/claude/skills/*/SKILL.md Dotfiles/claude/agents/*.md Dotfiles/claude/commands/*.md; do
+            # Command substitution, not a pipe: a pipe would mask awk's exit status and a
+            # file with no header at all would parse as empty YAML and pass.
+            header=$(awk 'NR==1 && $0 != "---" { exit 1 } NR>1 && /^---$/ { exit } NR>1' "$f") \
+              || { echo "no frontmatter block: $f" >&2; rc=1; continue; }
+            printf '%s\n' "$header" \
+              | python3 -c 'import sys, yaml; yaml.safe_load(sys.stdin)' \
+              || { echo "invalid frontmatter: $f" >&2; rc=1; }
+          done
+          exit $rc

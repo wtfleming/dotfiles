@@ -43,10 +43,15 @@ Each case names three things, and is useless without the third:
 wrongly: a 500 where a 400 belongs, a bad value silently defaulting, an auth check that
 fails open, a stack trace in the response. Name the shape.
 
-Lean on the boundaries authors skip: absent versus empty versus null; one past a limit;
-an unknown field that may be silently ignored; an **expired** credential rather than a
-missing one; a valid credential belonging to **another user**; the same request sent
-twice; a dependency that is down.
+For the boundaries worth trying, read
+`~/.claude/skills/wtf-code-verify/references/expectations.md` — the catalogue under "The
+negative-case catalogue". It is maintained in one place, and a second copy here would
+drift out of step with it without either file being obviously wrong.
+
+That file is the one thing you should read before starting. What you must **not** be
+given, and must not go looking for, is anything the author has written about *this*
+change — their reasoning, their expectations, their assessment of what is fine. Your
+entire value is that you have not seen it.
 
 ## 3. The bar for inclusion
 

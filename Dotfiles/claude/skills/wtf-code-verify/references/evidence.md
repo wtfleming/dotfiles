@@ -54,7 +54,7 @@ failure". Write the bytes down first, read them second.
 Paste under the change summary. Keep it short — a reviewer should be able to tell in
 fifteen seconds whether the claim was actually tested, and by what.
 
-```markdown
+````markdown
 ## Verification
 
 **Verdict.** Verified with gaps — 3 of 4 expectations met, 1 defect found and fixed in `a91c` (see below).
@@ -71,9 +71,9 @@ fifteen seconds whether the claim was actually tested, and by what.
 
 <details><summary>Raw output</summary>
 
-​```
+```
 <verbatim, per probe, both sides>
-​```
+```
 
 </details>
 
@@ -82,7 +82,7 @@ fifteen seconds whether the claim was actually tested, and by what.
 resolver shares the same guard and this PR does not touch it.
 **CI.** Unit suite and lint run on every push; none of the four above is in CI today.
 **Residue.** None — compose dependencies down, worktree removed.
-```
+````
 
 The **Discriminator** column is the part that cannot be omitted. It is what separates a
 result from a result that means something: it says how you know each ✅ would have been a
@@ -133,6 +133,18 @@ median with the spread omitted.
 
 Offer; do not post unasked. The section is public, it carries a verdict in the user's
 name, and one landing on the wrong PR is worse than none.
+
+**Scrub the outward copy.** The capture is deliberately unfiltered, and the worktree it
+came from has the machine's real `.env` symlinked in — so the raw bytes can carry an
+`Authorization: Bearer …`, a `postgres://user:password@host`, an API key echoed by a
+verbose client, or a DSN printed by a failed connect. A GitHub comment is indexed and
+mirrored to notification email, so editing it later does not take it back. The reviewer
+agent next door already works this way for the read-only side: cite a key by name, never
+by value. Quote only the assertion-bearing lines in the posted copy, replace any
+credential with `<redacted: SESSION_TOKEN>`, and leave the unabridged capture in the
+scratch directory where it belongs. Filtering at *capture* time is still wrong — that is
+what launders a compile failure into "the expected failure" — which is exactly why the
+scrub goes here instead.
 
 ```bash
 gh pr comment <n> --body-file VERIFICATION.md      # a comment, reversible

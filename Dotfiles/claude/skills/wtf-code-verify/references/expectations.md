@@ -183,9 +183,15 @@ body, only the part the post-open commits touched.
 ```bash
 gh pr view <n> --json title,body,createdAt,commits,reviews,comments
 gh pr diff <n>                                     # the change as it stands
-git log --oneline <first-commit-of-pr>..HEAD       # what landed after opening
-git diff <first-commit-of-pr>..HEAD                # and what it did
 ```
+
+Find the boundary from `createdAt` against each commit's `committedDate`, both of which
+that first call already returns, and diff from the last commit at or before it. Do not
+reach for `<first-commit-of-pr>..HEAD`: `A..HEAD` excludes only `A` and its ancestors, so
+a PR opened with three commits reports two of them as post-open work, and after a rebase
+the old first commit is not an ancestor at all and you get the whole branch. It
+over-includes rather than under-includes, so no verdict goes wrong — you just lose the
+shortcut this section exists to give you.
 
 The review threads are the map. A comment asking for a change, plus a commit answering
 it, is a behaviour the body almost certainly does not mention — start there rather than
@@ -197,10 +203,9 @@ anything from it — a conventional-commit prefix, a changelog section, a releas
 — a `fix:` that has grown into a `feat:` is not cosmetic. Judge the prefix separately
 from the wording, and say which one moved.
 
-**What a rewrite must not touch.** A regenerated body that drops `Closes #123` silently
-unlinks the issue and it will not close on merge. The same holds for review checklists,
-screenshots, links to design docs, and anything a PR template put there. Rewrite the
-parts that describe the change; carry everything else across verbatim.
+**What a rewrite must not touch** — `Closes #123`, checklists, screenshots, template
+sections. The rule and its consequences live in `evidence.md`, beside the `gh pr edit`
+that does the rewriting.
 
 ## Verifying a subject with no diff
 

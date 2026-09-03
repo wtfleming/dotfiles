@@ -32,7 +32,7 @@
 #   baseline-worktree.sh path [baseline|head]
 #   baseline-worktree.sh detect
 
-set -euo pipefail
+set -Eeuo pipefail
 
 TOOL_PREFIX=()
 OPT_FILTER=""
@@ -306,6 +306,12 @@ add_tree() {
   mkdir -p "$(dirname "$wt")"
   (cd "$main" && git worktree add --detach "$wt" "$commit")
 
+  # Bootstrap is the step that fails most often, and a half-built tree left registered is
+  # worse than no tree: the next `create` refuses to recreate it and advises reusing it,
+  # which is exactly wrong for a tree whose install never finished. Unwind to the state
+  # before this function ran, so a rerun starts clean.
+  trap 'worktree_destroy "$main" "$wt"' ERR
+
   # Symlinked, not copied: .env holds the machine's real credentials, and a copy in a
   # temp worktree outlives the run. The cache concern above is about build inputs the
   # tool hashes; .env is read at run time.
@@ -320,8 +326,10 @@ add_tree() {
     fi
     mkdir -p "$wt/$(dirname "$relative")"
     ln -sf "$env_file" "$wt/$relative"
-  done < <(find "$main" -name ".env" -not -path "*/node_modules/*" -not -path "*/.git/*" \
-    -not -path "*/deps/*" -not -path "*/_build/*" -not -path "*/target/*")
+  # -prune, not -not -path: the latter discards results without stopping the descent, so
+  # a large monorepo stats every inode under node_modules/ and target/ to find nothing.
+  done < <(find "$main" \( -name node_modules -o -name .git -o -name deps \
+    -o -name _build -o -name target \) -prune -o -name ".env" -print)
 
   if [ ${#OPT_COPIES[@]} -gt 0 ]; then
     echo "    copying generated artifacts"
@@ -357,6 +365,7 @@ add_tree() {
   fi
 
   report_missing_ignored "$main" "$wt"
+  trap - ERR
 }
 
 cmd_create() {
@@ -397,8 +406,16 @@ cmd_create() {
 
   # Without --head the working checkout is the head side, so uncommitted edits run on
   # one side of the comparison and not the other -- they would pass as the change.
-  if [ -z "$head_ref" ] && ! git -C "$main" diff --quiet HEAD; then
-    die "the working checkout is dirty, and without --head it is the head side of the comparison. Uncommitted edits would be credited to the change. Commit or stash them, or name the change with --head <ref>."
+  if [ -z "$head_ref" ]; then
+    if ! git -C "$main" diff --quiet HEAD; then
+      die "the working checkout is dirty, and without --head it is the head side of the comparison. Uncommitted edits would be credited to the change. Commit or stash them, or name the change with --head <ref>."
+    fi
+    # diff --quiet says nothing about untracked files, and a new un-added source file is
+    # live on the head side and absent from the baseline -- the same mis-attribution the
+    # check above exists to stop. `git stash` leaves them behind too, hence -u.
+    if [ -n "$(git -C "$main" ls-files --others --exclude-standard)" ]; then
+      die "the working checkout has untracked files, and without --head it is the head side of the comparison. They are absent from the baseline, so they would be credited to the change. Commit them, stash with 'git stash -u', or name the change with --head <ref>."
+    fi
   fi
 
   merge_base="$(git -C "$main" merge-base "$after" "$base")" \

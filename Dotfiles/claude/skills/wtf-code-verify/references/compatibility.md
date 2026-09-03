@@ -47,15 +47,32 @@ completes, or the migration is deliberately run afterwards, which is the safer o
 a lock-heavy one. Run HEAD against a database migrated only as far as the base.
 
 **Old code against the new schema.** The migration lands first and old processes are
-still serving. Migrate the database to HEAD, then run the **baseline** worktree against
-it. This is the probe that catches `SELECT *` mapped onto a struct, a `NOT NULL` column
-the old insert does not supply, and a dropped column the old reader still names.
+still serving. Migrate the database to HEAD, then run the **old** tree against it. This
+is the probe that catches `SELECT *` mapped onto a struct, a `NOT NULL` column the old
+insert does not supply, and a dropped column the old reader still names.
+
+"Old" here means **what is deployed** — the release tag or the base branch tip — not the
+merge base that `differential.md` argues for. Those are different questions: the merge
+base isolates *your* change, which is right when the claim is a difference; the deploy
+window asks what is running beside you, and on a branch that forked two weeks ago the
+merge base predates siblings that already shipped, so a failure there can belong to
+somebody else's change. `baseline-worktree.sh` cannot build this tree for you — it
+resolves `merge-base(after, base)`, so naming a release tag that is not an ancestor
+collapses straight back to the fork point. Check the deployed ref out into a worktree of
+your own (`git worktree add <dir> <tag>`) and bootstrap it by hand.
 
 ```bash
-BASE=$(~/.claude/skills/wtf-code-verify/scripts/baseline-worktree.sh path baseline)
-# ... migrate the database to HEAD ...
-(cd "$BASE" && <the old version's probe>)
+DEPLOYED=$(git describe --tags --abbrev=0)   # or origin/main, whatever is actually live
+OLD=$(mktemp -d)/deployed
+git worktree add --detach "$OLD" "$DEPLOYED"
+# ... bootstrap $OLD as the project needs, then migrate the database to HEAD ...
+(cd "$OLD" && <the old version's probe>)
+git worktree remove --force "$OLD"
 ```
+
+Note this is a worktree you make and tear down yourself, not
+`baseline-worktree.sh path baseline` — that one is always the merge base, which is the
+tree this section just ruled out.
 
 **Expected result for both is pass**, and that is worth saying out loud before you run
 them. Every other section of this skill trains the reflex that a green baseline means a
@@ -70,12 +87,27 @@ result, and it is invisible from a diff.
 
 ## Migrations
 
+**Run these against a disposable database and nothing else.** Everything below is
+destructive by design: a down migration that drops a column the forward one
+added-and-backfilled destroys those rows for good, and the schema round-trip hides it by
+leaving the structure looking correct. A fresh volume, a container you can throw away, or
+a dump taken immediately before the sequence — one of the three, named in the report. The
+skill's other data rule forbids pointing a probe at a *shared* environment; this one is
+about your own database, which that rule does not cover.
+
 Four checks, and usually only the first has ever been run.
 
 **Forward, on realistic data.** An empty table proves the SQL parses. Volume proves what
 it does to production: `ADD COLUMN NOT NULL DEFAULT`, an index built without
-`CONCURRENTLY`, a type change that rewrites the table. Restore or generate a realistic row
+`CONCURRENTLY`, a type change that rewrites the table. **Generate** a realistic row
 count, time it, and note what it locks and for how long.
+
+Generate rather than restore. A production dump carries real user data onto a developer
+machine, to have the next paragraph's destructive migration run against it — and this
+skill's shared-environment rule governs where a probe is *pointed*, not what data is
+fetched to it, so nothing else here will stop you. Where volume genuinely has to come
+from a dump, use the project's anonymised or sanitised one and say in the report which
+you used.
 
 **Backward, actually executed.** Down migrations are written once and run never, which is
 how you discover at 2am that yours drops a column that was renamed rather than added. Run
@@ -126,6 +158,11 @@ Run the change forward, produce data with it, then put the baseline worktree bac
 front of that data and exercise it. It is the same shape as the deploy-window probe, but
 the data now contains whatever the new version wrote — which is the part nobody simulates
 and the part that makes a rollback fail.
+
+**Say what schema version you left the database at.** The deploy-window probe leaves it
+migrated to HEAD, and the rollback probe leaves new-version data behind; both are residue
+in the sense the report's Residue line means, and neither is a container or a worktree,
+so the checklist will not prompt you for it.
 
 Where rollback is genuinely impossible — a destructive migration, a one-way format change
 — that is not a probe failure, it is a fact about the change. Say it plainly in the
