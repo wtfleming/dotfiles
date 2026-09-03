@@ -94,8 +94,12 @@ The **Not covered** line is the most useful sentence in the section. Every probe
 narrow; naming the gap tells a reviewer where to look, and its absence invites them to
 assume there isn't one.
 
-**Verified at** is `git rev-parse HEAD`, taken when the probes run — not the merge base,
-which **Scope** already carries and which is a different commit for a different purpose.
+**Verified at** is `git rev-parse --short HEAD`, taken when the probes run — not the merge
+base, which **Scope** already carries and which is a different commit for a different
+purpose. The short form is deliberate and so is stating it: `/wtf-create-pr` compares this
+field against HEAD, and comparing an abbreviated SHA to a full one is unequal on every
+commit, which would age every fresh artifact as stale. Both sides abbreviate
+(`git rev-parse --short HEAD`), and a reader who wants the full hash has the branch.
 Anything that reads this section later has to answer "does this still describe the code?",
 and only a head SHA answers it: `/wtf-create-pr` compares this field to HEAD before
 embedding the section in a PR body, and without it a stale verdict cannot be told from a

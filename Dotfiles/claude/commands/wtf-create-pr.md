@@ -32,8 +32,11 @@ and check it is not empty:
 
 ```sh
 branch=$(git branch --show-current)    # empty on a detached HEAD
-[ -n "$branch" ] || echo "not on a branch — nothing to open a PR from" >&2
+[ -n "$branch" ] || { echo "not on a branch — nothing to open a PR from" >&2; exit 1; }
 ```
+
+The `exit 1` is the point of it. A guard that only prints leaves every later step to run
+against an empty `$branch`, which is how the failures below happen rather than a clean stop.
 
 A detached HEAD is not an exotic state: a stopped `rebase -i`, a `git checkout <sha>`, a
 bisect, or a worktree pinned to a commit all produce one. Refuse there, and refuse *before*
@@ -54,54 +57,65 @@ history: propose the move and wait for a yes rather than performing it.
 **The branch must be pushed and current with its remote.**
 
 ```sh
-git fetch --quiet origin "$branch" 2>/dev/null   # refresh the remote-tracking ref first
-git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null   # is there an upstream
+upstream=$(git rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null)   # e.g. origin/foo
+if [ -n "$upstream" ]; then
+  # Refresh the ref `git status` actually compares against, which is this branch's upstream
+  # — not necessarily origin/$branch. A fetch of the wrong remote leaves the compared ref
+  # stale and reports a behind or diverged branch as current.
+  git fetch --quiet "${upstream%%/*}" || { echo "fetch failed — remote state unknown" >&2; exit 1; }
+fi
 git status -sb                                                       # ahead / behind counts
 ```
 
-The fetch is what makes the next two lines mean anything. `git status -sb` compares against
-the *local* remote-tracking ref, so without it a branch pushed from another machine — or
-amended by a bot — reads as in-sync while the remote head carries commits your body never
-describes. That is the same defect this step exists to catch, arriving from the other
-direction, and it silently skips the "behind or diverged" branch below precisely when that
-branch was needed.
+The fetch is what makes `git status -sb` mean anything: it compares against the *local*
+remote-tracking ref, so without a refresh a branch pushed from another machine — or amended
+by a bot — reads as in-sync while the remote head carries commits your body never describes.
+That is the same defect this step exists to catch, arriving from the other direction, and it
+silently skips the "behind or diverged" branch below precisely when that branch was needed.
+A failed fetch is not "nothing to update" — it means the comparison cannot be made, so stop
+rather than reporting a stale ref as current.
 
-No upstream means `git push -u`; ahead means `git push`. GitHub opens the PR against the
-*remote* ref, so an unpushed commit is simply not in it — and the body you just composed
-from the local diff describes code no reviewer can see. Behind or diverged is different:
-say so and stop, because the fix is a rebase or a force-push and neither is yours to
-choose.
+**Record what the push will be; do not push yet.** No upstream means the branch is unpublished
+and will need `git push -u`; ahead means `git push`. Behind or diverged is different — say so
+and stop, because the fix is a rebase or a force-push and neither is yours to choose.
 
-**The push is the irreversible step in this command, and it happens here** — before the
-confirmation gate in **Show it before it opens**, which covers the title and body only. On a
-public repo a pushed object stays reachable by SHA after a force-push or a branch delete, and
-forks and caches keep it, so declining at the gate un-publishes nothing. Nothing in this
-command reads the *commits* for secrets — the scrub governs published text — so before
-pushing a branch that has never been pushed, look at what is in it:
+The push is deferred to the confirmation gate in **Show it before it opens**, and that is a
+deliberate ordering. It is the irreversible step: on a public repo a pushed object stays
+reachable by SHA after a force-push or a branch delete, and forks and caches keep it. Pushing
+during pre-flight would mean declining at the gate un-publishes nothing, so the branch would
+be public whatever the author then decided. Nothing needs the remote in order to compose —
+the title and body come from the local diff — so there is no cost to waiting, and the gate
+becomes what it claims to be: the point before anything is public.
+
+What pre-flight *does* do is look at what a push would publish, because nothing in this
+command reads the *commits* for secrets — the scrub governs published text only:
 
 ```sh
 git diff --stat "$base"...HEAD    # names that look like .env, .pem, id_rsa, credentials.json
 ```
 
-Say what you are about to publish and push it. This is not a veto — invoking this command is
-authorization to put the branch on the remote — it is making the one step that cannot be
-taken back visible before it is taken, rather than filing it under checks that "usually
-pass".
+Report that alongside the title and body, so one decision covers both the text and the
+branch.
 
 **Check whether a PR already exists for this branch.**
 
 ```sh
-gh pr list --head "$branch" --state all --json number,url,state,isDraft
+gh pr list --head "$branch" --state all --json number,url,state,isDraft,baseRefName
 ```
 
-An open one means this is an update, not a create. Say so, keep the composition work, and
-follow the rewrite rules in `~/.claude/reference/github-publishing.md` — carry across
-everything that is not a description of the change, and replace generated sections rather
-than stacking them — then `gh pr edit`. GitHub refuses a second open PR for the same
-head and base, but it refuses with an error that reads as a failure rather than as *you
-meant to edit*, and switching modes deliberately is better than reading that error and
-guessing. A **closed** PR for the same branch is not a bar to opening a new one; mention
-it, since reopening may be what was wanted.
+An open one **whose `baseRefName` equals the base you are targeting** means this is an
+update, not a create. Both halves matter: GitHub allows several open PRs from the same head
+to *different* bases, so matching on head alone can route `gh pr edit` onto a PR that
+targets somewhere else — and on a stack the base is not settled until **How much of this to
+do** below, so re-check this once the base is final rather than acting on the head match
+here. Where it is an update: say so, keep the composition work, follow the rewrite rules in
+`~/.claude/reference/github-publishing.md` — carry across everything that is not a
+description of the change, and replace generated sections rather than stacking them — then
+`gh pr edit`. GitHub refuses a second open PR for the same head *and* base, but it refuses
+with an error that reads as a failure rather than as *you meant to edit*, and switching
+modes deliberately is better than reading that error and guessing. A **closed** or
+**merged** PR for the same branch is not a bar to opening a new one; mention it, since a
+reused branch is worth knowing about and reopening may be what was wanted.
 
 **Name any uncommitted or untracked work, and ask.**
 
@@ -171,13 +185,20 @@ Detect it rather than assume it:
 ```sh
 # Every remote-tracking ref that is an ancestor of HEAD, in one call rather than one probe
 # per open PR. `--merged HEAD` is the same question `--is-ancestor` answers, asked in bulk.
-git fetch --quiet
-git branch -r --merged HEAD --format='%(refname:short)' | grep -v '^origin$' > "$OUT/ancestors"
-gh pr list --state open --json number,headRefName,baseRefName --limit 100 > "$OUT/prs.json"
+# Strip the remote prefix, because the two sides name branches differently: refname:short
+# gives `origin/feature`, headRefName gives `feature`, and intersecting those two spellings
+# matches nothing at all — silently, which reads as "not stacked".
+git fetch --quiet || { echo "fetch failed — cannot resolve the base" >&2; exit 1; }
+git branch -r --merged HEAD --format='%(refname:short)' \
+  | sed -n 's|^origin/||p' | grep -v '^HEAD$' > "$OUT/ancestors"
+gh pr list --state open --limit 100 \
+  --json number,headRefName,baseRefName,headRepositoryOwner > "$OUT/prs.json"
 ```
 
 Intersect the two: an open PR whose head appears in `ancestors` is a branch this one sits on
-top of. Three things decide the answer from there, and each of them is a case that produced a
+top of. Compare only PRs whose `headRepositoryOwner` is this repository's owner — a fork PR's
+head lives in someone else's namespace and has no `origin/` counterpart, so a fork branch
+that happens to share a name with a local one would otherwise match the wrong ref. Three things decide the answer from there, and each of them is a case that produced a
 wrong base before it was written down:
 
 - **Drop `$branch` and `$base` from the candidates.** `--is-ancestor` and `--merged` both
@@ -263,7 +284,9 @@ finding: that is a negative it cannot establish, delivered in the voice of one i
 
 **The verification artifact.** Look for `VERIFICATION.md` under this session's scratch
 directory, at `<scratch>/code-verify/`. Its **Verified at** line carries the commit the
-probes ran against. Compare that to HEAD: if they differ, the section describes superseded
+probes ran against, abbreviated — so compare against `git rev-parse --short HEAD`, not the
+full hash, since an abbreviated SHA never equals a full one and every fresh artifact would
+age as stale. Compare that to HEAD: if they differ, the section describes superseded
 code, and embedding it publishes a stale verdict under a heading that reads as current.
 Two honest options — re-run the verification, or embed it with the commit it actually
 covers named in the provenance line.

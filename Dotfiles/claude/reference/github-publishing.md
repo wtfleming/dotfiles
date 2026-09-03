@@ -70,20 +70,30 @@ gh pr view <n> --json body -q .body > "$OUT/body.raw" \
 # line count: counting matched pairs but not their order lets an `end` above a `start` pass,
 # and the filter then deletes every line below the start marker.
 awk '
-  /<!-- verify:start -->/ { if (skip) { bad = "nested start"; exit 1 } skip = 1; next }
-  /<!-- verify:end -->/   { if (!skip) { bad = "end before start"; exit 1 } skip = 0; next }
+  /<!-- verify:start -->/ { if (skip) exit 1; if (seen) exit 1; skip = 1; seen = 1; next }
+  /<!-- verify:end -->/   { if (!skip) exit 1; skip = 0; next }
   !skip
-  END { if (skip) { bad = "start with no end"; exit 1 } }
+  END { if (skip) exit 1 }
   ' "$OUT/body.raw" > "$OUT/body.md" \
-  || { echo "unbalanced verify markers in the PR body — fix it by hand" >&2; exit 1; }
-{ echo '<!-- verify:start -->'; cat "$OUT/SECTION.md"; echo '<!-- verify:end -->'; } >> "$OUT/body.md"
+  || { echo "verify markers missing, doubled or out of order — fix it by hand" >&2; exit 1; }
+# The section has to exist and be non-empty before any of it reaches the body: a failed `cat`
+# inside the braces still writes both markers, and an empty section between them publishes as
+# a verdict with no content.
+[ -s "$OUT/SECTION.md" ] || { echo "no section to publish" >&2; exit 1; }
+{ echo '<!-- verify:start -->'; cat "$OUT/SECTION.md" || exit 1; echo '<!-- verify:end -->'; } \
+  >> "$OUT/body.md" || { echo "could not append the section — body.md left unpushed" >&2; exit 1; }
 gh pr edit <n> --body-file "$OUT/body.md"
 ```
 
-Both guards are load-bearing, and both fail in the same direction if you drop them: the body
-that gets pushed is missing whatever the author wrote. The read check catches a rate limit, a
-502 or a mistyped PR number — each of which leaves an empty `body.raw` that a counting guard
-reads as balanced. The order check catches the hand-edit that left two half-sections behind.
+Every guard there fails in the same direction if you drop it: the body that gets pushed is
+missing something the author wrote, or claims something no run produced. The read check
+catches a rate limit, a 502 or a mistyped PR number, each of which leaves an empty `body.raw`
+that a counting guard reads as balanced. The order check catches the hand-edit that left two
+half-sections behind. The `seen` flag refuses a body that already holds *two* complete
+sections rather than quietly collapsing them into one — two sections means an earlier write
+went wrong, and deleting both to append a third destroys the evidence of that while looking
+like a clean replace. And the `-s` check stops an unreadable or empty section from being
+published as a verdict inside a matched pair of markers.
 
 ## Put what cannot be regenerated in a comment
 
