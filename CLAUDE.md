@@ -15,10 +15,25 @@ home directory. Key consequences to keep in mind:
 
 - The repo is the source of truth. Edits made to deployed files in `$HOME` do **not**
   flow back — change the file under `Dotfiles/` and re-run the sync.
-- **If you add a new config file under `Dotfiles/`, you must also add a copy step to
-  `sync-dotfiles.sh`**, or it will never be deployed. Write the step as
-  `run cp ...`, not bare `cp` — `run` echoes the command so the sync's output
-  accounts for every file. A bare `cp` still copies, it just goes unreported.
+- **A new file usually needs a matching copy step in `sync-dotfiles.sh`**, or it is
+  never deployed — but *which* step, or whether one is needed at all, depends on how its
+  directory is copied. Three patterns are in use:
+  - **Copied by name** — `Dotfiles/gitconfig`, `Dotfiles/claude/settings.json`, most of
+    `emacs.d/`. Add a line, and write it as `run cp ...`, not bare `cp`: `run` echoes the
+    command so the sync's output accounts for every file. A bare `cp` still copies, it
+    just goes unreported.
+  - **Copied by glob** — `bin/*` and `emacs.d/wtf-elisp/*.el`. A new *file* there needs
+    no edit. A new *directory* is where the two diverge. `bin/*` matches one, and `cp`
+    without `-r` exits 1 on a directory operand, so `set -e` stops the sync there and
+    nothing below it is copied — `~/.claude` included. `wtf-elisp/*.el` matches only a
+    directory whose own name ends `.el`, so an ordinary subdirectory there is skipped
+    without a word instead. The abort itself is not silent — `cp` prints its own error
+    and an `EXIT` trap names the step it stopped at — but neither tells you which of the
+    later steps still need running.
+  - **Swept whole** — `hooks/`, `skills/`, `scripts/`, `reference/`, `agents/` and
+    `commands/` under `Dotfiles/claude/`, each copied as `cp -r .../X/. ~/.claude/X/`.
+    New files *and* whole new subdirectories deploy with no change to the sync, so
+    adding a skill, agent or command needs nothing here.
 - **Deleting or renaming a file here does not remove the deployed copy** — `cp` only
   ever adds. Delete it from `$HOME` by hand as well, in the same change. Skipping that
   leaves a file nothing in the repo accounts for, which later reads as untracked local
@@ -68,6 +83,9 @@ home directory. Key consequences to keep in mind:
 - Shell scripts target bash/zsh on macOS. Keep them `shellcheck`-clean — CI runs
   the same set on every push:
   `shellcheck sync-dotfiles.sh install-dependencies-macos.sh bin/* Dotfiles/claude/hooks/*.sh Dotfiles/claude/scripts/*.sh Dotfiles/claude/skills/*/scripts/*.sh`
+- CI also parses the YAML frontmatter of every `SKILL.md`, agent and command. A header
+  that does not parse registers wrong or not at all, and nothing else notices —
+  `shellcheck` skips markdown and `jq` only sees `settings.json`.
 - Prefer POSIX-compatible test syntax (`[ "$x" = "$y" ]`, not `==`) in `sh` scripts.
 - **New agents, commands and skills under `Dotfiles/claude/` take a `wtf-` prefix**,
   in the file name *and* the registered name. These share a namespace with whatever

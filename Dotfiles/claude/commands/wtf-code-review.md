@@ -235,6 +235,11 @@ The two working-tree shapes need both commands: an untracked file is
 uncommitted work that `git diff` never lists, and a new source file beside a
 Markdown edit is exactly the change that would otherwise pass as prose.
 
+Resolve `<merge-base>` per `~/.claude/reference/scope-resolution.md` rather than
+assuming the default branch is `main` — on a `master` or `trunk` repo the assumption
+collapses the range to `HEAD...HEAD` and the listing comes back empty, which reads here
+as "every file is prose".
+
 A range the user typed is used as typed. When the scope came from the
 reviewer — the second branch above — run this on the revision its Scope line
 states; a subject has no diff to list, so skip the check and dispatch all

@@ -33,6 +33,13 @@ run() {
     "$@"
 }
 
+# set -e stops at the first failing copy, and a bare `cp` over a glob exits 1 when the
+# glob catches a directory while still copying the files beside it -- so the sync can
+# stop partway with everything below that line left stale. Under -q the `run` echoes are
+# suppressed too, leaving no trace of where it got to. EXIT rather than ERR: an ERR trap
+# is not inherited by `run`, which is where every copy actually executes.
+trap '[ $? -eq 0 ] || echo "sync-dotfiles: ABORTED after the last command above -- everything below it was NOT copied" >&2' EXIT
+
 if [ ! -d ~/bin ]; then
     echo "Error: ~/bin directory does not exist" >&2
     exit 1
@@ -130,6 +137,13 @@ run cp ~/src/dotfiles/Dotfiles/claude/CLAUDE.global.md ~/.claude/CLAUDE.md
 run cp -r ~/src/dotfiles/Dotfiles/claude/reference/. ~/.claude/reference/
 run cp -r ~/src/dotfiles/Dotfiles/claude/agents/. ~/.claude/agents/
 run cp -r ~/src/dotfiles/Dotfiles/claude/commands/. ~/.claude/commands/
+
+# Tombstone: wtf-verify-fix was absorbed into wtf-code-verify. The sweeps only ever add,
+# so a machine that synced before the rename would keep the old skill registered beside
+# the new one, with trigger phrases that overlap verbatim. This runs after the sweeps so
+# a failed copy leaves the old skill in place rather than neither. Remove the line once
+# every machine has run it.
+run rm -rf ~/.claude/skills/wtf-verify-fix
 
 
 if [ "$quiet" -eq 0 ]; then

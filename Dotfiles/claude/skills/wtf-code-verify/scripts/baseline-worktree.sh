@@ -17,6 +17,11 @@
 # by walking up from the working directory, and a worktree nested under the checkout
 # gives them two plausible roots to choose between.
 #
+# --base finds the merge base, which is what isolates *your* change. --base-exact takes
+# the ref as given instead, for the deploy-window question -- what is running beside you
+# right now, which is a release tag or the base tip and usually not an ancestor. Both fill
+# the same baseline slot, one tree at a time; `remove` between them.
+#
 # Ecosystems are detected from marker files at the repo root and can be forced or
 # replaced outright. Detection is a convenience, not a contract: --install-cmd and
 # --build-cmd override everything and are the right answer for anything unusual.
@@ -24,7 +29,8 @@
 # Written for bash 3.2 (the macOS system bash), so no associative arrays, no mapfile.
 #
 # Usage:
-#   baseline-worktree.sh create [--base <ref>] [--head <ref>] [--ecosystem <name>]...
+#   baseline-worktree.sh create [--base <ref> | --base-exact <ref>] [--head <ref>]
+#                               [--ecosystem <name>]...
 #                               [--filter <pkg>] [--copy <relpath>]...
 #                               [--install-cmd <cmd>] [--build-cmd <cmd>]
 #                               [--no-build] [--force]
@@ -32,7 +38,7 @@
 #   baseline-worktree.sh path [baseline|head]
 #   baseline-worktree.sh detect
 
-set -euo pipefail
+set -Eeuo pipefail
 
 TOOL_PREFIX=()
 OPT_FILTER=""
@@ -306,6 +312,12 @@ add_tree() {
   mkdir -p "$(dirname "$wt")"
   (cd "$main" && git worktree add --detach "$wt" "$commit")
 
+  # Bootstrap is the step that fails most often, and a half-built tree left registered is
+  # worse than no tree: the next `create` refuses to recreate it and advises reusing it,
+  # which is exactly wrong for a tree whose install never finished. Unwind to the state
+  # before this function ran, so a rerun starts clean.
+  trap 'worktree_destroy "$main" "$wt"' ERR
+
   # Symlinked, not copied: .env holds the machine's real credentials, and a copy in a
   # temp worktree outlives the run. The cache concern above is about build inputs the
   # tool hashes; .env is read at run time.
@@ -320,8 +332,10 @@ add_tree() {
     fi
     mkdir -p "$wt/$(dirname "$relative")"
     ln -sf "$env_file" "$wt/$relative"
-  done < <(find "$main" -name ".env" -not -path "*/node_modules/*" -not -path "*/.git/*" \
-    -not -path "*/deps/*" -not -path "*/_build/*" -not -path "*/target/*")
+  # -prune, not -not -path: the latter discards results without stopping the descent, so
+  # a large monorepo stats every inode under node_modules/ and target/ to find nothing.
+  done < <(find "$main" \( -name node_modules -o -name .git -o -name deps \
+    -o -name _build -o -name target \) -prune -o -name ".env" -print)
 
   if [ ${#OPT_COPIES[@]} -gt 0 ]; then
     echo "    copying generated artifacts"
@@ -357,13 +371,15 @@ add_tree() {
   fi
 
   report_missing_ignored "$main" "$wt"
+  trap - ERR
 }
 
 cmd_create() {
-  local base="main" head_ref="" force=0 eco
+  local base="main" base_set=0 base_exact="" base_label="" head_ref="" force=0 eco
   while [ $# -gt 0 ]; do
     case "$1" in
-      --base) base="${2:?--base needs a ref}"; shift 2 ;;
+      --base) base="${2:?--base needs a ref}"; base_set=1; shift 2 ;;
+      --base-exact) base_exact="${2:?--base-exact needs a ref}"; shift 2 ;;
       --head) head_ref="${2:?--head needs a ref}"; shift 2 ;;
       --ecosystem)
         case "${2:?--ecosystem needs a name}" in
@@ -397,14 +413,33 @@ cmd_create() {
 
   # Without --head the working checkout is the head side, so uncommitted edits run on
   # one side of the comparison and not the other -- they would pass as the change.
-  if [ -z "$head_ref" ] && ! git -C "$main" diff --quiet HEAD; then
-    die "the working checkout is dirty, and without --head it is the head side of the comparison. Uncommitted edits would be credited to the change. Commit or stash them, or name the change with --head <ref>."
+  if [ -z "$head_ref" ]; then
+    if ! git -C "$main" diff --quiet HEAD; then
+      die "the working checkout is dirty, and without --head it is the head side of the comparison. Uncommitted edits would be credited to the change. Commit or stash them, or name the change with --head <ref>."
+    fi
+    # diff --quiet says nothing about untracked files, and a new un-added source file is
+    # live on the head side and absent from the baseline -- the same mis-attribution the
+    # check above exists to stop. `git stash` leaves them behind too, hence -u.
+    if [ -n "$(git -C "$main" ls-files --others --exclude-standard)" ]; then
+      die "the working checkout has untracked files, and without --head it is the head side of the comparison. They are absent from the baseline, so they would be credited to the change. Commit them, stash with 'git stash -u', or name the change with --head <ref>."
+    fi
   fi
 
-  merge_base="$(git -C "$main" merge-base "$after" "$base")" \
-    || die "no merge base between $after_label and $base"
+  if [ -n "$base_exact" ]; then
+    [ "$base_set" -eq 0 ] || die "--base and --base-exact are alternatives; pass one."
+    merge_base="$(git -C "$main" rev-parse --verify "$base_exact^{commit}" 2>/dev/null)" \
+      || die "--base-exact: no such commit: $base_exact"
+    base_label="exact: $base_exact"
+  else
+    merge_base="$(git -C "$main" merge-base "$after" "$base")" \
+      || die "no merge base between $after_label and $base"
+    base_label="merge-base of $after_label and $base"
+  fi
 
-  if [ "$merge_base" = "$after" ]; then
+  # The collapse check belongs to the merge-base path only: --base-exact names a commit
+  # deliberately, and it being an ancestor, a descendant or unrelated is the caller's
+  # business rather than a mistake to catch.
+  if [ -z "$base_exact" ] && [ "$merge_base" = "$after" ]; then
     if [ -n "$head_ref" ]; then
       local fork
       fork="$(suggest_fork_point "$main" "$after" "$base")"
@@ -443,7 +478,7 @@ cmd_create() {
   echo "    ecosystems: ${ECOSYSTEMS[*]:-none detected}"
   [ ${#TOOL_PREFIX[@]} -gt 0 ] && echo "    toolchain:  $(prefix) (pinned by this project)"
 
-  add_tree "$main" "$wt" "$merge_base" "baseline (merge-base of $after_label and $base)"
+  add_tree "$main" "$wt" "$merge_base" "baseline ($base_label)"
   if [ -n "$head_ref" ]; then
     add_tree "$main" "$wt_head" "$after" "head ($head_ref)"
   fi

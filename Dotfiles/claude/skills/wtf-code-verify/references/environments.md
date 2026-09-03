@@ -1,11 +1,24 @@
 # Environments by tier
 
 How to run a probe in a project you do not have memorized, and the hazards that come
-with each tier and each language. Pick the tier from SKILL.md §3 first.
+with each tier and each language. Pick the tier in SKILL.md §5 first.
 
-Whatever you settle on, the invocation must be **identical on both sides**. The
-baseline worktree and the main checkout differ by one commit; if they also differ by
-how you ran the probe, you are comparing two procedures rather than two commits.
+## Contents
+
+- Find the project's own commands before inventing any
+- What CI already runs
+- Pinned toolchains (mise, asdf)
+- Per-language quick reference
+- Tier 0 — a test in one package
+- Tier 1 — headless script, CLI, or a real build
+- Does a clean tree of this branch work?
+- Containers, compose and other isolation
+- Tier 2 — the service booted, driven over its real interface
+- Tier 3 — full stack and a browser
+
+When a claim uses a differential, the invocation must be **identical on both sides**.
+The baseline worktree and the main checkout differ by one commit; if they also differ
+by how you ran the probe, you are comparing two procedures rather than two commits.
 
 ## Find the project's own commands before inventing any
 
@@ -27,6 +40,30 @@ painful to rediscover.
 
 `baseline-worktree.sh detect` prints which ecosystems it found, and a repo can
 legitimately be several at once.
+
+## What CI already runs
+
+Check before designing probes, not after. A probe that duplicates a job running on every
+push has spent minutes to reproduce a green check.
+
+```bash
+ls .github/workflows .gitlab-ci.yml .circleci 2>/dev/null
+grep -rhE '^\s{4,}(run|- run):' .github/workflows 2>/dev/null | sort -u | head -30
+```
+
+Read what the jobs actually invoke, and note where they stop. Most pipelines run the unit
+suite and the linter, some run an integration suite against a service container, and very
+few drive a browser or exercise an authorisation boundary between two real users. The
+probes worth building are the ones on the far side of where CI stops.
+
+Two things this discovery gives you beyond scope. The workflow file is often the most
+accurate documentation of how to run the project — it is executable, so it cannot drift
+the way a README does. And a job that boots services shows you the exact environment
+variables, service versions and health gates the project needs, which is otherwise the
+most tedious thing to reconstruct.
+
+Say what you found in the report, so the run's contribution is legible rather than
+implied.
 
 ## Pinned toolchains (mise, asdf)
 
@@ -92,7 +129,8 @@ runner is a replay, not a run. Force a real execution before citing it, and note
 a replayed log may print paths from wherever the cache entry was originally produced,
 which looks alarming and means nothing.
 
-Prefer this tier. If the probe lives here, write it as a committed test (SKILL.md §4).
+Prefer this tier. A probe that lives here is also the best candidate for promotion to
+a permanent test — see `promotion.md`.
 
 ## Tier 1 — headless script, CLI, or a real build
 
@@ -124,6 +162,85 @@ reproducible on its own — content that changes between the two runs shows up i
 diff looking exactly like a code difference. Run both sides close together, and if a
 diff looks like content rather than structure, re-run the baseline to see whether it
 is stable.
+
+## Does a clean tree of this branch work?
+
+Every probe run in your own checkout runs against a tree carrying your uncommitted env
+var, your generated file, your locally installed dependency, and whatever else has
+accumulated since you last cloned. A change can pass all of them and still be missing a
+file nobody committed.
+
+Worth paying for when the diff touches what causes it: a dependency manifest or lockfile,
+`.env.example` or config, generated code, build configuration, a migration, a CI file, a
+toolchain pin. Skip it otherwise — a change to one resolver cannot break the build for
+anybody else.
+
+```bash
+~/.claude/skills/wtf-code-verify/scripts/baseline-worktree.sh create --head <branch>
+```
+
+`--head` builds the "after" side as its own worktree, bootstrapped from git. Install,
+build, boot, and run the project's own test command in it. Two things this catches that
+nothing else will: a dependency added to the lockfile but not the manifest or the
+reverse, and generated code that is gitignored with no generation step in the build.
+
+**It will not catch a newly required environment variable**, and the failure is silent.
+`add_tree` symlinks every untracked `.env` from your main checkout into the new tree, so
+a variable that lives only in your `.env` is present there too and the boot goes green;
+`report_missing_ignored` stays quiet as well, because its existence test follows the
+symlink. To cover that case you have to take the links out of the picture — plain
+`git worktree add` with `--install-cmd`/`--build-cmd`, or unlink the `.env` files before
+booting — and say in the report which you did.
+
+The script already closes by listing every gitignored path the main checkout has and the
+fresh tree does not, and it runs that check *after* install and build — so anything the
+detected steps recreate is already present and never appears. For a differential the list
+is a bootstrap-gap diagnostic. Here it *is* the finding: each entry is something your
+checkout has that the branch did not carry and the install did not produce.
+
+Two things narrow it before you report one. `--no-build` skips the build, so build output
+shows as absent when it would not otherwise. And a project whose setup includes a step the
+script does not detect will list whatever that step would have made — check the documented
+setup before calling an entry a defect.
+
+Report it on its own line rather than folding it into a probe result. "A clean tree of
+`<branch>` builds and boots" is a different claim from "the feature works", and a reader
+needs to know which one you checked.
+
+## Containers, compose and other isolation
+
+Isolation is not a virtue in itself. It buys attributability — a failure belongs to the
+code rather than to your checkout — and containment, so the probe leaves nothing behind.
+Buy only what the claim needs.
+
+**Use what the project already has.** In order: its compose file
+(`docker-compose*.y*ml`, `compose*.y*ml`), its devcontainer, its Makefile or justfile
+target, its documented `dev` script. These encode service versions, health gates and
+ordering that are invisible from the outside and painful to rediscover.
+
+```bash
+docker compose up -d db redis        # dependencies only, app from the tree under test
+docker compose ps                    # confirm health, not just "started"
+```
+
+Bringing up **only the dependencies** and running the application from the worktree is
+usually the right shape. The app is what you are testing, so you want it built from the
+tree under test with a debugger and logs to hand; the database and cache are stage
+scenery, and they can stay up across both sides of a differential because they are state
+rather than code.
+
+**Do not build an image the project does not have.** A hand-rolled Dockerfile turns the
+session into Dockerfile debugging, which teaches you nothing about the change and
+produces a verdict about your image. If the project has no container story and the claim
+needs one, drop a tier and say in the report which part went unexercised as a result.
+
+**Containers are not a substitute for a fresh entity per run.** A container shared across
+two runs carries its volume with it, so the baseline's rows are still there for the head
+run. Reset the volume between runs (`docker compose down -v`) or use distinct entities —
+and if you reset, remember it also discards any seed the project's setup put there.
+
+**Tear down what you started**, and say so in the report's residue line. A leftover
+container holding port 5432 is the next session's inexplicable connection error.
 
 ## Tier 2 — the service booted, driven over its real interface
 
