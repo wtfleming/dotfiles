@@ -154,8 +154,13 @@ gh pr comment <n> --body-file VERIFICATION.md      # a comment, reversible
 # are needed — and the section is delimited so a rerun *replaces* it rather than stacking
 # a second one below the first. Two verdicts in one body, oldest first, is how a stale
 # "Verified" outlives the run that retracted it.
-gh pr view <n> --json body -q .body \
-  | awk '/<!-- verify:start -->/{skip=1} !skip; /<!-- verify:end -->/{skip=0}' > "$OUT/body.md"
+gh pr view <n> --json body -q .body > "$OUT/body.raw"
+# Fail closed on a half-open marker: with a start and no end the filter below drops
+# everything after it, which silently deletes whatever the author wrote underneath.
+[ "$(grep -c 'verify:start' "$OUT/body.raw")" = "$(grep -c 'verify:end' "$OUT/body.raw")" ] \
+  || { echo "unbalanced verify markers in the PR body — fix it by hand" >&2; exit 1; }
+awk '/<!-- verify:start -->/{skip=1} !skip; /<!-- verify:end -->/{skip=0}' \
+  "$OUT/body.raw" > "$OUT/body.md"
 { echo '<!-- verify:start -->'; cat "$OUT/VERIFICATION.md"; echo '<!-- verify:end -->'; } >> "$OUT/body.md"
 gh pr edit <n> --body-file "$OUT/body.md"
 ```
