@@ -150,10 +150,13 @@ scrub goes here instead.
 ```bash
 gh pr comment <n> --body-file VERIFICATION.md      # a comment, reversible
 
-# into the body instead: fetch, append, push back. The fetch alone changes nothing
-# on GitHub, so all three lines are needed.
-gh pr view <n> --json body -q .body > "$OUT/body.md"
-cat "$OUT/VERIFICATION.md" >> "$OUT/body.md"
+# Into the body instead. The fetch alone changes nothing on GitHub, so all three steps
+# are needed — and the section is delimited so a rerun *replaces* it rather than stacking
+# a second one below the first. Two verdicts in one body, oldest first, is how a stale
+# "Verified" outlives the run that retracted it.
+gh pr view <n> --json body -q .body \
+  | awk '/<!-- verify:start -->/{skip=1} !skip; /<!-- verify:end -->/{skip=0}' > "$OUT/body.md"
+{ echo '<!-- verify:start -->'; cat "$OUT/VERIFICATION.md"; echo '<!-- verify:end -->'; } >> "$OUT/body.md"
 gh pr edit <n> --body-file "$OUT/body.md"
 ```
 

@@ -198,8 +198,11 @@ cheapest first — pick one per claim:
    removes the whole of it. §0 only requires a commit for claims that use a differential, so
    a dirty file is reachable here.
 
-   Break inside a worktree you can throw away. If it genuinely has to be in place, copy the
-   file byte-for-byte before touching it and copy it back afterwards —
+   Break inside a worktree you can throw away. If it genuinely has to be in place, **name
+   the file and get the user's agreement before editing it** — this is the only step in the
+   skill that writes to their own checkout, and an unannounced edit there is indistinguishable
+   from a bug in whatever they were working on. Then copy the file byte-for-byte before
+   touching it and copy it back afterwards —
    `cp <path> "$OUT/pre-break"` … `cp "$OUT/pre-break" <path>` — which restores exactly what
    was there without asking git what it thinks the file should look like. A break left
    behind survives an interrupted run as an uncommitted edit nobody attributes, and the next

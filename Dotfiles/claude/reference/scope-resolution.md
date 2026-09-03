@@ -30,11 +30,18 @@ fix lands once.
 ## Resolve the default branch; do not hardcode `main`
 
 ```sh
-base=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||')
-[ -n "$base" ] || for c in main master trunk; do
-  git rev-parse --verify --quiet "$c" >/dev/null && base=$c && break
+# Keep the remote prefix. A fresh clone or a detached checkout can have origin/main with
+# no local main, and stripping the prefix turns a ref that resolves into one that does
+# not -- which is this file's own failure, committed one paragraph after warning about it.
+base=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null)   # e.g. origin/main
+[ -n "$base" ] || for c in origin/main origin/master origin/trunk main master trunk; do
+  git rev-parse --verify --quiet "$c" >/dev/null && base="$c" && break
 done
+[ -n "$base" ] || echo "cannot resolve a default branch; ask for one" >&2
 ```
+
+Remote-tracking refs come first in that list because they are the ones that exist in a
+clone nobody has branched in.
 
 On a `master` repo, `git merge-base HEAD main` fails, a `$(...)` substitution collapses to
 empty, and `git diff ...HEAD` degrades to `HEAD...HEAD` — empty output, exit 0, no stderr
