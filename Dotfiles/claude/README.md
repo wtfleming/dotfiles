@@ -214,7 +214,11 @@ It reports one of four verdicts. `Not verified` is neither a pass nor a defect a
 which of the three inconclusive shapes it was; `Falsified` — a real defect, found before
 the merge — is a success for the process, and it offers to fix and re-verify rather than
 quietly rewriting history. Every report carries what went uncovered, what CI already
-runs, and what state was left behind. It ends by triaging the probes and offering to
+runs, and what state was left behind — and each of those lines is something checked
+rather than recalled. A verification section is read as the output of a process that
+checked things, so a sentence in it that was reasoned rather than run borrows that
+authority without earning it. Figures fall under the same rule: a count taken from raw
+text rather than a parse reads exactly like a measured value and is not one. It ends by triaging the probes and offering to
 promote the ones worth keeping into permanent tests, in the project's own idiom, proven
 to fail without the fix.
 
@@ -226,7 +230,15 @@ the subject under test.
 It absorbed the earlier `wtf-verify-fix`, whose merge-base differential is now one
 technique among several in `references/differential.md` — the two would otherwise have
 competed for the same trigger. `scripts/baseline-worktree.sh` and
-`references/environments.md` came across with it.
+`references/environments.md` came across with it, and the script gained `--base-exact`:
+the merge base is what isolates *your* change, but the deploy window asks what is running
+beside you, which is a release tag and usually not an ancestor. Without it that probe had
+to hand-roll a worktree and skip the bootstrap the script exists to do.
+
+How to resolve a scope nobody named lives in `~/.claude/reference/scope-resolution.md`,
+shared with the review tooling rather than restated here. Hardcoding `main` fails silently
+on a `master` or `trunk` repo — the merge base collapses, the diff comes back empty with
+exit 0, and an empty diff read as "no changes" is a confident report about nothing.
 
 Deliberately expensive and deliberately rare: at the upper tiers it boots services and
 bootstraps a second worktree, so it announces the tiers it expects to need and asks

@@ -83,6 +83,9 @@ home directory. Key consequences to keep in mind:
 - Shell scripts target bash/zsh on macOS. Keep them `shellcheck`-clean — CI runs
   the same set on every push:
   `shellcheck sync-dotfiles.sh install-dependencies-macos.sh bin/* Dotfiles/claude/hooks/*.sh Dotfiles/claude/scripts/*.sh Dotfiles/claude/skills/*/scripts/*.sh`
+- CI also parses the YAML frontmatter of every `SKILL.md`, agent and command. A header
+  that does not parse registers wrong or not at all, and nothing else notices —
+  `shellcheck` skips markdown and `jq` only sees `settings.json`.
 - Prefer POSIX-compatible test syntax (`[ "$x" = "$y" ]`, not `==`) in `sh` scripts.
 - **New agents, commands and skills under `Dotfiles/claude/` take a `wtf-` prefix**,
   in the file name *and* the registered name. These share a namespace with whatever
