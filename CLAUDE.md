@@ -15,10 +15,21 @@ home directory. Key consequences to keep in mind:
 
 - The repo is the source of truth. Edits made to deployed files in `$HOME` do **not**
   flow back — change the file under `Dotfiles/` and re-run the sync.
-- **If you add a new config file under `Dotfiles/`, you must also add a copy step to
-  `sync-dotfiles.sh`**, or it will never be deployed. Write the step as
-  `run cp ...`, not bare `cp` — `run` echoes the command so the sync's output
-  accounts for every file. A bare `cp` still copies, it just goes unreported.
+- **A new file usually needs a matching copy step in `sync-dotfiles.sh`**, or it is
+  never deployed — but *which* step, or whether one is needed at all, depends on how its
+  directory is copied. Three patterns are in use:
+  - **Copied by name** — `Dotfiles/gitconfig`, `Dotfiles/claude/settings.json`, most of
+    `emacs.d/`. Add a line, and write it as `run cp ...`, not bare `cp`: `run` echoes the
+    command so the sync's output accounts for every file. A bare `cp` still copies, it
+    just goes unreported.
+  - **Copied by glob** — `bin/*` and `emacs.d/wtf-elisp/*.el`. A new *file* there needs
+    no edit. A new *subdirectory* is worse than undeployed: `cp` without `-r` exits 1 on
+    a directory, the script runs under `set -e`, and so the sync aborts at that line —
+    leaving everything below it, `~/.claude` included, silently stale.
+  - **Swept whole** — `hooks/`, `skills/`, `scripts/`, `reference/`, `agents/` and
+    `commands/` under `Dotfiles/claude/`, each copied as `cp -r .../X/. ~/.claude/X/`.
+    New files *and* whole new subdirectories deploy with no change to the sync, so
+    adding a skill, agent or command needs nothing here.
 - **Deleting or renaming a file here does not remove the deployed copy** — `cp` only
   ever adds. Delete it from `$HOME` by hand as well, in the same change. Skipping that
   leaves a file nothing in the repo accounts for, which later reads as untracked local
