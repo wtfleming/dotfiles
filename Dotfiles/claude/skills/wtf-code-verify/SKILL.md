@@ -67,9 +67,11 @@ Bootstrapping executes that tree's own install scripts in a worktree with this m
 
 A named scope comes in three shapes.
 
-**A revision** — a ref, a branch, a path, a PR number. Diff it. `gh pr diff <n>` and
-`gh pr view <n>` for a PR, which also gives you the body, and the body is where the
-author already wrote down what they think they did. On a PR that body is both context
+**A revision** — a ref, a branch, a path, a PR number. Resolve it with
+`~/.claude/scripts/resolve-scope.sh resolve --scope <it>`, the same way an omitted scope is
+resolved below, so a named revision gets the artifact and the `correspondence` too rather
+than a diff derived a second way. `gh pr view <n>` still gives you the body, and the body
+is where the author already wrote down what they think they did. On a PR that body is both context
 and a claim in its own right, verified alongside the code — it was written before review
 and is rarely updated after.
 
@@ -81,12 +83,16 @@ cannot see that choice has no way to tell whether the run covered the thing they
 If nothing in the repo plausibly implements the subject, say so and stop rather than
 verifying the nearest thing you found.
 
-**Nothing** — resolve it yourself: uncommitted work, else the branch against its merge
-base, else `git show HEAD`. Follow `~/.claude/reference/scope-resolution.md` for the
-procedure. Two things there decide whether this step is silently wrong: the default branch
-has to be resolved rather than assumed to be `main`, and an empty diff means *fall
-through*, not *no changes*. Where nothing resolves, ask for `--base` rather than
-guessing.
+**Nothing** — resolve it with `~/.claude/scripts/resolve-scope.sh resolve` and no
+`--scope`: uncommitted work, else the branch against its merge base, else `git show HEAD`. It implements
+`~/.claude/reference/scope-resolution.md`, including the two things that decide whether
+this step is silently wrong — the default branch resolved rather than assumed to be
+`main`, and an empty diff treated as *fall through* rather than *no changes*. Where
+nothing resolves it says so and stops; ask for `--base` rather than guessing.
+
+The resolver exits **2** when the scope is prose — that is the subject case above, and
+its procedure applies instead. Any other non-zero exit is a real failure: report it and
+stop rather than verifying something else.
 
 State the scope you settled on before you run anything.
 

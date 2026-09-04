@@ -27,10 +27,24 @@ command *does*; do not invoke it. Ordinary read-only git is fine — `git diff`,
 
 ## 1. Establish scope
 
-If the task names a scope (a ref, a branch, a path), use it. Otherwise resolve one per
-`~/.claude/reference/scope-resolution.md`: uncommitted changes if there are any, else
-the branch against its merge base, else `git show HEAD`. State what you settled on at
-the top of your report.
+Resolve it with `~/.claude/scripts/resolve-scope.sh resolve [--scope <what you were
+given>]`, which implements `~/.claude/reference/scope-resolution.md`: uncommitted changes
+if there are any, else the branch against its merge base, else `git show HEAD`, with the
+default branch resolved rather than assumed. It exits 2 when the scope is prose rather
+than a revision, which for a design review means read the code that implements it and
+review that.
+
+State what you settled on at the top of your report. On a resolved scope that is the
+manifest's `scope_line`. **On the exit-2 path there is no manifest** — nothing was written
+— so say it in the subject form instead: the subject, the files you chose, and how you
+found them. A reader who cannot see that choice cannot tell whether the review covered what
+they meant.
+
+Where `correspondence` is anything but `workspace` or `same`, the working tree is not the
+code you were asked to review — read it with `git show <scope_head>:<path>`, or out of
+`scope.diff` where that cannot reach it: a file the change deleted is absent at
+`scope_head`, and on `unknown` the head is not local at all. Shape is judged from whole
+files, so reading the wrong ones is not a small error here.
 
 Read the repo's stated rules before judging shape — `CLAUDE.md` at every level
 of the tree above the touched files, and `ARCHITECTURE.md`, `DESIGN.md` or

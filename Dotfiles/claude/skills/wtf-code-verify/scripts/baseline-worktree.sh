@@ -17,7 +17,9 @@
 # by walking up from the working directory, and a worktree nested under the checkout
 # gives them two plausible roots to choose between.
 #
-# --base finds the merge base, which is what isolates *your* change. --base-exact takes
+# --base finds the merge base, which is what isolates *your* change. It defaults to the
+# repository's default branch, resolved rather than assumed -- hardcoding `main` yields a
+# base that looks resolved and is not on a master or trunk repo. --base-exact takes
 # the ref as given instead, for the deploy-window question -- what is running beside you
 # right now, which is a release tag or the base tip and usually not an ancestor. Both fill
 # the same baseline slot, one tree at a time; `remove` between them.
@@ -375,7 +377,7 @@ add_tree() {
 }
 
 cmd_create() {
-  local base="main" base_set=0 base_exact="" base_label="" head_ref="" force=0 eco
+  local base="" base_set=0 base_exact="" base_label="" head_ref="" force=0 eco
   while [ $# -gt 0 ]; do
     case "$1" in
       --base) base="${2:?--base needs a ref}"; base_set=1; shift 2 ;;
@@ -397,7 +399,7 @@ cmd_create() {
     esac
   done
 
-  local main wt wt_head merge_base after after_label existing=()
+  local main wt wt_head merge_base after after_label resolver existing=()
   main="$(main_root)"
   wt="$(worktree_path baseline)"
   wt_head="$(worktree_path head)"
@@ -423,6 +425,18 @@ cmd_create() {
     if [ -n "$(git -C "$main" ls-files --others --exclude-standard)" ]; then
       die "the working checkout has untracked files, and without --head it is the head side of the comparison. They are absent from the baseline, so they would be credited to the change. Commit them, stash with 'git stash -u', or name the change with --head <ref>."
     fi
+  fi
+
+  # Defaulting to the literal "main" gave a base that looks resolved and is not on a
+  # master or trunk repo. Resolved lazily: --base and --base-exact never need the lookup.
+  if [ -z "$base_exact" ] && [ -z "$base" ]; then
+    # Relative to this script, not $HOME: the path resolves in both layouts, and the
+    # hardcoded one silently ran the last *deployed* resolver when this copy was the one
+    # being edited.
+    resolver="$(dirname "$0")/../../../scripts/resolve-scope.sh"
+    [ -x "$resolver" ] || die "cannot find resolve-scope.sh beside this script (looked in $resolver); pass --base <ref>."
+    base="$("$resolver" base)" \
+      || die "cannot resolve a default branch to use as the base; pass --base <ref>."
   fi
 
   if [ -n "$base_exact" ]; then

@@ -31,24 +31,56 @@ reviewed, and a reader who cannot see that choice has no way to tell whether the
 report covers the code they meant. If nothing in the repo plausibly implements
 the subject, say so and stop rather than reviewing the nearest thing you found.
 
-If the task names no scope at all:
+**If you were handed an artifact directory, read it — do not re-resolve.** A dispatch may
+give you a path to a directory holding `scope.diff` and `manifest.json`, already settled by
+whoever spawned you. Read the diff from that file and take the file list, the scope line and
+the correspondence from the manifest. Running the resolver again there is wrong twice over:
+it republishes that directory underneath the other agents reading it right now, and on an
+uncommitted scope a tree that moved between the two runs hands them a different diff than
+you got — the divergence the artifact exists to prevent. (Feeding the directory back in as
+`--scope` does not even work: it is outside the repository, and the resolver stops.)
 
+Otherwise — a revision, or no scope at all — resolve it with the script rather than by hand:
+
+```sh
+~/.claude/scripts/resolve-scope.sh resolve [--scope <ref|range|path|PR#>]
 ```
-git status --porcelain
-git stash list
-git diff                     # unstaged
-git diff --staged            # staged
-```
 
-If the working tree is clean, review the branch against its merge base instead; if that
-is empty too, review `git show HEAD`. Follow
-`~/.claude/reference/scope-resolution.md` for both steps — resolving the default branch
-rather than assuming `main`, since the assumption fails silently on a `master` or `trunk`
-repo, and treating an empty diff as *fall through* rather than as no changes.
+It prints the scope line and the artifact directory, which holds `scope.diff` and
+`manifest.json`. It implements the whole procedure in
+`~/.claude/reference/scope-resolution.md` — the three-step fall-through, the default
+branch resolved rather than assumed to be `main`, untracked files folded into the same
+diff, the base fetched first, and an empty diff treated as *fall through* rather than as
+no changes. `git status --porcelain` and `git stash list` are still worth running for
+context the diff does not carry.
 
-State the scope you settled on at the top of your report. Read the full
-surrounding file for any hunk you comment on — a diff alone hides the caller,
-the existing error handling, and the conventions you are judging against.
+It exits **2** when the scope is not a PR, a range, a ref or a path — that is a subject,
+and the subject procedure above applies instead. **Nothing is written on that path**, so
+the two manifest-backed header lines below do not apply to it: state the subject, the files
+you settled on and how you found them, and write the `Correspondence:` line as
+`workspace · none · none` — you read the tree as it stands, which is what a subject means.
+
+Otherwise, state the scope you settled on at the top of your report, using the manifest's
+`scope_line` rather than composing your own: it already names the ref, the file count,
+which step settled it and how the tree corresponds.
+
+Then give `correspondence`, `scope_head` and the artifact directory their own
+**Correspondence:** header line, as three fields. `scope_line` is prose written for a
+reader and names none of them in a form anything downstream can use — and whoever
+dispatched you may have only your report to relay from, so a refuter's instruction to read
+the scope's blobs depends on those three surviving the hop. Write `none` for the directory
+where you resolved the scope yourself and there is no artifact to point at.
+
+**Check `correspondence` before you read a file.** On `workspace` or `same`, read files
+from disk as usual. On anything else the working tree is not the code under review. Read the reviewed
+contents with `git show <scope_head>:<path>` — except in the two cases where that cannot
+work, neither of which the manifest flags: a file the change **deleted** does not exist at
+`scope_head`, and on `unknown` the head may not be in the local object database at all.
+Read those out of `scope.diff` itself, which always holds them. Reading the wrong tree does not merely add noise:
+findings that cannot be located get dropped, so the mismatch deletes real ones.
+
+Read the full surrounding file for any hunk you comment on — a diff alone hides the
+caller, the existing error handling, and the conventions you are judging against.
 
 ## 2. Run the tests
 
@@ -143,10 +175,17 @@ Three tiers, plus one section for problems the change did not cause. Every
 finding gets `file:line`, a statement of what breaks, and a concrete fix. No
 other severity labels.
 
+**Anchor with a repo-relative path and a single line** — not an absolute path,
+not a line range. Findings from this report get merged with other agents' by
+their anchors, and an anchor written a different way is a duplicate nobody can
+match. Where a finding genuinely has no single line, give the file alone rather
+than inventing one.
+
 ```markdown
 # Code Review
 
 **Scope:** <what you diffed> — <N> files, +<A>/-<B>
+**Correspondence:** <state> · <scope_head> · <artifact directory, or "none">
 **Tests:** <command> → <pass / N failed / not run: reason>
 **Lint:** <command> → <clean / N issues / not run: reason>
 

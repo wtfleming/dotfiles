@@ -1,7 +1,7 @@
 ---
 description: 'Compose and open a pull request — pre-flight the branch, report what has gone stale since it was written, then write a title that survives a squash merge and a body that is true in both directions. Use this whenever a finished branch is ready to go up for review: "open a PR", "raise a PR for this", "push this up for review", "PR this branch", "make a pull request". It composes and opens, and shows you both before it does; it does not review the code (that is /wtf-code-review), prove it works (wtf-code-verify), or merge anything.'
 argument-hint: "[--draft] [extra context — an issue to close, framing the diff cannot show]"
-allowed-tools: Read, Grep, Glob, Write, Bash(git:*), Bash(gh pr list:*), Bash(gh pr view:*), Bash(gh pr create:*), Bash(gh pr edit:*), Bash(gh pr comment:*), Bash(gh repo view:*), Bash(gh api:*)
+allowed-tools: Read, Grep, Glob, Write, Bash(git:*), Bash(~/.claude/scripts/resolve-scope.sh:*), Bash(gh pr list:*), Bash(gh pr view:*), Bash(gh pr create:*), Bash(gh pr edit:*), Bash(gh pr comment:*), Bash(gh repo view:*), Bash(gh api:*)
 ---
 
 Arguments: $ARGUMENTS
@@ -47,9 +47,10 @@ this branch's and routes to `gh pr edit` on it. The upstream check is no guard e
 reports "no upstream" here, whose prescribed fix is `git push -u`, which cannot work when
 there is no branch to push.
 
-**HEAD must not be the default branch.** Resolve the default per
-`~/.claude/reference/scope-resolution.md` rather than assuming `main` — on a `master` or
-`trunk` repo the assumption produces a base that looks resolved and is not. Standing on
+**HEAD must not be the default branch.** Resolve the default with
+`~/.claude/scripts/resolve-scope.sh base`, which is the executable copy of the candidate
+loop in `~/.claude/reference/scope-resolution.md`, rather than assuming `main` — on a
+`master` or `trunk` repo the assumption produces a base that looks resolved and is not. Standing on
 the default branch there is nothing to open a PR *from*, so refuse and say what would fix
 it. If the work is already committed there locally, moving it onto a branch rewrites local
 history: propose the move and wait for a yes rather than performing it.

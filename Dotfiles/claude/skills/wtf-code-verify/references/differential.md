@@ -59,7 +59,7 @@ An intermittent bug is exactly the kind someone reaches for a differential to pr
 ## Build the baseline
 
 ```bash
-~/.claude/skills/wtf-code-verify/scripts/baseline-worktree.sh create --base main
+~/.claude/skills/wtf-code-verify/scripts/baseline-worktree.sh create
 ```
 
 This creates a worktree at `git merge-base HEAD <base>` **outside the repo** (under
@@ -92,17 +92,17 @@ whole-workspace. Keep the filter **wider than what the probe exercises**, though
 A's *built* output, and a filter narrower than the probe's reach reproduces exactly the
 broken-baseline failure this file spends its length warning about.
 
-The merge base, not the tip of `main`: you are isolating **your** change, and anything
-that landed on `main` since you branched is somebody else's variable.
+The merge base, not the tip of the default branch: you are isolating **your** change, and
+anything that landed there since you branched is somebody else's variable.
 
 By default the "after" side is your working checkout. `--head <ref>` names it instead and
 builds a second worktree for it — which you need when the change is already merged, or
 sits on a branch you would rather not check out. It also makes the two sides symmetric:
 both freshly bootstrapped, neither carrying whatever your working checkout has
 accumulated. For a change that already landed, point `--head` at the branch tip and
-`--base` at the commit it forked from; naming `--base main` there compares the change
-against a branch that already contains it, and the script says so and works out the fork
-point for you.
+`--base` at the commit it forked from; leaving the base at the default branch there
+compares the change against a branch that already contains it, and the script says so and
+works out the fork point for you.
 
 Bootstrapping is the step that goes wrong most often. A worktree shares git history but
 not gitignored files, so a fresh one has no dependencies, no compiled output, no `.env`
