@@ -9,6 +9,13 @@ Arguments: $ARGUMENTS
 Split those into a scope and the optional flag `--lite`. Everything that is not
 the flag is the scope, and the scope may be empty.
 
+**A leading em or en dash means a double hyphen.** iOS smart punctuation rewrites
+`--` as it is typed, so from the Claude app the flag usually arrives as `—lite`,
+sometimes `–lite`. Read `—lite`, `–lite` and `−lite` as `--lite`, and the same for
+`—deep` below. This is not a nicety: the rule above sends anything that is not the
+flag to the scope, so a dashed flag left unrecognised is reviewed as a path that
+does not exist, and the run reports on nothing.
+
 The full pass is the default: the reviewer, a dedicated agent per dimension, and
 a refuter per finding that survives to verification. `--lite` is the reviewer
 alone, with only its Criticals verified. Where the text below says *under

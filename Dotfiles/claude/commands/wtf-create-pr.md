@@ -10,6 +10,12 @@ Treat `--draft` as a flag and everything else as context for the body — an iss
 a reason the diff cannot show, a reviewer's earlier ask. It may be empty, which is the
 normal case: the branch is the input.
 
+**A leading em or en dash means a double hyphen.** iOS smart punctuation rewrites `--`
+as it is typed, so from the Claude app the flag usually arrives as `—draft`, sometimes
+`–draft`. Read `—draft`, `–draft` and `−draft` as `--draft`. Everything else here is body
+context, so an unrecognised `—draft` does not fail loudly — it opens a normal PR with
+the word "draft" folded into the body, which reads as the author's own framing.
+
 ## What this does
 
 Composes a pull request and opens it. That is the whole job. It does not review the code,
