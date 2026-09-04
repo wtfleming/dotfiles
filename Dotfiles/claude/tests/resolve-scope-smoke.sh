@@ -355,6 +355,58 @@ rc=0
 ( cd "$WORK/republish" && PATH="$stub:$PATH" "$RESOLVE" resolve --scope HEAD ) >/dev/null 2>&1 || rc=$?
 check "a jq system error leaves the script at 1, not 2" "1" "$rc"
 
+echo "== a phrase naming the default scope resolves as the default, not as a subject =="
+# `/wtf-code-review this branch` is the natural way to ask for the default, and the
+# argument-hint teaches the word "branch" -- but the phrase has a space, so before this it
+# hit the whitespace rule and the caller ran the subject procedure against prose no file
+# implements. The two collision cases matter more than the happy path: the guard has to let
+# a real ref or a real path win, or naming one becomes unreachable.
+scratch_repo "$WORK/deictic"
+commit "$WORK/deictic" a.txt one base
+(cd "$WORK/deictic" && git checkout -q -b feature && :)
+commit "$WORK/deictic" b.txt two feature
+
+bare=$(cd "$WORK/deictic" && "$RESOLVE" resolve 2>/dev/null | head -1)
+for phrase in "this branch" "the branch" "my changes" "THE Working Tree " "uncommitted"; do
+  out=$(cd "$WORK/deictic" && "$RESOLVE" resolve --scope "$phrase" 2>/dev/null | head -1)
+  check "'$phrase' resolves as the bare default" "$bare" "$out"
+done
+# Announced, not silent: the manifest says nothing was named, which is only true after the
+# phrase has been translated.
+err=$(cd "$WORK/deictic" && "$RESOLVE" resolve --scope 'this branch' 2>&1 >/dev/null | head -1)
+case "$err" in
+  *"names the default scope"*) echo "  ok    the translation is announced on stderr" ;;
+  *) echo "  FAIL  the translation is announced on stderr: got '$err'" >&2; failures=$((failures + 1)) ;;
+esac
+
+# A phrase describing some *other* scope is still a subject, which is the boundary that
+# keeps the list from growing into a natural-language parser.
+rc=0; (cd "$WORK/deictic" && "$RESOLVE" resolve --scope 'the last three commits' >/dev/null 2>&1) || rc=$?
+check "a phrase naming a different scope still exits 2" "2" "$rc"
+
+# Collision 1: a real branch wins. `uncommitted` is a legal refname, so this one is
+# reachable -- the space-bearing phrases are not, since git refuses spaces in a refname.
+(cd "$WORK/deictic" && git checkout -q -b uncommitted && :)
+commit "$WORK/deictic" c.txt three uncommitted
+out=$(cd "$WORK/deictic" && "$RESOLVE" resolve --scope uncommitted 2>/dev/null | head -1)
+case "$out" in
+  *"merge-base main uncommitted"*) echo "  ok    a real branch named 'uncommitted' still wins" ;;
+  *) echo "  FAIL  a real branch named 'uncommitted' still wins: got '$out'" >&2; failures=$((failures + 1)) ;;
+esac
+
+# Collision 2: a real path wins. Committed and then modified, so the path scope has a diff
+# to resolve and the run reaches a manifest rather than the empty-diff guard.
+scratch_repo "$WORK/deictic-path"
+commit "$WORK/deictic-path" "the branch" one base
+(cd "$WORK/deictic-path" && printf 'changed\n' >> "the branch")
+out=$(cd "$WORK/deictic-path" && "$RESOLVE" resolve --scope 'the branch' 2>/dev/null | tail -1)
+check "a real path named 'the branch' still wins" "1" "$(field "$out" .file_count)"
+err=$(cd "$WORK/deictic-path" && "$RESOLVE" resolve --scope 'the branch' 2>&1 >/dev/null | head -1)
+case "$err" in
+  *"names the default scope"*) echo "  FAIL  a real path was translated to the default" >&2; failures=$((failures + 1)) ;;
+  *) echo "  ok    a real path is not translated" ;;
+esac
+
 if [ "$failures" -gt 0 ]; then
   echo "$failures check(s) failed" >&2
   exit 1

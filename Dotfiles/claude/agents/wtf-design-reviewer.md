@@ -39,9 +39,10 @@ command *does*; do not invoke it. Ordinary read-only git is fine — `git diff`,
 Resolve it with `~/.claude/scripts/resolve-scope.sh resolve [--scope <what you were
 given>]`, which implements `~/.claude/reference/scope-resolution.md`: uncommitted changes
 if there are any, else the branch against its merge base, else `git show HEAD`, with the
-default branch resolved rather than assumed. It exits 2 when the scope is prose rather
-than a revision, which for a design review means read the code that implements it and
-review that.
+default branch resolved rather than assumed. It exits 2 when the scope is prose naming an
+area of behaviour rather than a revision, which for a design review means read the code
+that implements it and review that. Prose that names the default scope instead — "this
+branch", "my changes" — it translates and resolves, saying so on stderr.
 
 State what you settled on at the top of your report. On a resolved scope that is the
 manifest's `scope_line`. **On the exit-2 path there is no manifest** — nothing was written

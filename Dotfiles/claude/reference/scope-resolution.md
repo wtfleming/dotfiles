@@ -64,6 +64,28 @@ procedure returns a confident review of a scope nobody asked for.
 `scope_line` exists so that a reviewer, eight lenses and a merged report describe one scope
 in one form rather than nine. Use it rather than composing your own.
 
+## A phrase that names the default counts as naming nothing
+
+`this branch`, `the branch`, `my changes`, `the working tree`, `uncommitted` and their
+close variants are how a person asks for the default out loud, and the commands' own
+argument hints teach the vocabulary — they offer "branch" and describe the fall-through as
+"else the branch". None of them is a revision, and the ones with a space in them land on
+the whitespace rule that means *subject*, so without this the caller runs the subject
+procedure against prose no file implements: one wasted dispatch, a round trip, and a report
+that nothing in the repo implements "this branch".
+
+The resolver translates them to the fall-through below and **says on stderr that it did**,
+because the manifest will read `nothing named` and that is only true after the translation.
+Two constraints on the translation, both of which the smoke test pins:
+
+- **A real ref or a real path wins.** The check runs after both tests, so a repo with a
+  branch called `uncommitted` or a file called `the branch` still resolves to it. Git
+  refuses spaces in a refname, so only the space-free entries can collide with a ref.
+- **The list holds only phrases meaning *the default*.** Anything describing a different
+  scope stays what it is: `the last three commits` is a revision the caller should spell as
+  one, and `the auth changes` is a subject. Without that boundary this becomes a
+  natural-language parser with nowhere to stop.
+
 ## The order, when nothing is named
 
 1. **Uncommitted work**, if there is any:
