@@ -296,9 +296,14 @@ last move is the worst outcome this method can produce.
 
 **Falsified is a success for this process.** Finding it now is the entire point of
 running before the PR. Report the failure with its reproduction first, then offer to fix
-it and re-verify — ask; do not assume. If you do fix and re-run, the report says the
-verdict describes post-fix code and quotes the original failure verbatim. A report
-showing only the final green run has erased the most valuable thing the run produced.
+it and re-verify — ask; do not assume. If you do fix and re-run, the **terminal** report
+says the verdict describes post-fix code and quotes the original failure verbatim. A
+report to the author showing only the final green run has erased the most valuable thing
+the run produced.
+
+The PR section is the other audience and takes the opposite rule: it describes the code
+as it now stands and leaves the failure out, because the fix is a commit in the branch
+the reviewer is already reading. `references/evidence.md` has both forms.
 
 ## 8. Report
 

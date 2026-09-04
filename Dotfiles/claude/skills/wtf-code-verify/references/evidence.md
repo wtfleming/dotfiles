@@ -65,10 +65,27 @@ failure". Write the bytes down first, read them second.
 Paste under the change summary. Keep it short — a reviewer should be able to tell in
 fifteen seconds whether the claim was actually tested, and by what.
 
+**It describes the code, not the run that got there.** Every row states what the code in
+this PR does now. A defect this run found and fixed does not appear: the fix is a commit
+in the branch, so the diff already carries it, and narrating it here duplicates what the
+reviewer is about to read while leaving them to work out whether the ❌ still applies.
+
+The test is which before-and-after a sentence is about. Against the base branch it is the
+change itself and belongs here — "the resolver now returns 400" is what the PR is for.
+Against an earlier state of this same branch it is the run's history, and a row carrying
+an ❌ for code that no longer exists is the clearest case: it reads as a defect the
+reviewer should look for.
+
+That history is not thrown away, it is addressed to someone else. The author gets it in
+the terminal report, where a defect caught before the merge is the most valuable thing
+the run produced; the reviewer gets the state of the code they are being asked to
+approve. The one exception is a claim still unproven at the end — a gap, an environmental
+failure, a non-deterministic probe — which is a fact about this code and belongs here.
+
 ````markdown
 ## Verification
 
-**Verdict.** Verified with gaps — 3 of 4 expectations met, 1 defect found and fixed in `a91c` (see below).
+**Verdict.** Verified with gaps — 4 of 4 expectations met against this code; one path went unexercised (see **Not covered**).
 
 **Scope.** `feat/archived-posts` vs merge-base `2427dfb` — 4 files
 **Verified at.** `5544ef1` — the commit the probes actually ran against
@@ -78,7 +95,7 @@ fifteen seconds whether the claim was actually tested, and by what.
 | - | ----------- | ------------- | ------ |
 | 1 | editor with `includeArchived: true` sees archived id 7 | flag off → id 7 absent | ✅ 200, id 7 present |
 | 2 | anonymous caller is refused | valid session → 200 | ✅ 401 `UNAUTHENTICATED`, no `data.posts` |
-| 3 | `includeArchived: "banana"` → 400, field-level error | valid value → 200 | ❌ 500 `Boolean cannot represent a non boolean value` — fixed in `a91c`, now 400 |
+| 3 | `includeArchived: "banana"` → 400, field-level error | valid value → 200 | ✅ 400 `BAD_USER_INPUT`, error names the field |
 | 4 | `posts` with no new argument is unchanged | baseline `2427dfb` | ✅ byte-identical response |
 
 <details><summary>Raw output</summary>
