@@ -503,10 +503,30 @@ import left unused by a deletion, a rename applied in three places out of four.
 That is the shape a fix to a Suggestion breaks in, and it is exactly what a
 refuter reading one finding is not looking at.
 
+One case takes the batch apart. A refuter re-runs a command its finding cites
+having observed, so when any finding going out to one cites an observed test
+run, its suite and yours are the same command in the same checkout launched at
+once — two runs over one cache, lock or artifact directory, and a result
+neither can be trusted. Wait for the refuters before re-running then, and say
+the batch was split and why. Nothing else needs the wait: the linter runs in
+check mode on both sides, and a refuter holding no test-citing finding starts
+no suite.
+
 Run the command the report's **Lint:** line names, not the project's `lint`
 script. Where that script fixes in place — `eslint --fix` and friends — the
 reviewer already substituted a check-mode invocation, and re-deriving the
 command here would throw that away and rewrite the tree mid-verification.
+
+Both re-runs are execution, so they take the trust gate the refuters take. The
+check-mode substitution governs what the linter *does*, not whose code it
+loads — a suite runs the tree's test files, config and build hooks, and a
+linter loads its config and plugins from that same tree. Run neither unless the
+tree is the user's own work or they have sanctioned it explicitly. The fix path
+already knows which, since it relays that provenance to every refuter it
+dispatches, and the session's own permissions are no guard here: a project that
+pre-approves its test or lint command runs it unprompted. Otherwise report both
+as `not run: tree is not the user's own work`, and say the fixes stand checked
+by the refuters alone.
 
 The verdicts read inverted from the verify pass: the refuter argues the code is
 correct, so against the fixed tree `refuted` means the problem is gone and
