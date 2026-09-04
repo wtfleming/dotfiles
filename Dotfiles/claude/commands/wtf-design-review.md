@@ -33,6 +33,14 @@ Print the report verbatim when it returns. Do not re-rank it, soften it, or
 defend the code — you are relaying an independent review, not negotiating with
 it.
 
+That includes the report's closing **Coverage** section, which says how widely
+the reviewer read — every entry as written. Relay it even when the verdict is
+that the shape is sound: a clean report is the case where how far the review
+reached is the whole of what the author has to weigh, and it is also the case
+where the section looks the most droppable. If the report has no **Coverage**
+section, or it is missing entries, say which rather than filling them in — an
+unaccounted read is not a wide one.
+
 Then stop. The suggestions are the author's to weigh — a design review is
 advice, not a mandate, and the author knows the constraints and sunk cost the
 reviewer cannot see. If the user replies asking to take a suggestion, do the
