@@ -26,9 +26,11 @@ conversation where their intent lives — not here.
 
 Launch the `wtf-change-reviewer` subagent on the scope. Dispatch it with the
 Agent tool, `subagent_type: "wtf-change-reviewer"`, and wait for it to
-complete — except on a named revision, where this dispatch is held for the
-batched launch described below so the lenses do not serialise behind it. Under
-`--lite` there is no batch to hold it for, so always wait.
+complete — except where you resolved the scope before dispatch, which is every
+shape but a subject: a named revision and a bare invocation alike, since the
+lenses launch in that same batch and cannot wait for the reviewer. Hold the
+dispatch for the batch there. Under `--lite` there is no batch to hold it for,
+so always wait.
 
 The whole point is that the reviewer starts cold. So the prompt you send it
 contains **only** the scope. Do not include:
@@ -78,8 +80,7 @@ agent that wrote a finding is the worst-placed to judge it, alone or in a crowd.
 Verifying all of them here would cost what the full pass costs, on the path
 chosen for being cheap — and unlike a lens, a refuter cannot ride along in the
 reviewer's batch, because a finding has to exist before anything can argue
-against it. So
-this path verifies **Critical findings only**:
+against it. So this path verifies **Critical findings only**:
 
 - Critical is the tier that claims to block the commit, so a false one is the
   most expensive finding in the report: it stops work that should not stop.
@@ -200,10 +201,14 @@ the others. This adds a dedicated pass per dimension, over the same scope the
 reviewer reads — plus `reuse` and `resilience`, which the reviewer's checklist
 does not cover at all.
 
-**`--lite` skips this section and everything below it**, stopping where **Review**
-says to. It exists for the runs where the reviewer alone is the right spend — a
-one-file change, a second look at something already reviewed — and it is a
-deliberate choice, not the fallback for a scope that merely looks small.
+**`--lite` skips this section and the rest of the per-dimension pass**, stopping
+where **Review** says to. It skips the *pass*, not the file: **If the user asks
+for fixes** is where **Review** sends a `--lite` run when the user asks, and
+**If the findings go to GitHub** governs findings from either path. Both sit
+below this section and both apply. It exists for the runs where the reviewer
+alone is the right spend — a one-file change, a second look at something already
+reviewed — and it is a deliberate choice, not the fallback for a scope that
+merely looks small.
 
 Say up front how many agents you are about to spawn, so the cost is the user's
 to refuse before it is spent rather than after. Not every scope has a surface
@@ -323,7 +328,7 @@ The lenses and their rubrics:
 |---|---|
 | `correctness` | logic errors, off-by-one, wrong operator, null/empty/zero/max edges, races, unhandled promises, missing await |
 | `security` | unvalidated input at boundaries, hardcoded secrets, injection, sensitive data in logs and errors, authz gaps |
-| `tests` | new branches with no test, uncovered edge cases, tests that cannot fail, flakiness, fixtures that hide the bug, an invariant a handful of examples cannot pin where the repo already has a property-based harness |
+| `tests` | new branches with no test, uncovered edge cases, tests that cannot fail, flakiness, fixtures that hide the bug, an invariant a handful of examples cannot pin where the repo's tests already use a property-based harness |
 | `maintainability` | unclear names, functions doing several things, unactionable error messages, comments explaining *what*, changes bundling unrelated concerns |
 | `resilience` | outbound calls with no timeout, retries with no backoff or no cap, a failure swallowed into a default that reads as success, multi-step work that leaves inconsistent state when it fails halfway, a retried write that is not idempotent, a call the code assumes cannot fail, a new failure path nothing logs |
 | `reuse` | logic the repo already implements elsewhere, a second copy of something within the diff itself, a hand-rolled version of what a dependency already in the manifest provides, a new abstraction where an existing one would have served, code shared between two things that only look alike — and code the change orphaned but did not remove: a function whose last caller went away, a config key nothing reads, a flag now permanently on with its dead branch intact |
@@ -340,8 +345,9 @@ trivial code without one is not.
 That row's property-based clause is gated twice, and both gates carry weight. The
 code has to state an invariant a handful of examples cannot pin — a round trip, an
 idempotent operation, a comparator, an invariant a mutation must preserve, a
-hand-rolled parser or normaliser over a large input domain — and the repo has to
-already have a property-based harness. Without the first, "this could have
+hand-rolled parser or normaliser over a large input domain — and the repo's own
+tests have to already use a property-based harness: a generator-driven test that
+exists, not a dependency in a manifest. Without the first, "this could have
 properties" is true of nearly every function and the lens writes a Suggestion on
 every diff. Without the second the finding is a proposal to adopt a dependency and
 a testing style, which is `dependencies`' business and far larger than anything a
@@ -505,8 +511,8 @@ nothing.
 
 Print the merged report of what survived, in the reviewer's Critical / Warning /
 Pre-existing format, keeping its Scope / Tests / Lint header lines — the test
-result is the most load-bearing line in the report, and on this path this is
-its only airing. The surviving Suggestions print once, in the triage below.
+result is the most load-bearing line in the report, and on the full pass this
+is its only airing. The surviving Suggestions print once, in the triage below.
 
 The **Scope** line is the manifest's `scope_line`, which already carries the
 correspondence. Say it even when it is `same`: a reader cannot tell "the tree

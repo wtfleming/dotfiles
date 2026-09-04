@@ -50,7 +50,21 @@ there is no branch to push.
 **HEAD must not be the default branch.** Resolve the default with
 `~/.claude/scripts/resolve-scope.sh base`, which is the executable copy of the candidate
 loop in `~/.claude/reference/scope-resolution.md`, rather than assuming `main` — on a
-`master` or `trunk` repo the assumption produces a base that looks resolved and is not. Standing on
+`master` or `trunk` repo the assumption produces a base that looks resolved and is not.
+
+```sh
+base=$(~/.claude/scripts/resolve-scope.sh base) || exit 1
+[ -n "$base" ] || { echo "no base resolved — cannot judge the branch" >&2; exit 1; }
+```
+
+**Guard it for the same reason `$branch` is guarded**, and here the failure is quieter. The
+script *dies* rather than printing a fallback when its candidate loop is exhausted — a repo
+whose default is `develop`, or one built by `git init` + `remote add` so `origin/HEAD` was
+never set — leaving `$base` empty. `git diff --stat ""...HEAD` is then valid syntax that git
+reads as `HEAD...HEAD`: no output, exit 0. The credential scrub below is the only thing
+standing between a committed key and a public object, and an empty `$base` makes a scrub
+that scanned nothing indistinguishable from one that found nothing. The same empty value
+reaches `git log "$base"..HEAD` in the ticket hunt, where it reads as "no ticket". Standing on
 the default branch there is nothing to open a PR *from*, so refuse and say what would fix
 it. If the work is already committed there locally, moving it onto a branch rewrites local
 history: propose the move and wait for a yes rather than performing it.
@@ -86,22 +100,31 @@ SHA after a force-push or a branch delete, and forks and caches keep it. Composi
 still fail after pre-flight — an unresolvable base, an unreadable template, a scrub hit —
 and pushing early would leave the branch public with no PR pointing at it and nobody told.
 Nothing needs the remote in order to compose, since the title and body come from the local
-diff, so there is no cost to waiting and publishing the branch and opening the PR stay one
-act.
+diff, so there is no cost to waiting: the deferral does not make publishing the branch and
+opening the PR one act — they are two commands — but it shrinks the window in which the
+first can succeed and the second not to as close to nothing as this can get. §8 says what to
+report when it happens anyway.
 
 What pre-flight *does* do is look at what a push would publish, because nothing in this
 command reads the *commits* for secrets — the scrub governs published text only:
 
 ```sh
 git diff --stat "$base"...HEAD    # names that look like .env, .pem, id_rsa, credentials.json
+# Fixed credential markers, not entropy: a literal match is a secret, never a coincidence.
+git diff "$base"...HEAD | grep -nE '(-----BEGIN [A-Z ]*PRIVATE KEY-----|AKIA[0-9A-Z]{16}|xox[baprs]-|gh[pousr]_[A-Za-z0-9]{16,}|github_pat_[A-Za-z0-9_]{20,})'
 ```
 
-A hit stops the run. Nothing downstream asks a human anything, so there is no later point
-at which someone looks at that filename before it is public — and a published object stays
-reachable whatever is done next. Name the file and what would clear it (remove it from the
-branch, or say it is safe on a re-run); do not push, and do not open. This is the one
-pre-flight check that stops on a judgement rather than on a fact, so keep it to the file
-*names*: a scan that reads content and guesses is the one that cries wolf.
+A hit from either stops the run. Nothing downstream asks a human anything, so there is no
+later point at which someone looks at it before it is public — and a published object stays
+reachable whatever is done next. Name what matched and what would clear it (remove it from
+the branch, or say it is safe on a re-run); do not push, and do not open.
+
+The two checks are bounded differently, and deliberately. The **name** check stops on a
+judgement, so keep it to the file names: a scan that reads content and guesses is the one
+that cries wolf. The **content** check is the opposite — it guesses nothing, because each
+pattern is a fixed vendor prefix that has no innocent reading. That is why it is safe to run
+over content when a general secret scan would not be, and why it is worth having at all:
+without it nothing in this command reads the commits, and the branch is pushed regardless.
 
 **Check whether a PR already exists for this branch.**
 
@@ -153,8 +176,12 @@ Read that output rather than pattern-matching it. A bare-`#123` grep looks like 
 version of this step and is a trap: on a squash-merging repo every subject ends in the PR's
 own number — `(#33)` — so a match harvests PR numbers as if they were issue ids, and a
 closing keyword in front of one closes something unrelated. What marks an id as a ticket is
-where it sits and what it says, which is a reading job. On a stacked branch `$base` is the
-parent, so the ids are this slice's rather than the whole stack's.
+where it sits and what it says, which is a reading job. `$base` here is the **default**
+branch, not the stack parent — that is not settled until **How much of this to do** — so on
+a stacked branch this lists the whole stack's commits and the ids are the stack's, not this
+slice's. Prefer an id the branch name or this command's arguments carry, and where the
+ticket comes from the log on a stack, say which commit it came from rather than presenting
+it as this slice's.
 
 Take the id from what is written there; do not infer one from the subject matter. A
 fabricated or mistyped id links the reader to someone else's work and, with a closing
@@ -483,6 +510,33 @@ shell argument loses its formatting to quoting the moment it contains backticks 
 lines, which is most bodies worth writing. Pass `--base` explicitly, resolved as in the
 pre-flight, rather than trusting the repository default to be what this branch targets.
 
+**Check the push landed before opening anything.** Every other command here that talks to
+the remote stops on failure; this one is the irreversible pair, so it gets the same
+treatment rather than less.
+
+```sh
+git push -u origin "$branch" || { echo "push failed — nothing opened" >&2; exit 1; }
+[ "$(git rev-parse HEAD)" = "$(git rev-parse '@{u}')" ] || {
+  echo "remote head is not this branch's HEAD — refusing to open a PR for code nobody pushed" >&2
+  exit 1; }
+```
+
+The second check is not the first restated. Pre-flight's fetch was minutes ago, and
+composition is slow — templates, `git log`, the drift pass, `gh api` calls. A bot amend or a
+push from another machine inside that window makes the push a non-fast-forward reject, and
+`gh pr create` would then happily open a PR against the *remote's* head: a public PR whose
+diff is someone else's commits, under a body describing commits that were never pushed. That
+is the exact defect pre-flight's fetch exists to catch, arriving after the check for it.
+
+**On the update path this section still applies.** An existing open PR routes to
+`gh pr edit` rather than `gh pr create`, and the no-ask contract covers it: a regenerated
+body replaces the live one without anyone approving the replacement. That is a heavier act
+than opening a PR, because what it overwrites may be someone else's — so print the live body
+alongside the new one and say what is being dropped, before the edit rather than after. The
+carry-across rules in `~/.claude/reference/github-publishing.md` are what stop the loss; the
+printed comparison is what makes a failure of those rules visible to the author in the same
+turn instead of on the next read of the PR.
+
 ## 8. After
 
 Report the URL, and note two things about what happens next. CI is now running and has not
@@ -497,6 +551,12 @@ to stdout, and *then* exits non-zero. So on a non-zero exit, check before you re
 opens a second PR, and reporting failure leaves a live PR nobody is told about. Report the
 create and the attachments separately: the PR is open at this URL, these images did not
 upload.
+
+**The other direction needs saying too.** Where that check comes back empty — the push
+succeeded and the create genuinely failed, on an absent base ref, an unwritable body file or
+a network error — the branch is published and nothing points at it. Say so explicitly,
+naming the remote and branch, because that is a public artifact the author has not been told
+about and it decides whether the fix is a retry or a branch delete.
 
 Then stop. Do not merge, do not enable auto-merge, and do not request reviewers unless the
 repo's conventions say to.

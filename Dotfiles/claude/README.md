@@ -23,13 +23,13 @@ Under `--lite` it settles the scope, runs the project's test suite and linter,
 reviews the diff against the checklist, and prints findings as Critical, Warning
 or Suggestion — then stops. Any Critical is checked by a `wtf-refuter` before the
 report prints, since a false Critical stops work that should not stop; most runs
-have none and so spend nothing. Warnings arrive marked `(unverified)`. The reviewer has no `Edit` or `Write`, so a review
-cannot change anything.
+have none and so spend nothing. Warnings arrive marked `(unverified)`. The
+reviewer has no `Edit` or `Write`, so a review cannot change anything.
 
 By default it does more: up to eight `wtf-lens` agents in parallel, one per
 lens — correctness, security, tests, maintainability, performance, dependencies,
-reuse, resilience. A
-change that touches only prose skips the four lenses with no surface there
+reuse, resilience. A change that touches only prose skips the four lenses with
+no surface there
 (tests, resilience, performance, dependencies), decided from the file list alone
 and disclosed in the report. That list comes from the scope artifact rather than
 from a second set of git commands, so it cannot disagree with the diff the lenses
@@ -47,8 +47,10 @@ its dispatch. Collisions run down an ordered ladder — Pre-existing, then tier,
 then the statement naming a concrete failure, then the reviewer over a lens, then
 the longer evidence — because "keep the more specific statement" leaves two
 equally-tiered findings with nothing to separate them, and the model then picks by
-feel between reports its own agents wrote. Suggestions arrive marked
-`(unverified)` rather than spending an agent apiece on nits. There is
+feel between reports its own agents wrote. The triage's **Definitely worth
+doing** list is refuted alongside the Criticals and Warnings; **Worth doing**
+arrives marked `(unverified)` rather than spending an agent apiece on nits, and
+under `--lite` both lists carry the mark. There is
 deliberately no linter lens — the reviewer already runs the real one.
 
 `reuse` and `resilience` are the two lenses with no counterpart in the checklist.

@@ -21,8 +21,8 @@ flag is gone and run the default rather than treating it as a scope — a scope 
 This is the single-agent variant of `/wtf-code-review`. It is the same command
 in every respect but one: where that one spawns a `wtf-lens` per dimension, this
 one hands the same rubrics to the one reviewer and has it work through them
-itself. The two exist to be compared — same scope, same report
-shape, different cost — so nothing else here should drift from that command.
+itself. The two exist to be compared — same scope, same report shape, different
+cost — so nothing else here should drift from that command.
 
 This command reviews; it does not fix. If the user wants findings acted on,
 they will say which ones in a later message, and that happens in the main
@@ -218,11 +218,15 @@ the reviewer is asked to look for. Say that up front — one reviewer, and
 refuters later whose count is not knowable yet — so the user knows what this run
 costs before it is spent.
 
-**`--lite` skips this section and everything below it**, stopping where
-**Review** says to: the reviewer works from its own checklist, and only its
-Criticals are verified. It exists for the runs where that is the right spend — a
-one-file change, a second look at something already reviewed — and it is a
-deliberate choice, not the fallback for a scope that merely looks small.
+**`--lite` skips this section and the rest of the per-dimension pass**, stopping
+where **Review** says to: the reviewer works from its own checklist, and only
+its Criticals are verified. It skips the *pass*, not the file: **If the user
+asks for fixes** is where **Review** sends a `--lite` run when the user asks,
+and **If the findings go to GitHub** governs findings from either path. Both sit
+below this section and both apply. It exists for the runs where that is the
+right spend — a one-file change, a second look at something already reviewed —
+and it is a deliberate choice, not the fallback for a scope that merely looks
+small.
 
 Dispatch the reviewer exactly as **Review** describes, with the scope and the
 block below appended, and nothing else. The rubrics are the same data every run
@@ -242,7 +246,7 @@ are hunting for, and it asks you to account for each dimension explicitly.
 |---|---|
 | `correctness` | logic errors, off-by-one, wrong operator, null/empty/zero/max edges, races, unhandled promises, missing await |
 | `security` | unvalidated input at boundaries, hardcoded secrets, injection, sensitive data in logs and errors, authz gaps |
-| `tests` | new branches with no test, uncovered edge cases, tests that cannot fail, flakiness, fixtures that hide the bug, an invariant a handful of examples cannot pin where the repo already has a property-based harness |
+| `tests` | new branches with no test, uncovered edge cases, tests that cannot fail, flakiness, fixtures that hide the bug, an invariant a handful of examples cannot pin where the repo's tests already use a property-based harness |
 | `maintainability` | unclear names, functions doing several things, unactionable error messages, comments explaining *what*, changes bundling unrelated concerns |
 | `resilience` | outbound calls with no timeout, retries with no backoff or no cap, a failure swallowed into a default that reads as success, multi-step work that leaves inconsistent state when it fails halfway, a retried write that is not idempotent, a call the code assumes cannot fail, a new failure path nothing logs |
 | `reuse` | logic the repo already implements elsewhere, a second copy of something within the diff itself, a hand-rolled version of what a dependency already in the manifest provides, a new abstraction where an existing one would have served, code shared between two things that only look alike — and code the change orphaned but did not remove: a function whose last caller went away, a config key nothing reads, a flag now permanently on with its dead branch intact |
@@ -294,12 +298,15 @@ Three boundaries, because they are the ones that blur:
 - `tests` judges coverage by ROI: a new branch with no test is a finding;
   trivial code without one is not. Its property-based clause is gated twice: the
   code has to state an invariant a handful of examples cannot pin — a round trip,
-  an idempotent operation, a comparator, a hand-rolled parser or normaliser over a
-  large input domain — and the repo has to already have a property-based harness.
+  an idempotent operation, a comparator, an invariant a mutation must preserve, a
+  hand-rolled parser or normaliser over a large input domain — and the repo's own
+  tests have to already use a property-based harness: a generator-driven test that
+  exists, not a dependency in a manifest.
   Without the first, "this could have properties" is true of nearly every function
   and you write a Suggestion on every diff; without the second the finding is a
   proposal to adopt a dependency and a testing style, which is `dependencies`'
-  business and far larger than anything a Suggestion should carry.
+  business and far larger than anything a Suggestion should carry. Where both
+  hold, file it as a Suggestion anchored at the test file, and do not promote it.
 
 `reuse` is the one dimension whose target sits outside the diff: both the
 duplicate it looks for and the code the change orphaned live in files the change
@@ -446,8 +453,8 @@ nothing.
 
 Print the report of what survived, in the reviewer's Critical / Warning /
 Pre-existing format, keeping its Scope / Tests / Lint header lines — the test
-result is the most load-bearing line in the report, and on this path this is
-its only airing. The surviving Suggestions print once, in the triage below.
+result is the most load-bearing line in the report, and on the full pass this
+is its only airing. The surviving Suggestions print once, in the triage below.
 
 The **Scope** line carries the correspondence between the working tree and the
 code reviewed. Relay it even when it is `same`: a reader cannot tell "the tree

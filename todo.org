@@ -148,7 +148,7 @@ the LSP findReferences bug (anthropics/claude-code#44767).
 
 Then a ~wtf-refuter~ can re-run the query instead of reasoning about the claim.
 Deterministic evidence collapses the verification step, which is the most
-expensive fan-out in a --deep run.
+expensive fan-out in a full run.
 
 *** Do not auto-load rule files from the branch under review
 
