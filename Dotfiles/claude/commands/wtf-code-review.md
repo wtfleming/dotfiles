@@ -40,12 +40,15 @@ contains **only** the scope. Do not include:
 - any reasoning from this conversation
 
 If you wrote the code under review, that is exactly the bias this exists to
-avoid. Hand over the scope and nothing else. If the scope is empty, say so and
-let the agent work out its own — it runs the same resolver you would, so under
-`--lite` there is nothing to gain by resolving first. Otherwise you resolve
-before dispatch instead, because the lenses launch in the same batch and cannot
-wait for it; hand the reviewer the artifact directory there, which is data about
-where the code lives and no more a cold-start violation than the scope string is.
+avoid. Hand over the scope and nothing else.
+
+An empty scope is resolved here before dispatch, exactly as a named one is — a bare
+invocation is the common case, not a special one, and the lenses launch in the same
+batch and cannot wait for the reviewer to settle it. Hand the reviewer the artifact
+directory, which is data about where the code lives and no more a cold-start violation
+than the scope string is. **Only under `--lite`** may you say the scope is empty and
+let the agent work out its own: it runs the same resolver you would, and with no batch
+behind it there is nothing to gain by resolving first.
 
 Under `--lite`, print the report verbatim when it returns — unless it carries
 a Critical, in which case hold it and follow **Verify the Criticals** first. Do
@@ -352,7 +355,9 @@ properties" is true of nearly every function and the lens writes a Suggestion on
 every diff. Without the second the finding is a proposal to adopt a dependency and
 a testing style, which is `dependencies`' business and far larger than anything a
 review Suggestion should carry. Where both hold it is a Suggestion, anchored at the
-test file.
+test file, and it is never promoted — the promotion rule below moves "a new branch
+with no test" up to Warning, and an untested invariant reads as exactly that. It is
+not: the branch has a test, and this is a second way to exercise it.
 
 `reuse` is the one lens whose target sits outside the diff: both the duplicate it
 looks for and the code the change orphaned live in files the change did not touch.

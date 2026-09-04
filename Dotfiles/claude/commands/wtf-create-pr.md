@@ -55,7 +55,15 @@ loop in `~/.claude/reference/scope-resolution.md`, rather than assuming `main` �
 ```sh
 base=$(~/.claude/scripts/resolve-scope.sh base) || exit 1
 [ -n "$base" ] || { echo "no base resolved — cannot judge the branch" >&2; exit 1; }
+base_branch=${base#*/}    # origin/main -> main; a bare name is unchanged
 ```
+
+**Two names, and they are not interchangeable.** The resolver answers with a *ref* —
+`origin/main` — which is what every `git` command here wants. GitHub wants a *branch*:
+`gh pr create --base` takes a branch name on the target repo and rejects a remote prefix,
+and `gh pr list --json baseRefName` reports `main`, so comparing it against `origin/main`
+never matches and an update is misread as a create. Use `$base` for git, `$base_branch`
+for `gh`.
 
 **Guard it for the same reason `$branch` is guarded**, and here the failure is quieter. The
 script *dies* rather than printing a fallback when its candidate loop is exhausted — a repo
@@ -110,9 +118,19 @@ command reads the *commits* for secrets — the scrub governs published text onl
 
 ```sh
 git diff --stat "$base"...HEAD    # names that look like .env, .pem, id_rsa, credentials.json
+
+# Materialise the diff first: piping git into grep hides git's exit status, and a grep
+# that received nothing exits 1 exactly as a clean scan does.
+diff_out=$(git diff "$base"...HEAD) || { echo "diff failed — branch not scanned" >&2; exit 1; }
 # Fixed credential markers, not entropy: a literal match is a secret, never a coincidence.
-git diff "$base"...HEAD | grep -nE '(-----BEGIN [A-Z ]*PRIVATE KEY-----|AKIA[0-9A-Z]{16}|xox[baprs]-|gh[pousr]_[A-Za-z0-9]{16,}|github_pat_[A-Za-z0-9_]{20,})'
+printf '%s' "$diff_out" | grep -nE '(-----BEGIN [A-Z ]*PRIVATE KEY-----|AKIA[0-9A-Z]{16}|xox[baprs]-|gh[pousr]_[A-Za-z0-9]{16,}|github_pat_[A-Za-z0-9_]{20,})'
 ```
+
+The scan must **fail closed**, which is why the diff is not piped straight into `grep`. A
+pipeline reports only the last command's status, and `grep` handed an empty stream exits 1 —
+the same status a clean scan returns. So a `git diff` that failed for any reason would read
+as "no secrets found" and the branch would be pushed unscanned, which is the one outcome
+this check exists to prevent.
 
 A hit from either stops the run. Nothing downstream asks a human anything, so there is no
 later point at which someone looks at it before it is public — and a published object stays
@@ -132,8 +150,8 @@ without it nothing in this command reads the commits, and the branch is pushed r
 gh pr list --head "$branch" --state all --json number,url,state,isDraft,baseRefName
 ```
 
-An open one **whose `baseRefName` equals the base you are targeting** means this is an
-update, not a create. Both halves matter: GitHub allows several open PRs from the same head
+An open one **whose `baseRefName` equals `$base_branch`** means this is an update, not a
+create — the branch name, since that is what GitHub reports here. Both halves matter: GitHub allows several open PRs from the same head
 to *different* bases, so matching on head alone can route `gh pr edit` onto a PR that
 targets somewhere else — and on a stack the base is not settled until **How much of this to
 do** below, so re-check this once the base is final rather than acting on the head match
@@ -507,15 +525,20 @@ composition here than opening the PR to see what was said.
 
 Write the body to `<scratch>/create-pr/body.md` and pass `--body-file`. A body sent as a
 shell argument loses its formatting to quoting the moment it contains backticks or blank
-lines, which is most bodies worth writing. Pass `--base` explicitly, resolved as in the
-pre-flight, rather than trusting the repository default to be what this branch targets.
+lines, which is most bodies worth writing. Pass `--base "$base_branch"` explicitly rather
+than trusting the repository default to be what this branch targets — the branch name from
+the pre-flight, never the `$base` ref, per the two-names note there.
 
 **Check the push landed before opening anything.** Every other command here that talks to
 the remote stops on failure; this one is the irreversible pair, so it gets the same
 treatment rather than less.
 
 ```sh
-git push -u origin "$branch" || { echo "push failed — nothing opened" >&2; exit 1; }
+# The branch's own remote, not a hardcoded origin — pre-flight fetched from this one, and a
+# branch tracking anything else would otherwise be judged against one remote and pushed to
+# another. `origin` is the fallback only when there is no upstream yet.
+remote=${upstream%%/*}; : "${remote:=origin}"
+git push -u "$remote" "$branch" || { echo "push failed — nothing opened" >&2; exit 1; }
 [ "$(git rev-parse HEAD)" = "$(git rev-parse '@{u}')" ] || {
   echo "remote head is not this branch's HEAD — refusing to open a PR for code nobody pushed" >&2
   exit 1; }
