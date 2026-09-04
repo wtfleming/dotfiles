@@ -130,6 +130,37 @@ check "prose exits 2" "2" "$rc"
 rc=0; (cd "$WORK/range" && "$RESOLVE" resolve --scope 'no-such-branch' >/dev/null 2>&1) || rc=$?
 check "an unresolvable token exits 1" "1" "$rc"
 
+echo "== untracked bytes are bounded in aggregate, not just per file =="
+scratch_repo "$WORK/budget"
+commit "$WORK/budget" a.txt one base
+# Twelve files of 1MB each: every one is at or under the per-file cap, so only the
+# aggregate budget can stop them.
+mkdir -p "$WORK/budget/bulk"
+i=0
+while [ "$i" -lt 12 ]; do
+  head -c 1048576 /dev/zero | tr '\0' 'x' > "$WORK/budget/bulk/f$i.txt"
+  i=$((i + 1))
+done
+out=$(cd "$WORK/budget" && "$RESOLVE" resolve 2>/dev/null | tail -1)
+check "all twelve stay in the file list" "12" "$(field "$out" .file_count)"
+bytes=$(field "$out" .diff_bytes)
+if [ "$bytes" -lt 12582912 ]; then
+  echo "  ok    the diff is bounded ($bytes bytes, not 12M+)"
+else
+  echo "  FAIL  aggregate budget did not bind: $bytes bytes" >&2
+  failures=$((failures + 1))
+fi
+
+echo "== a PR URL for another repository is refused =="
+# Exit 1, not 2: callers read 2 as "this is a subject" and would go looking for code that
+# implements the URL. Both the no-origin and the wrong-origin paths must land on 1.
+rc=0; (cd "$WORK/range" && "$RESOLVE" resolve --scope 'https://github.com/torvalds/linux/pull/1' >/dev/null 2>&1) || rc=$?
+check "a foreign PR URL with no origin is a stop" "1" "$rc"
+git -C "$WORK/range" remote add origin git@github.com:someone/thing.git
+rc=0; (cd "$WORK/range" && "$RESOLVE" resolve --scope 'https://github.com/torvalds/linux/pull/1' >/dev/null 2>&1) || rc=$?
+check "a foreign PR URL against a real origin is a stop" "1" "$rc"
+git -C "$WORK/range" remote remove origin
+
 echo "== an empty scope is never written =="
 scratch_repo "$WORK/empty"
 commit "$WORK/empty" a.txt one base

@@ -62,10 +62,12 @@ State the scope you settled on at the top of your report, using the manifest's
 which step settled it and how the tree corresponds.
 
 **Check `correspondence` before you read a file.** On `workspace` or `same`, read files
-from disk as usual. On anything else the working tree is not the code under review, so read
-the scope's blobs with `git show <scope_head>:<path>`. Reading the wrong tree does not
-merely add noise: findings that cannot be located get dropped, so the mismatch deletes real
-ones.
+from disk as usual. On anything else the working tree is not the code under review. Read the reviewed
+contents with `git show <scope_head>:<path>` — except in the two cases where that cannot
+work, and the manifest's `correspondence_note` says which: a file the change **deleted**
+does not exist at `scope_head`, and on `unknown` the head is not in the local object
+database at all. Read those out of `scope.diff` itself, which always holds them. Reading the wrong tree does not merely add noise:
+findings that cannot be located get dropped, so the mismatch deletes real ones.
 
 Read the full surrounding file for any hunk you comment on — a diff alone hides the
 caller, the existing error handling, and the conventions you are judging against.

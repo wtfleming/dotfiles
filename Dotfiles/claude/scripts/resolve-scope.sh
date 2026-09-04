@@ -48,6 +48,12 @@ CORRESPONDENCE_NOTE=""
 # untracked 200MB CSV would otherwise become a 200MB scope.diff that eight agents are
 # each told to read in full.
 MAX_INLINE_BYTES=1048576
+# And a budget across all of them, because the per-file cap alone does not bound the total:
+# four hundred files of just under the per-file limit clear every check individually and
+# still build a diff nobody can read. Ten times the per-file cap -- high enough that
+# ordinary untracked work never trips it, low enough to bite well before eight agents'
+# context does.
+MAX_UNTRACKED_TOTAL_BYTES=10485760
 # Past this many untracked files the per-file `git diff` calls dominate the run, so say so
 # rather than appearing to hang.
 UNTRACKED_NOISY_COUNT=500
@@ -75,6 +81,18 @@ die() {
 repo_root() {
   git rev-parse --git-common-dir >/dev/null 2>&1 || die "not inside a git repository"
   dirname "$(git rev-parse --path-format=absolute --git-common-dir)"
+}
+
+# owner/repo for the origin remote, from the local config -- no network. Handles the scp
+# form (git@host:o/r), the URL forms, and a trailing .git.
+# Empty output rather than a failure when there is no origin: this runs inside a command
+# substitution, so a non-zero return would take `set -e` with it and exit carrying git's
+# own status -- which for a missing remote is 2, the code callers read as "this is a
+# subject". The caller checks for empty and reports the real cause.
+remote_slug() {
+  local url
+  url="$(git remote get-url origin 2>/dev/null)" || return 0
+  printf '%s' "$url" | sed -e 's|\.git$||' -e 's|^.*://[^/]*/||' -e 's|^.*:||'
 }
 
 hash12() {
@@ -148,7 +166,7 @@ scope_out_dir() {
 # one. Order matters: a PR before a ref because bare digits almost never name one, a ref
 # before a path because that is git's own convention, a path last.
 scope_shape_of() {
-  local scope=$1 full
+  local scope=$1 full url_slug here_slug
   [ -n "$scope" ] || { SHAPE=worktree; return 0; }
 
   # A leading dash reaches `git diff` in option position, where `--output=<path>` truncates
@@ -159,7 +177,23 @@ scope_shape_of() {
   esac
 
   case "$scope" in
-    */pull/[0-9]*) SHAPE="pr"; PR_NUMBER="${scope##*/pull/}"; PR_NUMBER="${PR_NUMBER%%/*}"; return 0 ;;
+    */pull/[0-9]*)
+      # A URL names a repository as well as a number, and dropping that half is how
+      # `https://github.com/someone-else/repo/pull/123` becomes `gh pr diff 123` against
+      # *this* repo -- publishing an unrelated PR's diff while reporting the URL as its
+      # scope. Everything downstream (the merge base, the correspondence, the blob reads)
+      # is local anyway, so a foreign PR has no meaning here and is refused rather than
+      # retargeted.
+      SHAPE="pr"
+      PR_NUMBER="${scope##*/pull/}"; PR_NUMBER="${PR_NUMBER%%/*}"
+      url_slug="${scope#*://}"; url_slug="${url_slug#*/}"; url_slug="${url_slug%%/pull/*}"
+      here_slug="$(remote_slug)"
+      [ -n "$here_slug" ] \
+        || die "cannot tell which repository this checkout is; pass the PR number rather than a URL"
+      [ "$(printf '%s' "$url_slug" | tr '[:upper:]' '[:lower:]')" \
+        = "$(printf '%s' "$here_slug" | tr '[:upper:]' '[:lower:]')" ] \
+        || die "that PR URL is for $url_slug, but this checkout is $here_slug. Review it from a checkout of that repository."
+      return 0 ;;
     '#'[0-9]*)     SHAPE="pr"; PR_NUMBER="${scope#\#}"; return 0 ;;
     ''|*[!0-9]*)   ;;
     *)             SHAPE="pr"; PR_NUMBER="$scope"; return 0 ;;
@@ -211,11 +245,16 @@ EOF
 # synthesising here. It exits 1 whenever the files differ, which is always -- unguarded,
 # that kills the script on the first untracked file.
 append_untracked() {
-  local out=$1 filter=$2 f rc size count=0
+  local out=$1 filter=$2 f rc size count=0 total=0 over_budget=false
   while IFS= read -r -d '' f; do
     count=$((count + 1))
     size="$(wc -c < "$f" 2>/dev/null | tr -d ' ')" || size=0
-    if [ "${size:-0}" -gt "$MAX_INLINE_BYTES" ]; then
+    if [ "$over_budget" = false ] \
+       && [ $((total + ${size:-0})) -gt "$MAX_UNTRACKED_TOTAL_BYTES" ]; then
+      over_budget=true
+      warn "untracked files passed ${MAX_UNTRACKED_TOTAL_BYTES} bytes in total; the rest are stubbed rather than inlined"
+    fi
+    if [ "$over_budget" = true ] || [ "${size:-0}" -gt "$MAX_INLINE_BYTES" ]; then
       # The same shape git uses for a binary, so `git apply --numstat` still counts the
       # file and it survives into the file list. Dropping it instead would narrow the
       # scope without saying so.
@@ -225,9 +264,11 @@ append_untracked() {
         printf 'index 0000000..0000000\n'
         printf 'Binary files /dev/null and b/%s differ\n' "$f"
       } >> "$out"
-      warn "untracked file over ${MAX_INLINE_BYTES} bytes, stubbed rather than inlined: $f ($size bytes)"
+      [ "$over_budget" = true ] \
+        || warn "untracked file over ${MAX_INLINE_BYTES} bytes, stubbed rather than inlined: $f ($size bytes)"
       continue
     fi
+    total=$((total + ${size:-0}))
     rc=0
     git diff --no-index -- /dev/null "$f" >> "$out" || rc=$?
     # Exit 1 is "they differ", which is every file here. Anything above it is a real
@@ -394,6 +435,11 @@ cmd_resolve() {
       || die "--base $base_override does not resolve to a commit"
     BASE="$base_override"
     BASE_RESOLVED=true
+    # Refresh it too. Setting BASE_RESOLVED here short-circuits need_base(), which is where
+    # the fetch lives, so without this an explicit --base origin/main computes its merge
+    # base against whatever the last fetch left behind. fetch_base returns immediately for
+    # a local name, so this costs nothing when the base is not a remote-tracking ref.
+    fetch_base "$BASE"
     BASE_SHA="$(git rev-parse "$BASE")"
   fi
 

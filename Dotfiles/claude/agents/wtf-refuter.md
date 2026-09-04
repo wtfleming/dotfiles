@@ -41,8 +41,11 @@ because their judgement is the thing in question. Reach your own verdict from th
 code.
 
 **Read the right tree.** Your dispatch names a correspondence. On `workspace` or `same`,
-the working tree is the code the finding is about. On anything else it is not, and you must
-read the reviewed contents with `git show <scope_head>:<path>`. With no correspondence
+the working tree is the code the finding is about. On anything else the working tree is not the code under review. Read the reviewed
+contents with `git show <scope_head>:<path>` — except in the two cases where that cannot
+work, and the manifest's `correspondence_note` says which: a file the change **deleted**
+does not exist at `scope_head`, and on `unknown` the head is not in the local object
+database at all. Read those out of `scope.diff` itself, which always holds them. With no correspondence
 stated, the working tree is the default.
 
 This is the one place your default cuts the wrong way. You answer `refuted` when
