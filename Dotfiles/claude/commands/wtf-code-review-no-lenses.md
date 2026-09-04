@@ -89,8 +89,8 @@ a clean bill of health.
 
 Warnings and Suggestions go through unchecked. Mark each Warning
 **(unverified)** so no reader mistakes an unchecked finding for a checked one,
-and leave the Suggestions to the triage below, which already says it verifies
-nothing.
+and leave the Suggestions to the triage below, which on this path verifies
+nothing and says so.
 
 ## Triage the Suggestions
 
@@ -121,25 +121,43 @@ saying how many is the whole of it. Match that line to the number —
 `_1 Suggestion judged not worth doing and dropped._` — and omit it altogether
 when nothing was dropped, since a line reporting zero dropped findings reports
 nothing. Each Suggestion that *is* printed lands in exactly one list, carrying
-its `file:line`, the finding as written, and any qualifier it arrived with —
-**(unverified)** under `--deep` — plus the one-line reason. That is the only
-place it appears, so a finding shortened here is shortened everywhere. Findings
-under **Pre-existing** are the exception and are not sorted into these lists,
-whatever tier they carry — they are tickets, not work for this change, and they
-stay in that section of the report, once. The promotion rule below still
-applies to them: tier follows content there as anywhere, and the section does
-not change that.
+its `file:line`, the finding as written, any qualifier it arrived with, and the
+one-line reason. The qualifier tracks what checked the finding, not which list
+it landed in: mark it **(unverified)** unless a refuter read it and let it
+stand, which happens only to the **Definitely worth doing** list under
+`--deep`. Everything else carries the mark — both lists without `--deep`, and
+**Worth doing** with it. So a bare Suggestion means one thing everywhere,
+including on a PR comment, where the triage's closing line does not travel with
+it. That is the only place it appears, so a finding shortened here is shortened
+everywhere. Findings under **Pre-existing** are the exception and are
+not sorted into these lists, whatever tier they carry — they are tickets, not
+work for this change, and they stay in that section of the report, once. The
+promotion rule below still applies to them: tier follows content there as
+anywhere, and the section does not change that.
 **Definitely worth doing** is for the few a reader should not skip: the change
 is small and the payoff is clear and durable — a misleading name on something
 public, dead code that will be mistaken for live, a comment that states
 something false. **Worth doing** is the rest of the genuine
 improvements — right to take, fine to defer. Keep the top list short; if most
-Suggestions land there, it is not sorting anything. This is a
-judgement, not a verification: nothing is dispatched to check a Suggestion, and
-the triage says so in a closing line. The third list is the only place a
-Suggestion may go unprinted: nothing above carries one except the two cases
-named here — a Pre-existing one, and one promoted to Warning — so every other
-one the reviewer wrote is either in a list or in the dropped count.
+Suggestions land there, it is not sorting anything — and under `--deep` it is
+also spending a refuter on each one, which is the second reason to keep it
+short.
+
+Whether the triage verifies anything depends on the path, and its closing line
+says which. Without `--deep` it is a judgement and nothing else: nothing is
+dispatched to check a Suggestion. Under `--deep` the **Definitely worth doing**
+list is refuted alongside the Criticals and Warnings — see **Verify** — and only
+the **Worth doing** list goes out unchecked. The sorting is what makes that
+affordable: it is the difference between verifying the tier and verifying the
+few findings the triage is actively steering the reader towards.
+
+The third list is the only place the triage itself may leave a Suggestion
+unprinted: nothing above carries one except the two cases named here — a
+Pre-existing one, and one promoted to Warning. Under `--deep` there is one
+further route out, and it is not the triage's: a refuter kills the finding, and
+it leaves with the other refuted findings, counted in that line rather than
+this one. Every other Suggestion the reviewer wrote is either in a list or in
+the dropped count.
 
 One shape does not belong in either list. A Suggestion whose content describes
 something that *breaks* — a specific input and a wrong result, a leak, an
@@ -314,19 +332,32 @@ handed eight rubrics and asked to account for each one, which is quiet pressure
 to fill a row, which is exactly the pressure that produces plausible findings
 that are not real.
 
-First sort the Suggestions for misfiled Warnings, as **Triage the Suggestions**
-describes: a Suggestion that states a concrete failure is promoted to Warning
-here, before any `wtf-refuter` is spawned, so it gets a refuter rather than an
-unverified pass. Say how many moved.
+First run **Triage the Suggestions** in full, before any `wtf-refuter` is
+spawned — both halves of it, because both decide what gets verified. The
+promotion moves a Suggestion that states a concrete failure up to Warning, so it
+gets a refuter rather than an unverified pass. The sort then splits what is left
+into **Definitely worth doing**, **Worth doing** and the dropped count, and the
+first of those is verified too. Say how many were promoted and how many landed
+in the top list.
 
 Refute the Critical and Warning findings — promoted ones included, and
 Pre-existing ones at those tiers, since a ticket for a bug that is not there
-costs as much as a fix for one; carry the remaining Suggestions through marked
-**(unverified)** and say how many went unchecked. Suggestions are the most
-numerous tier, and one agent apiece to verify a naming nit is the bulk of the
-spend for the least of the value. Never drop one silently to save the spawn — an
-unverified finding the reader knows is unverified is honest; one that disappears
-is not.
+costs as much as a fix for one — plus the **Definitely worth doing**
+Suggestions. Those last are the ones the triage has just told the reader not to
+skip, and an unchecked finding a reader is being steered towards is the one that
+costs most when it is wrong. Carry the **Worth doing** Suggestions through
+marked **(unverified)** and say how many went unchecked: they are the bulk of
+the tier, and one agent apiece to verify a naming nit is most of the spend for
+least of the value. Never drop one silently to save the spawn — an unverified
+finding the reader knows is unverified is honest; one that disappears is not.
+
+A dropped Suggestion gets no refuter either. The triage judged it not worth
+acting on, so a verdict on it changes nothing; it stays a count.
+
+A **Definitely worth doing** Suggestion a refuter kills leaves the report with
+the other refuted findings and is counted in the same line — it is not demoted
+to **Worth doing**. Refuted means the problem was not there, which is not a
+reason to do it later.
 
 Spawn one `wtf-refuter` subagent per finding being verified, in parallel. It
 already knows to argue the code is correct, to re-run a command the finding
@@ -382,8 +413,9 @@ Then:
   doubting rather than a clean bill of health — that is also what a gate that
   never bites looks like
 
-Then the **Suggestion triage**, carrying the Suggestions that remain, each
-marked **(unverified)**.
+Then the **Suggestion triage**, carrying the Suggestions that remain: the
+**Definitely worth doing** list as it came back from the refuters, and the
+**Worth doing** list marked **(unverified)**.
 
 Then stop. The same close as above: the findings are the user's to triage, and
 fixes happen only if they ask — when they do, follow the next section.
@@ -406,17 +438,50 @@ fixes were just written here, in the conversation the reviewer was deliberately
 kept out of. The original diff got a cold reviewer; the edits repairing it get
 nothing unless you dispatch it.
 
-Spawn one `wtf-refuter` per fixed Critical and Warning finding, in parallel,
-with the finding **as the review wrote it**, plus the same scope-and-provenance
+Spawn one `wtf-refuter`, in parallel, per fixed Critical and Warning finding,
+per fixed **Definitely worth doing** Suggestion, and per fixed finding under the
+triage's **Reads as a Warning (unverified)** heading — that heading exists
+because the content is a Warning, so a fix to one is checked as a Warning's is.
+Send the finding **as the review wrote it**, plus the same scope-and-provenance
 data the verify pass sends — here that is the working tree, where the fixes
 landed, and whose work it is — and nothing else: not the fix, not which lines
 it touched, not that a fix exists. The finding's `file:line` may have drifted
 under the edits; locating the code in the tree as it now stands is the
 refuter's job, not a reason to annotate the dispatch. Say how many refuters
-that is before spawning them. Re-run the tests the reviewer's report named in
-the same batch — neither depends on the other, and serialising the suite behind
-the verdicts buys nothing — and report the result alongside them, `not run:
-reason` when it cannot happen.
+that is before spawning them.
+
+Re-run the tests **and the linter** the reviewer's report named, in the same
+batch — neither depends on the verdicts, and serialising them behind it buys
+nothing — and report both results alongside them, `not run: reason` when one
+cannot happen. The linter is here for what the Suggestion fixes tend to be: an
+import left unused by a deletion, a rename applied in three places out of four.
+That is the shape a fix to a Suggestion breaks in, and it is exactly what a
+refuter reading one finding is not looking at.
+
+One case takes the batch apart. A refuter re-runs a command its finding cites
+having observed, so when any finding going out to one cites an observed test
+run, its suite and yours are the same command in the same checkout launched at
+once — two runs over one cache, lock or artifact directory, and a result
+neither can be trusted. Wait for the refuters before re-running then, and say
+the batch was split and why. Nothing else needs the wait: the linter runs in
+check mode on both sides, and a refuter holding no test-citing finding starts
+no suite.
+
+Run the command the report's **Lint:** line names, not the project's `lint`
+script. Where that script fixes in place — `eslint --fix` and friends — the
+reviewer already substituted a check-mode invocation, and re-deriving the
+command here would throw that away and rewrite the tree mid-verification.
+
+Both re-runs are execution, so they take the trust gate the refuters take. The
+check-mode substitution governs what the linter *does*, not whose code it
+loads — a suite runs the tree's test files, config and build hooks, and a
+linter loads its config and plugins from that same tree. Run neither unless the
+tree is the user's own work or they have sanctioned it explicitly. The fix path
+already knows which, since it relays that provenance to every refuter it
+dispatches, and the session's own permissions are no guard here: a project that
+pre-approves its test or lint command runs it unprompted. Otherwise report both
+as `not run: tree is not the user's own work`, and say the fixes stand checked
+by the refuters alone.
 
 The verdicts read inverted from the verify pass: the refuter argues the code is
 correct, so against the fixed tree `refuted` means the problem is gone and
@@ -432,10 +497,11 @@ its check once is a fix a human should look at.
 What this check does not cover, so it is not mistaken for more than it is:
 
 - A refuter confirms the finding is resolved, not that the fix broke nothing
-  else. The test re-run above is the only check that covers regressions, which
-  is why its result — `not run: reason` included — belongs in the report.
-- Fixed Suggestions go unverified — the same economics as the verify pass —
-  and are reported as such.
+  else. The test and lint re-runs above are the only checks that cover
+  regressions, which is why their results — `not run: reason` included — belong
+  in the report.
+- Fixed **Worth doing** Suggestions go unverified — the same economics as the
+  verify pass — and are reported as such.
 - The refuter defaults to `refuted` when the evidence is ambiguous, and that
   default now lands in the fix's favour — relay a verdict whose reasoning looks
   thin as exactly that. A `stands` whose reasoning says the check was blocked
