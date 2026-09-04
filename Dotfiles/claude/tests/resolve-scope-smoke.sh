@@ -366,14 +366,31 @@ commit "$WORK/deictic" a.txt one base
 (cd "$WORK/deictic" && git checkout -q -b feature && :)
 commit "$WORK/deictic" b.txt two feature
 
-bare=$(cd "$WORK/deictic" && "$RESOLVE" resolve 2>/dev/null | head -1)
+# Captured whole and sliced afterwards, never piped straight out of the resolver: `head`
+# closes the pipe on its first line while the resolver is still writing its second, the
+# resolver takes EPIPE, and `pipefail` turns that into a suite-ending failure. Every case
+# above uses `tail -1`, which drains the stream and cannot trip it.
+first_line() { printf '%s\n' "$1" | sed -n '1p'; }
+bare_out=$(cd "$WORK/deictic" && "$RESOLVE" resolve 2>/dev/null)
+bare=$(first_line "$bare_out")
+# Pin the baseline before comparing anything to it. Every check below asserts that a phrase
+# resolves to the same line as a bare invocation, and two empty strings satisfy that just as
+# well as two real ones -- so a resolver that produced nothing at all would pass the whole
+# section. Assert the baseline is a scope line first, and the comparisons mean something.
+case "$bare" in
+  "git diff"*) echo "  ok    the bare baseline is a real scope line" ;;
+  *) echo "  FAIL  the bare baseline is a real scope line: got '$bare'" >&2
+     failures=$((failures + 1)) ;;
+esac
 for phrase in "this branch" "the branch" "my changes" "THE Working Tree " "uncommitted"; do
-  out=$(cd "$WORK/deictic" && "$RESOLVE" resolve --scope "$phrase" 2>/dev/null | head -1)
+  phrase_out=$(cd "$WORK/deictic" && "$RESOLVE" resolve --scope "$phrase" 2>/dev/null)
+  out=$(first_line "$phrase_out")
   check "'$phrase' resolves as the bare default" "$bare" "$out"
 done
 # Announced, not silent: the manifest says nothing was named, which is only true after the
 # phrase has been translated.
-err=$(cd "$WORK/deictic" && "$RESOLVE" resolve --scope 'this branch' 2>&1 >/dev/null | head -1)
+err_out=$(cd "$WORK/deictic" && "$RESOLVE" resolve --scope 'this branch' 2>&1 >/dev/null)
+err=$(first_line "$err_out")
 case "$err" in
   *"names the default scope"*) echo "  ok    the translation is announced on stderr" ;;
   *) echo "  FAIL  the translation is announced on stderr: got '$err'" >&2; failures=$((failures + 1)) ;;
@@ -388,7 +405,8 @@ check "a phrase naming a different scope still exits 2" "2" "$rc"
 # reachable -- the space-bearing phrases are not, since git refuses spaces in a refname.
 (cd "$WORK/deictic" && git checkout -q -b uncommitted && :)
 commit "$WORK/deictic" c.txt three uncommitted
-out=$(cd "$WORK/deictic" && "$RESOLVE" resolve --scope uncommitted 2>/dev/null | head -1)
+ref_out=$(cd "$WORK/deictic" && "$RESOLVE" resolve --scope uncommitted 2>/dev/null)
+out=$(first_line "$ref_out")
 case "$out" in
   *"merge-base main uncommitted"*) echo "  ok    a real branch named 'uncommitted' still wins" ;;
   *) echo "  FAIL  a real branch named 'uncommitted' still wins: got '$out'" >&2; failures=$((failures + 1)) ;;
@@ -401,7 +419,8 @@ commit "$WORK/deictic-path" "the branch" one base
 (cd "$WORK/deictic-path" && printf 'changed\n' >> "the branch")
 out=$(cd "$WORK/deictic-path" && "$RESOLVE" resolve --scope 'the branch' 2>/dev/null | tail -1)
 check "a real path named 'the branch' still wins" "1" "$(field "$out" .file_count)"
-err=$(cd "$WORK/deictic-path" && "$RESOLVE" resolve --scope 'the branch' 2>&1 >/dev/null | head -1)
+patherr_out=$(cd "$WORK/deictic-path" && "$RESOLVE" resolve --scope 'the branch' 2>&1 >/dev/null)
+err=$(first_line "$patherr_out")
 case "$err" in
   *"names the default scope"*) echo "  FAIL  a real path was translated to the default" >&2; failures=$((failures + 1)) ;;
   *) echo "  ok    a real path is not translated" ;;
