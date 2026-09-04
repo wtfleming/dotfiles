@@ -192,9 +192,9 @@ does not cover at all.
 
 Say up front how many agents you are about to spawn, so the cost is the user's
 to refuse before it is spent rather than after. Not every scope has a surface
-for every lens, so the number comes from **Pick the lenses** below — one git
-command, run before any *lens* is dispatched — and the announcement names the
-lenses being skipped alongside the ones being launched.
+for every lens, so the number comes from **Pick the lenses** below, which reads
+the manifest resolved above — and the announcement names the lenses being
+skipped alongside the ones being launched.
 
 Before anything is spawned, resolve the scope once:
 
@@ -261,6 +261,11 @@ itself, so it cannot disagree with the diff the lenses are about to read, and a
 list derived separately can. It already includes untracked files, which
 `git diff` never lists and which are exactly the change that would otherwise
 pass as prose.
+
+Check `manifest.file_list_source` first. `fallback-headers` means the list was
+scraped from the diff's headers rather than parsed, so it may be missing files —
+and a listing missing a code file is exactly what makes a change read as
+prose-only and skip four lenses. Dispatch all eight there, and say why.
 
 A subject has no diff to list, so skip the check and dispatch all eight, and say
 so.

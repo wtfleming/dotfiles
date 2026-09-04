@@ -399,7 +399,7 @@ cmd_create() {
     esac
   done
 
-  local main wt wt_head merge_base after after_label existing=()
+  local main wt wt_head merge_base after after_label resolver existing=()
   main="$(main_root)"
   wt="$(worktree_path baseline)"
   wt_head="$(worktree_path head)"
@@ -430,7 +430,12 @@ cmd_create() {
   # Defaulting to the literal "main" gave a base that looks resolved and is not on a
   # master or trunk repo. Resolved lazily: --base and --base-exact never need the lookup.
   if [ -z "$base_exact" ] && [ -z "$base" ]; then
-    base="$("$HOME/.claude/scripts/resolve-scope.sh" base)" \
+    # Relative to this script, not $HOME: the path resolves in both layouts, and the
+    # hardcoded one silently ran the last *deployed* resolver when this copy was the one
+    # being edited.
+    resolver="$(dirname "$0")/../../../scripts/resolve-scope.sh"
+    [ -x "$resolver" ] || die "cannot find resolve-scope.sh beside this script (looked in $resolver); pass --base <ref>."
+    base="$("$resolver" base)" \
       || die "cannot resolve a default branch to use as the base; pass --base <ref>."
   fi
 

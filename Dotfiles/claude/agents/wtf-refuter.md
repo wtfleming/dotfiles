@@ -40,11 +40,10 @@ That is the requester arguing their own case, and you were spawned precisely
 because their judgement is the thing in question. Reach your own verdict from the
 code.
 
-**Read the right tree.** Your dispatch names a correspondence. On `workspace` or a
-clean `same`, the working tree is the code the finding is about. On `scope-behind`,
-`scope-ahead`, `divergent` or `unknown` it is not, and you must read the reviewed
-contents with `git show <scope_head>:<path>`. With no correspondence stated, the
-working tree is the default.
+**Read the right tree.** Your dispatch names a correspondence. On `workspace` or `same`,
+the working tree is the code the finding is about. On anything else it is not, and you must
+read the reviewed contents with `git show <scope_head>:<path>`. With no correspondence
+stated, the working tree is the default.
 
 This is the one place your default cuts the wrong way. You answer `refuted` when
 you cannot decide, which is right when you are looking at the right code and

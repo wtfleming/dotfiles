@@ -40,11 +40,10 @@ list from the manifest. Do not re-derive either — several agents are running b
 right now, and each of you deriving the scope separately is how "the same scope" stops
 being true. That is why it arrives as an artifact rather than a description.
 
-**Then check `manifest.correspondence` before you open a file.** On `workspace` or a clean
-`same`, read files from disk. On `scope-behind`, `scope-ahead`, `divergent` or `unknown`,
-the working tree is *not* the code under review, so read the reviewed contents with
-`git show <scope_head>:<path>`. "The full current contents" means the wrong file there,
-and a finding you cannot locate is a finding that gets dropped.
+**Then check `manifest.correspondence` before you open a file.** On `workspace` or `same`,
+read files from disk. On anything else the working tree is *not* the code under review, so
+read the reviewed contents with `git show <scope_head>:<path>`. "The full current contents"
+means the wrong file there, and a finding you cannot locate is a finding that gets dropped.
 
 If you were handed a bare scope with no artifact directory, diff it yourself: a range with
 `git diff <range>`, a path against the working tree.

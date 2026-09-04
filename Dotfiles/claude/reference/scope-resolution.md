@@ -15,7 +15,7 @@ all point here rather than restating it, so a fix lands once.
 ## Run the script
 
 ```sh
-~/.claude/scripts/resolve-scope.sh resolve [--scope <ref|range|path|PR#>] [--base <ref>] [--no-fetch]
+~/.claude/scripts/resolve-scope.sh resolve [--scope <ref|range|path|PR#|PR-url>] [--base <ref>]
 ```
 
 It prints the scope line and then the artifact directory, which holds two files:
@@ -29,9 +29,14 @@ alongside it. **Several agents each deriving the scope separately is how "the sa
 stops being true**, which is the entire reason the diff is an artifact rather than an
 instruction.
 
-Two other subcommands: `base` prints the resolved default branch and nothing else, for
-callers that need only that; `path` prints the artifact directory for a scope without
-resolving it, so two callers naming the same scope agree on where its artifacts are.
+One other subcommand: `base` prints the resolved default branch and nothing else, for
+callers that need only that.
+
+**Exit codes carry a decision.** `0` resolved. `2` means the scope is *prose* — a subject
+naming an area of behaviour, which has no diff; take your subject procedure. `1` is a real
+failure, and a single token that resolves to neither a ref nor a path is one of them: a
+mistyped or unfetched branch name is a caller error, and routing it into the subject
+procedure returns a confident review of a scope nobody asked for.
 
 ### Fields worth knowing by name
 
@@ -42,8 +47,10 @@ resolving it, so two callers naming the same scope agree on where its artifacts 
 | `correspondence`, `correspondence_note` | see below |
 | `scope_head` | the commit the findings are about; `git show <scope_head>:<path>` reads it |
 | `diff_path` | hand this to an agent instead of a description |
-| `base_stale`, `base_stale_reason` | the fetch failed; the merge base may be behind |
+| `base_stale`, `base_stale_reason` | the fetch failed; the merge base may be behind. Null on the shapes that need no base at all |
 | `fell_through` | which auto steps produced nothing, and why |
+| `file_list_source` | `git-apply-numstat` normally. `fallback-headers` means the list was scraped from the diff's headers and may be incomplete — **say so** rather than presenting `files` as settled |
+| `warnings` | anything the resolver could not do cleanly; disclose these the way you disclose `base_stale` |
 
 `scope_line` exists so that a reviewer, eight lenses and a merged report describe one scope
 in one form rather than nine. Use it rather than composing your own.
@@ -86,29 +93,19 @@ genuinely empty change look identical on disk.
 
 ## Resolve the default branch; do not hardcode `main`
 
-```sh
-# Take the first candidate that resolves to a commit. Validating the result rather than
-# trusting the source is the whole point: origin/HEAD can be a dangling symbolic ref
-# after the upstream default branch is renamed, a local name can be missing in a fresh
-# clone, and the prefix can be stripped off a ref that needed it. All three produce a
-# base that looks resolved and is not.
-base=""
-for c in "$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || true)" \
-         origin/main origin/master origin/trunk main master trunk; do
-  [ -n "$c" ] || continue
-  if git rev-parse --verify --quiet "$c^{commit}" >/dev/null 2>&1; then base=$c; break; fi
-done
-[ -n "$base" ] || echo "cannot resolve a default branch; ask for one" >&2
-```
+The candidate order is `origin/HEAD`, then `origin/main`, `origin/master`, `origin/trunk`,
+then the bare `main`, `master`, `trunk` — and **every candidate is validated** with
+`git rev-parse --verify` before it is used, including the one `origin/HEAD` names.
+`resolve_default_branch()` in `~/.claude/scripts/resolve-scope.sh` is the implementation;
+`resolve-scope.sh base` prints its answer. Stated here once as an order rather than as a
+second copy of the loop, because two copies drift and only one of them runs.
 
-Two things that snippet is doing deliberately. Remote-tracking refs come before local
-names because they are the ones that exist in a clone nobody has branched in. And every
-candidate goes through `rev-parse --verify` including the one `origin/HEAD` names — a
-symbolic ref is a pointer, and nothing guarantees its target still exists.
-
-Note the `if … then … fi` rather than `… && base=$c && break`. The latter is a statement
-whose value is 1 when a candidate misses, so under `set -e` it kills the script on the
-first non-resolving candidate — in exactly the repos the loop exists for.
+Two things that order is doing deliberately. Remote-tracking refs come before local names
+because they are the ones that exist in a clone nobody has branched in. And every candidate
+is validated rather than trusted: `origin/HEAD` can be a dangling symbolic ref after the
+upstream default branch is renamed, a local name can be missing in a fresh clone, and the
+prefix can be stripped off a ref that needed it. All three produce a base that looks
+resolved and is not.
 
 On a `master` repo, `git merge-base HEAD main` fails, a `$(...)` substitution collapses to
 empty, and `git diff ...HEAD` degrades to `HEAD...HEAD` — empty output, exit 0, no stderr
@@ -125,9 +122,13 @@ A stale remote-tracking ref does not fail. It moves the merge base backwards, an
 review scope silently grows to include commits nobody asked to review — on a long-lived
 branch, other people's commits, reported as this branch's changes.
 
-The fetch is narrow (`git fetch <remote> <branch>`, not `--all`) and **non-fatal**:
+The fetch is narrow (`git fetch <remote> <branch>`, not `--all`), **bounded** — five
+seconds, because non-fatal is not the same as non-blocking and a remote that black-holes
+SYNs would otherwise stall every review for the OS TCP timeout — and **non-fatal**:
 reviewing offline is legitimate, so a failure is recorded in `base_stale_reason` and
-disclosed rather than raised. Disclose it when it is set; the scope is still reviewable,
+disclosed rather than raised. It runs only for the shapes that actually consult a base: a
+branch, and the auto fall-through's second step. A PR, a range, a single commit and a path
+carry their own endpoints, so they neither resolve nor fetch one. Disclose it when it is set; the scope is still reviewable,
 it just may be wider than the branch.
 
 A base that resolved to a *local* name is not stale — a local name is only ever chosen
@@ -167,11 +168,17 @@ disclose for each:
 | Value | Meaning |
 |---|---|
 | `workspace` | the scope *is* the working tree; uncommitted state is the subject, not a contaminant |
-| `same` | the checkout is at the reviewed commit |
+| `same` | the checkout is at the reviewed commit and clean |
+| `same-dirty` | at the reviewed commit, but carrying uncommitted edits — a file on disk may not match the diff |
 | `scope-behind` | the checkout is ahead of the review — reviewing `HEAD~3` |
 | `scope-ahead` | the reviewed commits are not checked out — an unmerged branch |
 | `divergent` | different lines of history — a fetched PR |
 | `unknown` | the scope's head is not present locally, so no comparison was made |
+
+`same-dirty` is a value of its own rather than a flag beside `same` because every agent's
+rule keys on this one field. A checkout sitting at the reviewed commit with uncommitted
+edits does not hold the reviewed code, and folding it into `same` leaves that state matching
+no clause at all.
 
 Direction is tracked because the two ancestor cases call for opposite disclosures, and
 `unknown` is its own answer because reporting `divergent` for a comparison that was never
@@ -180,10 +187,13 @@ made is a claim nothing supports.
 **None of these is a reason to abort.** Reviewing an older ref or a branch you would rather
 not check out is a legitimate thing to ask for. What changes is how the code is read:
 
-- On `workspace` and a clean `same`, read files from disk as usual.
-- On anything else, **read the scope's blobs**: `git show <scope_head>:<path>`, not the
-  working file. A lens told to read "the full current contents" of a file is being told to
-  read the wrong file here.
+- On `workspace` and `same`, read files from disk as usual.
+- On anything else — `same-dirty` included — **read the scope's blobs**:
+  `git show <scope_head>:<path>`, not the working file. A lens told to read "the full
+  current contents" of a file is being told to read the wrong file here. State the rule
+  this way rather than listing the values: an enumeration has to be found and updated in
+  every prompt when a value is added, and the one that gets missed leaves an agent with a
+  state it has no instruction for.
 - And in every non-`same` case: **a line that is not in the working tree is not a
   refutation.** It is the expected consequence of reading the wrong tree.
 

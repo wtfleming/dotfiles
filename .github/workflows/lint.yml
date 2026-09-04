@@ -33,10 +33,17 @@ jobs:
 
       # shellcheck and jq are preinstalled on ubuntu-latest runners
       - name: shellcheck
-        run: shellcheck sync-dotfiles.sh install-dependencies-macos.sh bin/* Dotfiles/claude/hooks/*.sh Dotfiles/claude/scripts/*.sh Dotfiles/claude/skills/*/scripts/*.sh
+        run: shellcheck sync-dotfiles.sh install-dependencies-macos.sh bin/* Dotfiles/claude/hooks/*.sh Dotfiles/claude/scripts/*.sh Dotfiles/claude/skills/*/scripts/*.sh Dotfiles/claude/tests/*.sh
 
       - name: validate claude settings.json
         run: jq empty Dotfiles/claude/settings.json
+
+      # Everything else here is static, and resolve-scope.sh is almost entirely branching
+      # -- the shape dispatch, the three-step fall-through, the correspondence states. It
+      # is the single authority on what every review reads, so a wrong answer is a
+      # confident report about the wrong code, and shellcheck cannot reach any of it.
+      - name: resolve-scope smoke test
+        run: Dotfiles/claude/tests/resolve-scope-smoke.sh
 
       # A skill, agent or command whose YAML header does not parse registers wrong or
       # not at all, and nothing else here would notice -- shellcheck skips markdown and

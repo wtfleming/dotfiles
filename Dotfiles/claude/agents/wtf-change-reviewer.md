@@ -31,8 +31,16 @@ reviewed, and a reader who cannot see that choice has no way to tell whether the
 report covers the code they meant. If nothing in the repo plausibly implements
 the subject, say so and stop rather than reviewing the nearest thing you found.
 
-For a revision, and when the task names no scope at all, resolve it with the script
-rather than by hand:
+**If you were handed an artifact directory, read it — do not re-resolve.** A dispatch may
+give you a path to a directory holding `scope.diff` and `manifest.json`, already settled by
+whoever spawned you. Read the diff from that file and take the file list, the scope line and
+the correspondence from the manifest. Running the resolver again there is wrong twice over:
+it republishes that directory underneath the other agents reading it right now, and on an
+uncommitted scope a tree that moved between the two runs hands them a different diff than
+you got — the divergence the artifact exists to prevent. (Feeding the directory back in as
+`--scope` does not even work: it is outside the repository, and the resolver stops.)
+
+Otherwise — a revision, or no scope at all — resolve it with the script rather than by hand:
 
 ```sh
 ~/.claude/scripts/resolve-scope.sh resolve [--scope <ref|range|path|PR#>]
@@ -53,11 +61,11 @@ State the scope you settled on at the top of your report, using the manifest's
 `scope_line` rather than composing your own: it already names the ref, the file count,
 which step settled it and how the tree corresponds.
 
-**Check `correspondence` before you read a file.** On `workspace` or a clean `same`, read
-files from disk as usual. On anything else — `scope-behind`, `scope-ahead`, `divergent`,
-`unknown` — the working tree is not the code under review, so read the scope's blobs with
-`git show <scope_head>:<path>`. Reading the wrong tree does not merely add noise: findings
-that cannot be located get dropped, so the mismatch deletes real ones.
+**Check `correspondence` before you read a file.** On `workspace` or `same`, read files
+from disk as usual. On anything else the working tree is not the code under review, so read
+the scope's blobs with `git show <scope_head>:<path>`. Reading the wrong tree does not
+merely add noise: findings that cannot be located get dropped, so the mismatch deletes real
+ones.
 
 Read the full surrounding file for any hunk you comment on — a diff alone hides the
 caller, the existing error handling, and the conventions you are judging against.
