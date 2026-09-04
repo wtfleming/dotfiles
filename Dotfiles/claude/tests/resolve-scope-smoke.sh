@@ -231,8 +231,23 @@ first_target="$(readlink "$first" || echo "")"
 again="$(cd "$WORK/republish" && "$RESOLVE" resolve --scope 'HEAD~2...HEAD' | tail -1)"
 check "a different scope gets its own directory" "2" "$(field "$again" '.file_count')"
 
+# The scope *string* is the same, so this lands on the same $out; what it resolves
+# to must differ, or a stale symlink target satisfies the assertion just as well as
+# a fresh one. Two files in one commit gives a file count the old manifest cannot
+# have.
+printf 'four\n' > "$WORK/republish/d.txt"
+printf 'five\n' > "$WORK/republish/e.txt"
+git -C "$WORK/republish" add d.txt e.txt
+git -C "$WORK/republish" commit -q -m fourth
+
 third="$(cd "$WORK/republish" && "$RESOLVE" resolve --scope 'HEAD~1...HEAD' | tail -1)"
-check "republishing the same scope serves the new manifest" "1" "$(field "$third" '.file_count')"
+check "republishing the same scope serves the new manifest" "2" "$(field "$third" '.file_count')"
+
+# ...and the tree it replaced is still readable, with its own answer intact.
+if [ -n "$first_target" ]; then
+  check "the previous target still holds its own manifest" "1" \
+    "$(field "$(dirname "$third")/$first_target" '.file_count')"
+fi
 check "the published path is a symlink, not a directory" "yes" \
   "$([ -L "$third" ] && echo yes || echo no)"
 
@@ -242,10 +257,7 @@ check "the published path is a symlink, not a directory" "yes" \
 check "the swap did not nest the new link inside the old target" "" \
   "$(find "$first_target" -maxdepth 1 -name '*.[0-9]*' 2>/dev/null | head -1)"
 
-if [ -n "$first_target" ]; then
-  check "a reader holding the previous target still has it" "yes" \
-    "$([ -f "$(dirname "$third")/$first_target/manifest.json" ] && echo yes || echo no)"
-fi
+
 
 echo "== a jq failure is not mistaken for a subject =="
 # Exit 2 is a contract, so nothing but the deliberate prose exit may produce it. jq

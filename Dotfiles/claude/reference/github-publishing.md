@@ -86,6 +86,11 @@ awk '
 # read-modify-write over a body other people and bots also edit, and `--body-file`
 # replaces the whole thing -- so a review bot that posts between the read and the
 # write has its edit silently discarded, with nothing in the output to say so.
+#
+# This narrows that window; it does not close it. `gh pr edit` exposes no ETag or
+# version precondition, so there is no compare-and-swap to be had here and an edit
+# landing between this check and the write is still lost. Treat it as best effort,
+# and prefer appending a comment over rewriting a body that changes often.
 gh pr view <n> --json body -q .body > "$OUT/body.now" \
   || { echo "could not re-read the body; not writing" >&2; exit 1; }
 cmp -s "$OUT/body.raw" "$OUT/body.now" \

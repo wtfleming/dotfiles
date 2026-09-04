@@ -111,15 +111,17 @@ worktree_path() {
 # directory test below sufficient: it drops exactly the registrations that have no
 # directory, so the two states agree afterwards.
 #
-# Pruned narrowly: a bare `git worktree prune` drops the registration of *every*
-# worktree in the repository whose directory is currently missing, which takes an
-# unmounted external drive's worktree -- and its index, and anything staged in
-# it -- with it. Only our own path is ever stale on our account.
+# Removed by name, never pruned: a bare `git worktree prune` drops the registration
+# of *every* worktree in the repository whose directory is currently missing, which
+# takes an unmounted external drive's worktree -- and its index, and anything staged
+# in it -- with it. `worktree remove --force` works on a registration whose directory
+# is already gone, so the narrow operation is available and there is no reason to
+# reach for the broad one.
 worktree_present() {
   local main=$1 wt=$2
 
   if [ ! -d "$wt" ] && git -C "$main" worktree list --porcelain | grep -qxF "worktree $wt"; then
-    git -C "$main" worktree prune
+    git -C "$main" worktree remove --force "$wt" 2>/dev/null || true
   fi
 
   [ -d "$wt" ]

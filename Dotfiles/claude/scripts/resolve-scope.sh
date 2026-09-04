@@ -661,11 +661,24 @@ cmd_resolve() {
     BASE_SHA="$(git rev-parse "$BASE")"
   fi
 
-  # Build into a temporary directory and move it into place last, so a consumer that finds a
-  # manifest finds a complete scope.diff beside it.
-  local tmp="$out.tmp.$$" diff
-  rm -rf "$tmp"
-  mkdir -p "$tmp"
+  # The parent is validated before anything is written beneath it, not just before the
+  # publish: with TMPDIR unset this lands in a world-writable /tmp, `mkdir -p` accepts a
+  # directory somebody else created, and $out is predictable from the repo path and the
+  # scope. Checking it after the diff has been written is checking it too late -- a
+  # symlink planted there has already redirected scope.diff and manifest.json.
+  local parent
+  parent="$(dirname "$out")"
+  [ ! -L "$parent" ] || die "$parent is a symlink; refusing to write a scope under it."
+  mkdir -p "$parent"
+  [ -O "$parent" ] || die "$parent is not owned by you; refusing to write a scope under it."
+
+  # Build in an exclusive directory and publish it by flipping a symlink, so a consumer
+  # that finds a manifest finds a complete scope.diff beside it. `mktemp -d` rather than a
+  # $$ suffix: a pid is reused, and the old name's `rm -rf` would then delete the tree a
+  # reader is holding.
+  local tmp diff
+  tmp="$(mktemp -d "$parent/$(basename "$out").XXXXXXXX")" \
+    || die "cannot create a working directory under $parent"
   trap 'rm -rf "$tmp"' EXIT
   diff="$tmp/scope.diff"
   : > "$diff"
@@ -768,28 +781,14 @@ cmd_resolve() {
     }' > "$tmp/manifest.json"
   rm -f "$tmp/files.json"
 
-  local parent
-  parent="$(dirname "$out")"
-
-  # Same reasoning as `umask 077` below, one level up: with TMPDIR unset this lands in a
-  # world-writable /tmp, and `mkdir -p` accepts a parent somebody else created. Whoever
-  # owns it can replace the manifest and the diff every agent is about to read.
-  [ ! -L "$parent" ] || die "$parent is a symlink; refusing to publish a scope under it."
-  mkdir -p "$parent"
-  [ -O "$parent" ] || die "$parent is not owned by you; refusing to publish a scope under it."
-
-  # Published by rename onto a fresh name, never by deleting the old one: the out dir is
-  # keyed on repo and scope, so a second resolve of the same scope would otherwise
-  # `rm -rf` the manifest that the agents from the first one are reading by path. The
-  # symlink swap is atomic, so a reader holds either the old tree or the new one and
-  # never neither.
-  local final="$out.$$"
-  rm -rf "$final"
-  mv "$tmp" "$final"
-
-  # A real directory here predates this scheme; replace it once. `ln -sfn` is what
-  # flips the pointer -- NOT `mv` onto $out, which follows an existing symlink and
-  # deposits the new link *inside* the old target, leaving readers on the stale tree.
+  # Published by flipping a pointer, never by deleting the old one: the out dir is keyed
+  # on repo and scope, so a second resolve of the same scope would otherwise `rm -rf` the
+  # manifest that the agents from the first one are reading by path.
+  #
+  # A real directory here predates this scheme; replace it once. `ln -sfn` is what flips
+  # the pointer -- NOT `mv` onto $out, which follows an existing symlink and deposits the
+  # new link *inside* the old target, leaving readers on the stale tree.
+  local final="$tmp"
   [ -L "$out" ] || rm -rf "$out"
   ln -sfn "$(basename "$final")" "$out"
 
@@ -800,6 +799,7 @@ cmd_resolve() {
   find "$parent" -maxdepth 1 -type d -name "$(basename "$out").*" \
     ! -name "$(basename "$final")" -mmin +60 -exec rm -rf {} + 2>/dev/null || :
 
+  # The tree is published; the EXIT trap must not take it away.
   trap - EXIT
 
   echo "$scope_line"
