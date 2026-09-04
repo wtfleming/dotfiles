@@ -15,19 +15,20 @@ that code as it stands, picks the files itself, and says which ones it picked.
 ```
 /wtf-code-review                     # uncommitted, else the branch, else HEAD
 /wtf-code-review HEAD~3              # any ref, branch or path
-/wtf-code-review main --deep         # add a verified parallel pass per dimension
+/wtf-code-review main --lite         # the reviewer alone, no per-dimension pass
 /wtf-code-review "db connection"     # a subject, reviewed as it stands
 ```
 
-Without `--deep` it settles the scope, runs the project's test suite and linter,
+Under `--lite` it settles the scope, runs the project's test suite and linter,
 reviews the diff against the checklist, and prints findings as Critical, Warning
 or Suggestion — then stops. Any Critical is checked by a `wtf-refuter` before the
 report prints, since a false Critical stops work that should not stop; most runs
 have none and so spend nothing. Warnings arrive marked `(unverified)`. The reviewer has no `Edit` or `Write`, so a review
 cannot change anything.
 
-`--deep` adds up to eight `wtf-lens` agents in parallel, one per lens: correctness,
-security, tests, maintainability, performance, dependencies, reuse, resilience. A
+By default it does more: up to eight `wtf-lens` agents in parallel, one per
+lens — correctness, security, tests, maintainability, performance, dependencies,
+reuse, resilience. A
 change that touches only prose skips the four lenses with no surface there
 (tests, resilience, performance, dependencies), decided from the file list alone
 and disclosed in the report. That list comes from the scope artifact rather than
@@ -80,14 +81,14 @@ verification the findings did. Committing stays yours.
 ### The single-agent variant
 
 `/wtf-code-review-no-lenses` is the same command with the lenses folded back
-into the reviewer. Under `--deep` it dispatches no `wtf-lens` at all: the eight
-rubrics ride along in the reviewer's own prompt, and the one agent that already
-diffed the change and read its files works through them in one pass. It exists
-because most of a `--deep` run's tokens go on eight agents each re-reading the
-same scope before any of them writes a line.
+into the reviewer. It dispatches no `wtf-lens` at all: the eight rubrics ride
+along in the reviewer's own prompt, and the one agent that already diffed the
+change and read its files works through them in one pass. It exists because most
+of a full run's tokens go on eight agents each re-reading the same scope before
+any of them writes a line.
 
 ```
-/wtf-code-review-no-lenses main --deep
+/wtf-code-review-no-lenses main
 ```
 
 Everything downstream is unchanged — same report, same promotion rule, same
@@ -131,7 +132,7 @@ allowed to be red — and it does not hunt bugs.
 | Agent | Role |
 |---|---|
 | `wtf-change-reviewer` | scope, tests, lint, the full review |
-| `wtf-lens` | one dimension only; dispatched up to eight times by `--deep` |
+| `wtf-lens` | one dimension only; dispatched up to eight times per review |
 | `wtf-refuter` | tries to kill a single finding |
 | `wtf-design-reviewer` | shape of the change, Suggestion-only; dispatched by `/wtf-design-review` |
 
@@ -145,17 +146,18 @@ that has them. Edits only ever happen in the main session, one approval at a tim
   without touching an agent definition.
 - A project's own `REVIEW.md`, `AGENTS.md` or `CLAUDE.md` wins where it conflicts.
   `REVIEW.md` is the name Anthropic's own code review reads.
-- The eight `--deep` rubrics live in the commands, not in `wtf-lens`, so they can
+- The eight lens rubrics live in the commands, not in `wtf-lens`, so they can
   be retuned without editing an agent — but there are two copies of the table
   now, one per command, and a retune means editing both.
 
 ### Cost
 
-`--deep` spawns one reviewer, up to eight lenses, and one refuter per verified finding —
-tens of agents on a real branch — and asking for fixes afterwards adds one more
-refuter per fixed Critical or Warning. It announces each fan-out before spawning
-it, so the spend can be refused. For very large diffs, the built-in `/code-review ultra`
-is the maintained alternative.
+A default run spawns one reviewer, up to eight lenses, and one refuter per verified
+finding — tens of agents on a real branch — and asking for fixes afterwards adds one
+more refuter per fixed Critical or Warning. It announces each fan-out before spawning
+it, so the spend can be refused, and `--lite` cuts it to the reviewer alone plus a
+refuter per Critical. For very large diffs, the built-in `/code-review ultra` is the
+maintained alternative.
 
 ## Resolving the scope
 
@@ -163,7 +165,7 @@ is the maintained alternative.
 here has to settle before it reads a line: **what code is under review**, and **does the
 working tree actually hold it**.
 
-The first matters because `--deep` dispatches eight lenses plus one refuter per finding,
+The first matters because a full run dispatches eight lenses plus one refuter per finding,
 each of which used to run its own git commands. "The same scope" then held only for as
 long as every agent derived it identically — an instruction, not a fact. Now the diff is
 produced once, written to `scope.diff`, and handed over by path, with `manifest.json`
