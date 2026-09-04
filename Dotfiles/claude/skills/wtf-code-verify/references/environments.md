@@ -226,8 +226,15 @@ docker compose ps                    # confirm health, not just "started"
 Bringing up **only the dependencies** and running the application from the worktree is
 usually the right shape. The app is what you are testing, so you want it built from the
 tree under test with a debugger and logs to hand; the database and cache are stage
-scenery, and they can stay up across both sides of a differential because they are state
-rather than code.
+scenery, and the *processes* can stay up across both sides of a differential because they
+are state rather than code.
+
+Their **contents** cannot. Being state is what makes them dangerous here, not what makes
+them safe: a probe that writes on the baseline side leaves rows and cache entries the HEAD
+side then reads, so HEAD can pass without ever executing the changed path, or fail on a
+value the old code wrote in a shape the new code does not expect — and both look like a
+verdict about the change. Give each side its own namespace (a key prefix, a schema, a
+database number) or flush between them, and say in the report which you did.
 
 **Do not build an image the project does not have.** A hand-rolled Dockerfile turns the
 session into Dockerfile debugging, which teaches you nothing about the change and

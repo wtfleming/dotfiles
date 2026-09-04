@@ -38,8 +38,19 @@ correct means, add a line saying so rather than editing the original.
 ## Capturing output
 
 ```bash
-"$PROBE" > "$OUT/raw/p2.head.stdout.txt" 2> "$OUT/raw/p2.head.stderr.txt"; echo "exit=$?"
+status=0
+"$PROBE" > "$OUT/raw/p2.head.stdout.txt" 2> "$OUT/raw/p2.head.stderr.txt" || status=$?
+echo "$status" > "$OUT/raw/p2.head.exit"
 ```
+
+Into a variable first, then the file. `$?` survives exactly one command, so anything that
+records it also destroys it: `; echo "exit=$?"` *prints* the status and keeps nothing, and
+`echo $? > file` writes it and leaves `$?` as `echo`'s own zero — so a probe that failed
+reads as one that passed to whatever runs next. The `|| status=$?` form matters under
+`set -e`, where a failing probe would otherwise abort before anything could record it.
+
+A probe wrapped in a script of its own has to **return** that status too — `exit "$status"`
+as its last line, not the status of the last thing it wrote.
 
 Capture both streams and the exit code. Several test runners report results on stderr and
 leave stdout empty — ERT is one — so a probe that captures only stdout looks like it

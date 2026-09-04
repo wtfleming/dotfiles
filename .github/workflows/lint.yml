@@ -45,6 +45,12 @@ jobs:
       - name: resolve-scope smoke test
         run: Dotfiles/claude/tests/resolve-scope-smoke.sh
 
+      # Same reasoning, and the same blind spot until now: baseline-worktree.sh builds and
+      # destroys git worktrees under $TMPDIR, and its failure modes are a guard that does
+      # not stop the run and half a pair left registered for the next one to trip over.
+      - name: baseline-worktree smoke test
+        run: Dotfiles/claude/tests/baseline-worktree-smoke.sh
+
       # A skill, agent or command whose YAML header does not parse registers wrong or
       # not at all, and nothing else here would notice -- shellcheck skips markdown and
       # jq only sees settings.json.

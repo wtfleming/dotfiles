@@ -150,7 +150,8 @@ result doesn't move.
 | fails with the predicted symptom | passes | **Verified.** Report both. |
 | **passes** | passes | **Not verified.** The probe does not exercise the claim, the claim needed a condition you did not reproduce, or the change does not do what it says. Pick one and say so. |
 | fails for another reason (module resolution, missing env, port in use) | any | **Not verified** — invalid probe or bootstrap. Fix it and rerun; never report this as a reproduction. |
-| fails with the predicted symptom | **fails** | **Falsified.** The fix does not work. Report it plainly; this is a success for the process. |
+| fails with the predicted symptom | **fails with the predicted symptom** | **Falsified.** The fix does not work. Report it plainly; this is a success for the process. |
+| fails with the predicted symptom | fails for another reason | **Not verified.** A compile error, a missing service or a port in use on HEAD says nothing about the fix. The row above rounds an inconclusive result *down*, which is the same error as rounding one up. |
 
 The second row is the one that matters, and the temptation there is to loosen the probe
 until the baseline finally fails. That converts an honest inconclusive into a fabricated

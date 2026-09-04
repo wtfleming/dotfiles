@@ -35,6 +35,15 @@
 
 set -Eeuo pipefail
 
+# Exit 2 is a contract: it means "the scope is prose, run the subject procedure", and a
+# caller that reads it will happily review an area of behaviour named after a real commit.
+# jq exits 2 on a system error of its own -- a truncated or missing --slurpfile input, a
+# full $TMPDIR -- and under `set -e` that status would become this script's.
+#
+# The deliberate `exit 2` below needs no exemption here: bash runs no ERR trap for an
+# explicit exit, so the only status this trap ever sees is a command's.
+trap 'rc=$?; [ "$rc" -ne 2 ] || rc=1; exit "$rc"' ERR
+
 WARNINGS=()
 FELL_THROUGH=()
 FETCH_WARNING=""
@@ -43,6 +52,13 @@ SHAPE=""
 PR_NUMBER=""
 CORRESPONDENCE=""
 CORRESPONDENCE_NOTE=""
+
+# Set by resolve_diff_for_shape: the commit the diff is of, a human label for it, the
+# command that produced it, and which fall-through step settled an unnamed scope.
+SCOPE_HEAD=""
+HEAD_LABEL=""
+RESOLVED_BY=""
+RESOLUTION_STEP=explicit
 
 # Untracked files above this go into the diff as a stub rather than inline. A single
 # untracked 200MB CSV would otherwise become a 200MB scope.diff that eight agents are
@@ -95,8 +111,29 @@ remote_slug() {
   printf '%s' "$url" | sed -e 's|\.git$||' -e 's|^.*://[^/]*/||' -e 's|^.*:||'
 }
 
+# Guarded like jq and gh below: this runs before either of their checks, so an image
+# without perl died on a bare `shasum: command not found` and exit 127.
+#
+# Captured into a variable rather than piped straight into `cut`: sha256_stdin's `die`
+# runs as a pipeline element, so it exits that subshell alone. Every caller interpolates
+# hash12 into a larger string, which would then be built from an empty hash and used to
+# name a directory -- the run limping on past a failure it already reported.
 hash12() {
-  printf '%s' "$1" | shasum -a 256 | cut -c1-12
+  local h
+  h="$(printf '%s' "$1" | sha256_stdin)" || exit 1
+  printf '%s' "${h:0:12}"
+}
+
+# One place, because there are two callers and a bare `shasum` in either dies with
+# `command not found` and exit 127 rather than a named cause.
+sha256_stdin() {
+  if command -v shasum >/dev/null 2>&1; then
+    shasum -a 256
+  elif command -v sha256sum >/dev/null 2>&1; then
+    sha256sum
+  else
+    die "neither shasum nor sha256sum is installed; one is needed to hash the scope"
+  fi
 }
 
 # Take the first candidate that resolves to a commit. Validating the result rather than
@@ -121,6 +158,32 @@ resolve_default_branch() {
   return 1
 }
 
+# A wall-clock ceiling on a network call that has none of its own -- gh sets no client
+# timeout, so a connection that establishes and then goes silent hangs for as long as
+# the peer holds it open. `timeout` is GNU and `gtimeout` is its Homebrew name; where
+# neither is installed the call runs unbounded rather than not at all, since a missing
+# bound is worse than a missing resolver.
+#
+# It bounds *duration*, not idleness, so a slow-but-progressing transfer can hit it: a
+# few thousand files over a metered link is a real diff, not a hang. Hence the override
+# -- the alternative is a hard failure recoverable only by editing this file.
+WTF_SCOPE_TIMEOUT="${WTF_SCOPE_TIMEOUT:-30}"
+run_bounded() {
+  local timeout_bin=""
+
+  if command -v timeout >/dev/null 2>&1; then
+    timeout_bin=timeout
+  elif command -v gtimeout >/dev/null 2>&1; then
+    timeout_bin=gtimeout
+  fi
+
+  if [ -n "$timeout_bin" ]; then
+    "$timeout_bin" "$WTF_SCOPE_TIMEOUT" "$@"
+  else
+    "$@"
+  fi
+}
+
 # Refresh the base before it is used as a merge base. A stale remote-tracking ref does not
 # fail, it just moves the merge base back, and the review scope grows to include commits
 # nobody asked to review. Non-fatal on purpose -- offline review is legitimate -- so the
@@ -138,12 +201,84 @@ fetch_base() {
     */*) remote="${base%%/*}"; branch="${base#*/}" ;;
     *)   return 0 ;;
   esac
-  if ! GIT_TERMINAL_PROMPT=0 \
-       GIT_SSH_COMMAND='ssh -o ConnectTimeout=5 -o BatchMode=yes' \
+  # Three bounds, because none of them covers the others. ConnectTimeout stops a
+  # remote that black-holes SYNs, but only during connection setup; the HTTP
+  # low-speed pair stops a transfer that stalls, but only over HTTP; and neither
+  # bounds an ssh session that connects and then goes quiet. run_bounded is the
+  # only one that holds whatever the transport does.
+  if ! run_bounded env GIT_TERMINAL_PROMPT=0 \
+       GIT_SSH_COMMAND='ssh -o ConnectTimeout=5 -o BatchMode=yes -o ServerAliveInterval=5 -o ServerAliveCountMax=2' \
        GIT_HTTP_LOW_SPEED_LIMIT=1000 GIT_HTTP_LOW_SPEED_TIME=10 \
        git fetch --quiet "$remote" "$branch" 2>/dev/null; then
     FETCH_WARNING="git fetch $remote $branch failed; the merge base may be behind $remote"
   fi
+}
+
+# Create one directory level, refusing anything somebody else could have planted. Each
+# level is made non-recursively, so `mkdir -p` cannot walk down through a symlink on the
+# way, and both tests run against that level itself.
+#
+# Reports through its exit status and writes nothing to stdout, for the reason hash12
+# spells out: a `die` inside a command substitution exits only that subshell.
+# A directory is only as private as every directory above it. If any ancestor can be
+# renamed by somebody else, they can swap a validated tree for their own after the
+# check has passed -- so the leaf mode test alone protects nothing.
+#
+# World-writable is safe *only* with the sticky bit, which is the whole reason /tmp at
+# 1777 is a normal place to work: without `t`, anyone may rename anyone's entries.
+# Ownership by root is accepted for the same reason -- the system owns /, /tmp and
+# /var/folders, and requiring our own uid there would refuse every real path.
+#
+# Fails closed. `find` printing nothing is not the same as `find` failing, and testing
+# its output alone accepted a directory it could not stat at all.
+path_is_unsafe() {
+  local dir=$1 out rc=0
+  out="$(find "$dir" -maxdepth 0 \( \( -perm -g+w -o -perm -o+w \) ! -perm -1000 \) 2>/dev/null)" || rc=$?
+  [ "$rc" -eq 0 ] || return 0
+  [ -z "$out" ] || return 0
+  [ -O "$dir" ] || [ -n "$(find "$dir" -maxdepth 0 -user root 2>/dev/null)" ] || return 0
+  return 1
+}
+
+# Every component from / down, because TMPDIR itself may be the weak link.
+#
+# Walked on the *physical* path, and symlink-ness is not what is tested here: on macOS
+# /tmp is a symlink to /private/tmp, so rejecting every symlinked component refuses
+# every run on the platform this is written for. What matters is whether the directory
+# the path really lands on can be renamed by somebody else. The levels this script
+# creates are tested for being symlinks by their own callers, where a planted link is
+# a redirection rather than a system layout.
+#
+# An array rather than a string: a TMPDIR with a space in it is ordinary on macOS.
+ensure_safe_ancestry() {
+  local dir=$1 what=$2 c
+  local real
+  real="$(cd "$dir" 2>/dev/null && pwd -P)" || real=""
+  [ -n "$real" ] || real=$dir
+  local p=$real
+  local chain=()
+  while :; do
+    chain=("$p" ${chain[@]+"${chain[@]}"})
+    case "$p" in /|.|"") break ;; esac
+    p="$(dirname "$p")"
+  done
+  for c in ${chain[@]+"${chain[@]}"}; do
+    [ -e "$c" ] || continue
+    path_is_unsafe "$c" && die "$c is writable by other users, or could not be inspected; refusing to $what under it. Fix with: chmod go-w '$c'"
+    :
+  done
+}
+
+ensure_private_dir() {
+  local dir=$1 what=$2
+  [ ! -L "$dir" ] || die "$dir is a symlink; refusing to $what under it."
+  mkdir -m 700 "$dir" 2>/dev/null || [ -d "$dir" ] \
+    || die "cannot create $dir to hold the scope."
+  [ -O "$dir" ] || die "$dir is not owned by you; refusing to $what under it."
+
+  # Ownership is not enough, and neither is this level alone: every directory above it
+  # is part of the same question.
+  ensure_safe_ancestry "$dir" "$what"
 }
 
 # Keyed on the repo *and* the scope. The repo half carries a hash of the absolute path
@@ -255,10 +390,35 @@ EOF
 # synthesising here. It exits 1 whenever the files differ, which is always -- unguarded,
 # that kills the script on the first untracked file.
 append_untracked() {
-  local out=$1 filter=$2 f rc size count=0 total=0 over_budget=false
+  local out=$1 filter=$2 f rc size count=0 pending total=0 over_budget=false noted=false list
+
+  # Enumerated once, into a file. The walk below needs the same list, and on a large
+  # checkout this traversal is the expensive part -- but the reason it is a file rather
+  # than a second identical command is correctness: two enumerations can disagree, and
+  # the count on stderr would then describe a set other than the one folded into the diff.
+  # It lands beside scope.diff and is removed here, the way files.json is.
+  list="$(dirname "$out")/untracked.list"
+  git ls-files --others --exclude-standard -z ${filter:+-- "$filter"} > "$list"
+  pending="$(tr -cd '\0' < "$list" | wc -c | tr -d ' ')"
+
+  # Straight to stderr, and before the walk rather than after it. This exists to explain
+  # a wait -- two processes per file -- and `warn` only queues a line for the flush that
+  # happens once the manifest is written, which is after the slow part is over.
+  if [ "${pending:-0}" -gt "$UNTRACKED_NOISY_COUNT" ]; then
+    echo "note: folding $pending untracked files into the diff; this takes a moment." >&2
+    noted=true
+  fi
+
   while IFS= read -r -d '' f; do
     count=$((count + 1))
-    size="$(wc -c < "$f" 2>/dev/null | tr -d ' ')" || size=0
+
+    # Skipped once the budget is gone: past that point the file is stubbed whatever its
+    # size, so the probe buys nothing but a process per file.
+    if [ "$over_budget" = true ]; then
+      size=0
+    else
+      size="$(wc -c < "$f" 2>/dev/null | tr -d ' ')" || size=0
+    fi
     if [ "$over_budget" = false ] \
        && [ $((total + ${size:-0})) -gt "$MAX_UNTRACKED_TOTAL_BYTES" ]; then
       over_budget=true
@@ -284,9 +444,11 @@ append_untracked() {
     # Exit 1 is "they differ", which is every file here. Anything above it is a real
     # failure on one file, and one bad file must not cost the whole scope.
     [ "$rc" -le 1 ] || warn "could not diff untracked file: $f (git exit $rc)"
-  done < <(git ls-files --others --exclude-standard -z ${filter:+-- "$filter"})
-  [ "$count" -le "$UNTRACKED_NOISY_COUNT" ] \
-    || warn "$count untracked files were folded into the diff; consider gitignoring what does not belong in a review"
+  done < "$list"
+  rm -f "$list"
+  if [ "$noted" = true ]; then
+    warn "$count untracked files were folded into the diff; consider gitignoring what does not belong in a review"
+  fi
 }
 
 # `git diff <ref>^!` is shorthand for `<ref>^ <ref>` and has no parent to name on a root
@@ -322,8 +484,11 @@ files_from_diff() {
     # Both sides, because a deleted file's `+++` line is /dev/null. Scraping only `+++`
     # reports a change that deletes a source file and edits a README as prose-only, and
     # prose-only is what skips four lenses.
+    # `|| :` because grep exits 1 when it selects nothing, which pipefail turns into a
+    # silent abort -- on a rename-only or mode-only diff, which is exactly the shape that
+    # reaches this fallback, and which the empty-file-list `die` below exists to report.
     sed -n -e 's|^+++ b/||p' -e 's|^--- a/||p' "$diff" \
-      | grep -v '^/dev/null$' \
+      | { grep -v '^/dev/null$' || :; } \
       | sort -u \
       | jq -Rs 'split("\n") | map(select(length > 0))' > "$dest"
   fi
@@ -337,7 +502,7 @@ json_array_from_lines() {
 }
 
 # Sets CORRESPONDENCE and CORRESPONDENCE_NOTE. The note names the real head rather than a
-# `<scope_head>` placeholder: it is the one field advertised as ready to paste, it is
+# `<SCOPE_HEAD>` placeholder: it is the one field advertised as ready to paste, it is
 # concatenated into `scope_line` verbatim, and on the relay hop where that line is the only
 # channel a placeholder leaves the next agent with no head to read the code from.
 #
@@ -412,6 +577,167 @@ need_base() {
   return 1
 }
 
+# Produce the diff for the shape `scope_shape_of` settled on, and record the four
+# facts about it that only this step knows.
+#
+# Lifted out of cmd_resolve, which was 300 lines and is the one function in this file
+# that did not read like the rest of it. The three-step fall-through for an unnamed
+# scope is the part that most needed a name of its own: it is the only place where
+# *not* finding a diff is the normal outcome and the next step is the answer.
+#
+# Out-values travel as globals, the way SHAPE and CORRESPONDENCE already do, rather
+# than as an echoed tuple -- there are four of them and one is a multi-word label.
+resolve_diff_for_shape() {
+  local scope=$1 diff=$2
+
+  case "$SHAPE" in
+    pr)
+      command -v gh >/dev/null 2>&1 || die "scope '$scope' is a PR but gh is not installed"
+      # gh pr diff is the single authority for a PR, and a failure is a stop rather than a
+      # fallback. A locally computed base...head is a *different change*: the local base ref
+      # may be stale, the PR may target a non-default base, and the PR may have been
+      # rebased. Silently reviewing a near-miss is worse than not reviewing.
+      # Bounded for the reason fetch_base is: gh sets no client timeout, so a proxy that
+      # accepts the connection and then goes silent hangs the resolver indefinitely,
+      # before any agent has been dispatched and with nothing on stderr.
+      run_bounded gh pr diff "$PR_NUMBER" > "$diff" \
+        || die "gh pr diff $PR_NUMBER failed or timed out. Not falling back to a local diff, which would review something other than the PR."
+      SCOPE_HEAD="$(run_bounded gh pr view "$PR_NUMBER" --json headRefOid -q .headRefOid 2>/dev/null || true)"
+      HEAD_LABEL="PR #$PR_NUMBER head"
+      RESOLVED_BY="gh pr diff $PR_NUMBER"
+      ;;
+    range)
+      git diff "$scope" -- > "$diff"
+      # Split on the range operator, not on the last dot: `${scope##*.}` turns v1.0..v2.0
+      # into `0`, which resolves to nothing, and the manifest then reports the scope's head
+      # as absent while the checkout sits exactly on it.
+      local rhs
+      case "$scope" in
+        *...*) rhs="${scope#*...}" ;;
+        *)     rhs="${scope#*..}" ;;
+      esac
+      [ -n "$rhs" ] || rhs=HEAD
+      SCOPE_HEAD="$(git rev-parse --verify --quiet "$rhs^{commit}" 2>/dev/null || true)"
+      HEAD_LABEL="$scope"
+      RESOLVED_BY="git diff $scope"
+      ;;
+    commit)
+      diff_one_commit "$scope" > "$diff"
+      SCOPE_HEAD="$(git rev-parse "$scope^{commit}")"
+      HEAD_LABEL="$scope"
+      RESOLVED_BY="git diff $scope^!"
+      ;;
+    branch)
+      need_base || die "cannot resolve a default branch to diff '$scope' against; pass --base"
+      local mb
+      mb="$(git merge-base "$BASE" "$scope")" \
+        || die "no merge base between $scope and $BASE"
+      BASE_SHA="$mb"
+      git diff "$mb...$scope" -- > "$diff"
+      SCOPE_HEAD="$(git rev-parse "$scope^{commit}")"
+      HEAD_LABEL="$scope"
+      RESOLVED_BY="git diff \$(git merge-base $BASE $scope)...$scope"
+      ;;
+    path)
+      git diff HEAD -- "$scope" > "$diff"
+      append_untracked "$diff" "$scope"
+      SCOPE_HEAD="$(git rev-parse HEAD)"
+      HEAD_LABEL="working tree"
+      RESOLVED_BY="git diff HEAD -- $scope, plus untracked files under it"
+      ;;
+    worktree)
+      # The three-step order from scope-resolution.md: uncommitted work, else the branch
+      # against its merge base, else the commit at HEAD. An empty result at any step means
+      # *fall through*, never "no changes" -- so each step that produces nothing records
+      # why, and the reasons are carried into the manifest even when a later step succeeds.
+      git diff HEAD > "$diff"
+      append_untracked "$diff" ""
+      SCOPE_HEAD="$(git rev-parse HEAD)"
+      HEAD_LABEL="working tree"
+      RESOLVED_BY="git diff HEAD, plus untracked files"
+      RESOLUTION_STEP=auto-1-worktree
+
+      if [ ! -s "$diff" ]; then
+        FELL_THROUGH+=("auto-1-worktree: no uncommitted or untracked changes")
+        if need_base; then
+          local mb2
+          if mb2="$(git merge-base "$BASE" HEAD 2>/dev/null)"; then
+            BASE_SHA="$mb2"
+            git diff "$mb2...HEAD" > "$diff"
+            SHAPE=branch
+            HEAD_LABEL=HEAD
+            RESOLVED_BY="git diff \$(git merge-base $BASE HEAD)...HEAD"
+            RESOLUTION_STEP=auto-2-branch
+            [ -s "$diff" ] || FELL_THROUGH+=("auto-2-branch: empty diff against the merge base with $BASE (standing on the default branch, or the branch has no commits of its own)")
+          else
+            FELL_THROUGH+=("auto-2-branch: no merge base between HEAD and $BASE")
+          fi
+        else
+          FELL_THROUGH+=("auto-2-branch: no default branch resolved")
+        fi
+      fi
+
+      if [ ! -s "$diff" ]; then
+        diff_one_commit HEAD > "$diff"
+        SHAPE=commit
+        HEAD_LABEL=HEAD
+        RESOLVED_BY="git show HEAD"
+        RESOLUTION_STEP=auto-3-head
+        if [ ! -s "$diff" ]; then
+          FELL_THROUGH+=("auto-3-head: HEAD is an empty commit")
+          die "nothing to review. $(printf '%s; ' "${FELL_THROUGH[@]}")Name a scope -- a ref, a range, a PR number or a path."
+        fi
+      fi
+      ;;
+  esac
+}
+
+# publish_scope <built-tree> <pointer>
+#
+# Published by flipping a pointer, never by deleting the old one: the out dir is keyed on
+# repo and scope, so a second resolve of the same scope would otherwise `rm -rf` the
+# manifest that the agents from the first one are reading by path.
+publish_scope() {
+  local final=$1 out=$2 parent root_dir link
+
+  parent="$(dirname "$out")"
+  root_dir="$(dirname "$parent")"
+
+  # A real directory here predates this scheme; replace it once.
+  [ -L "$out" ] || rm -rf "$out"
+
+  # Swapped by rename, not by `ln -sfn` onto $out directly: BSD `ln -f` unlinks before it
+  # links, leaving a window in which $out does not exist at all and a reader takes ENOENT
+  # -- and "never neither" is the whole point. `mv -h` (BSD) and `mv -T` (GNU) each
+  # rename *onto* the symlink rather than through it; NOT a plain `mv`, which follows an
+  # existing symlink and deposits the new link inside the old target, leaving readers on
+  # the stale tree. Where neither flag exists the direct form is still better than none.
+  link="$out.new.$$"
+  ln -sfn "$(basename "$final")" "$link"
+  if ! mv -h "$link" "$out" 2>/dev/null && ! mv -T "$link" "$out" 2>/dev/null; then
+    rm -f "$link"
+    ln -sfn "$(basename "$final")" "$out"
+  fi
+
+  # The swap orphans the previous target, which the old unconditional `rm -rf` used to
+  # take with it. Pruned on age rather than immediately, because "not the current target"
+  # and "nobody is reading it" are different things: an hour is far longer than any run
+  # holds a manifest open, and $TMPDIR is purged on a timer anyway.
+  #
+  # Swept across every repo's parent rather than only this run's. The directory is keyed
+  # on the repo path, so a scope resolved once -- or a checkout at a path never revisited
+  # -- would otherwise hold its diff until the OS purges $TMPDIR: days on macOS, and on a
+  # Linux box with no tmpfiles timer, never.
+  find "$root_dir" -mindepth 2 -maxdepth 2 -type d -mmin +60 \
+    ! -name "$(basename "$final")" -exec rm -rf {} + 2>/dev/null || :
+  # Then the pointers whose target the sweep just took, and the parents left holding
+  # nothing -- otherwise the sweep trades whole trees for dangling links and empty dirs.
+  find "$root_dir" -mindepth 2 -maxdepth 2 -type l \
+    -exec sh -c 'for l; do [ -e "$l" ] || rm -f "$l"; done' _ {} + 2>/dev/null || :
+  find "$root_dir" -mindepth 1 -maxdepth 1 -type d -empty \
+    -exec rmdir {} + 2>/dev/null || :
+}
+
 cmd_resolve() {
   local scope="" base_override=""
   while [ $# -gt 0 ]; do
@@ -422,9 +748,14 @@ cmd_resolve() {
     esac
   done
 
-  local root out prefix scope_head="" head_label="" resolved_by="" resolution_step=explicit
+  local root out prefix
   command -v jq >/dev/null 2>&1 \
     || die "jq is required to write the manifest but is not installed (brew install jq)"
+  # Probed here rather than left to the first hash. hash12 is only ever reached from
+  # inside scope_out_dir's `echo`, so a `die` down there exits that substitution and
+  # nothing else -- the run would carry on and name a directory with the hash missing.
+  command -v shasum >/dev/null 2>&1 || command -v sha256sum >/dev/null 2>&1 \
+    || die "shasum or sha256sum is required to hash the scope but neither is installed"
   root="$(repo_root)"
 
   # A relative path scope names something relative to where the caller stands, and the `cd`
@@ -467,112 +798,33 @@ cmd_resolve() {
     BASE_SHA="$(git rev-parse "$BASE")"
   fi
 
-  # Build into a temporary directory and move it into place last, so a consumer that finds a
-  # manifest finds a complete scope.diff beside it.
-  local tmp="$out.tmp.$$" diff
-  rm -rf "$tmp"
-  mkdir -p "$tmp"
+  # Every level this script creates is validated, and validated before anything is
+  # written beneath it. With TMPDIR unset this lands in a world-writable /tmp, `mkdir -p`
+  # accepts a directory somebody else created, and both components are predictable from
+  # the repo path and the scope.
+  #
+  # Both levels, because checking only the leaf checks one level too deep: `wtf-scope` is
+  # the fixed, publicly documented name an attacker plants, and a `mkdir -p` that walks
+  # through their symlink creates the leaf *inside* their tree -- where it is not a
+  # symlink and is owned by us, so it passes both tests. And before the diff rather than
+  # after, because by then a planted symlink has already redirected scope.diff and
+  # manifest.json.
+  local parent
+  parent="$(dirname "$out")"
+  ensure_private_dir "$(dirname "$parent")" "write a scope"
+  ensure_private_dir "$parent" "write a scope"
+
+  # Build in an exclusive directory and publish it by flipping a symlink, so a consumer
+  # that finds a manifest finds a complete scope.diff beside it. `mktemp -d` rather than a
+  # $$ suffix: a pid is reused, and the old name's `rm -rf` would then delete the tree a
+  # reader is holding.
+  local tmp diff
+  tmp="$(mktemp -d "$parent/$(basename "$out").XXXXXXXX")" \
+    || die "cannot create a working directory under $parent"
   trap 'rm -rf "$tmp"' EXIT
   diff="$tmp/scope.diff"
   : > "$diff"
-
-  case "$SHAPE" in
-    pr)
-      command -v gh >/dev/null 2>&1 || die "scope '$scope' is a PR but gh is not installed"
-      # gh pr diff is the single authority for a PR, and a failure is a stop rather than a
-      # fallback. A locally computed base...head is a *different change*: the local base ref
-      # may be stale, the PR may target a non-default base, and the PR may have been
-      # rebased. Silently reviewing a near-miss is worse than not reviewing.
-      gh pr diff "$PR_NUMBER" > "$diff" \
-        || die "gh pr diff $PR_NUMBER failed. Not falling back to a local diff, which would review something other than the PR."
-      scope_head="$(gh pr view "$PR_NUMBER" --json headRefOid -q .headRefOid 2>/dev/null || true)"
-      head_label="PR #$PR_NUMBER head"
-      resolved_by="gh pr diff $PR_NUMBER"
-      ;;
-    range)
-      git diff "$scope" -- > "$diff"
-      # Split on the range operator, not on the last dot: `${scope##*.}` turns v1.0..v2.0
-      # into `0`, which resolves to nothing, and the manifest then reports the scope's head
-      # as absent while the checkout sits exactly on it.
-      local rhs
-      case "$scope" in
-        *...*) rhs="${scope#*...}" ;;
-        *)     rhs="${scope#*..}" ;;
-      esac
-      [ -n "$rhs" ] || rhs=HEAD
-      scope_head="$(git rev-parse --verify --quiet "$rhs^{commit}" 2>/dev/null || true)"
-      head_label="$scope"
-      resolved_by="git diff $scope"
-      ;;
-    commit)
-      diff_one_commit "$scope" > "$diff"
-      scope_head="$(git rev-parse "$scope^{commit}")"
-      head_label="$scope"
-      resolved_by="git diff $scope^!"
-      ;;
-    branch)
-      need_base || die "cannot resolve a default branch to diff '$scope' against; pass --base"
-      local mb
-      mb="$(git merge-base "$BASE" "$scope")" \
-        || die "no merge base between $scope and $BASE"
-      BASE_SHA="$mb"
-      git diff "$mb...$scope" -- > "$diff"
-      scope_head="$(git rev-parse "$scope^{commit}")"
-      head_label="$scope"
-      resolved_by="git diff \$(git merge-base $BASE $scope)...$scope"
-      ;;
-    path)
-      git diff HEAD -- "$scope" > "$diff"
-      append_untracked "$diff" "$scope"
-      scope_head="$(git rev-parse HEAD)"
-      head_label="working tree"
-      resolved_by="git diff HEAD -- $scope, plus untracked files under it"
-      ;;
-    worktree)
-      # The three-step order from scope-resolution.md: uncommitted work, else the branch
-      # against its merge base, else the commit at HEAD. An empty result at any step means
-      # *fall through*, never "no changes" -- so each step that produces nothing records
-      # why, and the reasons are carried into the manifest even when a later step succeeds.
-      git diff HEAD > "$diff"
-      append_untracked "$diff" ""
-      scope_head="$(git rev-parse HEAD)"
-      head_label="working tree"
-      resolved_by="git diff HEAD, plus untracked files"
-      resolution_step=auto-1-worktree
-
-      if [ ! -s "$diff" ]; then
-        FELL_THROUGH+=("auto-1-worktree: no uncommitted or untracked changes")
-        if need_base; then
-          local mb2
-          if mb2="$(git merge-base "$BASE" HEAD 2>/dev/null)"; then
-            BASE_SHA="$mb2"
-            git diff "$mb2...HEAD" > "$diff"
-            SHAPE=branch
-            head_label=HEAD
-            resolved_by="git diff \$(git merge-base $BASE HEAD)...HEAD"
-            resolution_step=auto-2-branch
-            [ -s "$diff" ] || FELL_THROUGH+=("auto-2-branch: empty diff against the merge base with $BASE (standing on the default branch, or the branch has no commits of its own)")
-          else
-            FELL_THROUGH+=("auto-2-branch: no merge base between HEAD and $BASE")
-          fi
-        else
-          FELL_THROUGH+=("auto-2-branch: no default branch resolved")
-        fi
-      fi
-
-      if [ ! -s "$diff" ]; then
-        diff_one_commit HEAD > "$diff"
-        SHAPE=commit
-        head_label=HEAD
-        resolved_by="git show HEAD"
-        resolution_step=auto-3-head
-        if [ ! -s "$diff" ]; then
-          FELL_THROUGH+=("auto-3-head: HEAD is an empty commit")
-          die "nothing to review. $(printf '%s; ' "${FELL_THROUGH[@]}")Name a scope -- a ref, a range, a PR number or a path."
-        fi
-      fi
-      ;;
-  esac
+  resolve_diff_for_shape "$scope" "$diff"
 
   # The invariant. An empty artifact is the one thing a consumer must never be handed,
   # because a collapsed range and a genuinely empty change look identical on disk.
@@ -595,7 +847,7 @@ cmd_resolve() {
   [ -z "$(git ls-files --others --exclude-standard --directory --no-empty-directory)" ] \
     || workspace_untracked=true
 
-  classify_correspondence "$SHAPE" "$scope_head" "$workspace_head" "$workspace_dirty"
+  classify_correspondence "$SHAPE" "$SCOPE_HEAD" "$workspace_head" "$workspace_dirty"
 
   local file_count
   files_from_diff "$diff" "$tmp/files.json"
@@ -606,12 +858,12 @@ cmd_resolve() {
   # Composed once, here, so that eight lenses and a merged report describe one scope in one
   # form rather than nine.
   local scope_line
-  scope_line="$resolved_by — $file_count files"
-  [ "$resolution_step" = explicit ] || scope_line="$scope_line ($resolution_step, nothing named)"
+  scope_line="$RESOLVED_BY — $file_count files"
+  [ "$RESOLUTION_STEP" = explicit ] || scope_line="$scope_line ($RESOLUTION_STEP, nothing named)"
   scope_line="$scope_line; $CORRESPONDENCE_NOTE"
 
   local diff_sha256 diff_bytes
-  diff_sha256="$(shasum -a 256 "$diff" | cut -d' ' -f1)"
+  diff_sha256="$(sha256_stdin < "$diff" | cut -d' ' -f1)"
   diff_bytes="$(wc -c < "$diff" | tr -d ' ')"
 
   # jq builds the JSON: a path with a quote, a backslash or a newline in it cannot break a
@@ -619,13 +871,13 @@ cmd_resolve() {
   jq -n \
     --arg scope_arg "$scope" \
     --arg shape "$SHAPE" \
-    --arg resolution_step "$resolution_step" \
-    --arg resolved_by "$resolved_by" \
+    --arg resolution_step "$RESOLUTION_STEP" \
+    --arg resolved_by "$RESOLVED_BY" \
     --arg scope_line "$scope_line" \
     --arg base_ref "$BASE" \
     --arg base_sha "$BASE_SHA" \
-    --arg scope_head "$scope_head" \
-    --arg head_label "$head_label" \
+    --arg scope_head "$SCOPE_HEAD" \
+    --arg head_label "$HEAD_LABEL" \
     --arg workspace_head "$workspace_head" \
     --argjson workspace_dirty "$workspace_dirty" \
     --argjson workspace_untracked "$workspace_untracked" \
@@ -633,7 +885,7 @@ cmd_resolve() {
     --arg correspondence_note "$CORRESPONDENCE_NOTE" \
     --argjson default_branch_resolved "$BASE_RESOLVED" \
     --arg base_stale_reason "$FETCH_WARNING" \
-    --arg out_dir "$out" \
+    --arg out_dir "$tmp" \
     --arg diff_sha256 "$diff_sha256" \
     --argjson diff_bytes "$diff_bytes" \
     --argjson file_count "$file_count" \
@@ -671,14 +923,18 @@ cmd_resolve() {
     }' > "$tmp/manifest.json"
   rm -f "$tmp/files.json"
 
-  rm -rf "$out"
-  mkdir -p "$(dirname "$out")"
-  mv "$tmp" "$out"
+  publish_scope "$tmp" "$out"
+
+  # The tree is published; the EXIT trap must not take it away.
   trap - EXIT
 
   echo "$scope_line"
   flush_warnings
-  echo "$out"
+  # The pinned tree, not the $out pointer. A consumer handed the pointer resolves it when
+  # it *reads*, so a second resolve of the same scope between dispatch and read would
+  # serve it the other run's diff -- the divergence this artifact exists to prevent.
+  # $out stays behind as a stable name a human can look up.
+  echo "$tmp"
 }
 
 # scope.diff is the full source of whatever is under review, so it is not left readable by

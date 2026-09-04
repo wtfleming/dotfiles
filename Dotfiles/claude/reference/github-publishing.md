@@ -82,6 +82,20 @@ awk '
 [ -s "$OUT/SECTION.md" ] || { echo "no section to publish" >&2; exit 1; }
 { echo '<!-- verify:start -->'; cat "$OUT/SECTION.md" || exit 1; echo '<!-- verify:end -->'; } \
   >> "$OUT/body.md" || { echo "could not append the section — body.md left unpushed" >&2; exit 1; }
+# Re-read immediately before the write and refuse on a change. Everything above is a
+# read-modify-write over a body other people and bots also edit, and `--body-file`
+# replaces the whole thing -- so a review bot that posts between the read and the
+# write has its edit silently discarded, with nothing in the output to say so.
+#
+# This narrows that window; it does not close it. `gh pr edit` exposes no ETag or
+# version precondition, so there is no compare-and-swap to be had here and an edit
+# landing between this check and the write is still lost. Treat it as best effort,
+# and prefer appending a comment over rewriting a body that changes often.
+gh pr view <n> --json body -q .body > "$OUT/body.now" \
+  || { echo "could not re-read the body; not writing" >&2; exit 1; }
+cmp -s "$OUT/body.raw" "$OUT/body.now" \
+  || { echo "the body changed while this ran; re-read and redo rather than overwrite" >&2; exit 1; }
+
 gh pr edit <n> --body-file "$OUT/body.md"
 ```
 

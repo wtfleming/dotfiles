@@ -14,6 +14,11 @@ set -Eeuo pipefail
 RESOLVE="$(cd "$(dirname "$0")/.." && pwd)/scripts/resolve-scope.sh"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
+# Every resolve publishes under $TMPDIR, and the trap above only removes $WORK -- so
+# without this the suite scatters artifact trees through the ambient temp directory and
+# cleans up none of them. It also makes the republish assertions independent of whatever
+# a previous run left behind.
+export TMPDIR="$WORK"
 failures=0
 
 check() {
@@ -211,6 +216,144 @@ scratch_repo "$WORK/empty"
 commit "$WORK/empty" a.txt one base
 rc=0; (cd "$WORK/empty" && "$RESOLVE" resolve --scope main >/dev/null 2>&1) || rc=$?
 check "standing on the default branch is a stop, not an empty manifest" "1" "$rc"
+
+# Republishing is where the artifact directory stops being a value and starts being a
+# shared resource: the path is keyed on repo and scope, so a second resolve of the same
+# scope lands on the directory the first one's agents were handed. The old code deleted
+# it; the fix flips a symlink instead, and both halves need pinning -- the swap has to
+# actually take effect, and the tree it replaced has to survive.
+echo "== republishing a scope neither loses the new answer nor deletes the old tree =="
+scratch_repo "$WORK/republish"
+commit "$WORK/republish" a.txt one base
+commit "$WORK/republish" b.txt two second
+commit "$WORK/republish" c.txt three third
+
+# What the script prints is the pinned tree, not the pointer: a consumer that held the
+# pointer would re-resolve it on read and get whichever run published last.
+first="$(cd "$WORK/republish" && "$RESOLVE" resolve --scope 'HEAD~1...HEAD' | tail -1)"
+check "the first resolve publishes its own file count" "1" "$(field "$first" '.file_count')"
+check "the published path is a real directory, not a pointer" "yes" \
+  "$([ -d "$first" ] && [ ! -L "$first" ] && echo yes || echo no)"
+check "the manifest names the tree it was written into" "$first" \
+  "$(field "$first" '.out_dir')"
+
+# mktemp appends one suffix to $out, so stripping it back off names the pointer.
+pointer="${first%.*}"
+check "a pointer is left beside it for a human" "$(basename "$first")" \
+  "$(readlink "$pointer" || echo "")"
+
+# A different scope must not land on the same pointer at all -- and reading a field out
+# of it cannot show that, since a collision would just serve the newer manifest. Both
+# trees share a per-repo parent, so it is the pointer the comparison has to be on.
+again="$(cd "$WORK/republish" && "$RESOLVE" resolve --scope 'HEAD~2...HEAD' | tail -1)"
+check "a different scope gets its own directory" "no" \
+  "$([ "${again%.*}" = "${first%.*}" ] && echo yes || echo no)"
+check "and its own answer" "2" "$(field "$again" '.file_count')"
+
+# Same scope string, so the same pointer: this is the collision the swap exists for.
+# What it resolves to must differ, or a stale tree satisfies the assertion just as well
+# as a fresh one -- two files in one commit gives a count the old manifest cannot have.
+printf 'four\n' > "$WORK/republish/d.txt"
+printf 'five\n' > "$WORK/republish/e.txt"
+git -C "$WORK/republish" add d.txt e.txt
+git -C "$WORK/republish" commit -q -m fourth
+
+third="$(cd "$WORK/republish" && "$RESOLVE" resolve --scope 'HEAD~1...HEAD' | tail -1)"
+check "republishing the same scope serves the new manifest" "2" "$(field "$third" '.file_count')"
+check "on a tree of its own, not the one already handed out" "no" \
+  "$([ "$third" = "$first" ] && echo yes || echo no)"
+
+# The whole point: an agent dispatched with the first path still reads the first answer.
+check "the tree it replaced still holds its own manifest" "1" "$(field "$first" '.file_count')"
+
+check "the pointer now names the new tree" "$(basename "$third")" \
+  "$(readlink "$pointer" || echo "")"
+
+# `mv` onto an existing symlink-to-directory follows it and deposits the new link
+# *inside* the old target, which leaves every later reader on the stale tree and is
+# invisible from the exit status. The old tree holds its two files and nothing else.
+check "the swap did not nest the new pointer inside the old tree" "manifest.json scope.diff" \
+  "$(find "$first" -mindepth 1 -maxdepth 1 -exec basename {} \; | sort | tr '\n' ' ' | sed 's/ $//')"
+
+echo "== the directory a scope is written into is validated first =="
+# Both levels, because only the leaf being checked is the hole: `wtf-scope` is a fixed,
+# publicly documented name, so it is the component a local user plants on a shared /tmp.
+guard="$WORK/guard"
+mkdir -p "$guard" "$WORK/guard-elsewhere"
+ln -s "$WORK/guard-elsewhere" "$guard/wtf-scope"
+rc=0
+( cd "$WORK/republish" && TMPDIR="$guard" "$RESOLVE" resolve --scope HEAD ) >/dev/null 2>&1 || rc=$?
+check "a symlinked wtf-scope is refused" "1" "$rc"
+check "and nothing was written through it" "" "$(ls -A "$WORK/guard-elsewhere")"
+
+# The per-repo level below it, which only exists once a resolve has created it.
+guard2="$WORK/guard2"
+mkdir -p "$guard2"
+inner="$(cd "$WORK/republish" && TMPDIR="$guard2" "$RESOLVE" resolve --scope HEAD | tail -1)"
+repo_parent="$(dirname "$inner")"
+mv "$repo_parent" "$repo_parent.moved"
+ln -s "$repo_parent.moved" "$repo_parent"
+rc=0
+( cd "$WORK/republish" && TMPDIR="$guard2" "$RESOLVE" resolve --scope HEAD ) >/dev/null 2>&1 || rc=$?
+check "a symlinked per-repo parent is refused" "1" "$rc"
+
+# Ownership alone accepts both of these: the directories are ours and only the mode is
+# wrong. A group- or world-writable level lets another local user replace the staging
+# directory or the published pointer after the check has passed.
+for level in wtf-scope repo; do
+  for mode in 777 770; do
+    guard3="$WORK/guard-$level-$mode"
+    mkdir -p "$guard3/wtf-scope"
+    if [ "$level" = repo ]; then
+      # Create the per-repo level by resolving once, then loosen that level only.
+      inner3="$(cd "$WORK/republish" && TMPDIR="$guard3" "$RESOLVE" resolve --scope HEAD | tail -1)"
+      chmod "$mode" "$(dirname "$inner3")"
+    else
+      chmod "$mode" "$guard3/wtf-scope"
+    fi
+    rc=0
+    ( cd "$WORK/republish" && TMPDIR="$guard3" "$RESOLVE" resolve --scope HEAD ) >/dev/null 2>&1 || rc=$?
+    check "a $mode $level level is refused" "1" "$rc"
+  done
+done
+
+# The level checks alone miss an ancestor: wtf-scope can be 700 while the directory
+# holding it is not, and renaming that one substitutes everything below it.
+guard4="$WORK/guard-ancestor"
+mkdir -p "$guard4/wtf-scope"
+chmod 777 "$guard4"
+rc=0
+( cd "$WORK/republish" && TMPDIR="$guard4" "$RESOLVE" resolve --scope HEAD ) >/dev/null 2>&1 || rc=$?
+check "a 777 non-sticky ancestor of wtf-scope is refused" "1" "$rc"
+chmod 1777 "$guard4"
+rc=0
+( cd "$WORK/republish" && TMPDIR="$guard4" "$RESOLVE" resolve --scope HEAD ) >/dev/null 2>&1 || rc=$?
+check "and the same ancestor is accepted when sticky" "0" "$rc"
+
+
+echo "== a jq failure is not mistaken for a subject =="
+# Exit 2 is a contract, so nothing but the deliberate prose exit may produce it. jq
+# itself exits 2 on a system error -- a missing --slurpfile input, a full TMPDIR -- and
+# under `set -e` that status would have become the script's.
+#
+# Driven through the real script rather than a copy of the trap: a hand-copied guard
+# passes this case whether or not resolve-scope.sh still carries one. The stub sits
+# ahead of the real jq on PATH and still satisfies the `command -v jq` preflight, then
+# fails the first time the script actually asks it to do something.
+stub="$WORK/jq-stub"
+mkdir -p "$stub"
+cat > "$stub/jq" <<'JQ'
+#!/bin/sh
+exit 2
+JQ
+chmod +x "$stub/jq"
+
+rc=0; ( PATH="$stub:$PATH" jq --version ) >/dev/null 2>&1 || rc=$?
+check "the stub really exits 2, so the guard is load-bearing" "2" "$rc"
+
+rc=0
+( cd "$WORK/republish" && PATH="$stub:$PATH" "$RESOLVE" resolve --scope HEAD ) >/dev/null 2>&1 || rc=$?
+check "a jq system error leaves the script at 1, not 2" "1" "$rc"
 
 if [ "$failures" -gt 0 ]; then
   echo "$failures check(s) failed" >&2

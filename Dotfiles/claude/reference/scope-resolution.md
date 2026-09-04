@@ -23,6 +23,15 @@ It prints the scope line and then the artifact directory, which holds two files:
 - **`scope.diff`** — one diff covering the whole scope, untracked files included.
 - **`manifest.json`** — what the diff is of, and how far it can be trusted.
 
+The directory it prints is **pinned to this run**, and it is the path to hand to an agent.
+Beside it sits a stable pointer — the same path with the run's suffix stripped — which is
+a convenience for a human looking the run up later, and the wrong thing to dispatch with:
+a second resolve of the same scope re-aims it, so an agent that resolved it when it *read*
+rather than when it was dispatched would get the other run's diff. `out_dir` and
+`diff_path` in the manifest both name the pinned directory. Old trees are swept after an
+hour, so a path handed out long ago may be gone — which is a legible failure, unlike
+silently reading someone else's scope.
+
 Everything the rest of this file describes is what the script implements. Read on for why
 each step is there and what to do with what comes back; do not re-derive the scope by hand
 alongside it. **Several agents each deriving the scope separately is how "the same scope"
@@ -47,7 +56,7 @@ procedure returns a confident review of a scope nobody asked for.
 | `correspondence`, `correspondence_note` | see below |
 | `scope_head` | the commit the findings are about; `git show <scope_head>:<path>` reads it |
 | `diff_path` | hand this to an agent instead of a description |
-| `base_stale`, `base_stale_reason` | the fetch failed; the merge base may be behind. Null on the shapes that need no base at all |
+| `base_stale`, `base_stale_reason` | the fetch failed; the merge base may be behind. `base_stale` is always a boolean, including on the shapes that consult no base — only `base_stale_reason` is null. To ask whether a base was consulted at all, read `base_ref == null` or `default_branch_resolved`; `base_stale == false` means "no failed fetch", not "fetched and fresh" |
 | `fell_through` | which auto steps produced nothing, and why |
 | `file_list_source` | `git-apply-numstat` normally. `fallback-headers` means the list was scraped from the diff's headers and may be incomplete — **say so** rather than presenting `files` as settled |
 | `warnings` | anything the resolver could not do cleanly; disclose these the way you disclose `base_stale` |
