@@ -133,8 +133,14 @@ check "a branch named like a subdirectory is still the branch" "branch" "$(field
 check "and the collision is disclosed" "1" "$(field "$out" '.warnings | length')"
 
 echo "== --base overrides the resolved default =="
-out=$(cd "$WORK/corr" && "$RESOLVE" resolve --scope feature --base main 2>/dev/null | tail -1)
-check "--base is used as the base ref" "main" "$(field "$out" .base_ref)"
+# Against a ref that is *not* the default. Passing `main` here would assert nothing: it is
+# already what resolve_default_branch returns in this fixture, so an implementation that
+# ignored --base entirely would still pass.
+git -C "$WORK/corr" branch other-base main
+out=$(cd "$WORK/corr" && "$RESOLVE" resolve --scope feature --base other-base 2>/dev/null | tail -1)
+check "--base is used as the base ref" "other-base" "$(field "$out" .base_ref)"
+check "and the diff is taken against it" "0" \
+  "$(field "$out" .resolved_by | grep -c 'merge-base main' || true)"
 
 echo "== auto step 3: a clean tree on the default branch falls through to HEAD =="
 scratch_repo "$WORK/step3"

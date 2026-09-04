@@ -55,9 +55,12 @@ no changes. `git status --porcelain` and `git stash list` are still worth runnin
 context the diff does not carry.
 
 It exits **2** when the scope is not a PR, a range, a ref or a path — that is a subject,
-and the subject procedure above applies instead.
+and the subject procedure above applies instead. **Nothing is written on that path**, so
+the two manifest-backed header lines below do not apply to it: state the subject, the files
+you settled on and how you found them, and write the `Correspondence:` line as
+`workspace · none · none` — you read the tree as it stands, which is what a subject means.
 
-State the scope you settled on at the top of your report, using the manifest's
+Otherwise, state the scope you settled on at the top of your report, using the manifest's
 `scope_line` rather than composing your own: it already names the ref, the file count,
 which step settled it and how the tree corresponds.
 

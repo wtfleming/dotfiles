@@ -168,7 +168,7 @@ disclose for each:
 | Value | Meaning |
 |---|---|
 | `workspace` | the scope *is* the working tree; uncommitted state is the subject, not a contaminant |
-| `same` | the checkout is at the reviewed commit and clean |
+| `same` | every tracked file matches the reviewed commit. Untracked files may still be present — they change no reviewed file, so reading from disk stays correct; `workspace_untracked` reports them |
 | `same-dirty` | at the reviewed commit, but carrying uncommitted edits — a file on disk may not match the diff |
 | `scope-behind` | the checkout is ahead of the review — reviewing `HEAD~3` |
 | `scope-ahead` | the reviewed commits are not checked out — an unmerged branch |

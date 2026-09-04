@@ -452,15 +452,18 @@ cmd_resolve() {
   scope_shape_of "$scope"
 
   if [ -n "$base_override" ]; then
-    git rev-parse --verify --quiet "$base_override^{commit}" >/dev/null 2>&1 \
-      || die "--base $base_override does not resolve to a commit"
     BASE="$base_override"
-    BASE_RESOLVED=true
-    # Refresh it too. Setting BASE_RESOLVED here short-circuits need_base(), which is where
-    # the fetch lives, so without this an explicit --base origin/main computes its merge
-    # base against whatever the last fetch left behind. fetch_base returns immediately for
-    # a local name, so this costs nothing when the base is not a remote-tracking ref.
+    # Fetched before it is validated, and validated before it is used. Setting
+    # BASE_RESOLVED short-circuits need_base(), which is where the fetch otherwise lives,
+    # so without this an explicit --base origin/main computes its merge base against
+    # whatever the last fetch left behind. Fetching *first* matters too: a remote-tracking
+    # ref that has never been fetched does not resolve yet, and validating ahead of the
+    # fetch rejects a base that is perfectly reachable. fetch_base returns immediately for a
+    # local name, so this costs nothing when the base is not a remote-tracking ref.
     fetch_base "$BASE"
+    git rev-parse --verify --quiet "$BASE^{commit}" >/dev/null 2>&1 \
+      || die "--base $BASE does not resolve to a commit"
+    BASE_RESOLVED=true
     BASE_SHA="$(git rev-parse "$BASE")"
   fi
 
