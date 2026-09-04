@@ -212,6 +212,56 @@ commit "$WORK/empty" a.txt one base
 rc=0; (cd "$WORK/empty" && "$RESOLVE" resolve --scope main >/dev/null 2>&1) || rc=$?
 check "standing on the default branch is a stop, not an empty manifest" "1" "$rc"
 
+# Republishing is where the artifact directory stops being a value and starts being a
+# shared resource: the path is keyed on repo and scope, so a second resolve of the same
+# scope lands on the directory the first one's agents were handed. The old code deleted
+# it; the fix flips a symlink instead, and both halves need pinning -- the swap has to
+# actually take effect, and the tree it replaced has to survive.
+echo "== republishing a scope neither loses the new answer nor deletes the old tree =="
+scratch_repo "$WORK/republish"
+commit "$WORK/republish" a.txt one base
+commit "$WORK/republish" b.txt two second
+commit "$WORK/republish" c.txt three third
+
+first="$(cd "$WORK/republish" && "$RESOLVE" resolve --scope 'HEAD~1...HEAD' | tail -1)"
+check "the first resolve publishes its own file count" "1" "$(field "$first" '.file_count')"
+first_target="$(readlink "$first" || echo "")"
+
+# Same scope string, so the same directory: this is the collision the swap exists for.
+again="$(cd "$WORK/republish" && "$RESOLVE" resolve --scope 'HEAD~2...HEAD' | tail -1)"
+check "a different scope gets its own directory" "2" "$(field "$again" '.file_count')"
+
+third="$(cd "$WORK/republish" && "$RESOLVE" resolve --scope 'HEAD~1...HEAD' | tail -1)"
+check "republishing the same scope serves the new manifest" "1" "$(field "$third" '.file_count')"
+check "the published path is a symlink, not a directory" "yes" \
+  "$([ -L "$third" ] && echo yes || echo no)"
+
+# `mv` onto an existing symlink-to-directory follows it and deposits the link *inside*
+# the old target, which leaves every later reader on the stale tree and is invisible
+# from the exit status.
+check "the swap did not nest the new link inside the old target" "" \
+  "$(find "$first_target" -maxdepth 1 -name '*.[0-9]*' 2>/dev/null | head -1)"
+
+if [ -n "$first_target" ]; then
+  check "a reader holding the previous target still has it" "yes" \
+    "$([ -f "$(dirname "$third")/$first_target/manifest.json" ] && echo yes || echo no)"
+fi
+
+echo "== a jq failure is not mistaken for a subject =="
+# Exit 2 is a contract, so nothing but the deliberate prose exit may produce it. jq
+# itself exits 2 on a system error -- a missing --slurpfile input, a full TMPDIR -- and
+# under `set -e` that status would have become the script's.
+cat > "$WORK/jq-trap.sh" <<'TRAP'
+set -Eeuo pipefail
+SUBJECT_EXIT=0
+trap 'rc=$?; if [ "$rc" -eq 2 ] && [ "$SUBJECT_EXIT" -ne 1 ]; then rc=1; fi; exit "$rc"' ERR
+jq -n --slurpfile missing /nonexistent/does-not-exist.json '.'
+TRAP
+rc=0; bash "$WORK/jq-trap.sh" >/dev/null 2>&1 || rc=$?
+check "a jq system error leaves as 1 under the guard" "1" "$rc"
+rc=0; jq -n --slurpfile missing /nonexistent/does-not-exist.json '.' >/dev/null 2>&1 || rc=$?
+check "and jq's own status really is 2, so the guard is load-bearing" "2" "$rc"
+
 if [ "$failures" -gt 0 ]; then
   echo "$failures check(s) failed" >&2
   exit 1

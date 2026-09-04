@@ -42,6 +42,11 @@
 
 set -Eeuo pipefail
 
+# The worktree is a full checkout of a repository that may be private, and the
+# .env files installed into it below are symlinks to the machine's live
+# credentials. Under the default 022 umask every local user could read both.
+umask 077
+
 TOOL_PREFIX=()
 OPT_FILTER=""
 OPT_NO_BUILD=0
@@ -67,10 +72,32 @@ main_root() {
   dirname "$(git rev-parse --path-format=absolute --git-common-dir)"
 }
 
+# The parent of every worktree this script makes. Created 0700 and refused when
+# somebody else already owns it: with TMPDIR unset this lands in /tmp, which is
+# world-writable, and `mkdir -p` accepts a parent it did not create. Whoever owns
+# it can swap the tree between `git worktree add` and the bootstrap, and the
+# bootstrap runs that tree's own package manager.
+worktree_parent() {
+  local parent="${TMPDIR:-/tmp}/verify-baseline"
+
+  if [ -L "$parent" ]; then
+    die "$parent is a symlink; refusing to build a worktree under it."
+  fi
+
+  mkdir -m 700 "$parent" 2>/dev/null || [ -d "$parent" ] ||
+    die "cannot create $parent to hold the worktree."
+
+  if [ ! -O "$parent" ]; then
+    die "$parent is not owned by you; refusing to build a worktree under it."
+  fi
+
+  echo "$parent"
+}
+
 # worktree_path [baseline|head]
 worktree_path() {
   local which=${1:-baseline} root
-  root="${TMPDIR:-/tmp}/verify-baseline/$(basename "$(main_root)")"
+  root="$(worktree_parent)/$(basename "$(main_root)")"
   case "$which" in
     baseline) echo "$root" ;;
     head) echo "$root-head" ;;
@@ -83,9 +110,18 @@ worktree_path() {
 # `git worktree add` until something prunes it. Pruning first is what makes the plain
 # directory test below sufficient: it drops exactly the registrations that have no
 # directory, so the two states agree afterwards.
+#
+# Pruned narrowly: a bare `git worktree prune` drops the registration of *every*
+# worktree in the repository whose directory is currently missing, which takes an
+# unmounted external drive's worktree -- and its index, and anything staged in
+# it -- with it. Only our own path is ever stale on our account.
 worktree_present() {
   local main=$1 wt=$2
-  git -C "$main" worktree prune
+
+  if [ ! -d "$wt" ] && git -C "$main" worktree list --porcelain | grep -qxF "worktree $wt"; then
+    git -C "$main" worktree prune
+  fi
+
   [ -d "$wt" ]
 }
 
@@ -484,6 +520,10 @@ cmd_create() {
     if [ "$force" -eq 1 ]; then
       local e
       for e in "${existing[@]}"; do worktree_destroy "$main" "$e"; done
+    elif [ -n "$head_ref" ] && [ ${#existing[@]} -eq 1 ]; then
+      # Half a pair is not something to reuse: `path head` would print a directory
+      # that does not exist and the probe would run in nothing.
+      die "${existing[*]} exists but its other half does not, so the pair is incomplete. Pass --force to recreate both."
     else
       die "${existing[*]} already exists. Reuse it, or pass --force to recreate."
     fi
@@ -492,9 +532,18 @@ cmd_create() {
   echo "    ecosystems: ${ECOSYSTEMS[*]:-none detected}"
   [ ${#TOOL_PREFIX[@]} -gt 0 ] && echo "    toolchain:  $(prefix) (pinned by this project)"
 
+  # One trap around both, because the pair is the unit. add_tree's own trap unwinds
+  # the tree it is building; this one unwinds the tree that already succeeded, so a
+  # bootstrap that fails on the head side does not leave a lone baseline behind for
+  # the next run to be offered as reusable.
+  if [ -n "$head_ref" ]; then
+    trap 'worktree_destroy "$main" "$wt"; worktree_destroy "$main" "$wt_head"' ERR
+  fi
+
   add_tree "$main" "$wt" "$merge_base" "baseline ($base_label)"
   if [ -n "$head_ref" ]; then
     add_tree "$main" "$wt_head" "$after" "head ($head_ref)"
+    trap - ERR
   fi
 
   report_toolchain_drift "$main" "$merge_base" "$after"
@@ -543,5 +592,5 @@ case "${1:-}" in
       echo "toolchain:  pinned by this project, but neither mise nor asdf is installed"
     fi
     ;;
-  *) die "usage: $0 create [--base <ref>] [--head <ref>] [--ecosystem <name>]... [--filter <pkg>] [--copy <relpath>]... [--install-cmd <cmd>] [--build-cmd <cmd>] [--no-build] [--force] | remove | path [baseline|head] | detect" ;;
+  *) die "usage: $0 create [--base <ref> | --base-exact <ref>] [--head <ref>] [--ecosystem <name>]... [--filter <pkg>] [--copy <relpath>]... [--install-cmd <cmd>] [--build-cmd <cmd>] [--no-build] [--force] | remove | path [baseline|head] | detect" ;;
 esac
