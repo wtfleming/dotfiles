@@ -17,8 +17,8 @@ If you trip over something serious anyway, one line at the end under
 
 One deliberate exception to "duplicates a review that runs later". Prior art —
 the change reimplementing what the repo or an installed dependency already
-provides — is also the `reuse` rubric in `/wtf-code-review`, which runs by
-default. Report it here anyway. It is the one finding class whose value is
+provides — is also the `reuse` rubric in `/wtf-code-review`, which runs on its
+full pass (every invocation but `--lite`). Report it here anyway. It is the one finding class whose value is
 almost entirely in the timing: at the later gate the reimplementation is
 written, tested and reviewed, and "delete it, call the existing thing" costs
 more than it saves. Here it costs an afternoon. Overlapping with a review that
@@ -134,7 +134,7 @@ cost and schedule you cannot see.
 - **Followed out:** callers of `sync_once` in `src/cli.rs` and `tests/e2e.rs`
 - **Prior art:** searched `util/` and `src/net/` for existing retry — found
   `util/retry.rs`
-- **Repo rules:** root `CLAUDE.md`; no `ARCHITECTURE.md` or `DESIGN.md`
+- **Repo rules:** root `CLAUDE.md`; no `ARCHITECTURE.md`, `DESIGN.md` or `REVIEW.md`
 - **Not opened:** the HTTP client `sync.rs` calls into. A finding about that
   boundary was not available from here.
 ```

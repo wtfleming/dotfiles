@@ -186,21 +186,39 @@ real `.env` symlinked in, so assume the raw bytes carry a live credential; and f
 at *capture* time is still wrong — that is what launders a compile failure into "the
 expected failure" — which is why the scrub happens at this step and not the earlier one.
 
-**The body is the default channel**, for the reasons the reference gives under who may
-write what. Use its marker recipe verbatim, with `VERIFICATION.md` as the recipe's
-`SECTION.md`. It is not repeated here on purpose — the copy that used to sit at this spot
-drifted from the one in the reference, and the failure mode of a stale copy is a filter that
-deletes whatever the author wrote below the section.
+**The body is the default channel**, for the reasons the reference gives under **Who may
+write what**. The merge is a script, not a recipe to retype —
+`~/.claude/scripts/publish-verify-section.sh merge <body> VERIFICATION.md <out>`, wrapped in
+the read and lost-update guards the reference shows. It replaces the section where it sits,
+leaves a marker the author only quoted alone, and refuses any merge that would touch a byte
+outside the section.
+
+**Establish whose PR it is before choosing the channel.** `gh pr view <n> --json
+author,headRepositoryOwner` — the field `/wtf-create-pr` already keys on for its own
+purposes. Nothing else in a verify run reads it: the drift check fetches
+`title,body,createdAt,commits,reviews,comments` and the resolver captures only
+`headRefOid`, so the manifest carries no ownership fact, and the execution gate never fires
+on a prose-claim run that needs no boot. Without the check the default channel is a
+read-modify-write over a contributor's own description. Say whose PR it is in the offer.
 
 ```bash
 gh pr comment <n> --body-file VERIFICATION.md      # the fallback, and reversible
 ```
 
 Fall back to a comment where the body is not available to write or not the right place for
-it: someone else's PR, a body whose markers came back doubled or out of order (the recipe
-fails closed and says to fix it by hand), or a user who asks for a comment. Say which
-channel was used, since the two are read differently — a comment is timestamped and
-attributable, a body section reads as current.
+it: someone else's PR, a body the merge refused (doubled or out-of-order markers, or a
+change that would reach outside the section), a tripped lost-update check, or a user who
+asks for a comment. Say which channel was used, since the two are read differently — a
+comment is timestamped and attributable, a body section reads as current.
+
+**On a refusal, name the state you left behind.** Every refusal except "the user asked for a
+comment" means the live body is *already* wrong — a half-section, two verdicts oldest-first,
+or a section the merge would not touch — and the new verdict has just gone somewhere else. A
+reviewer opening that PR reads the body's older verdict as current, and the guard's own
+message went to stderr where nobody sees it. So report that the body still holds an
+unreconciled `verify:start` section that reads as current and needs a hand fix, alongside
+which channel was used. A run that recovered itself and left the PR misleading has not
+finished.
 
 **Where the description drifted, report it and hand off.** Name what drifted — the claim
 in the title or body, and the code that contradicts it — and point at `/wtf-create-pr`,
@@ -217,8 +235,8 @@ pass.
 
 Lead with the verdict in one line, then the evidence, then the path to the files.
 
-> **Verified with gaps.** 3 of 4 expectations met; probe 3 found a real defect — the
-> coercion error surfaced as a 500 rather than a 400 — fixed in `a91c` and re-run green.
+> **Verified with gaps.** 4 of 4 met after the fix; probe 3 initially returned a 500 rather
+> than a 400 — a real defect, fixed in `a91c` and re-run green.
 > The admin override path went unexercised. Files in `<scratch>/code-verify/`, PR section
 > in `VERIFICATION.md`.
 

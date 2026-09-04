@@ -553,22 +553,34 @@ is the exact defect pre-flight's fetch exists to catch, arriving after the check
 
 **On the update path this section still applies.** An existing open PR routes to
 `gh pr edit` rather than `gh pr create`, and the no-ask contract covers it: a regenerated
-body replaces the live one without anyone approving the replacement.
+body replaces the live one without anyone approving the replacement. **Regenerating a body
+is a heavier act than opening a PR**, because what it overwrites may be someone else's — so
+print the live body alongside the new one and say what is being dropped, before the edit
+rather than after. The carry-across rules in
+`~/.claude/reference/github-publishing.md` are what stop the loss; the printed comparison is
+what makes a failure of those rules visible to the author in the same turn instead of on the
+next read of the PR.
 
-This path is also where the other tools land. `~/.claude/reference/github-publishing.md`
+**A `verify:` section already in the live body is a survivor.** The aging above governs an
+artifact in this session's scratch; a section already published is a different thing and the
+carry-across list did not name it. Scratch is per-session, so the ordinary case is having no
+artifact at all — and the ownership rule bars this command from regenerating a section it did
+not produce. So carry it across, and re-age its provenance line against HEAD rather than
+republishing it as written: a line reading `against 5544ef1, which is HEAD` becomes false the
+moment the branch moves, and it would be this command publishing it, about a fact it already
+holds. Say the verdict predates HEAD by N commits and name `wtf-code-verify` as the refresh.
+Dropping the section instead is not this command's call — only the tool that produced a
+section may drop it.
+
+**This path is also where the other tools land.** `~/.claude/reference/github-publishing.md`
 makes this command the only one that writes the title or the author's prose in the body —
 another tool may replace a delimited section of its own, and nothing else — so
 `wtf-code-verify`, and anything added later that finds the description stale, reports the
-drift and names this command rather than rewriting the description itself. A run that arrives that way is an
-update like any other, with one difference worth honouring: the drift has already been
-named, so say which of the named claims the new wording fixes. Regenerating the body and
-leaving the author to re-diff it against a report they already read is the round trip the
-handoff exists to save. That is a heavier act
-than opening a PR, because what it overwrites may be someone else's — so print the live body
-alongside the new one and say what is being dropped, before the edit rather than after. The
-carry-across rules in `~/.claude/reference/github-publishing.md` are what stop the loss; the
-printed comparison is what makes a failure of those rules visible to the author in the same
-turn instead of on the next read of the PR.
+drift and names this command rather than rewriting the description itself. A run that arrives
+that way is an update like any other, with one difference worth honouring: the drift has
+already been named, so say which of the named claims the new wording fixes. Regenerating the
+body and leaving the author to re-diff it against a report they already read is the round
+trip the handoff exists to save.
 
 ## 8. After
 
@@ -598,10 +610,14 @@ repo's conventions say to.
 
 - Push to the default branch.
 - Put AI or assistant attribution in the title, the body, or a commit message.
-- **Put a review severity in the title.** No `Critical`, `Warning` or `Suggestion`, and no
-  count of them. The title becomes the permanent commit subject, and a severity is a fact
-  about a review that ran once against one commit, not about the change — so it is wrong in
-  `git log` the moment the finding is fixed, which is usually before the merge. Review
-  findings belong in comments on the PR, where `/wtf-code-review` posts them.
+- **Put a review severity in the title as a verdict on the change.** No `Critical`,
+  `Warning` or `Suggestion` standing for how the change scored. The title becomes the
+  permanent commit subject, and a severity is a fact about a review that ran once against
+  one commit, not about the change — so it is wrong in `git log` the moment the finding is
+  fixed, which is usually before the merge. Review findings belong in comments on the PR,
+  where `/wtf-code-review` posts them. This does not reach a count of findings the change
+  *acted on*, which stays true forever and is already the house style here — "eleven
+  findings from reviewing their port" is a merged title in this repo, and section 4 tells
+  you to follow those.
 - Include a work email address, an internal hostname, or a credential — public repo, hard
   rule, and the reference file has the detail.

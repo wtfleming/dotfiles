@@ -1,7 +1,7 @@
 ---
 description: Independent code review in a fresh context — recent changes, or a named subject. Diff, tests, lint, structured report. Runs a verified parallel pass per dimension; pass --lite for the single-reviewer version.
 argument-hint: "[ref, branch, path or subject — defaults to uncommitted, else the branch, else HEAD] [--lite]"
-allowed-tools: Agent, Read, Grep, Glob, Bash(git:*), Bash(~/.claude/scripts/resolve-scope.sh:*)
+allowed-tools: Agent, Read, Grep, Glob, Bash(git:*), Bash(~/.claude/scripts/resolve-scope.sh:*), Bash(gh pr view:*)
 ---
 
 Arguments: $ARGUMENTS
@@ -658,10 +658,17 @@ What this check does not cover, so it is not mistaken for more than it is:
   was pointed at. Offer a fresh `/wtf-code-review` for it instead of
   presenting the verdicts as if they covered it.
 
-**A fix can strand a published verdict.** Where the scope is a PR, read its body for a
-`<!-- verify:start -->` section and say the verification is stale, naming what would
-refresh it (`wtf-code-verify` on the branch as it now stands) — the mechanism and why no
-delimiter catches this are in `~/.claude/reference/github-publishing.md`.
+**A fix can strand a published verdict.** Where the scope is a PR, read its body
+(`gh pr view <n> --json body`) for a `<!-- verify:start -->` section and say the
+verification is stale, naming what would refresh it (`wtf-code-verify` on the branch as it
+now stands). Where the read fails rather than coming back without markers, say **could not
+check for a published verification section** — an absent marker and an unreadable body are
+different facts, and only one of them is good news. Bound the call the way
+`resolve-scope.sh` bounds its own: `gh` sets no client timeout, and this read fires at the
+very end of a long run. The mechanism, why no delimiter catches
+this, and where the note belongs when findings are being posted are in
+`~/.claude/reference/github-publishing.md`, which names this command among the tools the
+rule binds.
 
 ## If the findings go to GitHub
 

@@ -135,13 +135,12 @@ what adjacent code it left unread. Every suggestion is a claim about code
 outside the diff, so that width is what the author weighs them by, and the
 section is printed even when the verdict is that the shape is sound.
 
-**It does overlap `/wtf-code-review`, on purpose, in one place.** Prior art —
-the change reimplementing what the repo or a dependency already provides — is
-also the `reuse` rubric, which runs in the full pass by default, so a branch put
-through both may hear it twice. That is the intended arrangement rather than
-waste: it is the finding class whose worth is almost all timing. Mid-work it
-costs an afternoon to act on; at the gate the reimplementation is written,
-tested and reviewed, and deleting it costs more than it saves.
+**It does overlap `/wtf-code-review`, on purpose, in one place.** Prior art is
+also the `reuse` rubric, which runs on the full pass, so a branch put through
+both may hear it twice. That is intended rather than wasteful, and the reason —
+timing is almost all of that finding's worth — is argued in the agent's own
+rules, where it has to be, since that is what stops the reviewer deferring the
+finding to the later review.
 
 Two of its other targets have no rubric row at all: an interface that will be
 awkward at the second call site, and a hardcoded decision the next caller needs
@@ -402,7 +401,10 @@ references without closing.
 It shows the title and body before anything is public, and stops after reporting the URL.
 
 `~/.claude/reference/github-publishing.md` holds the guards that apply to all three tools
-that write outward — scrubbing text, looking at every image, delimiting a generated section
-so a rerun replaces it instead of stacking a second verdict below the first, and keeping
-what cannot be regenerated in a comment rather than in a body that will be. Extracted
-rather than written a third time, so a fix lands once.
+that write outward: who may write which part of a PR, scrubbing text, looking at every
+image, delimiting a generated section so a rerun replaces it instead of stacking a second
+verdict below the first, and keeping what cannot be regenerated in a comment rather than in
+a body that will be. Extracted rather than written a third time, so a fix lands once. The
+first of those is the one the other tools cross-reference most — the title and the author's
+prose are `/wtf-create-pr`'s alone, a delimited section belongs to whoever writes it, and a
+tool that finds the description stale reports the drift rather than repairing it.

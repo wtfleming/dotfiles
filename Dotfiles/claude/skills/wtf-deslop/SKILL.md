@@ -26,6 +26,14 @@ idiom wins over the catalogue in every case.
 3. Make targeted fixes. Do not change correct code, and do not deslop lines the
    diff never touched.
 4. Summarise in 1–3 sentences what was removed and why.
+5. Where the scope is a PR, read its body (`gh pr view <n> --json body`) for a
+   `<!-- verify:start -->` section. This pass just changed the code that section
+   attested to and wrote no new one, so it now reads as current for a tree that no
+   longer exists — say it is stale and name `wtf-code-verify` as the refresh. Where
+   the read fails rather than coming back without markers, say so instead: an absent
+   marker and an unreadable body are different facts.
+   `~/.claude/reference/github-publishing.md` has why no delimiter catches this, and
+   names this skill among the tools the rule binds.
 
 ```
 Removed 3 redundant nil checks in order.ex (callers pattern-match the struct).

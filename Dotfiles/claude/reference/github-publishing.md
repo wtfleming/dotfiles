@@ -8,24 +8,33 @@ take back what was already delivered.
 
 This file is the single statement of the guards that apply to all three. Each one points here
 rather than restating them, so a fix lands once. Nothing below is about *what* to say; it is
-about the four ways an otherwise correct message goes wrong on the way out.
+about who may write where, and the ways an otherwise correct message goes wrong on the way
+out. No count, so the next addition does not have to edit this sentence.
 
-**Who may write what.** A PR has three places to write, and they are owned separately
-because a rewrite replaces rather than appends and `gh pr edit` has no compare-and-swap
-(see below), so what a tool is allowed to overwrite has to be text it wrote itself.
+## Who may write what
+
+A PR has **three overwritable places** — the title, the author's prose in the body, and a
+delimited generated section in the body — and they are owned separately because a rewrite
+replaces rather than appends and `gh pr edit` has no compare-and-swap (see below), so what
+a tool may overwrite has to be text it wrote itself. Comments are the fourth place to write
+and are not on this list because nothing overwrites them; they are governed by **Put what
+cannot be regenerated in a comment** below, and are always open to a tool that owns no
+section.
 
 - **The title** — `/wtf-create-pr` only. It becomes the permanent commit subject on a
   squash merge, there is nowhere in it to delimit a generated section, and so a write is
   replace-or-nothing on a line that outlives the PR.
 - **The author's prose in the body** — `/wtf-create-pr` only. That is the description of
   the change, and it is the author's account of their own work.
-- **A delimited generated section in the body** — whoever writes it replaces their own
-  section and carries every byte outside the markers across untouched. That is what the
-  section below is for. A section is owned per *section*, not per tool, and the one that
-  exists has two writers with different rights: `wtf-code-verify` regenerates the verdict,
-  because it ran the probes behind it; `/wtf-create-pr` may only embed an artifact it did
-  not produce, attributed and aged against HEAD. Neither may write the other's kind of
-  content into it.
+- **A delimited generated section in the body** — owned per *section*, not per tool, and
+  the one that exists has two writers with different rights. `wtf-code-verify` regenerates
+  the verdict, because it ran the probes behind it. `/wtf-create-pr` may only **embed** an
+  artifact it did not produce, attributed and aged against HEAD — and where it is
+  rewriting a body that already holds a `verify:` section and it has no artifact of its
+  own, that section is a **survivor**: carry it across verbatim except for its provenance
+  line, which is re-aged against HEAD (`Verified at` versus `git rev-parse --short HEAD`)
+  so a carried verdict cannot claim to be current. Only the tool that produced a section
+  may drop it. Neither writer may put the other's kind of content in it.
 
 This is why a verification section goes in the **body** rather than only in a comment: a
 reviewer opening the PR reads the description, while a comment competes with every thread
@@ -80,12 +89,29 @@ a body that holds two verdicts oldest-first is how a stale "Verified" outlives t
 retracted it. The reader takes the first one they meet as current.
 
 **The same verdict is stranded by a tool that changes the code and writes no section.** The
-filter below only replaces a section on the next run that writes one, so a fix applied after
+merge below only replaces a section on the next run that writes one, so a fix applied after
 a verification was published leaves it attesting to a tree that no longer exists — and a
-reader takes it as current for the same reason. A tool that edits code where a published
-section may exist therefore reads the body for the markers and says the verdict is stale,
-naming what would refresh it. That is this failure reached from the other direction, and no
-delimiter prevents it.
+reader takes it as current for the same reason. That is this failure reached from the other
+direction, and no delimiter prevents it.
+
+A tool that edits code where a published section may exist therefore reads the body for the
+markers and says the verdict is stale, naming what would refresh it. **The tools this binds
+today are `/wtf-code-review`, `/wtf-code-review-no-lenses` and `wtf-deslop`** — named rather
+than left as a class, because a class with no membership list gets wired into whichever
+members someone remembers. Add a tool to that list when it starts editing code.
+
+Two things that rule needs to be worth having:
+
+- **A read that fails is not a body with no section.** `gh pr view --json body` comes back
+  empty on a rate limit, a 502 or a permission it was never granted, and the marker is then
+  absent for a reason that has nothing to do with the PR. Report *could not check for a
+  published verification section* rather than silence, which is indistinguishable from a
+  clean result — the same distinction the merge below fails loudly to preserve. Bound the
+  call, too: `gh` sets no client timeout, and this read fires at the end of a long run.
+- **Say it where the stale text is.** The section stays live on the PR while the notice
+  lands in a terminal the reviewer reading that verdict never sees. Where the run is
+  already posting to the PR, the staleness note goes up with it as its own comment — the
+  one channel open to a tool that owns no section.
 
 **The marker name is `verify:start` / `verify:end`, spelled exactly that way.** One literal, named
 here, used verbatim by every tool that writes a verification section — `wtf-code-verify` and
@@ -94,30 +120,23 @@ filter below matches the full `<!-- … -->` comment, so a body delimited `foo-v
 survives the filter untouched and the new section lands underneath it. Two verdicts, oldest
 first, which is what this whole section exists to prevent.
 
-Wrap the section in those markers and filter the old copy out before appending the new one:
+The merge is `~/.claude/scripts/publish-verify-section.sh`, not a recipe to retype. It used
+to live here as a fenced block, which meant the shellcheck glob could not see it and no test
+could run it — for code whose failure mode is deleting the author's prose from a public PR.
+`Dotfiles/claude/tests/publish-verify-section-smoke.sh` now covers every branch below.
 
 ```bash
 # Fail loudly on a failed read. The redirect truncates body.raw before gh writes a byte, so
-# an empty file is indistinguishable from a PR with an empty body — and the filter below
-# would then replace the whole description with just the generated section.
+# an empty file is indistinguishable from a PR with an empty body.
 gh pr view <n> --json body -q .body > "$OUT/body.raw" \
   || { echo "could not read the PR body — nothing written" >&2; exit 1; }
-# Fail closed on a marker that is missing, doubled or out of order. awk decides it, not a
-# line count: counting matched pairs but not their order lets an `end` above a `start` pass,
-# and the filter then deletes every line below the start marker.
-awk '
-  /<!-- verify:start -->/ { if (skip) exit 1; if (seen) exit 1; skip = 1; seen = 1; next }
-  /<!-- verify:end -->/   { if (!skip) exit 1; skip = 0; next }
-  !skip
-  END { if (skip) exit 1 }
-  ' "$OUT/body.raw" > "$OUT/body.md" \
-  || { echo "verify markers missing, doubled or out of order — fix it by hand" >&2; exit 1; }
-# The section has to exist and be non-empty before any of it reaches the body: a failed `cat`
-# inside the braces still writes both markers, and an empty section between them publishes as
-# a verdict with no content.
-[ -s "$OUT/SECTION.md" ] || { echo "no section to publish" >&2; exit 1; }
-{ echo '<!-- verify:start -->'; cat "$OUT/SECTION.md" || exit 1; echo '<!-- verify:end -->'; } \
-  >> "$OUT/body.md" || { echo "could not append the section — body.md left unpushed" >&2; exit 1; }
+
+# Replaces the section in place, or appends it when the body has none. Refuses on a body
+# whose markers are doubled, out of order or unterminated, on an empty section, and on any
+# merge that would change a byte outside the section.
+~/.claude/scripts/publish-verify-section.sh merge \
+  "$OUT/body.raw" "$OUT/SECTION.md" "$OUT/body.md" || exit 1
+
 # Re-read immediately before the write and refuse on a change. Everything above is a
 # read-modify-write over a body other people and bots also edit, and `--body-file`
 # replaces the whole thing -- so a review bot that posts between the read and the
@@ -136,15 +155,22 @@ cmp -s "$OUT/body.raw" "$OUT/body.now" \
 gh pr edit <n> --body-file "$OUT/body.md"
 ```
 
-Every guard there fails in the same direction if you drop it: the body that gets pushed is
-missing something the author wrote, or claims something no run produced. The read check
-catches a rate limit, a 502 or a mistyped PR number, each of which leaves an empty `body.raw`
-that a counting guard reads as balanced. The order check catches the hand-edit that left two
-half-sections behind. The `seen` flag refuses a body that already holds *two* complete
-sections rather than quietly collapsing them into one — two sections means an earlier write
-went wrong, and deleting both to append a third destroys the evidence of that while looking
-like a clean replace. And the `-s` check stops an unreadable or empty section from being
-published as a verdict inside a matched pair of markers.
+Every guard fails in the same direction if you drop it: the body that gets pushed is missing
+something the author wrote, or claims something no run produced. Three are worth naming
+because each answers a case that looks like success:
+
+- **A marker inside a fenced code block is not a live section.** A body that quotes this
+  mechanism — plausible on any PR about it — carries the literal markers, and a filter
+  matching on substring alone deletes the quoted lines and everything between them at
+  exit 0. The script tracks fence state and leaves them alone.
+- **A section is replaced where it sits.** Deleting it and appending at EOF loses no bytes
+  and still moves the section below whatever followed it, on every rerun — which is why
+  the ownership rule's "every byte outside the markers is carried across untouched" is not
+  the whole invariant.
+- **So the gate is the whole invariant, checked rather than asserted.** The body with its
+  live section removed must be byte-identical, and in the same order, before and after. That
+  one comparison catches both cases above and anything else that reaches outside the
+  markers, and the script refuses the write rather than reporting it afterwards.
 
 ## Put what cannot be regenerated in a comment
 
@@ -170,4 +196,6 @@ Two consequences worth stating, because they are where this gets applied wrong:
   sections, `Closes #123`, and anyone else's prose are not descriptions of the change and are
   not regenerable from it. A regenerated body that drops the issue link silently stops it
   closing on merge, and one that drops an image leaves an orphaned upload and a broken
-  reference.
+  reference. **A live `verify:` section is on this list too** for the rewriting tool, per
+  **Who may write what** above: regenerable is not the same as regenerable *by you*, and only
+  the tool that produced a section may drop it.

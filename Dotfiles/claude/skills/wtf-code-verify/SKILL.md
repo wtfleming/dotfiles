@@ -343,11 +343,15 @@ public and outward-facing, and a verification section landing on the wrong PR is
 than none at all.
 
 **It goes in the PR body, between the `verify:start` / `verify:end` markers** — that
-section, and nothing else on the PR. Why the body rather than a comment, and what a write
-there may and may not touch, are the ownership rule in
-`~/.claude/reference/github-publishing.md`; `evidence.md` has the channel mechanics and when
-to fall back to a comment. Beyond that section, a run changes nothing outside its own
-scratch directory and the worktrees it tears down.
+section, and **nothing else on the PR**. Not the title, not the description: where either
+has drifted, report it and `/wtf-create-pr` fixes it. Why the body rather than a comment,
+and what a write there may and may not touch, are the ownership rule in
+`~/.claude/reference/github-publishing.md`; `evidence.md` has the channel mechanics, the
+check for whose PR it is, and when to fall back to a comment.
+
+That boundary is about outward-facing writes and nothing more. Inside the repo this skill
+does write, twice, both on a yes from the user: §7 offers a fix to tracked source, and §9
+writes promoted tests into the project.
 
 Post the whole section rather than the verdict line. The reviewer is the audience: they
 are about to read this diff, and what they can use is which expectations were probed, the
