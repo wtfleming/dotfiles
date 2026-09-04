@@ -38,6 +38,15 @@ If you wrote the code under review, that is exactly the bias this exists to
 avoid. Hand over the scope and nothing else. If the scope is empty, say so and
 let the agent work out its own.
 
+The reviewer settles the scope with `~/.claude/scripts/resolve-scope.sh`, per
+`~/.claude/reference/scope-resolution.md` — the default branch resolved rather
+than assumed, untracked files folded into the same diff, the base fetched before
+the merge base, and an empty diff treated as *fall through* rather than as no
+changes. There is only one agent here, so unlike `/wtf-code-review` this command
+runs nothing itself; it relays what the reviewer settled. That includes the
+**correspondence** between the working tree and the scope, which the reviewer's
+Scope line carries and which the refuters below need.
+
 Without `--deep`, print the report verbatim when it returns — unless it carries
 a Critical, in which case hold it and follow **Verify the Criticals** first. Do
 not re-rank the findings, soften them, or defend the code — you are relaying an
@@ -291,6 +300,19 @@ answer — do not manufacture a finding to fill a row. The bar for writing one i
 the bar you already have: try to refute it first, and drop it unless you can
 state a concrete failure.
 
+Tag every finding with the dimension that found it, after its anchor:
+
+```markdown
+- **Critical** · `src/auth.ts:42` · [correctness] — what breaks, and the fix.
+```
+
+You are one agent covering eight rubrics, so nothing downstream can work out
+which one found what — where `/wtf-code-review` can, because it holds eight
+reports. Without the tag the Dimensions counts below are a claim nobody can
+check against the findings list. It also keeps the finding format identical to
+the sibling command's, which is what makes the two comparable when they are run
+over the same branch.
+
 Add one section to the end of your report, after the closing line:
 
 ```markdown
@@ -321,7 +343,10 @@ what it said and stop — do not synthesise a report around a header you cannot
 fill.
 
 It returns one report, so there is nothing to merge, nothing to deduplicate
-and no tiers to reconcile. Do not print it yet — it has not been verified, and findings
+and no tiers to reconcile — so the sibling's disposition list and its
+collision-resolution ladder have nothing to act on here, and are deliberately
+absent rather than forgotten. What does carry across is the per-finding
+dimension tag, for the reason given above. Do not print it yet — it has not been verified, and findings
 that are about to be retracted should not get a first airing.
 
 ### Verify
@@ -373,8 +398,12 @@ disclosing.
 rides along for the same reason it rides to the reviewer — it is data, not
 opinion: a refuter reads the working tree unless told otherwise, so on a scope
 that is not checked out it would judge every finding against the wrong files
-and kill the real ones. Name the ref or tree the findings are about, and whose
-work it is — stated both ways, because the refuter treats silence as untrusted:
+and kill the real ones. **Send the correspondence and scope head the reviewer's
+Scope line names along with it**, which is what turns that from a hope into an
+instruction: on anything but `workspace` or a clean `same`, the refuter reads
+the scope's blobs, and knows that a line it cannot find is not a refutation.
+Name the ref or tree the findings are about, and whose work it is — stated both
+ways, because the refuter treats silence as untrusted:
 an ordinary review of the user's own branch says so plainly, and a fetched PR
 or a contributor's branch is named as such. The refuter's decision to run a
 cited command depends on it. When the tree is untrusted, the refuter will not
@@ -392,6 +421,12 @@ Print the report of what survived, in the reviewer's Critical / Warning /
 Pre-existing format, keeping its Scope / Tests / Lint header lines — the test
 result is the most load-bearing line in the report, and under `--deep` this is
 its only airing. The surviving Suggestions print once, in the triage below.
+
+The **Scope** line carries the correspondence between the working tree and the
+code reviewed. Relay it even when it is `same`: a reader cannot tell "the tree
+holds the reviewed code" from "nobody checked" unless the report distinguishes
+them, and every finding below was read out of one tree or the other.
+
 Then:
 
 - how many findings were refuted, and why — a dropped finding is reported, not

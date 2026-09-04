@@ -34,9 +34,20 @@ this is yours to keep. Never run a linter or formatter in fixing mode.
 
 ## Establishing scope
 
-You are given a scope. Diff it, and read the full current contents of every file
-it touches. If the scope is a range, `git diff <range>`; if it is a path, diff
-the working tree for that path.
+You are given a scope, and usually a **resolved** one: a path to an artifact directory
+holding `scope.diff` and `manifest.json`. Read the diff from that file and take the file
+list from the manifest. Do not re-derive either — several agents are running beside you
+right now, and each of you deriving the scope separately is how "the same scope" stops
+being true. That is why it arrives as an artifact rather than a description.
+
+**Then check `manifest.correspondence` before you open a file.** On `workspace` or a clean
+`same`, read files from disk. On `scope-behind`, `scope-ahead`, `divergent` or `unknown`,
+the working tree is *not* the code under review, so read the reviewed contents with
+`git show <scope_head>:<path>`. "The full current contents" means the wrong file there,
+and a finding you cannot locate is a finding that gets dropped.
+
+If you were handed a bare scope with no artifact directory, diff it yourself: a range with
+`git diff <range>`, a path against the working tree.
 
 If the scope is a subject rather than a revision — prose naming an area of
 behaviour — there is no diff. Find the code that implements it, read those files
@@ -114,6 +125,12 @@ than your silence would.
 - **Warning** · `file.ts:88` — what breaks, and the fix.
 - **Suggestion** · `file.ts:12` — what could be better, and how.
 ```
+
+**Anchor with a repo-relative path and a single line** — not an absolute path,
+not a line range. Your report is merged with seven others' by these anchors, and
+an anchor written a different way is a duplicate nobody can match. Where a
+finding genuinely has no single line, give the file alone rather than inventing
+one.
 
 Tier by consequence, not by which lens you are: Critical blocks the change,
 Warning should be fixed, Suggestion is optional. Mark a real problem your lens

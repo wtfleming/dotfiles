@@ -1,7 +1,7 @@
 ---
 description: Independent code review in a fresh context — recent changes, or a named subject. Diff, tests, lint, structured report. Pass --deep to add a verified parallel per-dimension pass.
 argument-hint: "[ref, branch, path or subject — defaults to uncommitted, else the branch, else HEAD] [--deep]"
-allowed-tools: Agent, Read, Grep, Glob, Bash(git:*)
+allowed-tools: Agent, Read, Grep, Glob, Bash(git:*), Bash(~/.claude/scripts/resolve-scope.sh:*)
 ---
 
 Arguments: $ARGUMENTS
@@ -30,7 +30,11 @@ contains **only** the scope. Do not include:
 
 If you wrote the code under review, that is exactly the bias this exists to
 avoid. Hand over the scope and nothing else. If the scope is empty, say so and
-let the agent work out its own.
+let the agent work out its own — it runs the same resolver you would, so without
+`--deep` there is nothing to gain by resolving first. Under `--deep` you resolve
+before dispatch instead, because the lenses launch in the same batch and cannot
+wait for it; hand the reviewer the artifact directory there, which is data about
+where the code lives and no more a cold-start violation than the scope string is.
 
 Without `--deep`, print the report verbatim when it returns — unless it carries
 a Critical, in which case hold it and follow **Verify the Criticals** first. Do
@@ -192,39 +196,51 @@ for every lens, so the number comes from **Pick the lenses** below — one git
 command, run before any *lens* is dispatched — and the announcement names the
 lenses being skipped alongside the ones being launched.
 
+Before anything is spawned, resolve the scope once:
+
+```sh
+~/.claude/scripts/resolve-scope.sh resolve [--scope <the user's scope>]
+```
+
+It prints the scope line and an artifact directory holding `scope.diff` and
+`manifest.json`. **Exit 2 means the scope is a subject** — prose naming an area of
+behaviour, which has no diff — and sends you to the second branch below. Any other
+non-zero exit is a real failure: report it and stop rather than reviewing something
+else.
+
 Dispatch one `wtf-lens` subagent per lens that survives that check, **in
 parallel**, each with the scope and its own rubric and nothing else. Unlike the
 reviewer, a lens cannot derive its own scope, and several agents each guessing
-one is how "the same scope" stops being true — so where the scope comes from
-depends on what the user gave:
+one is how "the same scope" stops being true — which is why the scope travels as
+the **artifact directory**, not as a description. Handing over a path is data
+about where the code lives, exactly like the file list and label below, and
+breaks no cold-start rule. Where it comes from depends on what the user gave:
 
-- **The user named a revision — a ref, a branch, a path:** every lens gets it
-  verbatim, and nothing a lens does depends on the reviewer's output — so launch
-  them all *alongside* the reviewer, in the same batch, rather than after it.
-  The reviewer's test run is the long pole of the whole pass; serialising the
-  lenses behind it buys nothing.
-- **The user named a subject, or named nothing at all:** the reviewer has to
-  settle it first. Wait for its report and hand each lens the scope stated at
-  the top of it — for a subject, the *file list* it settled on, labelled as a
-  subject and carrying the subject line with it. The list is what the lens
-  reads; the label is what stops it diffing. A bare file list is path-shaped,
-  and a lens handed a path diffs the working tree for it — which on a subject
-  is empty, so the pass reads nothing and marks whatever it does find
-  pre-existing. Named nothing at all is the other half of this branch and is
-  *not* a subject: the reviewer resolves it to a revision — the uncommitted
-  changes, the branch, or `HEAD` — so hand that over as the Scope line states
-  it and let the lens diff it as usual. Labelling that one a subject would
-  suppress the diff it exists to read. The list and the label are both data,
-  not opinion, and passing them breaks no cold-start rule. What must never
-  ride along is anything the reviewer concluded.
+- **The user named a revision — a ref, a branch, a path — or named nothing at
+  all:** the script has already settled it, so every lens gets the artifact
+  directory and the manifest's `correspondence`, and nothing a lens does depends
+  on the reviewer's output — so launch them all *alongside* the reviewer, in the
+  same batch, rather than after it. The reviewer's test run is the long pole of
+  the whole pass; serialising the lenses behind it buys nothing. Naming nothing
+  used to force a second round because only the reviewer could resolve it; it no
+  longer does, and that is the cheapest round this command saves.
+- **The user named a subject:** there is no diff to resolve — the script exits 2
+  saying so — and the reviewer has to settle it first. Wait for its report and
+  hand each lens the *file list* it settled on, labelled as a subject and
+  carrying the subject line with it. The list is what the lens reads; the label
+  is what stops it diffing. A bare file list is path-shaped, and a lens handed a
+  path diffs the working tree for it — which on a subject is empty, so the pass
+  reads nothing and marks whatever it does find pre-existing. The list and the
+  label are both data, not opinion, and passing them breaks no cold-start rule.
+  What must never ride along is anything the reviewer concluded.
 
 A subject belongs in the second branch for the reason the paragraph above
 opens with: prose is not something a lens can pin files with, so eight lenses
 each resolving it on their own is precisely the eight-guesses failure, and the
 merged Scope line would then name a file set that several findings did not come
 from. It costs the batched launch — say so when you announce the agents, since
-a subject scope is the one shape where the pass runs in two rounds rather than
-one.
+a subject is now the **only** shape where the pass runs in two rounds rather
+than one.
 
 That ordering also settles what happens when the reviewer finds nothing: if it
 comes back saying nothing in the repo implements the subject, it stopped at step
@@ -237,34 +253,21 @@ you cannot fill.
 
 A lens with no surface still costs a dispatch: it reads the whole scope before
 it can say **not applicable**. One absence is visible from the file list alone —
-a change that touches no code — and it can be skipped before the spawn. List
-the files the lenses will diff, in the shape the scope takes:
+a change that touches no code — and it can be skipped before the spawn.
 
-```sh
-git diff --name-status <merge-base>...<branch>   # a branch; merge-base with the default branch
-git diff --name-status <ref>^!                   # a single commit, HEAD included
-git diff --name-status HEAD                      # uncommitted, staged or not,
-git ls-files --others --exclude-standard         # plus untracked, which diff omits
-git diff --name-status HEAD -- <path>            # a path, again with untracked
-git ls-files --others --exclude-standard -- <path>
-```
+**The file list is `manifest.files`**, already resolved. Do not run a second set
+of git commands to build one: the manifest's list is projected from `scope.diff`
+itself, so it cannot disagree with the diff the lenses are about to read, and a
+list derived separately can. It already includes untracked files, which
+`git diff` never lists and which are exactly the change that would otherwise
+pass as prose.
 
-The two working-tree shapes need both commands: an untracked file is
-uncommitted work that `git diff` never lists, and a new source file beside a
-Markdown edit is exactly the change that would otherwise pass as prose.
+A subject has no diff to list, so skip the check and dispatch all eight, and say
+so.
 
-Resolve `<merge-base>` per `~/.claude/reference/scope-resolution.md` rather than
-assuming the default branch is `main` — on a `master` or `trunk` repo the assumption
-collapses the range to `HEAD...HEAD` and the listing comes back empty, which reads here
-as "every file is prose".
-
-A range the user typed is used as typed. When the scope came from the
-reviewer — the second branch above — run this on the revision its Scope line
-states; a subject has no diff to list, so skip the check and dispatch all
-eight, and say so.
-
-An empty listing means the check did not run — a scope shape not covered
-above, or a diff with nothing in it — not that every file is prose. Dispatch
+The manifest cannot describe an empty scope — the script falls through or exits
+rather than writing one, and records why in `fell_through`. So an empty listing
+here means something went wrong rather than that every file is prose: dispatch
 all eight and say so.
 
 Skip `tests`, `resilience`, `performance` and `dependencies` when every path
@@ -350,15 +353,51 @@ is `performance`.
 
 ### Synthesise
 
-Merge the lens reports with the reviewer's own. Deduplicate on the underlying
-defect, not the exact line — two agents describing the same problem routinely
-anchor a few lines apart. Where they found the same thing, keep the more
-specific statement and drop the other, rather than listing it twice with
-different wording. Where they disagree on tier, take the higher and say which
-reports saw it. A lens marks a problem the change did not cause
-**(pre-existing)** inline; in the merged report it goes under the reviewer's
-**Pre-existing** section with that tier leading it, and not under the tier
-itself — if any report filed it both ways, Pre-existing wins.
+Merge the lens reports with the reviewer's own. Every finding arrives anchored at
+a repo-relative `path:line`, so the first pass is mechanical: findings sharing an
+anchor are candidates for one defect. Findings with a file but no line match on
+path alone. A finding with neither is never merged automatically.
+
+That is a first pass, not the whole job. Deduplicate on the underlying **defect**,
+not the exact line — two agents describing the same problem routinely anchor a few
+lines apart, so a shared anchor is evidence of a duplicate and a differing anchor
+is not evidence against one.
+
+**Tag each merged finding with where it came from** — the lens name, or `reviewer`:
+
+```
+- **Critical** · `src/auth.ts:42` · [correctness] — what breaks, and the fix.
+```
+
+You already hold each report separately, so no agent has to be asked for this. It
+is what lets a reader see which lens earned its dispatch, and what the disposition
+list below refers to.
+
+**When two findings collide, work down this ladder and stop at the first rung that
+separates them:**
+
+1. **Pre-existing wins over a tier.** A lens marks a problem the change did not
+   cause **(pre-existing)** inline; in the merged report it goes under the
+   reviewer's **Pre-existing** section with that tier leading it, and not under
+   the tier itself. If any report filed it both ways, Pre-existing wins.
+2. **The higher tier wins,** and say which reports saw it.
+3. **The statement naming a concrete failing input or code path wins** over one
+   describing a category of problem.
+4. **The reviewer's statement wins over a lens's.** It read the surrounding files
+   and ran the tests; a lens read one rubric.
+5. **The longer evidence wins.**
+
+The ladder exists because "keep the more specific statement" leaves two
+equally-tiered findings with nothing to separate them, and the merging model then
+picks by feel — which is exactly the judgement it is worst placed to make, since
+the reports it is choosing between were written by its own agents.
+
+**Record a disposition for every candidate finding: `kept`, `merged` or
+`dropped`,** with the source it came from and a one-line reason. This is the one
+place in this command where a finding could disappear without the reader being
+told, and the rule everywhere else here is that a dropped finding is reported, not
+hidden. Two lenses raising one defect, collapsed silently, hides both which lens
+found it and that the collapse happened at all.
 
 Do not print the merged report yet — it has not been verified, and findings that
 are about to be retracted should not get a first airing.
@@ -411,8 +450,11 @@ already agreed to.
 rides along for the same reason it rides to the lenses — it is data, not
 opinion: a refuter reads the working tree unless told otherwise, so on a scope
 that is not checked out it would judge every finding against the wrong files
-and kill the real ones. Name the ref or tree the findings are about, and whose
-work it is — stated both ways, because the refuter treats silence as untrusted:
+and kill the real ones. **Send the manifest's `correspondence` and `scope_head`
+with it**, which is what turns that from a hope into an instruction: on anything
+but `workspace` or a clean `same`, the refuter reads the scope's blobs, and knows
+that a line it cannot find is not a refutation. Name the ref or tree the findings
+are about, and whose work it is — stated both ways, because the refuter treats silence as untrusted:
 an ordinary review of the user's own branch says so plainly, and a fetched PR
 or a contributor's branch is named as such. The refuter's decision to run a
 cited command depends on it. When the tree is untrusted, the refuter will not
@@ -430,10 +472,23 @@ Print the merged report of what survived, in the reviewer's Critical / Warning /
 Pre-existing format, keeping its Scope / Tests / Lint header lines — the test
 result is the most load-bearing line in the report, and under `--deep` this is
 its only airing. The surviving Suggestions print once, in the triage below.
+
+The **Scope** line is the manifest's `scope_line`, which already carries the
+correspondence. Say it even when it is `same`: a reader cannot tell "the tree
+holds the reviewed code" from "nobody checked" unless the report distinguishes
+them, and every finding below was read out of one tree or the other. Where
+`base_stale` is set, say that too — the scope may be wider than the branch.
+
 Then:
 
 - how many findings were refuted, and why — a dropped finding is reported, not
   hidden
+- **what the merge did to findings that are not in the report above**: which were
+  merged into which, and which were dropped, each with the lens that raised it
+  and the reason. Omit the section entirely when nothing was merged or dropped,
+  the same way the triage omits a line reporting zero. This is the merge's half
+  of the same rule as the line above it — a finding two lenses found and one
+  report shows is a fact about the pass, not noise to tidy away
 - which lenses returned nothing, and — listed separately — which returned **not
   applicable**, and — listed separately again — which returned **no usable
   report** because they errored, timed out or came back unparseable. A lens that
@@ -489,7 +544,8 @@ triage's **Reads as a Warning (unverified)** heading — that heading exists
 because the content is a Warning, so a fix to one is checked as a Warning's is.
 Send the finding **as the review wrote it**, plus the same scope-and-provenance
 data the verify pass sends — here that is the working tree, where the fixes
-landed, and whose work it is — and nothing else: not the fix, not which lines
+landed, and whose work it is, so the correspondence you send is `workspace` — and
+nothing else: not the fix, not which lines
 it touched, not that a fix exists. The finding's `file:line` may have drifted
 under the edits; locating the code in the tree as it now stands is the
 refuter's job, not a reason to annotate the dispatch. Say how many refuters
@@ -600,13 +656,18 @@ with a `comments` array, or the `gh` equivalent), so they land together as one
 review instead of trickling in as separate notifications.
 
 Inline anchoring only works within the PR's diff hunks — GitHub rejects a
-comment on a line the diff does not touch. Fetch the PR's actual hunks (`gh pr
-diff` or the per-file `patch` from the PR's files) and check each finding's
-`file:line` against them *before* posting, rather than discovering the
-rejection from a failed call. Anchor each comment with `path` and `line` +
-`side` — not the deprecated `position` — and set the review's `commit_id` to
-the PR's current head SHA, so a comment doesn't silently land against a stale
-commit. A finding's `file:line` always names code that still exists in the
+comment on a line the diff does not touch. Check each finding's `file:line`
+against the hunks *before* posting, rather than discovering the rejection from a
+failed call.
+
+On a PR scope those hunks are already in hand: `scope.diff` **is** `gh pr diff`,
+because that is the only thing this command will review a PR from. Check against
+the artifact rather than re-fetching, and the anchor check and the review are
+about one set of bytes instead of two computed at different moments. Anchor each
+comment with `path` and `line` + `side` — not the deprecated `position` — and set
+the review's `commit_id` to the manifest's `scope_head`, which is the head the
+findings were actually read from, so a comment cannot land against a commit
+nobody reviewed. A finding's `file:line` always names code that still exists in the
 tree being reviewed, never a deleted line, so `side` is always `RIGHT`.
 
 - A finding whose line falls inside a hunk goes up as its own inline comment,

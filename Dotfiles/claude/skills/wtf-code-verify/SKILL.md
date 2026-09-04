@@ -81,12 +81,12 @@ cannot see that choice has no way to tell whether the run covered the thing they
 If nothing in the repo plausibly implements the subject, say so and stop rather than
 verifying the nearest thing you found.
 
-**Nothing** — resolve it yourself: uncommitted work, else the branch against its merge
-base, else `git show HEAD`. Follow `~/.claude/reference/scope-resolution.md` for the
-procedure. Two things there decide whether this step is silently wrong: the default branch
-has to be resolved rather than assumed to be `main`, and an empty diff means *fall
-through*, not *no changes*. Where nothing resolves, ask for `--base` rather than
-guessing.
+**Nothing** — resolve it with `~/.claude/scripts/resolve-scope.sh resolve`: uncommitted
+work, else the branch against its merge base, else `git show HEAD`. It implements
+`~/.claude/reference/scope-resolution.md`, including the two things that decide whether
+this step is silently wrong — the default branch resolved rather than assumed to be
+`main`, and an empty diff treated as *fall through* rather than *no changes*. Where
+nothing resolves it says so and stops; ask for `--base` rather than guessing.
 
 State the scope you settled on before you run anything.
 

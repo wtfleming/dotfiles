@@ -30,11 +30,23 @@ cannot change anything.
 security, tests, maintainability, performance, dependencies, reuse, resilience. A
 change that touches only prose skips the four lenses with no surface there
 (tests, resilience, performance, dependencies), decided from the file list alone
-and disclosed in the report. Their reports are
-merged and
-deduplicated with the reviewer's, then verified before printing: one
-`wtf-refuter` per Critical and Warning finding, each told to argue the finding
-is *wrong* and to answer refuted when unsure. Suggestions arrive marked
+and disclosed in the report. That list comes from the scope artifact rather than
+from a second set of git commands, so it cannot disagree with the diff the lenses
+read. Their reports are merged and deduplicated with the reviewer's, then verified
+before printing: one `wtf-refuter` per Critical and Warning finding, each told to
+argue the finding is *wrong* and to answer refuted when unsure.
+
+The merge is where two lenses finding one defect becomes one line, and it used to
+be the single place in the command where a finding could vanish without the
+reader being told — everywhere else, "a dropped finding is reported, not hidden".
+So every candidate now gets a disposition, `kept`, `merged` or `dropped`, and the
+report prints the ones that are not in it. Each finding also carries the lens that
+raised it, which is what a disposition refers to and what shows which lens earned
+its dispatch. Collisions run down an ordered ladder — Pre-existing, then tier,
+then the statement naming a concrete failure, then the reviewer over a lens, then
+the longer evidence — because "keep the more specific statement" leaves two
+equally-tiered findings with nothing to separate them, and the model then picks by
+feel between reports its own agents wrote. Suggestions arrive marked
 `(unverified)` rather than spending an agent apiece on nits. There is
 deliberately no linter lens — the reviewer already runs the real one.
 
@@ -145,6 +157,44 @@ refuter per fixed Critical or Warning. It announces each fan-out before spawning
 it, so the spend can be refused. For very large diffs, the built-in `/code-review ultra`
 is the maintained alternative.
 
+## Resolving the scope
+
+`scripts/resolve-scope.sh` answers, once and in code, the two questions every review tool
+here has to settle before it reads a line: **what code is under review**, and **does the
+working tree actually hold it**.
+
+The first matters because `--deep` dispatches eight lenses plus one refuter per finding,
+each of which used to run its own git commands. "The same scope" then held only for as
+long as every agent derived it identically — an instruction, not a fact. Now the diff is
+produced once, written to `scope.diff`, and handed over by path, with `manifest.json`
+carrying the file list projected from that same diff.
+
+The second is the sharper one, because it fails in one direction only. Reviewing `HEAD~3`,
+or a fetched PR, is ordinary, and in both the files on disk are not the files under
+review. `wtf-refuter` reads the working tree by default and answers `refuted` when it
+cannot decide — so a refuter pointed at the wrong tree does not find the line a finding
+names, cannot decide, and kills it. The mismatch does not add noise; it silently deletes
+true findings. The manifest reports one of six correspondence states, distinguishing the
+two ancestor directions and keeping "not present locally" separate from "divergent", and
+agents read the scope's blobs rather than the working file whenever the tree is not the
+scope. A line that is not in the working tree is not a refutation.
+
+It also folds untracked files into the same diff, fetches the base before computing a
+merge base, resolves the default branch rather than assuming `main`, and treats
+`gh pr diff` as the sole authority on a PR — a failure there is a stop, never a fallback
+to a locally computed range, which would review a near-miss of the PR while claiming to
+review the PR.
+
+One invariant the consumers lean on: **if `manifest.json` exists, the scope is non-empty.**
+An empty diff on disk is indistinguishable from a collapsed range, so every path that
+would describe an empty scope either falls through to the next step or exits without
+writing anything, recording in `fell_through` what each step found. A scope that is not a
+PR, a range, a ref or a path exits 2, which is how a caller tells a subject from a failure
+without parsing an error string.
+
+Resolving before dispatch also removed a round: naming no scope at all used to wait for
+the reviewer to settle it. A prose subject is now the only shape that still runs in two.
+
 ## Interactive explainers
 
 `wtf-explainer` builds interactive, self-narrating explainers of complex
@@ -235,10 +285,12 @@ the merge base is what isolates *your* change, but the deploy window asks what i
 beside you, which is a release tag and usually not an ancestor. Without it that probe had
 to hand-roll a worktree and skip the bootstrap the script exists to do.
 
-How to resolve a scope nobody named lives in `~/.claude/reference/scope-resolution.md`,
-shared with the review tooling rather than restated here. Hardcoding `main` fails silently
-on a `master` or `trunk` repo — the merge base collapses, the diff comes back empty with
-exit 0, and an empty diff read as "no changes" is a confident report about nothing.
+How to resolve a scope lives in `~/.claude/reference/scope-resolution.md`, shared with the
+review tooling rather than restated here, and is implemented by
+`scripts/resolve-scope.sh`. Hardcoding `main` fails silently on a `master` or `trunk` repo
+— the merge base collapses, the diff comes back empty with exit 0, and an empty diff read
+as "no changes" is a confident report about nothing. `baseline-worktree.sh` was the last
+place that still hardcoded it, and now takes its default from the same resolver.
 
 Deliberately expensive and deliberately rare: at the upper tiers it boots services and
 bootstraps a second worktree, so it announces the tiers it expects to need and asks

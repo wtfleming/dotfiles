@@ -31,24 +31,36 @@ reviewed, and a reader who cannot see that choice has no way to tell whether the
 report covers the code they meant. If nothing in the repo plausibly implements
 the subject, say so and stop rather than reviewing the nearest thing you found.
 
-If the task names no scope at all:
+For a revision, and when the task names no scope at all, resolve it with the script
+rather than by hand:
 
-```
-git status --porcelain
-git stash list
-git diff                     # unstaged
-git diff --staged            # staged
+```sh
+~/.claude/scripts/resolve-scope.sh resolve [--scope <ref|range|path|PR#>]
 ```
 
-If the working tree is clean, review the branch against its merge base instead; if that
-is empty too, review `git show HEAD`. Follow
-`~/.claude/reference/scope-resolution.md` for both steps — resolving the default branch
-rather than assuming `main`, since the assumption fails silently on a `master` or `trunk`
-repo, and treating an empty diff as *fall through* rather than as no changes.
+It prints the scope line and the artifact directory, which holds `scope.diff` and
+`manifest.json`. It implements the whole procedure in
+`~/.claude/reference/scope-resolution.md` — the three-step fall-through, the default
+branch resolved rather than assumed to be `main`, untracked files folded into the same
+diff, the base fetched first, and an empty diff treated as *fall through* rather than as
+no changes. `git status --porcelain` and `git stash list` are still worth running for
+context the diff does not carry.
 
-State the scope you settled on at the top of your report. Read the full
-surrounding file for any hunk you comment on — a diff alone hides the caller,
-the existing error handling, and the conventions you are judging against.
+It exits **2** when the scope is not a PR, a range, a ref or a path — that is a subject,
+and the subject procedure above applies instead.
+
+State the scope you settled on at the top of your report, using the manifest's
+`scope_line` rather than composing your own: it already names the ref, the file count,
+which step settled it and how the tree corresponds.
+
+**Check `correspondence` before you read a file.** On `workspace` or a clean `same`, read
+files from disk as usual. On anything else — `scope-behind`, `scope-ahead`, `divergent`,
+`unknown` — the working tree is not the code under review, so read the scope's blobs with
+`git show <scope_head>:<path>`. Reading the wrong tree does not merely add noise: findings
+that cannot be located get dropped, so the mismatch deletes real ones.
+
+Read the full surrounding file for any hunk you comment on — a diff alone hides the
+caller, the existing error handling, and the conventions you are judging against.
 
 ## 2. Run the tests
 
@@ -142,6 +154,12 @@ real problems beats a long one padded with maybes.
 Three tiers, plus one section for problems the change did not cause. Every
 finding gets `file:line`, a statement of what breaks, and a concrete fix. No
 other severity labels.
+
+**Anchor with a repo-relative path and a single line** — not an absolute path,
+not a line range. Findings from this report get merged with other agents' by
+their anchors, and an anchor written a different way is a duplicate nobody can
+match. Where a finding genuinely has no single line, give the file alone rather
+than inventing one.
 
 ```markdown
 # Code Review
