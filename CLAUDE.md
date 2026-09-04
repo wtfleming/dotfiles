@@ -90,10 +90,14 @@ home directory. Key consequences to keep in mind:
 - CI also parses the YAML frontmatter of every `SKILL.md`, agent and command. A header
   that does not parse registers wrong or not at all, and nothing else notices —
   `shellcheck` skips markdown and `jq` only sees `settings.json`.
-- CI runs `Dotfiles/claude/tests/resolve-scope-smoke.sh`, the one step that *executes*
+- CI runs the two smoke tests in `Dotfiles/claude/tests/`, the only steps that *execute*
   anything. `resolve-scope.sh` is almost entirely branching and is the single authority on
   what every review reads, so a wrong answer there is a confident report about the wrong
-  code — and no static check can reach it.
+  code — and no static check can reach it. `baseline-worktree.sh` is there for a different
+  reason: it builds and destroys git worktrees, so its failure modes are a guard that does
+  not stop the run and half a pair left registered for the next run to trip over. A new
+  test file here needs a step added to `.github/workflows/lint.yml` — the shellcheck glob
+  picks it up, but nothing runs it otherwise.
 - Prefer POSIX-compatible test syntax (`[ "$x" = "$y" ]`, not `==`) in `sh` scripts.
 - **New agents, commands and skills under `Dotfiles/claude/` take a `wtf-` prefix**,
   in the file name *and* the registered name. These share a namespace with whatever

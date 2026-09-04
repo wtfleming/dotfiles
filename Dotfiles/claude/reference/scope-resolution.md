@@ -23,6 +23,15 @@ It prints the scope line and then the artifact directory, which holds two files:
 - **`scope.diff`** — one diff covering the whole scope, untracked files included.
 - **`manifest.json`** — what the diff is of, and how far it can be trusted.
 
+The directory it prints is **pinned to this run**, and it is the path to hand to an agent.
+Beside it sits a stable pointer — the same path with the run's suffix stripped — which is
+a convenience for a human looking the run up later, and the wrong thing to dispatch with:
+a second resolve of the same scope re-aims it, so an agent that resolved it when it *read*
+rather than when it was dispatched would get the other run's diff. `out_dir` and
+`diff_path` in the manifest both name the pinned directory. Old trees are swept after an
+hour, so a path handed out long ago may be gone — which is a legible failure, unlike
+silently reading someone else's scope.
+
 Everything the rest of this file describes is what the script implements. Read on for why
 each step is there and what to do with what comes back; do not re-derive the scope by hand
 alongside it. **Several agents each deriving the scope separately is how "the same scope"

@@ -72,13 +72,26 @@ main_root() {
   dirname "$(git rev-parse --path-format=absolute --git-common-dir)"
 }
 
-# The parent of every worktree this script makes. Created 0700 and refused when
-# somebody else already owns it: with TMPDIR unset this lands in /tmp, which is
-# world-writable, and `mkdir -p` accepts a parent it did not create. Whoever owns
-# it can swap the tree between `git worktree add` and the bootstrap, and the
-# bootstrap runs that tree's own package manager.
+# The parent of every worktree this script makes. Composing the path is pure: `path` and
+# `remove` are queries, and a query that creates a directory -- or refuses to answer --
+# surprises every caller that uses it to ask where a tree would be. The guards live in
+# ensure_worktree_parent, which runs where a tree is actually written.
 worktree_parent() {
-  local parent="${TMPDIR:-/tmp}/verify-baseline"
+  echo "${TMPDIR:-/tmp}/verify-baseline"
+}
+
+# Created 0700 and refused when somebody else already owns it: with TMPDIR unset this
+# lands in /tmp, which is world-writable, and `mkdir -p` accepts a parent it did not
+# create. Whoever owns it can swap the tree between `git worktree add` and the
+# bootstrap, and the bootstrap runs that tree's own package manager.
+#
+# Reports through its exit status and writes nothing to stdout. A guard that answers on
+# stdout has to be called in a command substitution, and an assignment takes its status
+# from the *last* substitution in it -- so `die` would exit that subshell alone and the
+# caller would carry on with a truncated path, the refusal printed but not obeyed.
+ensure_worktree_parent() {
+  local parent
+  parent="$(worktree_parent)"
 
   if [ -L "$parent" ]; then
     die "$parent is a symlink; refusing to build a worktree under it."
@@ -90,14 +103,31 @@ worktree_parent() {
   if [ ! -O "$parent" ]; then
     die "$parent is not owned by you; refusing to build a worktree under it."
   fi
+}
 
-  echo "$parent"
+# Resolve as much of a path as exists on disk, then re-append the part that does not.
+# `pwd -P` needs a directory to stand in, and the case this exists for is a path whose
+# leaf -- after a $TMPDIR purge, whose parent as well -- is gone.
+resolve_path() {
+  local path=$1 tail=""
+  while [ ! -d "$path" ] && [ -n "$path" ] && [ "$path" != "/" ]; do
+    tail="/$(basename "$path")$tail"
+    path="$(dirname "$path")"
+  done
+  if [ -d "$path" ]; then
+    printf '%s%s' "$(cd "$path" && pwd -P)" "$tail"
+  else
+    printf '%s%s' "$path" "$tail"
+  fi
 }
 
 # worktree_path [baseline|head]
 worktree_path() {
-  local which=${1:-baseline} root
-  root="$(worktree_parent)/$(basename "$(main_root)")"
+  local which=${1:-baseline} root main
+  # Resolved in its own assignment rather than inline below, for the reason above:
+  # `x="$(a)/$(b)"` reports b's status, so main_root's die would be swallowed too.
+  main="$(main_root)"
+  root="$(worktree_parent)/$(basename "$main")"
   case "$which" in
     baseline) echo "$root" ;;
     head) echo "$root-head" ;;
@@ -107,9 +137,8 @@ worktree_path() {
 
 # Registration lives in .git/worktrees, not in the directory, and $TMPDIR is purged on
 # a timer -- so a worktree is routinely registered with nothing on disk, which blocks
-# `git worktree add` until something prunes it. Pruning first is what makes the plain
-# directory test below sufficient: it drops exactly the registrations that have no
-# directory, so the two states agree afterwards.
+# `git worktree add` until something clears it. Clearing it first is what makes the
+# plain directory test below sufficient: the two states agree afterwards.
 #
 # Removed by name, never pruned: a bare `git worktree prune` drops the registration
 # of *every* worktree in the repository whose directory is currently missing, which
@@ -118,20 +147,34 @@ worktree_path() {
 # is already gone, so the narrow operation is available and there is no reason to
 # reach for the broad one.
 worktree_present() {
-  local main=$1 wt=$2
+  local main=$1 wt=$2 resolved
 
-  if [ ! -d "$wt" ] && git -C "$main" worktree list --porcelain | grep -qxF "worktree $wt"; then
-    git -C "$main" worktree remove --force "$wt" 2>/dev/null || true
+  # git records a worktree with its path resolved. $TMPDIR on macOS sits under /var,
+  # which is a symlink to /private/var, and it ends in a slash -- so the string this
+  # script composes never equals the one `worktree list` prints, and a comparison
+  # between the two silently never matches, leaving the registration to block the next
+  # `git worktree add` forever. Resolve our side before comparing, through the whole
+  # path: a purge takes the parent as well as the leaf, so neither can be assumed to
+  # still exist.
+  resolved="$(resolve_path "$wt")"
+
+  if [ ! -d "$wt" ] && git -C "$main" worktree list --porcelain | grep -qxF "worktree $resolved"; then
+    git -C "$main" worktree remove --force "$resolved" 2>/dev/null || true
   fi
 
   [ -d "$wt" ]
 }
 
-# Either half can be the one that survived, so clear both and prune what git kept.
+# Either half can be the one that survived. `worktree remove --force` deregisters and
+# deletes in one step and works on a registration whose directory is already gone; the
+# rm -rf is for a directory git does not know about, and the second remove clears a
+# registration that survived it. No bare `git worktree prune`, for the reason above.
 worktree_destroy() {
   local main=$1 wt=$2
-  git -C "$main" worktree remove --force "$wt" 2>/dev/null || rm -rf "$wt"
-  git -C "$main" worktree prune
+  if ! git -C "$main" worktree remove --force "$wt" 2>/dev/null; then
+    rm -rf "$wt"
+    git -C "$main" worktree remove --force "$wt" 2>/dev/null || true
+  fi
 }
 
 # A repo may legitimately be several of these at once.
@@ -344,28 +387,34 @@ suggest_fork_point() {
   git -C "$main" merge-base "$p1" "$p2" 2>/dev/null || return 0
 }
 
-# add_tree <main> <worktree-path> <commit> <label>
+# add_tree <main> <worktree-path> <commit> <label> [companion-worktree]
+#
+# The worktree is held in `tree`, never in `wt`. bash scopes `local` dynamically, so an
+# ERR trap the *caller* armed still runs with this function's variables in scope: a local
+# named `wt` here would shadow the caller's, and a caller trap armed to unwind the tree it
+# built would unwind this one instead -- leaving behind exactly the half-pair it was armed
+# to prevent, in the window before the trap below replaces it.
 add_tree() {
-  local main=$1 wt=$2 commit=$3 label=$4 also=${5:-} eco relative env_file
+  local main=$1 tree=$2 commit=$3 label=$4 companion=${5:-} eco relative env_file
 
   echo "==> $label at $(git -C "$main" rev-parse --short "$commit")"
-  mkdir -p "$(dirname "$wt")"
-  (cd "$main" && git worktree add --detach "$wt" "$commit")
+  mkdir -p "$(dirname "$tree")"
+  (cd "$main" && git worktree add --detach "$tree" "$commit")
 
   # Bootstrap is the step that fails most often, and a half-built tree left registered is
   # worse than no tree: the next `create` refuses to recreate it and advises reusing it,
   # which is exactly wrong for a tree whose install never finished. Unwind to the state
   # before this function ran, so a rerun starts clean.
   #
-  # `$also` is a tree an earlier call already built. It has to be named here rather
+  # `$companion` is a tree an earlier call already built. It has to be named here rather
   # than covered by a trap the caller holds, because traps are process-global rather
   # than scoped to a function: the `trap - ERR` at the end of this one clears whatever
   # the caller armed, so a caller-held trap is gone by the time the second bootstrap
   # runs -- which is the failure this argument exists to close.
-  if [ -n "$also" ]; then
-    trap 'worktree_destroy "$main" "$wt"; worktree_destroy "$main" "$also"' ERR
+  if [ -n "$companion" ]; then
+    trap 'worktree_destroy "$main" "$tree"; worktree_destroy "$main" "$companion"' ERR
   else
-    trap 'worktree_destroy "$main" "$wt"' ERR
+    trap 'worktree_destroy "$main" "$tree"' ERR
   fi
 
   # Symlinked, not copied: .env holds the machine's real credentials, and a copy in a
@@ -376,12 +425,12 @@ add_tree() {
     relative="${env_file#"$main"/}"
     # A tracked .env is part of the code under test, and this commit's own copy is
     # already checked out -- overwriting it would run the baseline on HEAD's config.
-    if git -C "$wt" ls-files --error-unmatch "$relative" >/dev/null 2>&1; then
+    if git -C "$tree" ls-files --error-unmatch "$relative" >/dev/null 2>&1; then
       echo "    skipped $relative (tracked at this commit — the worktree has its own)"
       continue
     fi
-    mkdir -p "$wt/$(dirname "$relative")"
-    ln -sf "$env_file" "$wt/$relative"
+    mkdir -p "$tree/$(dirname "$relative")"
+    ln -sf "$env_file" "$tree/$relative"
   # -prune, not -not -path: the latter discards results without stopping the descent, so
   # a large monorepo stats every inode under node_modules/ and target/ to find nothing.
   done < <(find "$main" \( -name node_modules -o -name .git -o -name deps \
@@ -391,7 +440,7 @@ add_tree() {
     echo "    copying generated artifacts"
     for relative in "${OPT_COPIES[@]}"; do
       if [ -e "$main/$relative" ]; then
-        copy_if_ignored "$main" "$relative" "$wt/$relative"
+        copy_if_ignored "$main" "$relative" "$tree/$relative"
       else
         echo "warn: $relative does not exist in the main checkout; skipped" >&2
       fi
@@ -401,11 +450,11 @@ add_tree() {
   echo "    install"
   if [ -n "$OPT_INSTALL_CMD" ]; then
     echo "    \$ $OPT_INSTALL_CMD"
-    (cd "$wt" && eval "$OPT_INSTALL_CMD")
+    (cd "$tree" && eval "$OPT_INSTALL_CMD")
   elif [ ${#ECOSYSTEMS[@]} -eq 0 ]; then
     echo "    (nothing detected — pass --install-cmd if this project needs one)"
   else
-    for eco in "${ECOSYSTEMS[@]}"; do install_for "$eco" "$main" "$wt"; done
+    for eco in "${ECOSYSTEMS[@]}"; do install_for "$eco" "$main" "$tree"; done
   fi
 
   echo "    build"
@@ -413,14 +462,14 @@ add_tree() {
     echo "    (skipped: --no-build)"
   elif [ -n "$OPT_BUILD_CMD" ]; then
     echo "    \$ $OPT_BUILD_CMD"
-    (cd "$wt" && eval "$OPT_BUILD_CMD")
+    (cd "$tree" && eval "$OPT_BUILD_CMD")
   elif [ ${#ECOSYSTEMS[@]} -eq 0 ]; then
     echo "    (nothing detected — pass --build-cmd if this project needs one)"
   else
-    for eco in "${ECOSYSTEMS[@]}"; do build_for "$eco" "$main" "$wt"; done
+    for eco in "${ECOSYSTEMS[@]}"; do build_for "$eco" "$main" "$tree"; done
   fi
 
-  report_missing_ignored "$main" "$wt"
+  report_missing_ignored "$main" "$tree"
   trap - ERR
 }
 
@@ -543,6 +592,11 @@ cmd_create() {
 
   echo "    ecosystems: ${ECOSYSTEMS[*]:-none detected}"
   [ ${#TOOL_PREFIX[@]} -gt 0 ] && echo "    toolchain:  $(prefix) (pinned by this project)"
+
+  # Everything below writes under the worktree parent, so it is validated here: once,
+  # and before the first tree is created rather than from whichever path helper a
+  # caller happened to reach for.
+  ensure_worktree_parent
 
   # The pair is the unit, so nothing between here and the end may leave one half
   # registered: the next `create` would refuse to recreate it and advise reusing it,

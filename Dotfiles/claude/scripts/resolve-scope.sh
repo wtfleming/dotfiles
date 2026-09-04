@@ -38,10 +38,11 @@ set -Eeuo pipefail
 # Exit 2 is a contract: it means "the scope is prose, run the subject procedure", and a
 # caller that reads it will happily review an area of behaviour named after a real commit.
 # jq exits 2 on a system error of its own -- a truncated or missing --slurpfile input, a
-# full $TMPDIR -- and under `set -e` that status would become this script's. Anything that
-# is not the deliberate `exit 2` below leaves as 1.
-SUBJECT_EXIT=0
-trap 'rc=$?; if [ "$rc" -eq 2 ] && [ "$SUBJECT_EXIT" -ne 1 ]; then rc=1; fi; exit "$rc"' ERR
+# full $TMPDIR -- and under `set -e` that status would become this script's.
+#
+# The deliberate `exit 2` below needs no exemption here: bash runs no ERR trap for an
+# explicit exit, so the only status this trap ever sees is a command's.
+trap 'rc=$?; [ "$rc" -ne 2 ] || rc=1; exit "$rc"' ERR
 
 WARNINGS=()
 FELL_THROUGH=()
@@ -112,8 +113,15 @@ remote_slug() {
 
 # Guarded like jq and gh below: this runs before either of their checks, so an image
 # without perl died on a bare `shasum: command not found` and exit 127.
+#
+# Captured into a variable rather than piped straight into `cut`: sha256_stdin's `die`
+# runs as a pipeline element, so it exits that subshell alone. Every caller interpolates
+# hash12 into a larger string, which would then be built from an empty hash and used to
+# name a directory -- the run limping on past a failure it already reported.
 hash12() {
-  printf '%s' "$1" | sha256_stdin | cut -c1-12
+  local h
+  h="$(printf '%s' "$1" | sha256_stdin)" || exit 1
+  printf '%s' "${h:0:12}"
 }
 
 # One place, because there are two callers and a bare `shasum` in either dies with
@@ -150,18 +158,16 @@ resolve_default_branch() {
   return 1
 }
 
-# Refresh the base before it is used as a merge base. A stale remote-tracking ref does not
-# fail, it just moves the merge base back, and the review scope grows to include commits
-# nobody asked to review. Non-fatal on purpose -- offline review is legitimate -- so the
-# failure is recorded and disclosed instead of raised.
+# A wall-clock ceiling on a network call that has none of its own -- gh sets no client
+# timeout, so a connection that establishes and then goes silent hangs for as long as
+# the peer holds it open. `timeout` is GNU and `gtimeout` is its Homebrew name; where
+# neither is installed the call runs unbounded rather than not at all, since a missing
+# bound is worse than a missing resolver.
 #
-# Bounded, because "non-fatal" is not the same as "non-blocking": with --quiet and stderr
-# discarded, a remote that black-holes SYNs would otherwise stall every review for the OS
-# TCP timeout -- 75 seconds, silently, before any agent is dispatched.
-# gh has no client timeout of its own, so a connection that establishes and then goes
-# silent would hang here for as long as the peer holds it open. `timeout` is GNU and
-# `gtimeout` is its Homebrew name; where neither is installed the call runs unbounded
-# rather than not at all -- a missing bound is worse than a missing resolver.
+# It bounds *duration*, not idleness, so a slow-but-progressing transfer can hit it: a
+# few thousand files over a metered link is a real diff, not a hang. Hence the override
+# -- the alternative is a hard failure recoverable only by editing this file.
+WTF_SCOPE_TIMEOUT="${WTF_SCOPE_TIMEOUT:-30}"
 run_bounded() {
   local timeout_bin=""
 
@@ -172,12 +178,20 @@ run_bounded() {
   fi
 
   if [ -n "$timeout_bin" ]; then
-    "$timeout_bin" 30 "$@"
+    "$timeout_bin" "$WTF_SCOPE_TIMEOUT" "$@"
   else
     "$@"
   fi
 }
 
+# Refresh the base before it is used as a merge base. A stale remote-tracking ref does not
+# fail, it just moves the merge base back, and the review scope grows to include commits
+# nobody asked to review. Non-fatal on purpose -- offline review is legitimate -- so the
+# failure is recorded and disclosed instead of raised.
+#
+# Bounded, because "non-fatal" is not the same as "non-blocking": with --quiet and stderr
+# discarded, a remote that black-holes SYNs would otherwise stall every review for the OS
+# TCP timeout -- 75 seconds, silently, before any agent is dispatched.
 fetch_base() {
   local base=$1 remote branch
   case "$base" in
@@ -198,6 +212,20 @@ fetch_base() {
        git fetch --quiet "$remote" "$branch" 2>/dev/null; then
     FETCH_WARNING="git fetch $remote $branch failed; the merge base may be behind $remote"
   fi
+}
+
+# Create one directory level, refusing anything somebody else could have planted. Each
+# level is made non-recursively, so `mkdir -p` cannot walk down through a symlink on the
+# way, and both tests run against that level itself.
+#
+# Reports through its exit status and writes nothing to stdout, for the reason hash12
+# spells out: a `die` inside a command substitution exits only that subshell.
+ensure_private_dir() {
+  local dir=$1 what=$2
+  [ ! -L "$dir" ] || die "$dir is a symlink; refusing to $what under it."
+  mkdir -m 700 "$dir" 2>/dev/null || [ -d "$dir" ] \
+    || die "cannot create $dir to hold the scope."
+  [ -O "$dir" ] || die "$dir is not owned by you; refusing to $what under it."
 }
 
 # Keyed on the repo *and* the scope. The repo half carries a hash of the absolute path
@@ -295,7 +323,6 @@ error: not a PR, a range, a ref or an existing path: $scope
   Read as a subject -- prose naming an area of behaviour. There is no diff to resolve and
   this is the wrong tool; the caller classifies subjects itself.
 EOF
-      SUBJECT_EXIT=1
       exit 2 ;;
   esac
   die "'$scope' resolves to neither a ref nor a path. Check the spelling, or fetch the branch first. (Prose naming an area of behaviour is a subject, and exits 2.)"
@@ -310,18 +337,24 @@ EOF
 # synthesising here. It exits 1 whenever the files differ, which is always -- unguarded,
 # that kills the script on the first untracked file.
 append_untracked() {
-  local out=$1 filter=$2 f rc size count=0 total=0 over_budget=false noted=false
+  local out=$1 filter=$2 f rc size count=0 pending total=0 over_budget=false noted=false list
+
+  # Enumerated once, into a file. The walk below needs the same list, and on a large
+  # checkout this traversal is the expensive part -- but the reason it is a file rather
+  # than a second identical command is correctness: two enumerations can disagree, and
+  # the count on stderr would then describe a set other than the one folded into the diff.
+  # It lands beside scope.diff and is removed here, the way files.json is.
+  list="$(dirname "$out")/untracked.list"
+  git ls-files --others --exclude-standard -z ${filter:+-- "$filter"} > "$list"
+  pending="$(tr -cd '\0' < "$list" | wc -c | tr -d ' ')"
 
   # Straight to stderr, and before the walk rather than after it. This exists to explain
   # a wait -- two processes per file -- and `warn` only queues a line for the flush that
   # happens once the manifest is written, which is after the slow part is over.
-  count="$(git ls-files --others --exclude-standard -z ${filter:+-- "$filter"} | tr -cd '\0' | wc -c | tr -d ' ')"
-  if [ "${count:-0}" -gt "$UNTRACKED_NOISY_COUNT" ]; then
-    echo "note: folding $count untracked files into the diff; this takes a moment." >&2
+  if [ "${pending:-0}" -gt "$UNTRACKED_NOISY_COUNT" ]; then
+    echo "note: folding $pending untracked files into the diff; this takes a moment." >&2
     noted=true
   fi
-
-  count=0
 
   while IFS= read -r -d '' f; do
     count=$((count + 1))
@@ -358,7 +391,8 @@ append_untracked() {
     # Exit 1 is "they differ", which is every file here. Anything above it is a real
     # failure on one file, and one bad file must not cost the whole scope.
     [ "$rc" -le 1 ] || warn "could not diff untracked file: $f (git exit $rc)"
-  done < <(git ls-files --others --exclude-standard -z ${filter:+-- "$filter"})
+  done < "$list"
+  rm -f "$list"
   if [ "$noted" = true ]; then
     warn "$count untracked files were folded into the diff; consider gitignoring what does not belong in a review"
   fi
@@ -501,8 +535,7 @@ need_base() {
 # Out-values travel as globals, the way SHAPE and CORRESPONDENCE already do, rather
 # than as an echoed tuple -- there are four of them and one is a multi-word label.
 resolve_diff_for_shape() {
-  local scope=$1 diff=$2 mb rhs
-
+  local scope=$1 diff=$2
 
   case "$SHAPE" in
     pr)
@@ -606,6 +639,52 @@ resolve_diff_for_shape() {
   esac
 }
 
+# publish_scope <built-tree> <pointer>
+#
+# Published by flipping a pointer, never by deleting the old one: the out dir is keyed on
+# repo and scope, so a second resolve of the same scope would otherwise `rm -rf` the
+# manifest that the agents from the first one are reading by path.
+publish_scope() {
+  local final=$1 out=$2 parent root_dir link
+
+  parent="$(dirname "$out")"
+  root_dir="$(dirname "$parent")"
+
+  # A real directory here predates this scheme; replace it once.
+  [ -L "$out" ] || rm -rf "$out"
+
+  # Swapped by rename, not by `ln -sfn` onto $out directly: BSD `ln -f` unlinks before it
+  # links, leaving a window in which $out does not exist at all and a reader takes ENOENT
+  # -- and "never neither" is the whole point. `mv -h` (BSD) and `mv -T` (GNU) each
+  # rename *onto* the symlink rather than through it; NOT a plain `mv`, which follows an
+  # existing symlink and deposits the new link inside the old target, leaving readers on
+  # the stale tree. Where neither flag exists the direct form is still better than none.
+  link="$out.new.$$"
+  ln -sfn "$(basename "$final")" "$link"
+  if ! mv -h "$link" "$out" 2>/dev/null && ! mv -T "$link" "$out" 2>/dev/null; then
+    rm -f "$link"
+    ln -sfn "$(basename "$final")" "$out"
+  fi
+
+  # The swap orphans the previous target, which the old unconditional `rm -rf` used to
+  # take with it. Pruned on age rather than immediately, because "not the current target"
+  # and "nobody is reading it" are different things: an hour is far longer than any run
+  # holds a manifest open, and $TMPDIR is purged on a timer anyway.
+  #
+  # Swept across every repo's parent rather than only this run's. The directory is keyed
+  # on the repo path, so a scope resolved once -- or a checkout at a path never revisited
+  # -- would otherwise hold its diff until the OS purges $TMPDIR: days on macOS, and on a
+  # Linux box with no tmpfiles timer, never.
+  find "$root_dir" -mindepth 2 -maxdepth 2 -type d -mmin +60 \
+    ! -name "$(basename "$final")" -exec rm -rf {} + 2>/dev/null || :
+  # Then the pointers whose target the sweep just took, and the parents left holding
+  # nothing -- otherwise the sweep trades whole trees for dangling links and empty dirs.
+  find "$root_dir" -mindepth 2 -maxdepth 2 -type l \
+    -exec sh -c 'for l; do [ -e "$l" ] || rm -f "$l"; done' _ {} + 2>/dev/null || :
+  find "$root_dir" -mindepth 1 -maxdepth 1 -type d -empty \
+    -exec rmdir {} + 2>/dev/null || :
+}
+
 cmd_resolve() {
   local scope="" base_override=""
   while [ $# -gt 0 ]; do
@@ -619,6 +698,11 @@ cmd_resolve() {
   local root out prefix
   command -v jq >/dev/null 2>&1 \
     || die "jq is required to write the manifest but is not installed (brew install jq)"
+  # Probed here rather than left to the first hash. hash12 is only ever reached from
+  # inside scope_out_dir's `echo`, so a `die` down there exits that substitution and
+  # nothing else -- the run would carry on and name a directory with the hash missing.
+  command -v shasum >/dev/null 2>&1 || command -v sha256sum >/dev/null 2>&1 \
+    || die "shasum or sha256sum is required to hash the scope but neither is installed"
   root="$(repo_root)"
 
   # A relative path scope names something relative to where the caller stands, and the `cd`
@@ -661,16 +745,21 @@ cmd_resolve() {
     BASE_SHA="$(git rev-parse "$BASE")"
   fi
 
-  # The parent is validated before anything is written beneath it, not just before the
-  # publish: with TMPDIR unset this lands in a world-writable /tmp, `mkdir -p` accepts a
-  # directory somebody else created, and $out is predictable from the repo path and the
-  # scope. Checking it after the diff has been written is checking it too late -- a
-  # symlink planted there has already redirected scope.diff and manifest.json.
+  # Every level this script creates is validated, and validated before anything is
+  # written beneath it. With TMPDIR unset this lands in a world-writable /tmp, `mkdir -p`
+  # accepts a directory somebody else created, and both components are predictable from
+  # the repo path and the scope.
+  #
+  # Both levels, because checking only the leaf checks one level too deep: `wtf-scope` is
+  # the fixed, publicly documented name an attacker plants, and a `mkdir -p` that walks
+  # through their symlink creates the leaf *inside* their tree -- where it is not a
+  # symlink and is owned by us, so it passes both tests. And before the diff rather than
+  # after, because by then a planted symlink has already redirected scope.diff and
+  # manifest.json.
   local parent
   parent="$(dirname "$out")"
-  [ ! -L "$parent" ] || die "$parent is a symlink; refusing to write a scope under it."
-  mkdir -p "$parent"
-  [ -O "$parent" ] || die "$parent is not owned by you; refusing to write a scope under it."
+  ensure_private_dir "$(dirname "$parent")" "write a scope"
+  ensure_private_dir "$parent" "write a scope"
 
   # Build in an exclusive directory and publish it by flipping a symlink, so a consumer
   # that finds a manifest finds a complete scope.diff beside it. `mktemp -d` rather than a
@@ -743,7 +832,7 @@ cmd_resolve() {
     --arg correspondence_note "$CORRESPONDENCE_NOTE" \
     --argjson default_branch_resolved "$BASE_RESOLVED" \
     --arg base_stale_reason "$FETCH_WARNING" \
-    --arg out_dir "$out" \
+    --arg out_dir "$tmp" \
     --arg diff_sha256 "$diff_sha256" \
     --argjson diff_bytes "$diff_bytes" \
     --argjson file_count "$file_count" \
@@ -781,30 +870,18 @@ cmd_resolve() {
     }' > "$tmp/manifest.json"
   rm -f "$tmp/files.json"
 
-  # Published by flipping a pointer, never by deleting the old one: the out dir is keyed
-  # on repo and scope, so a second resolve of the same scope would otherwise `rm -rf` the
-  # manifest that the agents from the first one are reading by path.
-  #
-  # A real directory here predates this scheme; replace it once. `ln -sfn` is what flips
-  # the pointer -- NOT `mv` onto $out, which follows an existing symlink and deposits the
-  # new link *inside* the old target, leaving readers on the stale tree.
-  local final="$tmp"
-  [ -L "$out" ] || rm -rf "$out"
-  ln -sfn "$(basename "$final")" "$out"
-
-  # The swap orphans the previous target, which the old unconditional `rm -rf` used to
-  # take with it. Pruned on age rather than immediately, because "not the current
-  # target" and "nobody is reading it" are different things: an hour is far longer than
-  # any run holds a manifest open, and $TMPDIR is purged on a timer anyway.
-  find "$parent" -maxdepth 1 -type d -name "$(basename "$out").*" \
-    ! -name "$(basename "$final")" -mmin +60 -exec rm -rf {} + 2>/dev/null || :
+  publish_scope "$tmp" "$out"
 
   # The tree is published; the EXIT trap must not take it away.
   trap - EXIT
 
   echo "$scope_line"
   flush_warnings
-  echo "$out"
+  # The pinned tree, not the $out pointer. A consumer handed the pointer resolves it when
+  # it *reads*, so a second resolve of the same scope between dispatch and read would
+  # serve it the other run's diff -- the divergence this artifact exists to prevent.
+  # $out stays behind as a stable name a human can look up.
+  echo "$tmp"
 }
 
 # scope.diff is the full source of whatever is under review, so it is not left readable by
