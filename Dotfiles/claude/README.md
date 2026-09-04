@@ -174,14 +174,19 @@ or a fetched PR, is ordinary, and in both the files on disk are not the files un
 review. `wtf-refuter` reads the working tree by default and answers `refuted` when it
 cannot decide — so a refuter pointed at the wrong tree does not find the line a finding
 names, cannot decide, and kills it. The mismatch does not add noise; it silently deletes
-true findings. The manifest reports one of six correspondence states, distinguishing the
-two ancestor directions and keeping "not present locally" separate from "divergent", and
-agents read the scope's blobs rather than the working file whenever the tree is not the
-scope. A line that is not in the working tree is not a refutation.
+true findings. The manifest reports one of seven correspondence states, distinguishing the
+two ancestor directions, keeping "not present locally" separate from "divergent", and
+splitting a clean checkout at the reviewed commit from one carrying uncommitted edits.
+Agents read the scope's blobs rather than the working file whenever the tree is not the
+scope, and they are told that as a rule rather than as a list of values — an enumeration
+has to be updated in every prompt when a state is added, and the one that gets missed
+leaves an agent with a state it has no instruction for. A line that is not in the working
+tree is not a refutation.
 
-It also folds untracked files into the same diff, fetches the base before computing a
-merge base, resolves the default branch rather than assuming `main`, and treats
-`gh pr diff` as the sole authority on a PR — a failure there is a stop, never a fallback
+It also folds untracked files into the same diff — bounded, so one large untracked file
+becomes a stub rather than a diff nobody can read — fetches the base before computing a
+merge base and only for the shapes that consult one, resolves the default branch rather
+than assuming `main`, and treats `gh pr diff` as the sole authority on a PR — a failure there is a stop, never a fallback
 to a locally computed range, which would review a near-miss of the PR while claiming to
 review the PR.
 
