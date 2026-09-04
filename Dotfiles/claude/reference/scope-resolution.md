@@ -47,7 +47,7 @@ procedure returns a confident review of a scope nobody asked for.
 | `correspondence`, `correspondence_note` | see below |
 | `scope_head` | the commit the findings are about; `git show <scope_head>:<path>` reads it |
 | `diff_path` | hand this to an agent instead of a description |
-| `base_stale`, `base_stale_reason` | the fetch failed; the merge base may be behind. Null on the shapes that need no base at all |
+| `base_stale`, `base_stale_reason` | the fetch failed; the merge base may be behind. `base_stale` is always a boolean, including on the shapes that consult no base — only `base_stale_reason` is null. To ask whether a base was consulted at all, read `base_ref == null` or `default_branch_resolved`; `base_stale == false` means "no failed fetch", not "fetched and fresh" |
 | `fell_through` | which auto steps produced nothing, and why |
 | `file_list_source` | `git-apply-numstat` normally. `fallback-headers` means the list was scraped from the diff's headers and may be incomplete — **say so** rather than presenting `files` as settled |
 | `warnings` | anything the resolver could not do cleanly; disclose these the way you disclose `base_stale` |

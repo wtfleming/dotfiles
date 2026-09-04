@@ -344,7 +344,7 @@ suggest_fork_point() {
 
 # add_tree <main> <worktree-path> <commit> <label>
 add_tree() {
-  local main=$1 wt=$2 commit=$3 label=$4 eco relative env_file
+  local main=$1 wt=$2 commit=$3 label=$4 also=${5:-} eco relative env_file
 
   echo "==> $label at $(git -C "$main" rev-parse --short "$commit")"
   mkdir -p "$(dirname "$wt")"
@@ -354,7 +354,17 @@ add_tree() {
   # worse than no tree: the next `create` refuses to recreate it and advises reusing it,
   # which is exactly wrong for a tree whose install never finished. Unwind to the state
   # before this function ran, so a rerun starts clean.
-  trap 'worktree_destroy "$main" "$wt"' ERR
+  #
+  # `$also` is a tree an earlier call already built. It has to be named here rather
+  # than covered by a trap the caller holds, because traps are process-global rather
+  # than scoped to a function: the `trap - ERR` at the end of this one clears whatever
+  # the caller armed, so a caller-held trap is gone by the time the second bootstrap
+  # runs -- which is the failure this argument exists to close.
+  if [ -n "$also" ]; then
+    trap 'worktree_destroy "$main" "$wt"; worktree_destroy "$main" "$also"' ERR
+  else
+    trap 'worktree_destroy "$main" "$wt"' ERR
+  fi
 
   # Symlinked, not copied: .env holds the machine's real credentials, and a copy in a
   # temp worktree outlives the run. The cache concern above is about build inputs the
@@ -532,21 +542,23 @@ cmd_create() {
   echo "    ecosystems: ${ECOSYSTEMS[*]:-none detected}"
   [ ${#TOOL_PREFIX[@]} -gt 0 ] && echo "    toolchain:  $(prefix) (pinned by this project)"
 
-  # One trap around both, because the pair is the unit. add_tree's own trap unwinds
-  # the tree it is building; this one unwinds the tree that already succeeded, so a
-  # bootstrap that fails on the head side does not leave a lone baseline behind for
-  # the next run to be offered as reusable.
+  # The pair is the unit, so nothing between here and the end may leave one half
+  # registered: the next `create` would refuse to recreate it and advise reusing it,
+  # and `path head` would then name a directory that does not exist.
+  #
+  # Every trap here is armed *after* the add_tree that precedes it, never before:
+  # add_tree ends with `trap - ERR`, and a trap is process-global, so one armed
+  # earlier does not survive the call.
+  add_tree "$main" "$wt" "$merge_base" "baseline ($base_label)"
+  trap 'worktree_destroy "$main" "$wt"' ERR
+
   if [ -n "$head_ref" ]; then
+    add_tree "$main" "$wt_head" "$after" "head ($head_ref)" "$wt"
     trap 'worktree_destroy "$main" "$wt"; worktree_destroy "$main" "$wt_head"' ERR
   fi
 
-  add_tree "$main" "$wt" "$merge_base" "baseline ($base_label)"
-  if [ -n "$head_ref" ]; then
-    add_tree "$main" "$wt_head" "$after" "head ($head_ref)"
-    trap - ERR
-  fi
-
   report_toolchain_drift "$main" "$merge_base" "$after"
+  trap - ERR
 
   echo
   echo "baseline: $wt"

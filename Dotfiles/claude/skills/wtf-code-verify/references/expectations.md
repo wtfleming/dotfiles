@@ -182,6 +182,13 @@ body, only the part the post-open commits touched.
 
 ```bash
 gh pr view <n> --json title,body,createdAt,commits,reviews,comments
+
+# Per-line review comments are NOT in the above: `reviews` carries the submission
+# summaries and `comments` the timeline, and neither includes the inline threads.
+# A later commit answering an inline request is the most common kind of drift there
+# is, and without this the check cannot see it happened.
+gh api --paginate repos/<owner>/<repo>/pulls/<n>/comments \
+  --jq '.[] | select(.in_reply_to_id == null) | "\(.id)\t\(.path):\(.line)\t\(.body)"'
 gh pr diff <n>                                     # the change as it stands
 ```
 

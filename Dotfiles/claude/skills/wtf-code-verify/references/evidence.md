@@ -38,8 +38,13 @@ correct means, add a line saying so rather than editing the original.
 ## Capturing output
 
 ```bash
-"$PROBE" > "$OUT/raw/p2.head.stdout.txt" 2> "$OUT/raw/p2.head.stderr.txt"; echo "exit=$?"
+"$PROBE" > "$OUT/raw/p2.head.stdout.txt" 2> "$OUT/raw/p2.head.stderr.txt"
+echo $? > "$OUT/raw/p2.head.exit"
 ```
+
+The status goes to a file on its own line, and is read straight after the probe. `; echo
+"exit=$?"` *prints* it and records nothing — and the pipeline then returns `echo`'s own
+zero, so a probe that failed reads as one that passed to anything checking the status.
 
 Capture both streams and the exit code. Several test runners report results on stderr and
 leave stdout empty — ERT is one — so a probe that captures only stdout looks like it

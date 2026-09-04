@@ -187,8 +187,13 @@ fetch_base() {
     */*) remote="${base%%/*}"; branch="${base#*/}" ;;
     *)   return 0 ;;
   esac
-  if ! GIT_TERMINAL_PROMPT=0 \
-       GIT_SSH_COMMAND='ssh -o ConnectTimeout=5 -o BatchMode=yes' \
+  # Three bounds, because none of them covers the others. ConnectTimeout stops a
+  # remote that black-holes SYNs, but only during connection setup; the HTTP
+  # low-speed pair stops a transfer that stalls, but only over HTTP; and neither
+  # bounds an ssh session that connects and then goes quiet. run_bounded is the
+  # only one that holds whatever the transport does.
+  if ! run_bounded env GIT_TERMINAL_PROMPT=0 \
+       GIT_SSH_COMMAND='ssh -o ConnectTimeout=5 -o BatchMode=yes -o ServerAliveInterval=5 -o ServerAliveCountMax=2' \
        GIT_HTTP_LOW_SPEED_LIMIT=1000 GIT_HTTP_LOW_SPEED_TIME=10 \
        git fetch --quiet "$remote" "$branch" 2>/dev/null; then
     FETCH_WARNING="git fetch $remote $branch failed; the merge base may be behind $remote"
