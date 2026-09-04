@@ -205,9 +205,11 @@ cheapest first — pick one per claim:
    a dirty file is reachable here.
 
    Break inside a worktree you can throw away. If it genuinely has to be in place, **name
-   the file and get the user's agreement before editing it** — this is the only step in the
-   skill that writes to their own checkout, and an unannounced edit there is indistinguishable
-   from a bug in whatever they were working on. Then copy the file byte-for-byte before
+   the file and get the user's agreement before editing it** — the only edit in this skill
+   that is meant to be undone, and an unannounced edit to their checkout is
+   indistinguishable from a bug in whatever they were working on. The other two writes
+   there, §7's fix and §9's promoted tests, are meant to stay; this one is restored
+   byte-for-byte below, so leaving it behind is the failure. Then copy the file byte-for-byte before
    touching it and copy it back afterwards —
    `cp <path> "$OUT/pre-break"` … `cp "$OUT/pre-break" <path>` — which restores exactly what
    was there without asking git what it thinks the file should look like. A break left
@@ -350,8 +352,8 @@ and what a write there may and may not touch, are the ownership rule in
 check for whose PR it is, and when to fall back to a comment.
 
 That boundary is about outward-facing writes and nothing more. Inside the repo this skill
-does write, twice, both on a yes from the user: §7 offers a fix to tracked source, and §9
-writes promoted tests into the project.
+writes at three steps, each on a yes from the user: §4 breaks a file in place and restores
+it, §7 offers a fix to tracked source, and §9 writes promoted tests into the project.
 
 Post the whole section rather than the verdict line. The reviewer is the audience: they
 are about to read this diff, and what they can use is which expectations were probed, the

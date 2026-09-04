@@ -630,6 +630,17 @@ pre-approves its test or lint command runs it unprompted. Otherwise report both
 as `not run: tree is not the user's own work`, and say the fixes stand checked
 by the refuters alone.
 
+**A `not run` says which kind it was.** This command's `allowed-tools` cannot cover
+this section, and not by oversight: the commands come from the reviewer's **Tests:**
+and **Lint:** lines, which name whatever the project uses, so there is nothing to
+enumerate at the time the frontmatter is written. What it does declare is the review
+path plus `Bash(gh pr view:*)` for the stranded-verdict read below, which is a fixed
+command and so can be named. Everything else here runs in the main conversation on a
+later turn, under the session's own permissions. So `not run` has three distinct
+causes — the tree is not the user's work, the session would not permit the command,
+or the report named no such command — and they are three different facts about how
+far the check reached. Say which; a bare `not run` reads as the first.
+
 The verdicts read inverted from the verify pass: the refuter argues the code is
 correct, so against the fixed tree `refuted` means the problem is gone and
 `stands` means the fix did not take. Relay them to the user in fix terms —

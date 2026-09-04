@@ -151,11 +151,12 @@ gh pr list --head "$branch" --state all --json number,url,state,isDraft,baseRefN
 ```
 
 An open one **whose `baseRefName` equals `$base_branch`** means this is an update, not a
-create — the branch name, since that is what GitHub reports here. Both halves matter: GitHub allows several open PRs from the same head
-to *different* bases, so matching on head alone can route `gh pr edit` onto a PR that
-targets somewhere else — and on a stack the base is not settled until **How much of this to
-do** below, so re-check this once the base is final rather than acting on the head match
-here. Where it is an update: say so, keep the composition work, follow the rewrite rules in
+create — the branch name, since that is what GitHub reports here. Both halves matter:
+GitHub allows several open PRs from the same head to *different* bases, so matching on
+head alone can route `gh pr edit` onto a PR that targets somewhere else — and on a stack
+the base is not settled until **How much of this to do** below, so re-check this once the
+base is final rather than acting on the head match here. Where it is an update: say so,
+keep the composition work, follow the rewrite rules in
 `~/.claude/reference/github-publishing.md` — carry across everything that is not a
 description of the change, and replace generated sections rather than stacking them — then
 `gh pr edit`. GitHub refuses a second open PR for the same head *and* base, but it refuses
@@ -247,10 +248,11 @@ gh pr list --state open --limit 100 \
   --json number,headRefName,baseRefName,headRepositoryOwner > "$OUT/prs.json"
 ```
 
-Intersect the two: an open PR whose head appears in `ancestors` is a branch this one sits on
-top of. Compare only PRs whose `headRepositoryOwner` is this repository's owner — a fork PR's
-head lives in someone else's namespace and has no `origin/` counterpart, so a fork branch
-that happens to share a name with a local one would otherwise match the wrong ref. Three things decide the answer from there, and each of them is a case that produced a
+Intersect the two: an open PR whose head appears in `ancestors` is a branch this one sits
+on top of. Compare only PRs whose `headRepositoryOwner` is this repository's owner — a
+fork PR's head lives in someone else's namespace and has no `origin/` counterpart, so a
+fork branch that happens to share a name with a local one would otherwise match the wrong
+ref. Three things decide the answer from there, and each of them is a case that produced a
 wrong base before it was written down:
 
 - **Drop `$branch` and `$base` from the candidates.** `--is-ancestor` and `--merged` both
