@@ -97,6 +97,25 @@ out=$(cd "$WORK/range" && "$RESOLVE" resolve --scope HEAD 2>/dev/null | tail -1)
 check "a dirty checkout is same-dirty" "same-dirty" "$(field "$out" .correspondence)"
 git -C "$WORK/range" checkout -q -- a.txt
 
+echo "== auto step 3: a clean tree on the default branch falls through to HEAD =="
+scratch_repo "$WORK/step3"
+commit "$WORK/step3" a.txt one base
+commit "$WORK/step3" a.txt two second
+out=$(cd "$WORK/step3" && "$RESOLVE" resolve 2>/dev/null | tail -1)
+check "auto step 3 step" "auto-3-head" "$(field "$out" .resolution_step)"
+check "auto step 3 shape" "commit" "$(field "$out" .shape)"
+check "auto step 3 records the two it skipped" "2" "$(field "$out" '.fell_through | length')"
+
+echo "== a path scope picks up untracked files under it =="
+scratch_repo "$WORK/pathscope"
+commit "$WORK/pathscope" a.txt one base
+mkdir -p "$WORK/pathscope/lib" "$WORK/pathscope/other"
+printf 'in\n' > "$WORK/pathscope/lib/new.txt"
+printf 'out\n' > "$WORK/pathscope/other/new.txt"
+out=$(cd "$WORK/pathscope" && "$RESOLVE" resolve --scope lib 2>/dev/null | tail -1)
+check "path scope shape" "path" "$(field "$out" .shape)"
+check "path scope takes only what is under it" "lib/new.txt" "$(field "$out" '.files | join(",")')"
+
 echo "== a root commit has no parent to diff against =="
 scratch_repo "$WORK/root"
 commit "$WORK/root" a.txt one base
