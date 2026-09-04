@@ -89,6 +89,55 @@ worktree_parent() {
 # stdout has to be called in a command substitution, and an assignment takes its status
 # from the *last* substitution in it -- so `die` would exit that subshell alone and the
 # caller would carry on with a truncated path, the refusal printed but not obeyed.
+# A directory is only as private as every directory above it. If any ancestor can be
+# renamed by somebody else, they can swap a validated tree for their own after the
+# check has passed -- so the leaf mode test alone protects nothing.
+#
+# World-writable is safe *only* with the sticky bit, which is the whole reason /tmp at
+# 1777 is a normal place to work: without `t`, anyone may rename anyone's entries.
+# Ownership by root is accepted for the same reason -- the system owns /, /tmp and
+# /var/folders, and requiring our own uid there would refuse every real path.
+#
+# Fails closed. `find` printing nothing is not the same as `find` failing, and testing
+# its output alone accepted a directory it could not stat at all.
+path_is_unsafe() {
+  local dir=$1 out rc=0
+  out="$(find "$dir" -maxdepth 0 \( \( -perm -g+w -o -perm -o+w \) ! -perm -1000 \) 2>/dev/null)" || rc=$?
+  [ "$rc" -eq 0 ] || return 0
+  [ -z "$out" ] || return 0
+  [ -O "$dir" ] || [ -n "$(find "$dir" -maxdepth 0 -user root 2>/dev/null)" ] || return 0
+  return 1
+}
+
+# Every component from / down, because TMPDIR itself may be the weak link.
+#
+# Walked on the *physical* path, and symlink-ness is not what is tested here: on macOS
+# /tmp is a symlink to /private/tmp, so rejecting every symlinked component refuses
+# every run on the platform this is written for. What matters is whether the directory
+# the path really lands on can be renamed by somebody else. The levels this script
+# creates are tested for being symlinks by their own callers, where a planted link is
+# a redirection rather than a system layout.
+#
+# An array rather than a string: a TMPDIR with a space in it is ordinary on macOS.
+ensure_safe_ancestry() {
+  local dir=$1 what=$2 c
+  local real
+  real="$(cd "$dir" 2>/dev/null && pwd -P)" || real=""
+  [ -n "$real" ] || real=$dir
+  local p=$real
+  local chain=()
+  while :; do
+    chain=("$p" ${chain[@]+"${chain[@]}"})
+    case "$p" in /|.|"") break ;; esac
+    p="$(dirname "$p")"
+  done
+  for c in ${chain[@]+"${chain[@]}"}; do
+    [ -e "$c" ] || continue
+    path_is_unsafe "$c" && die "$c is writable by other users, or could not be inspected; refusing to $what under it. Fix with: chmod go-w '$c'"
+    :
+  done
+}
+
 ensure_worktree_parent() {
   local parent
   parent="$(worktree_parent)"
@@ -104,12 +153,10 @@ ensure_worktree_parent() {
     die "$parent is not owned by you; refusing to build a worktree under it."
   fi
 
-  # Ownership is not enough: a directory you own at 0777 is still writable by every
-  # local user, who can swap the tree between `git worktree add` and the bootstrap that
-  # runs its package manager.
-  if [ -n "$(find "$parent" -maxdepth 0 \( -perm -g+w -o -perm -o+w \) 2>/dev/null)" ]; then
-    die "$parent is writable by group or others; refusing to build a worktree under it. Fix with: chmod go-w '$parent'"
-  fi
+  # Ownership is not enough, and neither is this level alone: TMPDIR itself may be the
+  # weak link, and the window is between `git worktree add` and a bootstrap that runs
+  # the tree's own package manager.
+  ensure_safe_ancestry "$parent" "build a worktree"
 }
 
 # Resolve as much of a path as exists on disk, then re-append the part that does not.

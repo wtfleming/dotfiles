@@ -317,6 +317,19 @@ for level in wtf-scope repo; do
   done
 done
 
+# The level checks alone miss an ancestor: wtf-scope can be 700 while the directory
+# holding it is not, and renaming that one substitutes everything below it.
+guard4="$WORK/guard-ancestor"
+mkdir -p "$guard4/wtf-scope"
+chmod 777 "$guard4"
+rc=0
+( cd "$WORK/republish" && TMPDIR="$guard4" "$RESOLVE" resolve --scope HEAD ) >/dev/null 2>&1 || rc=$?
+check "a 777 non-sticky ancestor of wtf-scope is refused" "1" "$rc"
+chmod 1777 "$guard4"
+rc=0
+( cd "$WORK/republish" && TMPDIR="$guard4" "$RESOLVE" resolve --scope HEAD ) >/dev/null 2>&1 || rc=$?
+check "and the same ancestor is accepted when sticky" "0" "$rc"
+
 
 echo "== a jq failure is not mistaken for a subject =="
 # Exit 2 is a contract, so nothing but the deliberate prose exit may produce it. jq

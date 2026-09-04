@@ -220,6 +220,55 @@ fetch_base() {
 #
 # Reports through its exit status and writes nothing to stdout, for the reason hash12
 # spells out: a `die` inside a command substitution exits only that subshell.
+# A directory is only as private as every directory above it. If any ancestor can be
+# renamed by somebody else, they can swap a validated tree for their own after the
+# check has passed -- so the leaf mode test alone protects nothing.
+#
+# World-writable is safe *only* with the sticky bit, which is the whole reason /tmp at
+# 1777 is a normal place to work: without `t`, anyone may rename anyone's entries.
+# Ownership by root is accepted for the same reason -- the system owns /, /tmp and
+# /var/folders, and requiring our own uid there would refuse every real path.
+#
+# Fails closed. `find` printing nothing is not the same as `find` failing, and testing
+# its output alone accepted a directory it could not stat at all.
+path_is_unsafe() {
+  local dir=$1 out rc=0
+  out="$(find "$dir" -maxdepth 0 \( \( -perm -g+w -o -perm -o+w \) ! -perm -1000 \) 2>/dev/null)" || rc=$?
+  [ "$rc" -eq 0 ] || return 0
+  [ -z "$out" ] || return 0
+  [ -O "$dir" ] || [ -n "$(find "$dir" -maxdepth 0 -user root 2>/dev/null)" ] || return 0
+  return 1
+}
+
+# Every component from / down, because TMPDIR itself may be the weak link.
+#
+# Walked on the *physical* path, and symlink-ness is not what is tested here: on macOS
+# /tmp is a symlink to /private/tmp, so rejecting every symlinked component refuses
+# every run on the platform this is written for. What matters is whether the directory
+# the path really lands on can be renamed by somebody else. The levels this script
+# creates are tested for being symlinks by their own callers, where a planted link is
+# a redirection rather than a system layout.
+#
+# An array rather than a string: a TMPDIR with a space in it is ordinary on macOS.
+ensure_safe_ancestry() {
+  local dir=$1 what=$2 c
+  local real
+  real="$(cd "$dir" 2>/dev/null && pwd -P)" || real=""
+  [ -n "$real" ] || real=$dir
+  local p=$real
+  local chain=()
+  while :; do
+    chain=("$p" ${chain[@]+"${chain[@]}"})
+    case "$p" in /|.|"") break ;; esac
+    p="$(dirname "$p")"
+  done
+  for c in ${chain[@]+"${chain[@]}"}; do
+    [ -e "$c" ] || continue
+    path_is_unsafe "$c" && die "$c is writable by other users, or could not be inspected; refusing to $what under it. Fix with: chmod go-w '$c'"
+    :
+  done
+}
+
 ensure_private_dir() {
   local dir=$1 what=$2
   [ ! -L "$dir" ] || die "$dir is a symlink; refusing to $what under it."
@@ -227,12 +276,9 @@ ensure_private_dir() {
     || die "cannot create $dir to hold the scope."
   [ -O "$dir" ] || die "$dir is not owned by you; refusing to $what under it."
 
-  # Ownership is not enough. A directory you own at 0777 -- pre-created under a loose
-  # umask, or inherited -- is still writable by every local user, who can replace what
-  # is under it after this check has passed. Both levels get the test because both are
-  # created here, and only the deepest one is created with an explicit mode.
-  [ -z "$(find "$dir" -maxdepth 0 \( -perm -g+w -o -perm -o+w \) 2>/dev/null)" ] ||
-    die "$dir is writable by group or others; refusing to $what under it. Fix with: chmod go-w '$dir'"
+  # Ownership is not enough, and neither is this level alone: every directory above it
+  # is part of the same question.
+  ensure_safe_ancestry "$dir" "$what"
 }
 
 # Keyed on the repo *and* the scope. The repo half carries a hash of the absolute path

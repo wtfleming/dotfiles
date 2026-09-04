@@ -99,6 +99,18 @@ check "and a 700 parent is not refused for its mode" "0" \
   "$(run "$W" create --base "$BASE_SHA")"
 run "$W" remove >/dev/null 2>&1 || true
 
+# The leaf check alone misses this: verify-baseline is 700 and its parent is not, so
+# another local user can rename the parent and substitute a tree after the check has
+# passed. Sticky is the exception that keeps /tmp usable -- without `t`, anyone may
+# rename anyone else's entries; with it, only the owner can.
+echo "== an ancestor of the worktree parent that others can rename is refused =="
+A="$WORK/anc"; mkdir -p "$A/verify-baseline"; chmod 700 "$A/verify-baseline"
+chmod 777 "$A"
+check "create refuses a 777 non-sticky ancestor" "1" "$(run "$A" create --base "$BASE_SHA")"
+chmod 1777 "$A"
+check "and accepts the same ancestor when it is sticky" "0" "$(run "$A" create --base "$BASE_SHA")"
+run "$A" remove >/dev/null 2>&1 || true
+
 echo "== a registration whose directory is gone does not block the next create =="
 P="$WORK/tmp-purge"; mkdir -p "$P"
 check "the pair is created" "0" "$(run "$P" create --head feature --base "$BASE_SHA")"
