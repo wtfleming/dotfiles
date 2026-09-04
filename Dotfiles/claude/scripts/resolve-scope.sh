@@ -3,7 +3,7 @@
 #
 # Several tools here -- /wtf-code-review and its lenses, /wtf-code-review-no-lenses,
 # wtf-change-reviewer, wtf-design-reviewer, wtf-code-verify -- work the scope out from
-# prose instructions. Under --deep that is eight lens agents plus one refuter per finding,
+# prose instructions. On the full pass that is eight lens agents plus one refuter per finding,
 # each running its own git commands, and "the same scope" holds only for as long as every
 # one of them derives it identically. This produces the diff once, writes it to a file,
 # and hands every agent the path.

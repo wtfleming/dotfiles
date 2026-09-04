@@ -1,5 +1,5 @@
 ---
-description: 'Compose and open a pull request — pre-flight the branch, report what has gone stale since it was written, then write a title that survives a squash merge and a body that is true in both directions. Use this whenever a finished branch is ready to go up for review: "open a PR", "raise a PR for this", "push this up for review", "PR this branch", "make a pull request". It composes and opens, and shows you both before it does; it does not review the code (that is /wtf-code-review), prove it works (wtf-code-verify), or merge anything.'
+description: 'Compose and open a pull request — pre-flight the branch, report what has gone stale since it was written, then write a title that survives a squash merge and a body that is true in both directions. Use this whenever a finished branch is ready to go up for review: "open a PR", "raise a PR for this", "push this up for review", "PR this branch", "make a pull request". It composes and opens without stopping to ask; it does not review the code (that is /wtf-code-review), prove it works (wtf-code-verify), or merge anything.'
 argument-hint: "[--draft] [extra context — an issue to close, framing the diff cannot show]"
 allowed-tools: Read, Grep, Glob, Write, Bash(git:*), Bash(~/.claude/scripts/resolve-scope.sh:*), Bash(gh pr list:*), Bash(gh pr view:*), Bash(gh pr create:*), Bash(gh pr edit:*), Bash(gh pr comment:*), Bash(gh repo view:*), Bash(gh api:*)
 ---
@@ -50,7 +50,29 @@ there is no branch to push.
 **HEAD must not be the default branch.** Resolve the default with
 `~/.claude/scripts/resolve-scope.sh base`, which is the executable copy of the candidate
 loop in `~/.claude/reference/scope-resolution.md`, rather than assuming `main` — on a
-`master` or `trunk` repo the assumption produces a base that looks resolved and is not. Standing on
+`master` or `trunk` repo the assumption produces a base that looks resolved and is not.
+
+```sh
+base=$(~/.claude/scripts/resolve-scope.sh base) || exit 1
+[ -n "$base" ] || { echo "no base resolved — cannot judge the branch" >&2; exit 1; }
+base_branch=${base#*/}    # origin/main -> main; a bare name is unchanged
+```
+
+**Two names, and they are not interchangeable.** The resolver answers with a *ref* —
+`origin/main` — which is what every `git` command here wants. GitHub wants a *branch*:
+`gh pr create --base` takes a branch name on the target repo and rejects a remote prefix,
+and `gh pr list --json baseRefName` reports `main`, so comparing it against `origin/main`
+never matches and an update is misread as a create. Use `$base` for git, `$base_branch`
+for `gh`.
+
+**Guard it for the same reason `$branch` is guarded**, and here the failure is quieter. The
+script *dies* rather than printing a fallback when its candidate loop is exhausted — a repo
+whose default is `develop`, or one built by `git init` + `remote add` so `origin/HEAD` was
+never set — leaving `$base` empty. `git diff --stat ""...HEAD` is then valid syntax that git
+reads as `HEAD...HEAD`: no output, exit 0. The credential scrub below is the only thing
+standing between a committed key and a public object, and an empty `$base` makes a scrub
+that scanned nothing indistinguishable from one that found nothing. The same empty value
+reaches `git log "$base"..HEAD` in the ticket hunt, where it reads as "no ticket". Standing on
 the default branch there is nothing to open a PR *from*, so refuse and say what would fix
 it. If the work is already committed there locally, moving it onto a branch rewrites local
 history: propose the move and wait for a yes rather than performing it.
@@ -80,23 +102,47 @@ rather than reporting a stale ref as current.
 and will need `git push -u`; ahead means `git push`. Behind or diverged is different — say so
 and stop, because the fix is a rebase or a force-push and neither is yours to choose.
 
-The push is deferred to the confirmation gate in **Show it before it opens**, and that is a
-deliberate ordering. It is the irreversible step: on a public repo a pushed object stays
-reachable by SHA after a force-push or a branch delete, and forks and caches keep it. Pushing
-during pre-flight would mean declining at the gate un-publishes nothing, so the branch would
-be public whatever the author then decided. Nothing needs the remote in order to compose —
-the title and body come from the local diff — so there is no cost to waiting, and the gate
-becomes what it claims to be: the point before anything is public.
+The push is deferred to **Open it**, next to `gh pr create`, and that is a deliberate
+ordering. It is the irreversible step: on a public repo a pushed object stays reachable by
+SHA after a force-push or a branch delete, and forks and caches keep it. Composition can
+still fail after pre-flight — an unresolvable base, an unreadable template, a scrub hit —
+and pushing early would leave the branch public with no PR pointing at it and nobody told.
+Nothing needs the remote in order to compose, since the title and body come from the local
+diff, so there is no cost to waiting: the deferral does not make publishing the branch and
+opening the PR one act — they are two commands — but it shrinks the window in which the
+first can succeed and the second not to as close to nothing as this can get. §8 says what to
+report when it happens anyway.
 
 What pre-flight *does* do is look at what a push would publish, because nothing in this
 command reads the *commits* for secrets — the scrub governs published text only:
 
 ```sh
 git diff --stat "$base"...HEAD    # names that look like .env, .pem, id_rsa, credentials.json
+
+# Materialise the diff first: piping git into grep hides git's exit status, and a grep
+# that received nothing exits 1 exactly as a clean scan does.
+diff_out=$(git diff "$base"...HEAD) || { echo "diff failed — branch not scanned" >&2; exit 1; }
+# Fixed credential markers, not entropy: a literal match is a secret, never a coincidence.
+printf '%s' "$diff_out" | grep -nE '(-----BEGIN [A-Z ]*PRIVATE KEY-----|AKIA[0-9A-Z]{16}|xox[baprs]-|gh[pousr]_[A-Za-z0-9]{16,}|github_pat_[A-Za-z0-9_]{20,})'
 ```
 
-Report that alongside the title and body, so one decision covers both the text and the
-branch.
+The scan must **fail closed**, which is why the diff is not piped straight into `grep`. A
+pipeline reports only the last command's status, and `grep` handed an empty stream exits 1 —
+the same status a clean scan returns. So a `git diff` that failed for any reason would read
+as "no secrets found" and the branch would be pushed unscanned, which is the one outcome
+this check exists to prevent.
+
+A hit from either stops the run. Nothing downstream asks a human anything, so there is no
+later point at which someone looks at it before it is public — and a published object stays
+reachable whatever is done next. Name what matched and what would clear it (remove it from
+the branch, or say it is safe on a re-run); do not push, and do not open.
+
+The two checks are bounded differently, and deliberately. The **name** check stops on a
+judgement, so keep it to the file names: a scan that reads content and guesses is the one
+that cries wolf. The **content** check is the opposite — it guesses nothing, because each
+pattern is a fixed vendor prefix that has no innocent reading. That is why it is safe to run
+over content when a general secret scan would not be, and why it is worth having at all:
+without it nothing in this command reads the commits, and the branch is pushed regardless.
 
 **Check whether a PR already exists for this branch.**
 
@@ -104,8 +150,8 @@ branch.
 gh pr list --head "$branch" --state all --json number,url,state,isDraft,baseRefName
 ```
 
-An open one **whose `baseRefName` equals the base you are targeting** means this is an
-update, not a create. Both halves matter: GitHub allows several open PRs from the same head
+An open one **whose `baseRefName` equals `$base_branch`** means this is an update, not a
+create — the branch name, since that is what GitHub reports here. Both halves matter: GitHub allows several open PRs from the same head
 to *different* bases, so matching on head alone can route `gh pr edit` onto a PR that
 targets somewhere else — and on a stack the base is not settled until **How much of this to
 do** below, so re-check this once the base is final rather than acting on the head match
@@ -118,7 +164,7 @@ modes deliberately is better than reading that error and guessing. A **closed** 
 **merged** PR for the same branch is not a bar to opening a new one; mention it, since a
 reused branch is worth knowing about and reopening may be what was wanted.
 
-**Name any uncommitted or untracked work, and ask.**
+**Name any uncommitted or untracked work.**
 
 ```sh
 git status --porcelain
@@ -127,8 +173,9 @@ git ls-files --others --exclude-standard    # untracked, which diff never lists
 
 None of it will be in the PR, and the author usually believes it will — a new source file
 sitting beside a committed Markdown edit is the case that costs the most. List what is
-there and ask whether to commit it or leave it behind. Do not decide silently in either
-direction.
+there and carry on: the PR is made of commits, so leaving it behind is what actually
+happens, and saying so plainly is the whole job here. Do not commit it — what belongs in
+this branch is the author's call, not a default worth guessing at.
 
 **Find the ticket, if there is one.** A PR that names the work item it came from lets a
 reader get to the *why* without asking, and lets the tracker close the loop by itself.
@@ -147,8 +194,12 @@ Read that output rather than pattern-matching it. A bare-`#123` grep looks like 
 version of this step and is a trap: on a squash-merging repo every subject ends in the PR's
 own number — `(#33)` — so a match harvests PR numbers as if they were issue ids, and a
 closing keyword in front of one closes something unrelated. What marks an id as a ticket is
-where it sits and what it says, which is a reading job. On a stacked branch `$base` is the
-parent, so the ids are this slice's rather than the whole stack's.
+where it sits and what it says, which is a reading job. `$base` here is the **default**
+branch, not the stack parent — that is not settled until **How much of this to do** — so on
+a stacked branch this lists the whole stack's commits and the ids are the stack's, not this
+slice's. Prefer an id the branch name or this command's arguments carry, and where the
+ticket comes from the log on a stack, say which commit it came from rather than presenting
+it as this slice's.
 
 Take the id from what is written there; do not infer one from the subject matter. A
 fabricated or mistyped id links the reader to someone else's work and, with a closing
@@ -298,8 +349,9 @@ HEAD at all, so quote it as *coverage unknown* rather than naming a commit for i
 file at all means **none in this session's scratch** — not that no verification ever ran.
 Scratch is per-session, so verifying on Monday and opening the PR on Tuesday leaves the
 artifact where this command cannot see it. Say "no verification artifact in this session"
-and, where a run is known to have happened, ask for the path rather than reporting a
-negative you did not establish.
+rather than reporting a negative you did not establish, and open without the section — a
+verdict that turns up afterwards is a `gh pr edit` away, and waiting to be handed a path is
+the one thing this command does not do.
 
 A matching SHA is not the same as a true verdict, and this is the trap worth naming: a
 fresh artifact can still be wrong. Re-verifying it is not this command's job — but
@@ -463,18 +515,50 @@ runs, and it is a fraction of the size.
 Do not escalate work to produce a picture. If a run already had the browser open, the pair
 costs seconds; opening one for the screenshot alone almost never pays.
 
-## 7. Show it before it opens
+## 7. Open it
 
 Print the title, the body verbatim, the base and head refs the PR will use, any
-attachments with their alt text, and whether it will be a draft. Then wait. This is the
-last point at which a wrong title is free to fix — after opening, it is a public edit with
-a notification behind it.
+attachments with their alt text, and whether it will be a draft — then push and open,
+without waiting. Print it anyway rather than only reporting the URL: a wrong title is a
+public edit with a notification behind it, and the author finds it faster reading the
+composition here than opening the PR to see what was said.
 
-On a yes, write the body to `<scratch>/create-pr/body.md` and pass `--body-file`. A body
-sent as a shell argument loses its formatting to quoting the moment it contains backticks
-or blank lines, which is most bodies worth writing. Pass `--base` explicitly, resolved as
-in the pre-flight, rather than trusting the repository default to be what this branch
-targets.
+Write the body to `<scratch>/create-pr/body.md` and pass `--body-file`. A body sent as a
+shell argument loses its formatting to quoting the moment it contains backticks or blank
+lines, which is most bodies worth writing. Pass `--base "$base_branch"` explicitly rather
+than trusting the repository default to be what this branch targets — the branch name from
+the pre-flight, never the `$base` ref, per the two-names note there.
+
+**Check the push landed before opening anything.** Every other command here that talks to
+the remote stops on failure; this one is the irreversible pair, so it gets the same
+treatment rather than less.
+
+```sh
+# The branch's own remote, not a hardcoded origin — pre-flight fetched from this one, and a
+# branch tracking anything else would otherwise be judged against one remote and pushed to
+# another. `origin` is the fallback only when there is no upstream yet.
+remote=${upstream%%/*}; : "${remote:=origin}"
+git push -u "$remote" "$branch" || { echo "push failed — nothing opened" >&2; exit 1; }
+[ "$(git rev-parse HEAD)" = "$(git rev-parse '@{u}')" ] || {
+  echo "remote head is not this branch's HEAD — refusing to open a PR for code nobody pushed" >&2
+  exit 1; }
+```
+
+The second check is not the first restated. Pre-flight's fetch was minutes ago, and
+composition is slow — templates, `git log`, the drift pass, `gh api` calls. A bot amend or a
+push from another machine inside that window makes the push a non-fast-forward reject, and
+`gh pr create` would then happily open a PR against the *remote's* head: a public PR whose
+diff is someone else's commits, under a body describing commits that were never pushed. That
+is the exact defect pre-flight's fetch exists to catch, arriving after the check for it.
+
+**On the update path this section still applies.** An existing open PR routes to
+`gh pr edit` rather than `gh pr create`, and the no-ask contract covers it: a regenerated
+body replaces the live one without anyone approving the replacement. That is a heavier act
+than opening a PR, because what it overwrites may be someone else's — so print the live body
+alongside the new one and say what is being dropped, before the edit rather than after. The
+carry-across rules in `~/.claude/reference/github-publishing.md` are what stop the loss; the
+printed comparison is what makes a failure of those rules visible to the author in the same
+turn instead of on the next read of the PR.
 
 ## 8. After
 
@@ -491,6 +575,12 @@ opens a second PR, and reporting failure leaves a live PR nobody is told about. 
 create and the attachments separately: the PR is open at this URL, these images did not
 upload.
 
+**The other direction needs saying too.** Where that check comes back empty — the push
+succeeded and the create genuinely failed, on an absent base ref, an unwritable body file or
+a network error — the branch is published and nothing points at it. Say so explicitly,
+naming the remote and branch, because that is a public artifact the author has not been told
+about and it decides whether the fix is a retry or a branch delete.
+
 Then stop. Do not merge, do not enable auto-merge, and do not request reviewers unless the
 repo's conventions say to.
 
@@ -500,4 +590,3 @@ repo's conventions say to.
 - Put AI or assistant attribution in the title, the body, or a commit message.
 - Include a work email address, an internal hostname, or a credential — public repo, hard
   rule, and the reference file has the detail.
-- Open the PR without showing the title and body first.

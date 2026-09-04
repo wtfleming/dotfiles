@@ -15,20 +15,21 @@ that code as it stands, picks the files itself, and says which ones it picked.
 ```
 /wtf-code-review                     # uncommitted, else the branch, else HEAD
 /wtf-code-review HEAD~3              # any ref, branch or path
-/wtf-code-review main --deep         # add a verified parallel pass per dimension
+/wtf-code-review main --lite         # the reviewer alone, no per-dimension pass
 /wtf-code-review "db connection"     # a subject, reviewed as it stands
 ```
 
-Without `--deep` it settles the scope, runs the project's test suite and linter,
+Under `--lite` it settles the scope, runs the project's test suite and linter,
 reviews the diff against the checklist, and prints findings as Critical, Warning
 or Suggestion — then stops. Any Critical is checked by a `wtf-refuter` before the
 report prints, since a false Critical stops work that should not stop; most runs
-have none and so spend nothing. Warnings arrive marked `(unverified)`. The reviewer has no `Edit` or `Write`, so a review
-cannot change anything.
+have none and so spend nothing. Warnings arrive marked `(unverified)`. The
+reviewer has no `Edit` or `Write`, so a review cannot change anything.
 
-`--deep` adds up to eight `wtf-lens` agents in parallel, one per lens: correctness,
-security, tests, maintainability, performance, dependencies, reuse, resilience. A
-change that touches only prose skips the four lenses with no surface there
+By default it does more: up to eight `wtf-lens` agents in parallel, one per
+lens — correctness, security, tests, maintainability, performance, dependencies,
+reuse, resilience. A change that touches only prose skips the four lenses with
+no surface there
 (tests, resilience, performance, dependencies), decided from the file list alone
 and disclosed in the report. That list comes from the scope artifact rather than
 from a second set of git commands, so it cannot disagree with the diff the lenses
@@ -46,8 +47,10 @@ its dispatch. Collisions run down an ordered ladder — Pre-existing, then tier,
 then the statement naming a concrete failure, then the reviewer over a lens, then
 the longer evidence — because "keep the more specific statement" leaves two
 equally-tiered findings with nothing to separate them, and the model then picks by
-feel between reports its own agents wrote. Suggestions arrive marked
-`(unverified)` rather than spending an agent apiece on nits. There is
+feel between reports its own agents wrote. The triage's **Definitely worth
+doing** list is refuted alongside the Criticals and Warnings; **Worth doing**
+arrives marked `(unverified)` rather than spending an agent apiece on nits, and
+under `--lite` both lists carry the mark. There is
 deliberately no linter lens — the reviewer already runs the real one.
 
 `reuse` and `resilience` are the two lenses with no counterpart in the checklist.
@@ -80,14 +83,14 @@ verification the findings did. Committing stays yours.
 ### The single-agent variant
 
 `/wtf-code-review-no-lenses` is the same command with the lenses folded back
-into the reviewer. Under `--deep` it dispatches no `wtf-lens` at all: the eight
-rubrics ride along in the reviewer's own prompt, and the one agent that already
-diffed the change and read its files works through them in one pass. It exists
-because most of a `--deep` run's tokens go on eight agents each re-reading the
-same scope before any of them writes a line.
+into the reviewer. It dispatches no `wtf-lens` at all: the eight rubrics ride
+along in the reviewer's own prompt, and the one agent that already diffed the
+change and read its files works through them in one pass. It exists because most
+of a full run's tokens go on eight agents each re-reading the same scope before
+any of them writes a line.
 
 ```
-/wtf-code-review-no-lenses main --deep
+/wtf-code-review-no-lenses main
 ```
 
 Everything downstream is unchanged — same report, same promotion rule, same
@@ -131,7 +134,7 @@ allowed to be red — and it does not hunt bugs.
 | Agent | Role |
 |---|---|
 | `wtf-change-reviewer` | scope, tests, lint, the full review |
-| `wtf-lens` | one dimension only; dispatched up to eight times by `--deep` |
+| `wtf-lens` | one dimension only; dispatched up to eight times per review |
 | `wtf-refuter` | tries to kill a single finding |
 | `wtf-design-reviewer` | shape of the change, Suggestion-only; dispatched by `/wtf-design-review` |
 
@@ -145,17 +148,18 @@ that has them. Edits only ever happen in the main session, one approval at a tim
   without touching an agent definition.
 - A project's own `REVIEW.md`, `AGENTS.md` or `CLAUDE.md` wins where it conflicts.
   `REVIEW.md` is the name Anthropic's own code review reads.
-- The eight `--deep` rubrics live in the commands, not in `wtf-lens`, so they can
+- The eight lens rubrics live in the commands, not in `wtf-lens`, so they can
   be retuned without editing an agent — but there are two copies of the table
   now, one per command, and a retune means editing both.
 
 ### Cost
 
-`--deep` spawns one reviewer, up to eight lenses, and one refuter per verified finding —
-tens of agents on a real branch — and asking for fixes afterwards adds one more
-refuter per fixed Critical or Warning. It announces each fan-out before spawning
-it, so the spend can be refused. For very large diffs, the built-in `/code-review ultra`
-is the maintained alternative.
+A default run spawns one reviewer, up to eight lenses, and one refuter per verified
+finding — tens of agents on a real branch — and asking for fixes afterwards adds one
+more refuter per fixed Critical or Warning. It announces each fan-out before spawning
+it, so the spend can be refused, and `--lite` cuts it to the reviewer alone plus a
+refuter per Critical. For very large diffs, the built-in `/code-review ultra` is the
+maintained alternative.
 
 ## Resolving the scope
 
@@ -163,7 +167,7 @@ is the maintained alternative.
 here has to settle before it reads a line: **what code is under review**, and **does the
 working tree actually hold it**.
 
-The first matters because `--deep` dispatches eight lenses plus one refuter per finding,
+The first matters because a full run dispatches eight lenses plus one refuter per finding,
 each of which used to run its own git commands. "The same scope" then held only for as
 long as every agent derived it identically — an instruction, not a fact. Now the diff is
 produced once, written to `scope.diff`, and handed over by path, with `manifest.json`
@@ -320,8 +324,9 @@ than loud: without the fetch, a branch pushed from another machine reads as in-s
 the remote head carries commits the body never describes; and on a detached HEAD the branch
 name is empty, which `gh pr list --head ""` treats as *no filter* rather than *no match* —
 it returns every PR in the repo, and the existing-PR check then reports a stranger's PR as
-this branch's. The push itself is named as the irreversible step, since it happens in
-pre-flight and the confirmation gate later covers only the title and body.
+this branch's. The push is the irreversible step, so it is deferred out of pre-flight to sit
+next to `gh pr create`: composition can still fail after the checks pass, and pushing early
+would leave the branch public with no PR pointing at it.
 
 The part that actually finds things is drift — prose that was true when it was written and
 stopped being true while the branch moved. Three axes: documentation describing the changed
@@ -335,7 +340,11 @@ had time to go stale, and the honest output is one line saying so: a check that
 manufactures findings to look useful spends the next real finding's credibility.
 
 None of it is a gate. "The bot has not reviewed the tip" is information for the author, not
-grounds to refuse — it reports, then opens.
+grounds to refuse — it reports, then opens. Nor does it stop to ask for a yes: it prints the
+title, body, refs and attachments and then opens, so the composition is there to read
+without the PR waiting on anyone. The one thing that does stop it is a file on the branch
+whose *name* looks like a credential, because with nobody in the loop there is no later
+point at which someone sees that filename before it is public.
 
 The title gets judged separately from its conventional-commit prefix, because on a squash
 merge it becomes the permanent commit subject on the default branch and a `fix:` that grew

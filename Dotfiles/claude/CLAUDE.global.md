@@ -13,6 +13,26 @@ are available or hand-rolling a substitute:
 - `docker` — container work; the CLI comes from Docker Desktop.
 
 
+## Flags typed on iOS arrive with the wrong dash
+
+I work from the Claude iOS app as well as the terminal, and its smart
+punctuation rewrites `--` to an em dash as it is typed. So a flag reaches you as
+`—lite` or `—draft`, sometimes with an en dash instead.
+
+**Read a leading `—`, `–` or `−` on an argument as `--`.** This holds for every
+command and skill, not just the ones whose own text mentions it.
+
+It matters because the failure is silent rather than loud. A command splits its
+arguments into the flags it knows and free text — a scope, a subject, body
+context — and an unrecognised flag is not an error, it lands in the free text.
+So `—lite` becomes a path to review that does not exist, and `—draft` becomes
+the word "draft" in a pull request body. Both look like the user asked for
+something odd rather than like a flag that went unread.
+
+Canonical spelling stays `--lite`. This widens only what is *read* as a flag;
+write it with two hyphens when you echo it back.
+
+
 ## Before You Start
 
 Read the relevant reference docs in `~/.claude/reference/`:

@@ -1,13 +1,22 @@
 ---
-description: Independent code review in a fresh context — recent changes, or a named subject. Diff, tests, lint, structured report. Pass --deep to add a verified parallel per-dimension pass.
-argument-hint: "[ref, branch, path or subject — defaults to uncommitted, else the branch, else HEAD] [--deep]"
+description: Independent code review in a fresh context — recent changes, or a named subject. Diff, tests, lint, structured report. Runs a verified parallel pass per dimension; pass --lite for the single-reviewer version.
+argument-hint: "[ref, branch, path or subject — defaults to uncommitted, else the branch, else HEAD] [--lite]"
 allowed-tools: Agent, Read, Grep, Glob, Bash(git:*), Bash(~/.claude/scripts/resolve-scope.sh:*)
 ---
 
 Arguments: $ARGUMENTS
 
-Split those into a scope and the optional flag `--deep`. Everything that is not
+Split those into a scope and the optional flag `--lite`. Everything that is not
 the flag is the scope, and the scope may be empty.
+
+The full pass is the default: the reviewer, a dedicated agent per dimension, and
+a refuter per finding that survives to verification. `--lite` is the reviewer
+alone, with only its Criticals verified. Where the text below says *under
+`--lite`* it means that cheaper path; everything else describes the default.
+
+`--deep` was the old name for what is now the default. If it arrives, say the
+flag is gone and run the default rather than treating it as a scope — a scope of
+`--deep` reviews a path that does not exist.
 
 This command reviews; it does not fix. If the user wants findings acted on,
 they will say which ones in a later message, and that happens in the main
@@ -17,9 +26,11 @@ conversation where their intent lives — not here.
 
 Launch the `wtf-change-reviewer` subagent on the scope. Dispatch it with the
 Agent tool, `subagent_type: "wtf-change-reviewer"`, and wait for it to
-complete — except under `--deep` with a named revision, where
-this dispatch is held for the batched launch described below so the lenses do
-not serialise behind it.
+complete — except where you resolved the scope before dispatch, which is every
+shape but a subject: a named revision and a bare invocation alike, since the
+lenses launch in that same batch and cannot wait for the reviewer. Hold the
+dispatch for the batch there. Under `--lite` there is no batch to hold it for,
+so always wait.
 
 The whole point is that the reviewer starts cold. So the prompt you send it
 contains **only** the scope. Do not include:
@@ -29,19 +40,22 @@ contains **only** the scope. Do not include:
 - any reasoning from this conversation
 
 If you wrote the code under review, that is exactly the bias this exists to
-avoid. Hand over the scope and nothing else. If the scope is empty, say so and
-let the agent work out its own — it runs the same resolver you would, so without
-`--deep` there is nothing to gain by resolving first. Under `--deep` you resolve
-before dispatch instead, because the lenses launch in the same batch and cannot
-wait for it; hand the reviewer the artifact directory there, which is data about
-where the code lives and no more a cold-start violation than the scope string is.
+avoid. Hand over the scope and nothing else.
 
-Without `--deep`, print the report verbatim when it returns — unless it carries
+An empty scope is resolved here before dispatch, exactly as a named one is — a bare
+invocation is the common case, not a special one, and the lenses launch in the same
+batch and cannot wait for the reviewer to settle it. Hand the reviewer the artifact
+directory, which is data about where the code lives and no more a cold-start violation
+than the scope string is. **Only under `--lite`** may you say the scope is empty and
+let the agent work out its own: it runs the same resolver you would, and with no batch
+behind it there is nothing to gain by resolving first.
+
+Under `--lite`, print the report verbatim when it returns — unless it carries
 a Critical, in which case hold it and follow **Verify the Criticals** first. Do
 not re-rank the findings, soften them, or defend the code — you are relaying an
 independent review, not negotiating with it.
 
-Under `--deep`, do not print it yet. Its findings are about to enter a verify
+Otherwise, do not print it yet. Its findings are about to enter a verify
 pass that may retract some of them, and a finding that is about to be retracted
 should not get a first airing here any more than in the merged report below.
 Say that the reviewer returned and how many findings it brought, and hold the
@@ -56,20 +70,20 @@ that says what to do about it — or, if it is judged not worth doing, in the
 count of the ones dropped. That is the only rearrangement allowed — the
 findings still go out as written, in the tier they arrived in.
 
-**Without `--deep`, stop here.** The findings are the user's to triage, and the
+**Under `--lite`, stop here.** The findings are the user's to triage, and the
 close matters: do not launch into fixing anything. If the user replies asking
 for fixes, follow **If the user asks for fixes** below.
 
 ## Verify the Criticals
 
-Without `--deep` the reviewer's findings reach the user checked by nobody, and
+Under `--lite` the reviewer's findings reach the user checked by nobody, and
 the bias that objection rests on does not depend on how many agents ran: the
 agent that wrote a finding is the worst-placed to judge it, alone or in a crowd.
 
-Verifying all of them here would cost what `--deep` costs on the path chosen for
-being cheap — and unlike a lens, a refuter cannot ride along in the reviewer's
-batch, because a finding has to exist before anything can argue against it. So
-this path verifies **Critical findings only**:
+Verifying all of them here would cost what the full pass costs, on the path
+chosen for being cheap — and unlike a lens, a refuter cannot ride along in the
+reviewer's batch, because a finding has to exist before anything can argue
+against it. So this path verifies **Critical findings only**:
 
 - Critical is the tier that claims to block the commit, so a false one is the
   most expensive finding in the report: it stops work that should not stop.
@@ -77,7 +91,7 @@ this path verifies **Critical findings only**:
   path as fast as the reviewer alone.
 
 Spawn one `wtf-refuter` per Critical, in parallel, dispatched exactly as
-**Verify** describes under `--deep` — the finding verbatim, plus the scope and
+**Verify** describes on the full pass — the finding verbatim, plus the scope and
 whose work it is, and nothing else. Say how many before you spawn them.
 
 Then print the report with the refuted Criticals removed, and say how many were
@@ -122,12 +136,12 @@ nothing. Each Suggestion that *is* printed lands in exactly one list, carrying
 its `file:line`, the finding as written, any qualifier it arrived with, and the
 one-line reason. The qualifier tracks what checked the finding, not which list
 it landed in: mark it **(unverified)** unless a refuter read it and let it
-stand, which happens only to the **Definitely worth doing** list under
-`--deep`. Everything else carries the mark — both lists without `--deep`, and
-**Worth doing** with it. So a bare Suggestion means one thing everywhere,
-including on a PR comment, where the triage's closing line does not travel with
-it. That is the only place it appears, so a finding shortened here is shortened
-everywhere. Findings under **Pre-existing** are the exception and are
+stand, which happens only to the **Definitely worth doing** list on the full
+pass. Everything else carries the mark — both lists under `--lite`, and
+**Worth doing** on the full pass. So a bare Suggestion means one thing
+everywhere, including on a PR comment, where the triage's closing line does not
+travel with it. That is the only place it appears, so a finding shortened here
+is shortened everywhere. Findings under **Pre-existing** are the exception and are
 not sorted into these lists, whatever tier they carry — they are tickets, not
 work for this change, and they stay in that section of the report, once. The
 promotion rule below still applies to them: tier follows content there as
@@ -137,13 +151,13 @@ is small and the payoff is clear and durable — a misleading name on something
 public, dead code that will be mistaken for live, a comment that states
 something false. **Worth doing** is the rest of the genuine
 improvements — right to take, fine to defer. Keep the top list short; if most
-Suggestions land there, it is not sorting anything — and under `--deep` it is
+Suggestions land there, it is not sorting anything — and on the full pass it is
 also spending a refuter on each one, which is the second reason to keep it
 short.
 
 Whether the triage verifies anything depends on the path, and its closing line
-says which. Without `--deep` it is a judgement and nothing else: nothing is
-dispatched to check a Suggestion. Under `--deep` the **Definitely worth doing**
+says which. Under `--lite` it is a judgement and nothing else: nothing is
+dispatched to check a Suggestion. Otherwise the **Definitely worth doing**
 list is refuted alongside the Criticals and Warnings — see **Verify** — and only
 the **Worth doing** list goes out unchecked. The sorting is what makes that
 affordable: it is the difference between verifying the tier and verifying the
@@ -151,7 +165,7 @@ few findings the triage is actively steering the reader towards.
 
 The third list is the only place the triage itself may leave a Suggestion
 unprinted: nothing above carries one except the two cases named here — a
-Pre-existing one, and one promoted to Warning. Under `--deep` there is one
+Pre-existing one, and one promoted to Warning. On the full pass there is one
 further route out, and it is not the triage's: a refuter kills the finding, and
 it leaves with the other refuted findings, counted in that line rather than
 this one. Every other Suggestion the reviewer wrote is either in a list or in
@@ -163,12 +177,12 @@ unhandled failure, a new branch with no test, a perf trap — is a Warning by th
 reviewer's own definitions, filed a tier low. Tier follows the content, not the
 label the finding arrived with:
 
-- under `--deep`, it is promoted to Warning *before* the verify pass and refuted
-  with the rest — see **Verify**. The report lists it under Warning marked
+- on the full pass, it is promoted to Warning *before* the verify pass and
+  refuted with the rest — see **Verify**. The report lists it under Warning marked
   **(promoted from Suggestion)**, and it does not reappear in the triage. A
   Pre-existing one stays in its section with the new tier leading it, marked
   the same way.
-- without `--deep`, there is no refuter to send it to: that path verifies
+- under `--lite`, there is no refuter to send it to: that path verifies
   Criticals only, and a promotion never reaches Critical. Print it in the triage
   under a third heading, **Reads as a Warning (unverified)**, as the reviewer
   wrote it, so it is not mistaken for a nit. A Pre-existing one is the exception
@@ -183,12 +197,21 @@ definition covers. "Could be cleaner" does not move. When unsure, do not
 promote — a wrongly promoted nit costs a refuter; a wrongly kept one is still
 in the triage for the user to see.
 
-## With `--deep`
+## The per-dimension pass
 
 One reviewer covering six dimensions gives some of them a shallower pass than
 the others. This adds a dedicated pass per dimension, over the same scope the
 reviewer reads — plus `reuse` and `resilience`, which the reviewer's checklist
 does not cover at all.
+
+**`--lite` skips this section and the rest of the per-dimension pass**, stopping
+where **Review** says to. It skips the *pass*, not the file: **If the user asks
+for fixes** is where **Review** sends a `--lite` run when the user asks, and
+**If the findings go to GitHub** governs findings from either path. Both sit
+below this section and both apply. It exists for the runs where the reviewer
+alone is the right spend — a one-file change, a second look at something already
+reviewed — and it is a deliberate choice, not the fallback for a scope that
+merely looks small.
 
 Say up front how many agents you are about to spawn, so the cost is the user's
 to refuse before it is spent rather than after. Not every scope has a surface
@@ -308,7 +331,7 @@ The lenses and their rubrics:
 |---|---|
 | `correctness` | logic errors, off-by-one, wrong operator, null/empty/zero/max edges, races, unhandled promises, missing await |
 | `security` | unvalidated input at boundaries, hardcoded secrets, injection, sensitive data in logs and errors, authz gaps |
-| `tests` | new branches with no test, uncovered edge cases, tests that cannot fail, flakiness, fixtures that hide the bug |
+| `tests` | new branches with no test, uncovered edge cases, tests that cannot fail, flakiness, fixtures that hide the bug, an invariant a handful of examples cannot pin where the repo's tests already use a property-based harness |
 | `maintainability` | unclear names, functions doing several things, unactionable error messages, comments explaining *what*, changes bundling unrelated concerns |
 | `resilience` | outbound calls with no timeout, retries with no backoff or no cap, a failure swallowed into a default that reads as success, multi-step work that leaves inconsistent state when it fails halfway, a retried write that is not idempotent, a call the code assumes cannot fail, a new failure path nothing logs |
 | `reuse` | logic the repo already implements elsewhere, a second copy of something within the diff itself, a hand-rolled version of what a dependency already in the manifest provides, a new abstraction where an existing one would have served, code shared between two things that only look alike — and code the change orphaned but did not remove: a function whose last caller went away, a config key nothing reads, a flag now permanently on with its dead branch intact |
@@ -321,6 +344,20 @@ the tool that does it exactly.
 
 The `tests` lens judges coverage by ROI: a new branch with no test is a finding;
 trivial code without one is not.
+
+That row's property-based clause is gated twice, and both gates carry weight. The
+code has to state an invariant a handful of examples cannot pin — a round trip, an
+idempotent operation, a comparator, an invariant a mutation must preserve, a
+hand-rolled parser or normaliser over a large input domain — and the repo's own
+tests have to already use a property-based harness: a generator-driven test that
+exists, not a dependency in a manifest. Without the first, "this could have
+properties" is true of nearly every function and the lens writes a Suggestion on
+every diff. Without the second the finding is a proposal to adopt a dependency and
+a testing style, which is `dependencies`' business and far larger than anything a
+review Suggestion should carry. Where both hold it is a Suggestion, anchored at the
+test file, and it is never promoted — the promotion rule below moves "a new branch
+with no test" up to Warning, and an untested invariant reads as exactly that. It is
+not: the branch has a test, and this is a second way to exercise it.
 
 `reuse` is the one lens whose target sits outside the diff: both the duplicate it
 looks for and the code the change orphaned live in files the change did not touch.
@@ -410,9 +447,9 @@ are about to be retracted should not get a first airing.
 ### Verify
 
 Every finding so far was judged by the agent that wrote it, which is the
-position it is worst placed to judge from — and under `--deep` there are up to
-eight agents each under quiet pressure to justify their dispatch, which is
-exactly the pressure that produces plausible findings that are not real.
+position it is worst placed to judge from — and here there are up to eight
+agents each under quiet pressure to justify their dispatch, which is exactly the
+pressure that produces plausible findings that are not real.
 
 First run **Triage the Suggestions** in full, before any `wtf-refuter` is
 spawned — both halves of it, because both decide what gets verified. The
@@ -479,8 +516,8 @@ nothing.
 
 Print the merged report of what survived, in the reviewer's Critical / Warning /
 Pre-existing format, keeping its Scope / Tests / Lint header lines — the test
-result is the most load-bearing line in the report, and under `--deep` this is
-its only airing. The surviving Suggestions print once, in the triage below.
+result is the most load-bearing line in the report, and on the full pass this
+is its only airing. The surviving Suggestions print once, in the triage below.
 
 The **Scope** line is the manifest's `scope_line`, which already carries the
 correspondence. Say it even when it is `same`: a reader cannot tell "the tree

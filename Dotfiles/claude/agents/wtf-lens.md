@@ -1,6 +1,6 @@
 ---
 name: wtf-lens
-description: Review a scope through one named lens only — correctness, security, tests, maintainability, performance, dependencies, reuse or resilience. Dispatched several at a time by /wtf-code-review --deep; not a general reviewer.
+description: Review a scope through one named lens only — correctness, security, tests, maintainability, performance, dependencies, reuse or resilience. Dispatched several at a time by /wtf-code-review; not a general reviewer.
 tools: Read, Grep, Glob, Bash
 ---
 
