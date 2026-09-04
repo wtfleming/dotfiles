@@ -84,6 +84,21 @@ check "and nothing was built through it" "" "$(ls -A "$WORK/hostile-target")"
 # The query is not guarded, because it writes nothing: it still answers.
 check "path still answers under it" "$H/verify-baseline/repo" "$(run_out "$H" path baseline)"
 
+# Ownership alone would accept this: the directory is ours, and only the mode is wrong.
+# A group- or world-writable parent lets another local user swap the tree between
+# `git worktree add` and the bootstrap that runs its package manager.
+echo "== a worktree parent we own but anyone can write to is refused =="
+for mode in 777 770; do
+  W="$WORK/tmp-mode$mode"; mkdir -p "$W/verify-baseline"; chmod "$mode" "$W/verify-baseline"
+  check "create refuses a $mode parent" "1" "$(run "$W" create --base "$BASE_SHA")"
+done
+# ...and the same directory at 700 is accepted, so the check is about the mode and not
+# about the directory existing.
+W="$WORK/tmp-mode700"; mkdir -p "$W/verify-baseline"; chmod 700 "$W/verify-baseline"
+check "and a 700 parent is not refused for its mode" "0" \
+  "$(run "$W" create --base "$BASE_SHA")"
+run "$W" remove >/dev/null 2>&1 || true
+
 echo "== a registration whose directory is gone does not block the next create =="
 P="$WORK/tmp-purge"; mkdir -p "$P"
 check "the pair is created" "0" "$(run "$P" create --head feature --base "$BASE_SHA")"

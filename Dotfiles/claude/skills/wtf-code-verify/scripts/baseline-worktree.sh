@@ -103,6 +103,13 @@ ensure_worktree_parent() {
   if [ ! -O "$parent" ]; then
     die "$parent is not owned by you; refusing to build a worktree under it."
   fi
+
+  # Ownership is not enough: a directory you own at 0777 is still writable by every
+  # local user, who can swap the tree between `git worktree add` and the bootstrap that
+  # runs its package manager.
+  if [ -n "$(find "$parent" -maxdepth 0 \( -perm -g+w -o -perm -o+w \) 2>/dev/null)" ]; then
+    die "$parent is writable by group or others; refusing to build a worktree under it. Fix with: chmod go-w '$parent'"
+  fi
 }
 
 # Resolve as much of a path as exists on disk, then re-append the part that does not.

@@ -297,6 +297,26 @@ rc=0
 ( cd "$WORK/republish" && TMPDIR="$guard2" "$RESOLVE" resolve --scope HEAD ) >/dev/null 2>&1 || rc=$?
 check "a symlinked per-repo parent is refused" "1" "$rc"
 
+# Ownership alone accepts both of these: the directories are ours and only the mode is
+# wrong. A group- or world-writable level lets another local user replace the staging
+# directory or the published pointer after the check has passed.
+for level in wtf-scope repo; do
+  for mode in 777 770; do
+    guard3="$WORK/guard-$level-$mode"
+    mkdir -p "$guard3/wtf-scope"
+    if [ "$level" = repo ]; then
+      # Create the per-repo level by resolving once, then loosen that level only.
+      inner3="$(cd "$WORK/republish" && TMPDIR="$guard3" "$RESOLVE" resolve --scope HEAD | tail -1)"
+      chmod "$mode" "$(dirname "$inner3")"
+    else
+      chmod "$mode" "$guard3/wtf-scope"
+    fi
+    rc=0
+    ( cd "$WORK/republish" && TMPDIR="$guard3" "$RESOLVE" resolve --scope HEAD ) >/dev/null 2>&1 || rc=$?
+    check "a $mode $level level is refused" "1" "$rc"
+  done
+done
+
 
 echo "== a jq failure is not mistaken for a subject =="
 # Exit 2 is a contract, so nothing but the deliberate prose exit may produce it. jq

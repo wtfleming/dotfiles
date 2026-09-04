@@ -226,6 +226,13 @@ ensure_private_dir() {
   mkdir -m 700 "$dir" 2>/dev/null || [ -d "$dir" ] \
     || die "cannot create $dir to hold the scope."
   [ -O "$dir" ] || die "$dir is not owned by you; refusing to $what under it."
+
+  # Ownership is not enough. A directory you own at 0777 -- pre-created under a loose
+  # umask, or inherited -- is still writable by every local user, who can replace what
+  # is under it after this check has passed. Both levels get the test because both are
+  # created here, and only the deepest one is created with an explicit mode.
+  [ -z "$(find "$dir" -maxdepth 0 \( -perm -g+w -o -perm -o+w \) 2>/dev/null)" ] ||
+    die "$dir is writable by group or others; refusing to $what under it. Fix with: chmod go-w '$dir'"
 }
 
 # Keyed on the repo *and* the scope. The repo half carries a hash of the absolute path
