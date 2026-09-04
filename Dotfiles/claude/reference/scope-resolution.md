@@ -162,7 +162,7 @@ reads the working tree unless told otherwise and answers `refuted` when it canno
 A refuter pointed at the wrong tree does not find the line a finding names, cannot decide,
 and kills it. So a mismatch does not add noise — **it silently deletes true findings.**
 
-`correspondence` takes one of six values, and `correspondence_note` carries the sentence to
+`correspondence` takes one of seven values, and `correspondence_note` carries the sentence to
 disclose for each:
 
 | Value | Meaning |

@@ -456,9 +456,13 @@ rides along for the same reason it rides to the lenses — it is data, not
 opinion: a refuter reads the working tree unless told otherwise, so on a scope
 that is not checked out it would judge every finding against the wrong files
 and kill the real ones. **Send the manifest's `correspondence` and `scope_head`
-with it**, which is what turns that from a hope into an instruction: on anything
-but `workspace` or a clean `same`, the refuter reads the scope's blobs, and knows
-that a line it cannot find is not a refutation. Name the ref or tree the findings
+with it, and the artifact directory too**, which is what turns that from a hope
+into an instruction: on anything but `workspace` or `same` the refuter reads the
+scope's blobs, and knows that a line it cannot find is not a refutation. The
+directory is what makes the fallback reachable — a deleted file is not at
+`scope_head` and on `unknown` the head may not be local at all, so `scope.diff`
+is the only copy, and a refuter that was never handed it has an instruction it
+cannot follow. Name the ref or tree the findings
 are about, and whose work it is — stated both ways, because the refuter treats silence as untrusted:
 an ordinary review of the user's own branch says so plainly, and a fetched PR
 or a contributor's branch is named as such. The refuter's decision to run a

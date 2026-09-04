@@ -43,9 +43,9 @@ being true. That is why it arrives as an artifact rather than a description.
 **Then check `manifest.correspondence` before you open a file.** On `workspace` or `same`,
 read files from disk. On anything else the working tree is not the code under review. Read the reviewed
 contents with `git show <scope_head>:<path>` — except in the two cases where that cannot
-work, and the manifest's `correspondence_note` says which: a file the change **deleted**
-does not exist at `scope_head`, and on `unknown` the head is not in the local object
-database at all. Read those out of `scope.diff` itself, which always holds them. "The full current contents" means the wrong file
+work, neither of which the manifest flags: a file the change **deleted** does not exist at
+`scope_head`, and on `unknown` the head may not be in the local object database at all.
+Read those out of `scope.diff` itself, which always holds them. "The full current contents" means the wrong file
 here, and a finding you cannot locate is a finding that gets dropped.
 
 If you were handed a bare scope with no artifact directory, diff it yourself: a range with

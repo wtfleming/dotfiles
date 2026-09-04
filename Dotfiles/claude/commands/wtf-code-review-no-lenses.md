@@ -398,10 +398,15 @@ disclosing.
 rides along for the same reason it rides to the reviewer — it is data, not
 opinion: a refuter reads the working tree unless told otherwise, so on a scope
 that is not checked out it would judge every finding against the wrong files
-and kill the real ones. **Send the correspondence and scope head the reviewer's
-Scope line names along with it**, which is what turns that from a hope into an
-instruction: on anything but `workspace` or a clean `same`, the refuter reads
-the scope's blobs, and knows that a line it cannot find is not a refutation.
+and kill the real ones. **Send the `Correspondence:` line's three fields —
+the state, the head, and the artifact directory — along with it**, which is what
+turns that from a hope into an instruction: on anything but `workspace` or
+`same` the refuter reads the scope's blobs, and knows that a line it cannot find
+is not a refutation. Take them from that header line rather than the `Scope:`
+line: `Scope:` is prose composed for a reader and names neither the state nor a
+usable head, so relaying it leaves the refuter with no correspondence stated at
+all — and its default then is the working tree, which on a mismatched scope is
+exactly the silent finding-deletion this pass exists to stop.
 Name the ref or tree the findings are about, and whose work it is — stated both
 ways, because the refuter treats silence as untrusted:
 an ordinary review of the user's own branch says so plainly, and a fetched PR

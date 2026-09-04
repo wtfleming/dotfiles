@@ -61,12 +61,19 @@ State the scope you settled on at the top of your report, using the manifest's
 `scope_line` rather than composing your own: it already names the ref, the file count,
 which step settled it and how the tree corresponds.
 
+Then give `correspondence`, `scope_head` and the artifact directory their own
+**Correspondence:** header line, as three fields. `scope_line` is prose written for a
+reader and names none of them in a form anything downstream can use — and whoever
+dispatched you may have only your report to relay from, so a refuter's instruction to read
+the scope's blobs depends on those three surviving the hop. Write `none` for the directory
+where you resolved the scope yourself and there is no artifact to point at.
+
 **Check `correspondence` before you read a file.** On `workspace` or `same`, read files
 from disk as usual. On anything else the working tree is not the code under review. Read the reviewed
 contents with `git show <scope_head>:<path>` — except in the two cases where that cannot
-work, and the manifest's `correspondence_note` says which: a file the change **deleted**
-does not exist at `scope_head`, and on `unknown` the head is not in the local object
-database at all. Read those out of `scope.diff` itself, which always holds them. Reading the wrong tree does not merely add noise:
+work, neither of which the manifest flags: a file the change **deleted** does not exist at
+`scope_head`, and on `unknown` the head may not be in the local object database at all.
+Read those out of `scope.diff` itself, which always holds them. Reading the wrong tree does not merely add noise:
 findings that cannot be located get dropped, so the mismatch deletes real ones.
 
 Read the full surrounding file for any hunk you comment on — a diff alone hides the
@@ -175,6 +182,7 @@ than inventing one.
 # Code Review
 
 **Scope:** <what you diffed> — <N> files, +<A>/-<B>
+**Correspondence:** <state> · <scope_head> · <artifact directory, or "none">
 **Tests:** <command> → <pass / N failed / not run: reason>
 **Lint:** <command> → <clean / N issues / not run: reason>
 

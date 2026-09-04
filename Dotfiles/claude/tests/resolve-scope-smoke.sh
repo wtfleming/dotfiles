@@ -97,6 +97,45 @@ out=$(cd "$WORK/range" && "$RESOLVE" resolve --scope HEAD 2>/dev/null | tail -1)
 check "a dirty checkout is same-dirty" "same-dirty" "$(field "$out" .correspondence)"
 git -C "$WORK/range" checkout -q -- a.txt
 
+echo "== the remaining correspondence states, and the branch shape =="
+# `same`, `scope-ahead` and `divergent` were the states nothing asserted, and every agent
+# decides from this field whether to read a file from disk. `unknown` is not reachable
+# offline -- it needs a head that resolution produced but the object database lacks, which
+# only the PR shape can do -- so it stays uncovered, deliberately and on the record.
+scratch_repo "$WORK/corr"
+commit "$WORK/corr" a.txt one base
+git -C "$WORK/corr" checkout -q -b feature
+commit "$WORK/corr" b.txt two "on the branch"
+out=$(cd "$WORK/corr" && "$RESOLVE" resolve --scope HEAD 2>/dev/null | tail -1)
+check "a clean checkout at the reviewed commit is same" "same" "$(field "$out" .correspondence)"
+
+git -C "$WORK/corr" checkout -q main
+out=$(cd "$WORK/corr" && "$RESOLVE" resolve --scope feature 2>/dev/null | tail -1)
+check "an unmerged branch is scope-ahead" "scope-ahead" "$(field "$out" .correspondence)"
+check "an explicit branch ref resolves as the branch shape" "branch" "$(field "$out" .shape)"
+
+commit "$WORK/corr" c.txt three "on main"
+out=$(cd "$WORK/corr" && "$RESOLVE" resolve --scope feature 2>/dev/null | tail -1)
+check "a branch off another line is divergent" "divergent" "$(field "$out" .correspondence)"
+# The note is the field advertised as ready to paste, so it must carry the head rather
+# than a placeholder -- the relay hop where the Scope line is the only channel depends on it.
+note=$(field "$out" .correspondence_note)
+case "$note" in
+  *"<scope_head>"*) echo "  FAIL  correspondence_note still carries a <scope_head> placeholder" >&2
+                    failures=$((failures + 1)) ;;
+  *) echo "  ok    correspondence_note names the head, not a placeholder" ;;
+esac
+
+echo "== a ref outranks a path, whatever directory the caller stands in =="
+mkdir -p "$WORK/corr/sub/feature"
+out=$(cd "$WORK/corr/sub" && "$RESOLVE" resolve --scope feature 2>/dev/null | tail -1)
+check "a branch named like a subdirectory is still the branch" "branch" "$(field "$out" .shape)"
+check "and the collision is disclosed" "1" "$(field "$out" '.warnings | length')"
+
+echo "== --base overrides the resolved default =="
+out=$(cd "$WORK/corr" && "$RESOLVE" resolve --scope feature --base main 2>/dev/null | tail -1)
+check "--base is used as the base ref" "main" "$(field "$out" .base_ref)"
+
 echo "== auto step 3: a clean tree on the default branch falls through to HEAD =="
 scratch_repo "$WORK/step3"
 commit "$WORK/step3" a.txt one base

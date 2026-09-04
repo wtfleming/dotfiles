@@ -166,7 +166,7 @@ scope_out_dir() {
 # one. Order matters: a PR before a ref because bare digits almost never name one, a ref
 # before a path because that is git's own convention, a path last.
 scope_shape_of() {
-  local scope=$1 full url_slug here_slug
+  local scope=$1 full is_ref url_slug here_slug
   [ -n "$scope" ] || { SHAPE=worktree; return 0; }
 
   # A leading dash reaches `git diff` in option position, where `--output=<path>` truncates
@@ -208,14 +208,24 @@ scope_shape_of() {
     *..*)   SHAPE=range;  return 0 ;;
   esac
 
+  # Matched against refs/, not merely tested for emptiness: `rev-parse
+  # --symbolic-full-name` echoes an argument it does not recognise straight back, so a bare
+  # `-n` test reads every path as a ref and sends it to be diffed as a commit.
   full="$(git rev-parse --symbolic-full-name "$scope" 2>/dev/null || true)"
   case "$full" in
-    # A branch means "against its merge base"; any other commit-ish means that commit
-    # alone. Conflating them reviews one commit of a branch that has many.
-    refs/heads/*|refs/remotes/*) SHAPE=branch; return 0 ;;
+    refs/*) is_ref=true ;;
+    *)      is_ref=false ;;
   esac
-  if git rev-parse --verify --quiet "$scope^{commit}" >/dev/null 2>&1; then
+  if [ "$is_ref" = true ] || git rev-parse --verify --quiet "$scope^{commit}" >/dev/null 2>&1; then
+    # The collision is disclosed once, here, before the split below -- a branch that shares
+    # a name with a file is the same ambiguity as a tag that does, and warning on only one
+    # of them means the quieter case is the one nobody hears about.
     [ -e "$scope" ] && warn "'$scope' is both a ref and a path; read as a ref (pass ./$scope for the path)"
+    case "$full" in
+      # A branch means "against its merge base"; any other commit-ish means that commit
+      # alone. Conflating them reviews one commit of a branch that has many.
+      refs/heads/*|refs/remotes/*) SHAPE=branch; return 0 ;;
+    esac
     SHAPE=commit
     return 0
   fi
@@ -326,7 +336,10 @@ json_array_from_lines() {
   printf '%s\0' "$@" | jq -Rs 'split("\u0000") | map(select(length > 0))'
 }
 
-# Sets CORRESPONDENCE and CORRESPONDENCE_NOTE.
+# Sets CORRESPONDENCE and CORRESPONDENCE_NOTE. The note names the real head rather than a
+# `<scope_head>` placeholder: it is the one field advertised as ready to paste, it is
+# concatenated into `scope_line` verbatim, and on the relay hop where that line is the only
+# channel a placeholder leaves the next agent with no head to read the code from.
 #
 # Direction matters, so the ancestor case is two states rather than one: reviewing HEAD~3
 # leaves the checkout carrying commits the review does not cover, while reviewing an
@@ -352,7 +365,7 @@ classify_correspondence() {
   if [ "$scope_head" = "$workspace_head" ]; then
     if [ "$workspace_dirty" = true ]; then
       CORRESPONDENCE="same-dirty"
-      CORRESPONDENCE_NOTE="the checkout is at the reviewed commit but carries uncommitted edits, so a file on disk may not match the diff; read with git show <scope_head>:<path>"
+      CORRESPONDENCE_NOTE="the checkout is at the reviewed commit but carries uncommitted edits, so a file on disk may not match the diff; read with git show $scope_head:<path>"
     else
       CORRESPONDENCE=same
       CORRESPONDENCE_NOTE="the checkout holds exactly the code under review"
@@ -368,9 +381,9 @@ classify_correspondence() {
     1) rc=0; git merge-base --is-ancestor "$workspace_head" "$scope_head" || rc=$?
        case $rc in
          0) CORRESPONDENCE="scope-ahead"
-            CORRESPONDENCE_NOTE="the reviewed commits are not checked out; read them with git show <scope_head>:<path> rather than from disk" ;;
+            CORRESPONDENCE_NOTE="the reviewed commits are not checked out; read them with git show $scope_head:<path> rather than from disk" ;;
          1) CORRESPONDENCE=divergent
-            CORRESPONDENCE_NOTE="the checkout and the scope are on different lines of history; read files with git show <scope_head>:<path>, never from disk" ;;
+            CORRESPONDENCE_NOTE="the checkout and the scope are on different lines of history; read files with git show $scope_head:<path>, never from disk" ;;
          *) CORRESPONDENCE=unknown
             CORRESPONDENCE_NOTE="the two heads could not be compared" ;;
        esac ;;
@@ -423,8 +436,16 @@ cmd_resolve() {
   git rev-parse --verify --quiet HEAD >/dev/null 2>&1 \
     || die "this repository has no commits; there is nothing to resolve a scope against"
 
+  # Only when the bare name is not a ref. Rewriting first would let the caller's cwd
+  # overturn the ref-before-path precedence below: the same argument would resolve as a
+  # branch from the repo root and as a path from a subdirectory that happens to contain a
+  # matching name -- two different reviews, chosen by where the caller stood, silently.
   if [ -n "$prefix" ] && [ -n "$scope" ] && [ -e "$prefix$scope" ]; then
-    scope="$prefix$scope"
+    if git rev-parse --verify --quiet "$scope^{commit}" >/dev/null 2>&1; then
+      warn "'$scope' is both a ref and a path under $prefix; read as a ref (pass ./$scope for the path)"
+    else
+      scope="$prefix$scope"
+    fi
   fi
 
   out="$(scope_out_dir "$scope" "$root")"
