@@ -52,6 +52,13 @@ PR_NUMBER=""
 CORRESPONDENCE=""
 CORRESPONDENCE_NOTE=""
 
+# Set by resolve_diff_for_shape: the commit the diff is of, a human label for it, the
+# command that produced it, and which fall-through step settled an unnamed scope.
+SCOPE_HEAD=""
+HEAD_LABEL=""
+RESOLVED_BY=""
+RESOLUTION_STEP=explicit
+
 # Untracked files above this go into the diff as a stub rather than inline. A single
 # untracked 200MB CSV would otherwise become a 200MB scope.diff that eight agents are
 # each told to read in full.
@@ -106,12 +113,18 @@ remote_slug() {
 # Guarded like jq and gh below: this runs before either of their checks, so an image
 # without perl died on a bare `shasum: command not found` and exit 127.
 hash12() {
+  printf '%s' "$1" | sha256_stdin | cut -c1-12
+}
+
+# One place, because there are two callers and a bare `shasum` in either dies with
+# `command not found` and exit 127 rather than a named cause.
+sha256_stdin() {
   if command -v shasum >/dev/null 2>&1; then
-    printf '%s' "$1" | shasum -a 256 | cut -c1-12
+    shasum -a 256
   elif command -v sha256sum >/dev/null 2>&1; then
-    printf '%s' "$1" | sha256sum | cut -c1-12
+    sha256sum
   else
-    die "neither shasum nor sha256sum is installed; one is needed to name the artifact directory"
+    die "neither shasum nor sha256sum is installed; one is needed to hash the scope"
   fi
 }
 
@@ -397,7 +410,7 @@ json_array_from_lines() {
 }
 
 # Sets CORRESPONDENCE and CORRESPONDENCE_NOTE. The note names the real head rather than a
-# `<scope_head>` placeholder: it is the one field advertised as ready to paste, it is
+# `<SCOPE_HEAD>` placeholder: it is the one field advertised as ready to paste, it is
 # concatenated into `scope_line` verbatim, and on the relay hop where that line is the only
 # channel a placeholder leaves the next agent with no head to read the code from.
 #
@@ -472,6 +485,122 @@ need_base() {
   return 1
 }
 
+# Produce the diff for the shape `scope_shape_of` settled on, and record the four
+# facts about it that only this step knows.
+#
+# Lifted out of cmd_resolve, which was 300 lines and is the one function in this file
+# that did not read like the rest of it. The three-step fall-through for an unnamed
+# scope is the part that most needed a name of its own: it is the only place where
+# *not* finding a diff is the normal outcome and the next step is the answer.
+#
+# Out-values travel as globals, the way SHAPE and CORRESPONDENCE already do, rather
+# than as an echoed tuple -- there are four of them and one is a multi-word label.
+resolve_diff_for_shape() {
+  local scope=$1 diff=$2 mb rhs
+
+
+  case "$SHAPE" in
+    pr)
+      command -v gh >/dev/null 2>&1 || die "scope '$scope' is a PR but gh is not installed"
+      # gh pr diff is the single authority for a PR, and a failure is a stop rather than a
+      # fallback. A locally computed base...head is a *different change*: the local base ref
+      # may be stale, the PR may target a non-default base, and the PR may have been
+      # rebased. Silently reviewing a near-miss is worse than not reviewing.
+      # Bounded for the reason fetch_base is: gh sets no client timeout, so a proxy that
+      # accepts the connection and then goes silent hangs the resolver indefinitely,
+      # before any agent has been dispatched and with nothing on stderr.
+      run_bounded gh pr diff "$PR_NUMBER" > "$diff" \
+        || die "gh pr diff $PR_NUMBER failed or timed out. Not falling back to a local diff, which would review something other than the PR."
+      SCOPE_HEAD="$(run_bounded gh pr view "$PR_NUMBER" --json headRefOid -q .headRefOid 2>/dev/null || true)"
+      HEAD_LABEL="PR #$PR_NUMBER head"
+      RESOLVED_BY="gh pr diff $PR_NUMBER"
+      ;;
+    range)
+      git diff "$scope" -- > "$diff"
+      # Split on the range operator, not on the last dot: `${scope##*.}` turns v1.0..v2.0
+      # into `0`, which resolves to nothing, and the manifest then reports the scope's head
+      # as absent while the checkout sits exactly on it.
+      local rhs
+      case "$scope" in
+        *...*) rhs="${scope#*...}" ;;
+        *)     rhs="${scope#*..}" ;;
+      esac
+      [ -n "$rhs" ] || rhs=HEAD
+      SCOPE_HEAD="$(git rev-parse --verify --quiet "$rhs^{commit}" 2>/dev/null || true)"
+      HEAD_LABEL="$scope"
+      RESOLVED_BY="git diff $scope"
+      ;;
+    commit)
+      diff_one_commit "$scope" > "$diff"
+      SCOPE_HEAD="$(git rev-parse "$scope^{commit}")"
+      HEAD_LABEL="$scope"
+      RESOLVED_BY="git diff $scope^!"
+      ;;
+    branch)
+      need_base || die "cannot resolve a default branch to diff '$scope' against; pass --base"
+      local mb
+      mb="$(git merge-base "$BASE" "$scope")" \
+        || die "no merge base between $scope and $BASE"
+      BASE_SHA="$mb"
+      git diff "$mb...$scope" -- > "$diff"
+      SCOPE_HEAD="$(git rev-parse "$scope^{commit}")"
+      HEAD_LABEL="$scope"
+      RESOLVED_BY="git diff \$(git merge-base $BASE $scope)...$scope"
+      ;;
+    path)
+      git diff HEAD -- "$scope" > "$diff"
+      append_untracked "$diff" "$scope"
+      SCOPE_HEAD="$(git rev-parse HEAD)"
+      HEAD_LABEL="working tree"
+      RESOLVED_BY="git diff HEAD -- $scope, plus untracked files under it"
+      ;;
+    worktree)
+      # The three-step order from scope-resolution.md: uncommitted work, else the branch
+      # against its merge base, else the commit at HEAD. An empty result at any step means
+      # *fall through*, never "no changes" -- so each step that produces nothing records
+      # why, and the reasons are carried into the manifest even when a later step succeeds.
+      git diff HEAD > "$diff"
+      append_untracked "$diff" ""
+      SCOPE_HEAD="$(git rev-parse HEAD)"
+      HEAD_LABEL="working tree"
+      RESOLVED_BY="git diff HEAD, plus untracked files"
+      RESOLUTION_STEP=auto-1-worktree
+
+      if [ ! -s "$diff" ]; then
+        FELL_THROUGH+=("auto-1-worktree: no uncommitted or untracked changes")
+        if need_base; then
+          local mb2
+          if mb2="$(git merge-base "$BASE" HEAD 2>/dev/null)"; then
+            BASE_SHA="$mb2"
+            git diff "$mb2...HEAD" > "$diff"
+            SHAPE=branch
+            HEAD_LABEL=HEAD
+            RESOLVED_BY="git diff \$(git merge-base $BASE HEAD)...HEAD"
+            RESOLUTION_STEP=auto-2-branch
+            [ -s "$diff" ] || FELL_THROUGH+=("auto-2-branch: empty diff against the merge base with $BASE (standing on the default branch, or the branch has no commits of its own)")
+          else
+            FELL_THROUGH+=("auto-2-branch: no merge base between HEAD and $BASE")
+          fi
+        else
+          FELL_THROUGH+=("auto-2-branch: no default branch resolved")
+        fi
+      fi
+
+      if [ ! -s "$diff" ]; then
+        diff_one_commit HEAD > "$diff"
+        SHAPE=commit
+        HEAD_LABEL=HEAD
+        RESOLVED_BY="git show HEAD"
+        RESOLUTION_STEP=auto-3-head
+        if [ ! -s "$diff" ]; then
+          FELL_THROUGH+=("auto-3-head: HEAD is an empty commit")
+          die "nothing to review. $(printf '%s; ' "${FELL_THROUGH[@]}")Name a scope -- a ref, a range, a PR number or a path."
+        fi
+      fi
+      ;;
+  esac
+}
+
 cmd_resolve() {
   local scope="" base_override=""
   while [ $# -gt 0 ]; do
@@ -482,7 +611,7 @@ cmd_resolve() {
     esac
   done
 
-  local root out prefix scope_head="" head_label="" resolved_by="" resolution_step=explicit
+  local root out prefix
   command -v jq >/dev/null 2>&1 \
     || die "jq is required to write the manifest but is not installed (brew install jq)"
   root="$(repo_root)"
@@ -535,107 +664,7 @@ cmd_resolve() {
   trap 'rm -rf "$tmp"' EXIT
   diff="$tmp/scope.diff"
   : > "$diff"
-
-  case "$SHAPE" in
-    pr)
-      command -v gh >/dev/null 2>&1 || die "scope '$scope' is a PR but gh is not installed"
-      # gh pr diff is the single authority for a PR, and a failure is a stop rather than a
-      # fallback. A locally computed base...head is a *different change*: the local base ref
-      # may be stale, the PR may target a non-default base, and the PR may have been
-      # rebased. Silently reviewing a near-miss is worse than not reviewing.
-      # Bounded for the reason fetch_base is: gh sets no client timeout, so a proxy that
-      # accepts the connection and then goes silent hangs the resolver indefinitely,
-      # before any agent has been dispatched and with nothing on stderr.
-      run_bounded gh pr diff "$PR_NUMBER" > "$diff" \
-        || die "gh pr diff $PR_NUMBER failed or timed out. Not falling back to a local diff, which would review something other than the PR."
-      scope_head="$(run_bounded gh pr view "$PR_NUMBER" --json headRefOid -q .headRefOid 2>/dev/null || true)"
-      head_label="PR #$PR_NUMBER head"
-      resolved_by="gh pr diff $PR_NUMBER"
-      ;;
-    range)
-      git diff "$scope" -- > "$diff"
-      # Split on the range operator, not on the last dot: `${scope##*.}` turns v1.0..v2.0
-      # into `0`, which resolves to nothing, and the manifest then reports the scope's head
-      # as absent while the checkout sits exactly on it.
-      local rhs
-      case "$scope" in
-        *...*) rhs="${scope#*...}" ;;
-        *)     rhs="${scope#*..}" ;;
-      esac
-      [ -n "$rhs" ] || rhs=HEAD
-      scope_head="$(git rev-parse --verify --quiet "$rhs^{commit}" 2>/dev/null || true)"
-      head_label="$scope"
-      resolved_by="git diff $scope"
-      ;;
-    commit)
-      diff_one_commit "$scope" > "$diff"
-      scope_head="$(git rev-parse "$scope^{commit}")"
-      head_label="$scope"
-      resolved_by="git diff $scope^!"
-      ;;
-    branch)
-      need_base || die "cannot resolve a default branch to diff '$scope' against; pass --base"
-      local mb
-      mb="$(git merge-base "$BASE" "$scope")" \
-        || die "no merge base between $scope and $BASE"
-      BASE_SHA="$mb"
-      git diff "$mb...$scope" -- > "$diff"
-      scope_head="$(git rev-parse "$scope^{commit}")"
-      head_label="$scope"
-      resolved_by="git diff \$(git merge-base $BASE $scope)...$scope"
-      ;;
-    path)
-      git diff HEAD -- "$scope" > "$diff"
-      append_untracked "$diff" "$scope"
-      scope_head="$(git rev-parse HEAD)"
-      head_label="working tree"
-      resolved_by="git diff HEAD -- $scope, plus untracked files under it"
-      ;;
-    worktree)
-      # The three-step order from scope-resolution.md: uncommitted work, else the branch
-      # against its merge base, else the commit at HEAD. An empty result at any step means
-      # *fall through*, never "no changes" -- so each step that produces nothing records
-      # why, and the reasons are carried into the manifest even when a later step succeeds.
-      git diff HEAD > "$diff"
-      append_untracked "$diff" ""
-      scope_head="$(git rev-parse HEAD)"
-      head_label="working tree"
-      resolved_by="git diff HEAD, plus untracked files"
-      resolution_step=auto-1-worktree
-
-      if [ ! -s "$diff" ]; then
-        FELL_THROUGH+=("auto-1-worktree: no uncommitted or untracked changes")
-        if need_base; then
-          local mb2
-          if mb2="$(git merge-base "$BASE" HEAD 2>/dev/null)"; then
-            BASE_SHA="$mb2"
-            git diff "$mb2...HEAD" > "$diff"
-            SHAPE=branch
-            head_label=HEAD
-            resolved_by="git diff \$(git merge-base $BASE HEAD)...HEAD"
-            resolution_step=auto-2-branch
-            [ -s "$diff" ] || FELL_THROUGH+=("auto-2-branch: empty diff against the merge base with $BASE (standing on the default branch, or the branch has no commits of its own)")
-          else
-            FELL_THROUGH+=("auto-2-branch: no merge base between HEAD and $BASE")
-          fi
-        else
-          FELL_THROUGH+=("auto-2-branch: no default branch resolved")
-        fi
-      fi
-
-      if [ ! -s "$diff" ]; then
-        diff_one_commit HEAD > "$diff"
-        SHAPE=commit
-        head_label=HEAD
-        resolved_by="git show HEAD"
-        resolution_step=auto-3-head
-        if [ ! -s "$diff" ]; then
-          FELL_THROUGH+=("auto-3-head: HEAD is an empty commit")
-          die "nothing to review. $(printf '%s; ' "${FELL_THROUGH[@]}")Name a scope -- a ref, a range, a PR number or a path."
-        fi
-      fi
-      ;;
-  esac
+  resolve_diff_for_shape "$scope" "$diff"
 
   # The invariant. An empty artifact is the one thing a consumer must never be handed,
   # because a collapsed range and a genuinely empty change look identical on disk.
@@ -658,7 +687,7 @@ cmd_resolve() {
   [ -z "$(git ls-files --others --exclude-standard --directory --no-empty-directory)" ] \
     || workspace_untracked=true
 
-  classify_correspondence "$SHAPE" "$scope_head" "$workspace_head" "$workspace_dirty"
+  classify_correspondence "$SHAPE" "$SCOPE_HEAD" "$workspace_head" "$workspace_dirty"
 
   local file_count
   files_from_diff "$diff" "$tmp/files.json"
@@ -669,12 +698,12 @@ cmd_resolve() {
   # Composed once, here, so that eight lenses and a merged report describe one scope in one
   # form rather than nine.
   local scope_line
-  scope_line="$resolved_by — $file_count files"
-  [ "$resolution_step" = explicit ] || scope_line="$scope_line ($resolution_step, nothing named)"
+  scope_line="$RESOLVED_BY — $file_count files"
+  [ "$RESOLUTION_STEP" = explicit ] || scope_line="$scope_line ($RESOLUTION_STEP, nothing named)"
   scope_line="$scope_line; $CORRESPONDENCE_NOTE"
 
   local diff_sha256 diff_bytes
-  diff_sha256="$(shasum -a 256 "$diff" | cut -d' ' -f1)"
+  diff_sha256="$(sha256_stdin < "$diff" | cut -d' ' -f1)"
   diff_bytes="$(wc -c < "$diff" | tr -d ' ')"
 
   # jq builds the JSON: a path with a quote, a backslash or a newline in it cannot break a
@@ -682,13 +711,13 @@ cmd_resolve() {
   jq -n \
     --arg scope_arg "$scope" \
     --arg shape "$SHAPE" \
-    --arg resolution_step "$resolution_step" \
-    --arg resolved_by "$resolved_by" \
+    --arg resolution_step "$RESOLUTION_STEP" \
+    --arg resolved_by "$RESOLVED_BY" \
     --arg scope_line "$scope_line" \
     --arg base_ref "$BASE" \
     --arg base_sha "$BASE_SHA" \
-    --arg scope_head "$scope_head" \
-    --arg head_label "$head_label" \
+    --arg scope_head "$SCOPE_HEAD" \
+    --arg head_label "$HEAD_LABEL" \
     --arg workspace_head "$workspace_head" \
     --argjson workspace_dirty "$workspace_dirty" \
     --argjson workspace_untracked "$workspace_untracked" \
