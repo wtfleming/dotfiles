@@ -412,6 +412,27 @@ case "$out" in
   *) echo "  FAIL  a real branch named 'uncommitted' still wins: got '$out'" >&2; failures=$((failures + 1)) ;;
 esac
 
+# Collision 3: a ref that exists without being commit-ish. Reported on the PR: the guard
+# tested only `rev-parse --verify <scope>^{commit}`, so a tag pointing at a blob fell
+# through to the phrase list and `uncommitted` was answered with the default instead of an
+# error. A ref named on the command line must never resolve to a different scope silently.
+# Two shapes, and neither `rev-parse` test sees either: a tag pointing at a blob is not
+# commit-ish, and a name carried by both a branch and a tag is *ambiguous*, which makes
+# `--symbolic-full-name` fail as though no ref existed at all.
+(cd "$WORK/deictic" && git update-ref refs/tags/uncommitted "$(git -C "$WORK/deictic" hash-object -w a.txt)")
+rc=0; (cd "$WORK/deictic" && "$RESOLVE" resolve --scope uncommitted >/dev/null 2>&1) || rc=$?
+check "an ambiguous ref name is not translated to the default" 1 "$rc"
+(cd "$WORK/deictic" && git branch -D uncommitted >/dev/null 2>&1) || true
+rc=0; (cd "$WORK/deictic" && "$RESOLVE" resolve --scope uncommitted >/dev/null 2>&1) || rc=$?
+check "a non-commit ref is not translated to the default" 1 "$rc"
+noterr=$( (cd "$WORK/deictic" && "$RESOLVE" resolve --scope uncommitted 2>&1 >/dev/null) || true )
+case "$noterr" in
+  *"names the default scope"*) echo "  FAIL  a non-commit ref was translated to the default" >&2
+     failures=$((failures + 1)) ;;
+  *) echo "  ok    and it is not reported as a default-scope phrase" ;;
+esac
+(cd "$WORK/deictic" && git update-ref -d refs/tags/uncommitted)
+
 # Collision 2: a real path wins. Committed and then modified, so the path scope has a diff
 # to resolve and the run reaches a manifest rather than the empty-diff guard.
 scratch_repo "$WORK/deictic-path"

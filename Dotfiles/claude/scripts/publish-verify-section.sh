@@ -41,12 +41,50 @@ run_awk() {
 			close(sectionfile)
 			print endm
 		}
-		# ``` or ~~~ toggles fenced state. Markers only count outside a fence.
-		# Both the toggle and the print are gated on !skip: a fence *inside* the section
-		# being replaced is section content, so printing it would move it outside the
-		# markers, and toggling on it would leave the fence state describing text that
-		# is being discarded.
-		/^[ \t]*(```|~~~)/ { if (!skip) { fence = !fence; print } next }
+		# The run of ` or ~ opening a line, or "" if the line opens no fence. Written
+		# without interval expressions, which mawk -- Debian'"'"'s default awk, and so CI'"'"'s --
+		# does not reliably support.
+		function fence_run(line,   s, ch, n) {
+			s = line
+			sub(/^[ \t]+/, "", s)
+			ch = substr(s, 1, 1)
+			if (ch != "`" && ch != "~") return ""
+			n = 0
+			while (substr(s, n + 1, 1) == ch) n++
+			if (n < 3) return ""
+			return substr(s, 1, n)
+		}
+		# A closing fence is the run and nothing else; an opening one may carry an info
+		# string (```markdown), which is why only the close is held to this.
+		function fence_only(line,   s) {
+			s = line
+			gsub(/[ \t]/, "", s)
+			return s == fence_run(line)
+		}
+		{
+			run = fence_run($0)
+			if (fence) {
+				# Only the same character, at least as long, alone on its line, closes
+				# it. A ``` inside a ~~~ block is content -- treating it as a delimiter
+				# clears the state and hands the markers below a quoted section to
+				# delete, which the gate cannot catch because it parses the same way.
+				if (run != "" && substr(run, 1, 1) == fence_char \
+				    && length(run) >= fence_len && fence_only($0)) fence = 0
+				if (!skip) print
+				next
+			}
+			if (run != "") {
+				# A fence *inside* the section being replaced is section content: discard
+				# it, and do not track it. Tracking would leave the fence state describing
+				# text that is not in the output, which is what the gate compares.
+				if (skip) next
+				fence = 1
+				fence_char = substr(run, 1, 1)
+				fence_len = length(run)
+				print
+				next
+			}
+		}
 		!fence && index($0, startm) {
 			if (skip || seen) { bad = 1; exit 1 }
 			skip = 1; seen = 1

@@ -162,6 +162,48 @@ check "the author's heading survives" 1 "$(grep -c '## Checklist' "$WORK/livefen
 check "strip removes a live fenced section whole" 0 \
   "$("$PUBLISH" strip "$WORK/livefence.body" | grep -c 'secret excerpt' || true)"
 
+echo "case: a backtick run inside a tilde fence is content, not a delimiter"
+# Reported on the PR. A fence tracker that toggles on either delimiter clears its state on
+# the inner ``` line, then reads the quoted markers below it as live and replaces the
+# author's quoted example in place. The gate cannot catch it, because it parses the body
+# the same way, so both sides agree on the damage.
+cat > "$WORK/mixed.body" <<'EOF'
+## Summary
+
+Here is the tool's own recipe, quoted:
+
+~~~
+```
+<!-- verify:start -->
+## Verification
+**Verdict.** Verified.
+<!-- verify:end -->
+```
+~~~
+
+Keep this trailing prose.
+EOF
+check "merge lands" 0 "$(merge_status "$WORK/mixed.body" "$WORK/section.md" "$WORK/mixed.out")"
+check "the quoted section body survives" 1 "$(grep -c '\*\*Verdict.\*\* Verified.' "$WORK/mixed.out")"
+check "the quoted markers survive" 1 "$(grep -c 'verify:start' "$WORK/mixed.body")"
+check "the new section is appended, not written into the quote" 1 "$(grep -c 'New verdict: verified.' "$WORK/mixed.out")"
+check "trailing prose survives" 1 "$(grep -c 'Keep this trailing prose.' "$WORK/mixed.out")"
+# strip must leave a quoted section whole, since the gate is built on it.
+check "strip keeps the quoted section" 1 \
+  "$("$PUBLISH" strip "$WORK/mixed.body" | grep -c '\*\*Verdict.\*\* Verified.')"
+
+echo "case: appending to a body that ends in blank lines adds one separator"
+# The gate normalises trailing blank lines on both sides, so an append to a body already
+# ending in them can add a separator and still pass. That is the one byte-level exception
+# to "byte-identical outside the markers", and it is asserted rather than left implicit.
+printf '## Summary\n\ntext\n\n\n' > "$WORK/trailing.body"
+check "merge lands" 0 "$(merge_status "$WORK/trailing.body" "$WORK/section.md" "$WORK/trailing.out")"
+check "no author line is lost" 1 "$(grep -c '^text$' "$WORK/trailing.out")"
+check "the only change outside the markers is trailing blanks" ok \
+  "$(diff <("$PUBLISH" strip "$WORK/trailing.body" | sed -e :a -e '/^$/{$d;N;ba' -e '}') \
+          <("$PUBLISH" strip "$WORK/trailing.out"  | sed -e :a -e '/^$/{$d;N;ba' -e '}') \
+     >/dev/null && echo ok || echo differs)"
+
 echo "case: refuses a body it cannot act on"
 printf 'a\n<!-- verify:start -->\nx\n<!-- verify:end -->\nb\n<!-- verify:start -->\ny\n<!-- verify:end -->\nc\n' > "$WORK/doubled.body"
 check "doubled pairs refused" 1 "$(merge_status "$WORK/doubled.body" "$WORK/section.md" "$WORK/doubled.out")"

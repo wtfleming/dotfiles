@@ -180,7 +180,23 @@ because each answers a case that looks like success:
 - **So the gate is the whole invariant, checked rather than asserted.** The body with its
   live section removed must be byte-identical, and in the same order, before and after. That
   one comparison catches both cases above and anything else that reaches outside the
-  markers, and the script refuses the write rather than reporting it afterwards.
+  markers, and the script refuses the write rather than reporting it afterward.
+
+One stated exception to byte-identical, and only one: appending a section to a body that
+had none adds a blank line to separate it, so trailing blank lines are normalised on both
+sides of the comparison. That is why a body already ending in blank lines can gain one and
+still pass. Nothing else about the text outside the markers may differ — no reordering, no
+line lost, no whitespace changed anywhere but at the end — and the smoke test asserts the
+exception rather than leaving it to be rediscovered from the code.
+
+A fence inside the section is where this gets subtle, and both directions are covered
+there. A fenced block *within* the section is content, so it is neither printed nor allowed
+to move the parser's fence state — state that described discarded text would corrupt the
+parse of everything after it. And a fence run only closes the fence that opened it: the
+same character, at least as long, alone on its line. A ``` inside a `~~~` block is content,
+because treating it as a delimiter clears the state and hands the markers below a quoted
+section to delete — which the gate cannot catch, since it parses the body the same way and
+so agrees with the damage.
 
 ## Put what cannot be regenerated in a comment
 

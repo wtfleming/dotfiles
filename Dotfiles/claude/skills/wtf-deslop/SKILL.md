@@ -29,10 +29,11 @@ idiom wins over the catalogue in every case.
 5. **Only where the user named a PR** — this skill resolves no scope of its own, step 1
    compares against the main branch, and nothing here supplies a PR number, so there is
    no number to guess at. Where they did: read that PR's body
-   (`gh pr view <that number> --json body`) for a `<!-- verify:start -->` section. This
-   pass just changed the code that section attested to and wrote no new one, so it now
-   reads as current for a tree that no longer exists — say it is stale and name
-   `wtf-code-verify` as the refresh. Where the read fails rather than coming back without
+   (`gh pr view <that number> --json body`) for a `<!-- verify:start -->` section — and
+   only where step 3 actually changed something. A pass that found no slop changed no code,
+   so the section still describes the tree it was written against and calling it stale is a
+   false report. Where code did change: it now reads as current for a tree that no longer
+   exists, so say it is stale and name `wtf-code-verify` as the refresh. Where the read fails rather than coming back without
    markers, say so instead: an absent marker and an unreadable body are different facts.
    `~/.claude/reference/github-publishing.md` has why no delimiter catches this, and names
    this skill among the tools the rule binds.

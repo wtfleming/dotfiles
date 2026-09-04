@@ -209,8 +209,14 @@ cheapest first — pick one per claim:
    that is meant to be undone, and an unannounced edit to their checkout is
    indistinguishable from a bug in whatever they were working on. The other two writes
    there, §7's fix and §9's promoted tests, are meant to stay; this one is restored
-   byte-for-byte below, so leaving it behind is the failure. Then copy the file
-   byte-for-byte before touching it and copy it back afterwards —
+   byte-for-byte below, so leaving it behind is the failure. **Arrange the restore before
+   you make the edit, not after the probe** — a `trap ... EXIT` in the shell that does it,
+   or an equivalent that survives the probe failing, a later command exiting and the run
+   being interrupted. "Copy it back afterwards" describes the happy path only, and the
+   paths that skip it are exactly the ones where a broken file is left in the user's
+   checkout and committed with the next change. Then `cmp` the restored file against the
+   copy and say so, because a restore that silently did not happen looks identical to one
+   that did. Copy the file byte-for-byte before touching it and copy it back —
    `cp <path> "$OUT/pre-break"` … `cp "$OUT/pre-break" <path>` — which restores exactly what
    was there without asking git what it thinks the file should look like. A break left
    behind survives an interrupted run as an uncommitted edit nobody attributes, and the next

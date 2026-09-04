@@ -808,7 +808,14 @@ cmd_resolve() {
   # that survives to here lands on the same artifact directory a bare invocation would --
   # it is the same scope, so it must not be a second cache entry. Announced rather than
   # silent: the manifest will say nothing was named, and that is only true after this.
+  # `show-ref` rather than `rev-parse`, because the question here is only whether the name
+  # is taken. A ref that exists without being commit-ish -- a tag pointing at a blob -- and
+  # an *ambiguous* name, where both a branch and a tag carry it, both fail `rev-parse
+  # --symbolic-full-name` and `^{commit}`; they would then fall through to the phrase list
+  # and a named ref would be answered with the default instead of an error. Answering a
+  # different scope silently is the worst outcome this script has.
   if [ -n "$scope" ] \
+    && ! git show-ref --quiet -- "$scope" 2>/dev/null \
     && ! git rev-parse --verify --quiet "$scope^{commit}" >/dev/null 2>&1 \
     && [ ! -e "$scope" ] \
     && is_default_scope_phrase "$scope"; then
