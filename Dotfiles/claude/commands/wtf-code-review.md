@@ -308,7 +308,7 @@ The lenses and their rubrics:
 |---|---|
 | `correctness` | logic errors, off-by-one, wrong operator, null/empty/zero/max edges, races, unhandled promises, missing await |
 | `security` | unvalidated input at boundaries, hardcoded secrets, injection, sensitive data in logs and errors, authz gaps |
-| `tests` | new branches with no test, uncovered edge cases, tests that cannot fail, flakiness, fixtures that hide the bug |
+| `tests` | new branches with no test, uncovered edge cases, tests that cannot fail, flakiness, fixtures that hide the bug, an invariant a handful of examples cannot pin where the repo already has a property-based harness |
 | `maintainability` | unclear names, functions doing several things, unactionable error messages, comments explaining *what*, changes bundling unrelated concerns |
 | `resilience` | outbound calls with no timeout, retries with no backoff or no cap, a failure swallowed into a default that reads as success, multi-step work that leaves inconsistent state when it fails halfway, a retried write that is not idempotent, a call the code assumes cannot fail, a new failure path nothing logs |
 | `reuse` | logic the repo already implements elsewhere, a second copy of something within the diff itself, a hand-rolled version of what a dependency already in the manifest provides, a new abstraction where an existing one would have served, code shared between two things that only look alike — and code the change orphaned but did not remove: a function whose last caller went away, a config key nothing reads, a flag now permanently on with its dead branch intact |
@@ -321,6 +321,17 @@ the tool that does it exactly.
 
 The `tests` lens judges coverage by ROI: a new branch with no test is a finding;
 trivial code without one is not.
+
+That row's property-based clause is gated twice, and both gates carry weight. The
+code has to state an invariant a handful of examples cannot pin — a round trip, an
+idempotent operation, a comparator, an invariant a mutation must preserve, a
+hand-rolled parser or normaliser over a large input domain — and the repo has to
+already have a property-based harness. Without the first, "this could have
+properties" is true of nearly every function and the lens writes a Suggestion on
+every diff. Without the second the finding is a proposal to adopt a dependency and
+a testing style, which is `dependencies`' business and far larger than anything a
+review Suggestion should carry. Where both hold it is a Suggestion, anchored at the
+test file.
 
 `reuse` is the one lens whose target sits outside the diff: both the duplicate it
 looks for and the code the change orphaned live in files the change did not touch.

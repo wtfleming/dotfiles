@@ -227,7 +227,7 @@ are hunting for, and it asks you to account for each dimension explicitly.
 |---|---|
 | `correctness` | logic errors, off-by-one, wrong operator, null/empty/zero/max edges, races, unhandled promises, missing await |
 | `security` | unvalidated input at boundaries, hardcoded secrets, injection, sensitive data in logs and errors, authz gaps |
-| `tests` | new branches with no test, uncovered edge cases, tests that cannot fail, flakiness, fixtures that hide the bug |
+| `tests` | new branches with no test, uncovered edge cases, tests that cannot fail, flakiness, fixtures that hide the bug, an invariant a handful of examples cannot pin where the repo already has a property-based harness |
 | `maintainability` | unclear names, functions doing several things, unactionable error messages, comments explaining *what*, changes bundling unrelated concerns |
 | `resilience` | outbound calls with no timeout, retries with no backoff or no cap, a failure swallowed into a default that reads as success, multi-step work that leaves inconsistent state when it fails halfway, a retried write that is not idempotent, a call the code assumes cannot fail, a new failure path nothing logs |
 | `reuse` | logic the repo already implements elsewhere, a second copy of something within the diff itself, a hand-rolled version of what a dependency already in the manifest provides, a new abstraction where an existing one would have served, code shared between two things that only look alike — and code the change orphaned but did not remove: a function whose last caller went away, a config key nothing reads, a flag now permanently on with its dead branch intact |
@@ -277,7 +277,14 @@ Three boundaries, because they are the ones that blur:
   whichever path leaks it: not closed on the way through is `performance`,
   skipped because an exception jumped over the cleanup is `resilience`.
 - `tests` judges coverage by ROI: a new branch with no test is a finding;
-  trivial code without one is not.
+  trivial code without one is not. Its property-based clause is gated twice: the
+  code has to state an invariant a handful of examples cannot pin — a round trip,
+  an idempotent operation, a comparator, a hand-rolled parser or normaliser over a
+  large input domain — and the repo has to already have a property-based harness.
+  Without the first, "this could have properties" is true of nearly every function
+  and you write a Suggestion on every diff; without the second the finding is a
+  proposal to adopt a dependency and a testing style, which is `dependencies`'
+  business and far larger than anything a Suggestion should carry.
 
 `reuse` is the one dimension whose target sits outside the diff: both the
 duplicate it looks for and the code the change orphaned live in files the change
