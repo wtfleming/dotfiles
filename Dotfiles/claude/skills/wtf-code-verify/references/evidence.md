@@ -169,23 +169,11 @@ real `.env` symlinked in, so assume the raw bytes carry a live credential; and f
 at *capture* time is still wrong — that is what launders a compile failure into "the
 expected failure" — which is why the scrub happens at this step and not the earlier one.
 
-**The body is the default, because the audience is the reviewer.** A reviewer opening the
-PR reads the description; a comment competes with every review thread and every bot, and
-in a long conversation the verification scrolls away from the diff it is about. Put the
-section in the body so it is visible without being looked for.
-
-Use the marker recipe in `~/.claude/reference/github-publishing.md` verbatim, with
-`VERIFICATION.md` as its `SECTION.md`. It is not repeated here on purpose — the copy that
-used to sit at this spot drifted from the one in the reference, and the failure mode of a
-stale copy is a filter that deletes whatever the author wrote below the section. The
-markers are `verify:start` / `verify:end`, which the reference names and every tool that
-writes this section shares. They are what makes the write safe to repeat: a rerun replaces
-the section instead of stacking a second verdict under the first.
-
-**What that write may touch is the section and nothing else.** Everything between the
-markers is text this run generated and is free to replace. Every byte outside them is the
-author's — the description, a checklist, `Closes #123`, someone's screenshot — and is
-carried across untouched by the recipe. This skill never writes the title at all.
+**The body is the default channel**, for the reasons the reference gives under who may
+write what. Use its marker recipe verbatim, with `VERIFICATION.md` as the recipe's
+`SECTION.md`. It is not repeated here on purpose — the copy that used to sit at this spot
+drifted from the one in the reference, and the failure mode of a stale copy is a filter that
+deletes whatever the author wrote below the section.
 
 ```bash
 gh pr comment <n> --body-file VERIFICATION.md      # the fallback, and reversible
@@ -197,13 +185,12 @@ fails closed and says to fix it by hand), or a user who asks for a comment. Say 
 channel was used, since the two are read differently — a comment is timestamped and
 attributable, a body section reads as current.
 
-**Where the description drifted, report it and hand off.** Rewriting the section is this
-skill's business; rewriting the author's account of their own change is not. Name what
-drifted — the claim in the title or body and the code that contradicts it — and point at
-`/wtf-create-pr`, whose update path routes an existing PR to `gh pr edit` and carries the
-survivors across. Do not propose replacement wording here, and do not edit the title. On
-someone else's PR the wording is theirs to fix; on your own it is one command away, and
-the drift you found is what that command needs to hear.
+**Where the description drifted, report it and hand off.** Name what drifted — the claim
+in the title or body, and the code that contradicts it — and point at `/wtf-create-pr`,
+whose update path routes an existing PR to `gh pr edit` and carries the survivors across.
+Do not propose replacement wording here. On someone else's PR the wording is theirs to
+fix; on your own it is one command away, and the drift you found is what that command
+needs to hear.
 
 Re-read the verdict line before posting. Verification sections are read as endorsements,
 and a "verified with gaps" whose gaps are buried below a fold reads as an unqualified

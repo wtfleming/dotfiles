@@ -313,10 +313,9 @@ and PR forms, and why each of these earns its place:
   nothing. Tear the worktrees down:
   `~/.claude/skills/wtf-code-verify/scripts/baseline-worktree.sh remove`.
 - **PR description** — whether the title and body still describe the change, or what
-  drifted. Only when the scope is a PR. Report the drift; do not fix it. Rewriting the
-  title or the description is `/wtf-create-pr`'s update path — this skill writes only its
-  own verification section — and naming what drifted precisely is what that command needs.
-  See `references/evidence.md`.
+  drifted. Only when the scope is a PR. Report the drift; do not fix it.
+  `references/expectations.md` has what makes that report actionable for the command
+  that does.
 
 **Every line in the report is either something you observed or is marked as inference.**
 The verdict has a probe behind it by construction, and the raw capture is on disk — but
@@ -338,17 +337,12 @@ Write the PR verification section to the scratch directory with the template in
 public and outward-facing, and a verification section landing on the wrong PR is worse
 than none at all.
 
-**It goes in the PR body, between the `verify:start` / `verify:end` markers.** The
-audience is the human about to review the diff, and the description is where they already
-look — a comment competes with every thread and bot on the PR and scrolls away from the
-code it is about. The markers make the write repeatable: a rerun replaces the section
-rather than leaving a second verdict under the first. `evidence.md` has the channel rules
-and when to fall back to a comment.
-
-**That section is the only thing this skill writes.** Not the title, not the description —
-where either has drifted, this skill reports it and `/wtf-create-pr` fixes it. Beyond that
-section, a run changes nothing outside its own scratch directory and the worktrees it tears
-down. What the write may and may not touch is the reference's rule, not restated here.
+**It goes in the PR body, between the `verify:start` / `verify:end` markers** — that
+section, and nothing else on the PR. Why the body rather than a comment, and what a write
+there may and may not touch, are the ownership rule in
+`~/.claude/reference/github-publishing.md`; `evidence.md` has the channel mechanics and when
+to fall back to a comment. Beyond that section, a run changes nothing outside its own
+scratch directory and the worktrees it tears down.
 
 Post the whole section rather than the verdict line. The reviewer is the audience: they
 are about to read this diff, and what they can use is which expectations were probed, the

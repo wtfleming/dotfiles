@@ -659,14 +659,9 @@ What this check does not cover, so it is not mistaken for more than it is:
   presenting the verdicts as if they covered it.
 
 **A fix can strand a published verdict.** Where the scope is a PR, read its body for a
-`<!-- verify:start -->` section before you finish: the fixes just changed the code that
-section attested to, and it is now claiming a verdict for a tree that no longer exists.
-Nothing replaces it on its own — the marker filter in
-`~/.claude/reference/github-publishing.md` only rewrites that section on the next run that
-writes one, and this command writes none. So say the verification is stale and name what
-would refresh it (`wtf-code-verify` on the branch as it now stands). A "Verified" block
-sitting above a diff it does not describe is read as current, which is the same failure the
-delimiters exist to prevent, reached from the other direction.
+`<!-- verify:start -->` section and say the verification is stale, naming what would
+refresh it (`wtf-code-verify` on the branch as it now stands) — the mechanism and why no
+delimiter catches this are in `~/.claude/reference/github-publishing.md`.
 
 ## If the findings go to GitHub
 

@@ -19,17 +19,24 @@ because a rewrite replaces rather than appends and `gh pr edit` has no compare-a
   replace-or-nothing on a line that outlives the PR.
 - **The author's prose in the body** — `/wtf-create-pr` only. That is the description of
   the change, and it is the author's account of their own work.
-- **A delimited generated section in the body** — the tool that generates it, replacing
-  its own section and carrying every byte outside the markers across untouched. That is
-  what the section below is for, and it is why `wtf-code-verify` writes its verification
-  section into the body rather than only commenting: a reviewer opening the PR reads the
-  description, while a comment competes with every thread and bot on it.
+- **A delimited generated section in the body** — whoever writes it replaces their own
+  section and carries every byte outside the markers across untouched. That is what the
+  section below is for. A section is owned per *section*, not per tool, and the one that
+  exists has two writers with different rights: `wtf-code-verify` regenerates the verdict,
+  because it ran the probes behind it; `/wtf-create-pr` may only embed an artifact it did
+  not produce, attributed and aged against HEAD. Neither may write the other's kind of
+  content into it.
+
+This is why a verification section goes in the **body** rather than only in a comment: a
+reviewer opening the PR reads the description, while a comment competes with every thread
+and bot on it and scrolls away from the code it is about. The markers are what make that
+write safe to repeat.
 
 A tool that finds the *description* stale therefore **reports the drift and names
 `/wtf-create-pr`**, whose update path already carries the survivors across; it does not
 rewrite the description or the title itself. This holds for tools added later as well as
-the three named above: a new tool may claim a delimited section of its own, and claims nothing
-else.
+the three named above: a new tool may claim a delimited section, stating who else writes
+it and with what rights, and claims nothing else.
 
 ## Scrub the text, and name a key rather than its value
 
@@ -71,6 +78,14 @@ Any section a tool generates into a PR body will be generated again — by the n
 the next commit, or after the verdict changes. Without delimiters the second run appends, and
 a body that holds two verdicts oldest-first is how a stale "Verified" outlives the run that
 retracted it. The reader takes the first one they meet as current.
+
+**The same verdict is stranded by a tool that changes the code and writes no section.** The
+filter below only replaces a section on the next run that writes one, so a fix applied after
+a verification was published leaves it attesting to a tree that no longer exists — and a
+reader takes it as current for the same reason. A tool that edits code where a published
+section may exist therefore reads the body for the markers and says the verdict is stale,
+naming what would refresh it. That is this failure reached from the other direction, and no
+delimiter prevents it.
 
 **The marker name is `verify:start` / `verify:end`, spelled exactly that way.** One literal, named
 here, used verbatim by every tool that writes a verification section — `wtf-code-verify` and

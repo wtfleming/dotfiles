@@ -146,9 +146,7 @@ Omit **Noticed in passing** if there is nothing in it.
 is thin. Every suggestion you wrote is a claim about code outside the diff —
 that the repo already has this, that no second caller will pass a second value,
 that the second call site will be awkward — and none of them can be supported
-from the diff alone. The author is being asked to weigh advice from a reviewer
-who was denied their intent on purpose; the width of the read is what is left to
-weigh it by. All five entries appear every time, in that order:
+from the diff alone. All five entries appear every time, in that order:
 
 - **Read whole** — the files you opened end to end, not as hunks
 - **Followed out** — call sites and callers you actually opened outside those
