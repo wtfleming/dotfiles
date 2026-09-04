@@ -313,7 +313,10 @@ and PR forms, and why each of these earns its place:
   nothing. Tear the worktrees down:
   `~/.claude/skills/wtf-code-verify/scripts/baseline-worktree.sh remove`.
 - **PR description** — whether the title and body still describe the change, or what
-  drifted. Only when the scope is a PR.
+  drifted. Only when the scope is a PR. Report the drift; do not fix it. Rewriting the
+  title or the description is `/wtf-create-pr`'s update path — this skill writes only its
+  own verification section — and naming what drifted precisely is what that command needs.
+  See `references/evidence.md`.
 
 **Every line in the report is either something you observed or is marked as inference.**
 The verdict has a probe behind it by construction, and the raw capture is on disk — but
@@ -331,9 +334,27 @@ checked things; a sentence in it that was reasoned rather than run borrows that 
 without earning it, and is indistinguishable from the ones that did.
 
 Write the PR verification section to the scratch directory with the template in
-`evidence.md`, tell the user the path, and offer to post it — appended to the PR body or
-as a comment via `gh`. Ask before posting: it is public and outward-facing, and a
-verification section landing on the wrong PR is worse than none at all.
+`evidence.md`, tell the user the path, and offer to post it. Ask before posting: it is
+public and outward-facing, and a verification section landing on the wrong PR is worse
+than none at all.
+
+**It goes in the PR body, between the `verify:start` / `verify:end` markers.** The
+audience is the human about to review the diff, and the description is where they already
+look — a comment competes with every thread and bot on the PR and scrolls away from the
+code it is about. The markers make the write repeatable: a rerun replaces the section
+rather than leaving a second verdict under the first. `evidence.md` has the channel rules
+and when to fall back to a comment.
+
+**That section is the only thing this skill writes.** Not the title, not the description —
+where either has drifted, this skill reports it and `/wtf-create-pr` fixes it. Beyond that
+section, a run changes nothing outside its own scratch directory and the worktrees it tears
+down. What the write may and may not touch is the reference's rule, not restated here.
+
+Post the whole section rather than the verdict line. The reviewer is the audience: they
+are about to read this diff, and what they can use is which expectations were probed, the
+discriminator that makes each result mean something, and — most of all — what the probes
+did **not** cover. A bare "Verified ✅" tells them a run happened and gives them nothing to
+review with, while reading as a broader endorsement than the run earned.
 
 ## 9. Offer to promote the probes
 

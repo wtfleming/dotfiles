@@ -10,6 +10,27 @@ This file is the single statement of the guards that apply to all three. Each on
 rather than restating them, so a fix lands once. Nothing below is about *what* to say; it is
 about the four ways an otherwise correct message goes wrong on the way out.
 
+**Who may write what.** A PR has three places to write, and they are owned separately
+because a rewrite replaces rather than appends and `gh pr edit` has no compare-and-swap
+(see below), so what a tool is allowed to overwrite has to be text it wrote itself.
+
+- **The title** — `/wtf-create-pr` only. It becomes the permanent commit subject on a
+  squash merge, there is nowhere in it to delimit a generated section, and so a write is
+  replace-or-nothing on a line that outlives the PR.
+- **The author's prose in the body** — `/wtf-create-pr` only. That is the description of
+  the change, and it is the author's account of their own work.
+- **A delimited generated section in the body** — the tool that generates it, replacing
+  its own section and carrying every byte outside the markers across untouched. That is
+  what the section below is for, and it is why `wtf-code-verify` writes its verification
+  section into the body rather than only commenting: a reviewer opening the PR reads the
+  description, while a comment competes with every thread and bot on it.
+
+A tool that finds the *description* stale therefore **reports the drift and names
+`/wtf-create-pr`**, whose update path already carries the survivors across; it does not
+rewrite the description or the title itself. This holds for tools added later as well as
+the three named above: a new tool may claim a delimited section of its own, and claims nothing
+else.
+
 ## Scrub the text, and name a key rather than its value
 
 The output these tools quote is deliberately unfiltered where it was captured: a probe's raw
@@ -89,8 +110,9 @@ awk '
 #
 # This narrows that window; it does not close it. `gh pr edit` exposes no ETag or
 # version precondition, so there is no compare-and-swap to be had here and an edit
-# landing between this check and the write is still lost. Treat it as best effort,
-# and prefer appending a comment over rewriting a body that changes often.
+# landing between this check and the write is still lost. Treat it as best effort:
+# where this check keeps tripping, the body is being edited faster than a
+# read-modify-write can land, so post a comment instead rather than forcing it.
 gh pr view <n> --json body -q .body > "$OUT/body.now" \
   || { echo "could not re-read the body; not writing" >&2; exit 1; }
 cmp -s "$OUT/body.raw" "$OUT/body.now" \
@@ -114,10 +136,15 @@ published as a verdict inside a matched pair of markers.
 A body gets rewritten; a comment does not. That asymmetry decides where a thing belongs.
 
 The body holds the description of the change, because that is what a later run can reproduce
-from the diff. Anything that cannot be reproduced belongs in a comment — an attachment, a
+from the diff — and, by the ownership rule above, a generated section a rerun regenerates
+the same way. Anything that cannot be reproduced belongs in a comment — an attachment, a
 stack trace someone pasted, a reviewer's added note, a decision recorded in prose. A comment
 is timestamped and attributable, it survives every rewrite of the body, and superseding it
 later is a second comment rather than a silent overwrite of someone else's text.
+
+The test is regenerability, not who is reading. A verification section goes in the body
+because the next run rebuilds it from its own probes; the raw capture it quotes stays in
+scratch, and a human's paste of that capture stays in a comment.
 
 Two consequences worth stating, because they are where this gets applied wrong:
 

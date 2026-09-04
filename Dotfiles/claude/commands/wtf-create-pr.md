@@ -553,7 +553,17 @@ is the exact defect pre-flight's fetch exists to catch, arriving after the check
 
 **On the update path this section still applies.** An existing open PR routes to
 `gh pr edit` rather than `gh pr create`, and the no-ask contract covers it: a regenerated
-body replaces the live one without anyone approving the replacement. That is a heavier act
+body replaces the live one without anyone approving the replacement.
+
+This path is also where the other tools land. `~/.claude/reference/github-publishing.md`
+makes this command the only one that writes the title or the author's prose in the body —
+another tool may replace a delimited section of its own, and nothing else — so
+`wtf-code-verify`, and anything added later that finds the description stale, reports the
+drift and names this command rather than rewriting the description itself. A run that arrives that way is an
+update like any other, with one difference worth honouring: the drift has already been
+named, so say which of the named claims the new wording fixes. Regenerating the body and
+leaving the author to re-diff it against a report they already read is the round trip the
+handoff exists to save. That is a heavier act
 than opening a PR, because what it overwrites may be someone else's — so print the live body
 alongside the new one and say what is being dropped, before the edit rather than after. The
 carry-across rules in `~/.claude/reference/github-publishing.md` are what stop the loss; the
@@ -588,5 +598,10 @@ repo's conventions say to.
 
 - Push to the default branch.
 - Put AI or assistant attribution in the title, the body, or a commit message.
+- **Put a review severity in the title.** No `Critical`, `Warning` or `Suggestion`, and no
+  count of them. The title becomes the permanent commit subject, and a severity is a fact
+  about a review that ran once against one commit, not about the change — so it is wrong in
+  `git log` the moment the finding is fixed, which is usually before the merge. Review
+  findings belong in comments on the PR, where `/wtf-code-review` posts them.
 - Include a work email address, an internal hostname, or a credential — public repo, hard
   rule, and the reference file has the detail.
