@@ -293,10 +293,6 @@ scope_out_dir() {
   echo "${tmp%/}/wtf-scope/$(basename "$root")-$(hash12 "$root")/${slug}-$(hash12 "${scope:-auto}")"
 }
 
-# Sets SHAPE, and PR_NUMBER for a pull request. Assigns to globals rather than echoing,
-# because `shape="$(scope_shape_of ...)"` runs in a subshell, and every `warn` raised in
-# here would be appended to a copy of WARNINGS that is discarded when it returns.
-#
 # A phrase that names the default scope rather than a revision. `/wtf-code-review this
 # branch` is the natural way to ask for the default, and the argument-hint teaches the
 # vocabulary -- it offers "branch" and describes the default as "else the branch" -- but
@@ -321,6 +317,10 @@ is_default_scope_phrase() {
   return 1
 }
 
+# Sets SHAPE, and PR_NUMBER for a pull request. Assigns to globals rather than echoing,
+# because `shape="$(scope_shape_of ...)"` runs in a subshell, and every `warn` raised in
+# here would be appended to a copy of WARNINGS that is discarded when it returns.
+#
 # `scope` has already been rewritten to a repo-relative path by the caller where it named
 # one. Order matters: a PR before a ref because bare digits almost never name one, a ref
 # before a path because that is git's own convention, a path last.

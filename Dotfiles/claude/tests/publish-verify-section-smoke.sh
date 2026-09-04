@@ -6,9 +6,12 @@
 # it lived as a fenced code block in a markdown reference, nothing could reach it:
 # the linter only sees *.sh, and neither other smoke test touches it.
 #
-# The two cases that motivated extracting it are `quoted markers` -- a body that quotes
-# this mechanism inside a fence, whose lines are not ours to delete -- and `mid-body`,
-# where a section must be replaced where it sits rather than reappearing at the end.
+# Three cases motivated extracting it. `quoted markers` -- a body that quotes this
+# mechanism inside a fence, whose lines are not ours to delete. `mid-body` -- a section
+# must be replaced where it sits rather than reappearing at the end. And a section that
+# itself contains a fence, which is the canonical shape and the one this suite missed on
+# its first pass: every fixture was a single line, so a leak that moved a replaced
+# section's backticks out into the author's prose passed as green.
 
 set -Eeuo pipefail
 
@@ -105,6 +108,59 @@ check "the quoted marker is still inside the fence" ok \
 check "quoted verdict line survives" 1 "$(grep -c '\*\*Verdict.\*\* Verified.' "$WORK/quoted.out")"
 check "trailing prose survives" 1 "$(grep -c 'That is the shape.' "$WORK/quoted.out")"
 check "new section appended" 1 "$(grep -c 'New verdict: verified.' "$WORK/quoted.out")"
+
+echo "case: a section containing a fenced block -- the canonical shape"
+# The shape that matters is a fence *inside* the section: references/evidence.md's template
+# wraps its raw output in one, inside <details>, so this is what a real run merges. Every
+# other fixture here is a single line, which is why the fence leak below shipped once.
+# Fixture built rather than sliced out of evidence.md: the property under test is "the
+# section contains a fence", and a line range into another file goes stale silently.
+cat > "$WORK/fenced.md" <<'EOF'
+## Verification
+
+**Verdict.** Verified.
+
+<details><summary>Raw output</summary>
+
+```
+200 OK
+```
+
+</details>
+EOF
+check "merge lands" 0 "$(merge_status "$WORK/plain.body" "$WORK/fenced.md" "$WORK/fenced.out")"
+check "body line survives" 1 "$(grep -c 'Rework the thing.' "$WORK/fenced.out")"
+check "exactly one live section" 1 "$(grep -c 'verify:start' "$WORK/fenced.out")"
+check "the section's fence is inside the markers" ok \
+  "$(awk '/verify:start/ {s=NR} /^[ \t]*```/ && !f {f=NR} /verify:end/ {e=NR} END {print (s && f && e && s < f && f < e) ? "ok" : "escaped"}' "$WORK/fenced.out")"
+
+echo "case: replacing a live fenced section does not move its fences out"
+cat > "$WORK/livefence.body" <<'EOF'
+## Summary
+
+keep me
+
+<!-- verify:start -->
+## Verification
+
+```
+secret excerpt
+```
+<!-- verify:end -->
+
+## Checklist
+
+- [ ] docs updated
+EOF
+check "merge lands" 0 "$(merge_status "$WORK/livefence.body" "$WORK/section.md" "$WORK/livefence.out")"
+check "the old section's content is gone" 0 "$(grep -c 'secret excerpt' "$WORK/livefence.out" || true)"
+# The leak: the replaced section's backtick lines reappeared below verify:end, above the
+# author's heading, as a stray empty fence in a public PR body.
+check "no fence survives outside the markers" 0 \
+  "$("$PUBLISH" strip "$WORK/livefence.out" | grep -c '^[[:space:]]*```' || true)"
+check "the author's heading survives" 1 "$(grep -c '## Checklist' "$WORK/livefence.out")"
+check "strip removes a live fenced section whole" 0 \
+  "$("$PUBLISH" strip "$WORK/livefence.body" | grep -c 'secret excerpt' || true)"
 
 echo "case: refuses a body it cannot act on"
 printf 'a\n<!-- verify:start -->\nx\n<!-- verify:end -->\nb\n<!-- verify:start -->\ny\n<!-- verify:end -->\nc\n' > "$WORK/doubled.body"

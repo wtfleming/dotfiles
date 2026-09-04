@@ -209,8 +209,8 @@ cheapest first — pick one per claim:
    that is meant to be undone, and an unannounced edit to their checkout is
    indistinguishable from a bug in whatever they were working on. The other two writes
    there, §7's fix and §9's promoted tests, are meant to stay; this one is restored
-   byte-for-byte below, so leaving it behind is the failure. Then copy the file byte-for-byte before
-   touching it and copy it back afterwards —
+   byte-for-byte below, so leaving it behind is the failure. Then copy the file
+   byte-for-byte before touching it and copy it back afterwards —
    `cp <path> "$OUT/pre-break"` … `cp "$OUT/pre-break" <path>` — which restores exactly what
    was there without asking git what it thinks the file should look like. A break left
    behind survives an interrupted run as an uncommitted edit nobody attributes, and the next
@@ -354,6 +354,15 @@ check for whose PR it is, and when to fall back to a comment.
 That boundary is about outward-facing writes and nothing more. Inside the repo this skill
 writes at three steps, each on a yes from the user: §4 breaks a file in place and restores
 it, §7 offers a fix to tracked source, and §9 writes promoted tests into the project.
+
+**Which is why declining to post has one more consequence.** Editing code where a published
+section may already exist obliges the tool to say that verdict is now stale — the rule in
+`~/.claude/reference/github-publishing.md`, which names this skill among the tools it binds.
+Posting satisfies it, because the section that goes up replaces the stale one. Fixing at §7
+and then *not* posting does not: the code has moved and the live section still reads as
+current. So on that path, read the body for a `<!-- verify:start -->` section and say it is
+stale, the same as a review command would — and where the read fails rather than coming back
+without markers, say that instead.
 
 Post the whole section rather than the verdict line. The reviewer is the audience: they
 are about to read this diff, and what they can use is which expectations were probed, the

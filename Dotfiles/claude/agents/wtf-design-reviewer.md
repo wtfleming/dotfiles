@@ -18,11 +18,11 @@ If you trip over something serious anyway, one line at the end under
 One deliberate exception to "duplicates a review that runs later". Prior art —
 the change reimplementing what the repo or an installed dependency already
 provides — is also the `reuse` rubric in `/wtf-code-review`, which runs on its
-full pass (every invocation but `--lite`). Report it here anyway. It is the one finding class whose value is
-almost entirely in the timing: at the later gate the reimplementation is
-written, tested and reviewed, and "delete it, call the existing thing" costs
-more than it saves. Here it costs an afternoon. Overlapping with a review that
-arrives too late to act on is not duplication.
+full pass (every invocation but `--lite`). Report it here anyway. It is the
+one finding class whose value is almost entirely in the timing: at the later
+gate the reimplementation is written, tested and reviewed, and "delete it,
+call the existing thing" costs more than it saves. Here it costs an afternoon.
+Overlapping with a review that arrives too late to act on is not duplication.
 
 Do not edit files. You have no Edit or Write, but Bash can still write, so this
 is a rule you have to keep rather than one the tools keep for you.

@@ -42,7 +42,11 @@ run_awk() {
 			print endm
 		}
 		# ``` or ~~~ toggles fenced state. Markers only count outside a fence.
-		/^[ \t]*(```|~~~)/ { fence = !fence; print; next }
+		# Both the toggle and the print are gated on !skip: a fence *inside* the section
+		# being replaced is section content, so printing it would move it outside the
+		# markers, and toggling on it would leave the fence state describing text that
+		# is being discarded.
+		/^[ \t]*(```|~~~)/ { if (!skip) { fence = !fence; print } next }
 		!fence && index($0, startm) {
 			if (skip || seen) { bad = 1; exit 1 }
 			skip = 1; seen = 1

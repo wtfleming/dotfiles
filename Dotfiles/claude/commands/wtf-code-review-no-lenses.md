@@ -596,9 +596,13 @@ What this check does not cover, so it is not mistaken for more than it is:
 verification is stale, naming what would refresh it (`wtf-code-verify` on the branch as it
 now stands). Where the read fails rather than coming back without markers, say **could not
 check for a published verification section** — an absent marker and an unreadable body are
-different facts, and only one of them is good news. Bound the call the way
-`resolve-scope.sh` bounds its own: `gh` sets no client timeout, and this read fires at the
-very end of a long run. The mechanism, why no delimiter catches
+different facts, and only one of them is good news. The read is deliberately unbounded,
+unlike `resolve-scope.sh`'s own `gh` calls: bounding means a `timeout`/`gtimeout` prefix,
+and a grant matches on the command prefix — so `Bash(timeout:*)` would license
+`timeout`-prefixed *anything*, far wider than the one read it protects. A narrow grant for
+a fixed command is worth more than the bound here, since `gh` setting no client timeout
+means a hung read stalls visibly at the end of the run where it can be interrupted, while
+a broad grant is permanent. The mechanism, why no delimiter catches
 this, and where the note belongs when findings are being posted are in
 `~/.claude/reference/github-publishing.md`, which names this command among the tools the
 rule binds.

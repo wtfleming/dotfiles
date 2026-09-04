@@ -96,9 +96,16 @@ direction, and no delimiter prevents it.
 
 A tool that edits code where a published section may exist therefore reads the body for the
 markers and says the verdict is stale, naming what would refresh it. **The tools this binds
-today are `/wtf-code-review`, `/wtf-code-review-no-lenses` and `wtf-deslop`** — named rather
-than left as a class, because a class with no membership list gets wired into whichever
-members someone remembers. Add a tool to that list when it starts editing code.
+today are `/wtf-code-review`, `/wtf-code-review-no-lenses`, `wtf-deslop` and
+`wtf-code-verify`** — named rather than left as a class, because a class with no membership
+list gets wired into whichever members someone remembers. Add a tool to that list when it
+starts editing code.
+
+`wtf-code-verify` is on it for the case that looks like an exemption and is not. It writes
+the section itself, so a run that posts has already replaced any stale one — but it also
+edits code at three steps, and posting is an offer the user can decline. Fix a defect at §7,
+decline the offer at §8, and the code has changed with no section written: the condition
+above, reached by the one tool that could have refreshed it.
 
 Two things that rule needs to be worth having:
 
@@ -106,8 +113,11 @@ Two things that rule needs to be worth having:
   empty on a rate limit, a 502 or a permission it was never granted, and the marker is then
   absent for a reason that has nothing to do with the PR. Report *could not check for a
   published verification section* rather than silence, which is indistinguishable from a
-  clean result — the same distinction the merge below fails loudly to preserve. Bound the
-  call, too: `gh` sets no client timeout, and this read fires at the end of a long run.
+  clean result — the same distinction the merge below fails loudly to preserve. Leave it
+  unbounded: a bound means a `timeout`/`gtimeout` prefix, grants match on the command
+  prefix, and `Bash(timeout:*)` licenses `timeout`-prefixed anything — a far wider grant
+  than the read it protects. A hung `gh` stalls visibly at the end of a run and can be
+  interrupted; a broad grant cannot be taken back.
 - **Say it where the stale text is.** The section stays live on the PR while the notice
   lands in a terminal the reviewer reading that verdict never sees. Where the run is
   already posting to the PR, the staleness note goes up with it as its own comment — the
