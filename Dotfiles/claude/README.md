@@ -320,8 +320,9 @@ than loud: without the fetch, a branch pushed from another machine reads as in-s
 the remote head carries commits the body never describes; and on a detached HEAD the branch
 name is empty, which `gh pr list --head ""` treats as *no filter* rather than *no match* —
 it returns every PR in the repo, and the existing-PR check then reports a stranger's PR as
-this branch's. The push itself is named as the irreversible step, since it happens in
-pre-flight and the confirmation gate later covers only the title and body.
+this branch's. The push is the irreversible step, so it is deferred out of pre-flight to sit
+next to `gh pr create`: composition can still fail after the checks pass, and pushing early
+would leave the branch public with no PR pointing at it.
 
 The part that actually finds things is drift — prose that was true when it was written and
 stopped being true while the branch moved. Three axes: documentation describing the changed
@@ -335,7 +336,11 @@ had time to go stale, and the honest output is one line saying so: a check that
 manufactures findings to look useful spends the next real finding's credibility.
 
 None of it is a gate. "The bot has not reviewed the tip" is information for the author, not
-grounds to refuse — it reports, then opens.
+grounds to refuse — it reports, then opens. Nor does it stop to ask for a yes: it prints the
+title, body, refs and attachments and then opens, so the composition is there to read
+without the PR waiting on anyone. The one thing that does stop it is a file on the branch
+whose *name* looks like a credential, because with nobody in the loop there is no later
+point at which someone sees that filename before it is public.
 
 The title gets judged separately from its conventional-commit prefix, because on a squash
 merge it becomes the permanent commit subject on the default branch and a `fix:` that grew
