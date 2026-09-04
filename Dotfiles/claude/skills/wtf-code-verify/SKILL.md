@@ -205,10 +205,18 @@ cheapest first — pick one per claim:
    a dirty file is reachable here.
 
    Break inside a worktree you can throw away. If it genuinely has to be in place, **name
-   the file and get the user's agreement before editing it** — this is the only step in the
-   skill that writes to their own checkout, and an unannounced edit there is indistinguishable
-   from a bug in whatever they were working on. Then copy the file byte-for-byte before
-   touching it and copy it back afterwards —
+   the file and get the user's agreement before editing it** — the only edit in this skill
+   that is meant to be undone, and an unannounced edit to their checkout is
+   indistinguishable from a bug in whatever they were working on. The other two writes
+   there, §7's fix and §9's promoted tests, are meant to stay; this one is restored
+   byte-for-byte below, so leaving it behind is the failure. **Arrange the restore before
+   you make the edit, not after the probe** — a `trap ... EXIT` in the shell that does it,
+   or an equivalent that survives the probe failing, a later command exiting and the run
+   being interrupted. "Copy it back afterwards" describes the happy path only, and the
+   paths that skip it are exactly the ones where a broken file is left in the user's
+   checkout and committed with the next change. Then `cmp` the restored file against the
+   copy and say so, because a restore that silently did not happen looks identical to one
+   that did. Copy the file byte-for-byte before touching it and copy it back —
    `cp <path> "$OUT/pre-break"` … `cp "$OUT/pre-break" <path>` — which restores exactly what
    was there without asking git what it thinks the file should look like. A break left
    behind survives an interrupted run as an uncommitted edit nobody attributes, and the next
@@ -296,9 +304,14 @@ last move is the worst outcome this method can produce.
 
 **Falsified is a success for this process.** Finding it now is the entire point of
 running before the PR. Report the failure with its reproduction first, then offer to fix
-it and re-verify — ask; do not assume. If you do fix and re-run, the report says the
-verdict describes post-fix code and quotes the original failure verbatim. A report
-showing only the final green run has erased the most valuable thing the run produced.
+it and re-verify — ask; do not assume. If you do fix and re-run, the **terminal** report
+says the verdict describes post-fix code and quotes the original failure verbatim. A
+report to the author showing only the final green run has erased the most valuable thing
+the run produced.
+
+The PR section is the other audience and takes the opposite rule: it describes the code
+as it now stands and leaves the failure out, because the fix is a commit in the branch
+the reviewer is already reading. `references/evidence.md` has both forms.
 
 ## 8. Report
 
@@ -313,7 +326,9 @@ and PR forms, and why each of these earns its place:
   nothing. Tear the worktrees down:
   `~/.claude/skills/wtf-code-verify/scripts/baseline-worktree.sh remove`.
 - **PR description** — whether the title and body still describe the change, or what
-  drifted. Only when the scope is a PR.
+  drifted. Only when the scope is a PR. Report the drift; do not fix it.
+  `references/expectations.md` has what makes that report actionable for the command
+  that does.
 
 **Every line in the report is either something you observed or is marked as inference.**
 The verdict has a probe behind it by construction, and the raw capture is on disk — but
@@ -331,9 +346,35 @@ checked things; a sentence in it that was reasoned rather than run borrows that 
 without earning it, and is indistinguishable from the ones that did.
 
 Write the PR verification section to the scratch directory with the template in
-`evidence.md`, tell the user the path, and offer to post it — appended to the PR body or
-as a comment via `gh`. Ask before posting: it is public and outward-facing, and a
-verification section landing on the wrong PR is worse than none at all.
+`evidence.md`, tell the user the path, and offer to post it. Ask before posting: it is
+public and outward-facing, and a verification section landing on the wrong PR is worse
+than none at all.
+
+**It goes in the PR body, between the `verify:start` / `verify:end` markers** — that
+section, and **nothing else on the PR**. Not the title, not the description: where either
+has drifted, report it and `/wtf-create-pr` fixes it. Why the body rather than a comment,
+and what a write there may and may not touch, are the ownership rule in
+`~/.claude/reference/github-publishing.md`; `evidence.md` has the channel mechanics, the
+check for whose PR it is, and when to fall back to a comment.
+
+That boundary is about outward-facing writes and nothing more. Inside the repo this skill
+writes at three steps, each on a yes from the user: §4 breaks a file in place and restores
+it, §7 offers a fix to tracked source, and §9 writes promoted tests into the project.
+
+**Which is why declining to post has one more consequence.** Editing code where a published
+section may already exist obliges the tool to say that verdict is now stale — the rule in
+`~/.claude/reference/github-publishing.md`, which names this skill among the tools it binds.
+Posting satisfies it, because the section that goes up replaces the stale one. Fixing at §7
+and then *not* posting does not: the code has moved and the live section still reads as
+current. So on that path, read the body for a `<!-- verify:start -->` section and say it is
+stale, the same as a review command would — and where the read fails rather than coming back
+without markers, say that instead.
+
+Post the whole section rather than the verdict line. The reviewer is the audience: they
+are about to read this diff, and what they can use is which expectations were probed, the
+discriminator that makes each result mean something, and — most of all — what the probes
+did **not** cover. A bare "Verified ✅" tells them a run happened and gives them nothing to
+review with, while reading as a broader endorsement than the run earned.
 
 ## 9. Offer to promote the probes
 

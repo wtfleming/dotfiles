@@ -129,6 +129,28 @@ alternative and what it buys; "consider making this more modular" is banned by
 the agent's own rules. It does not run tests or the linter — mid-work they are
 allowed to be red — and it does not hunt bugs.
 
+It reports as **Coverage** how widely it read — files opened whole, call sites
+followed, where it went looking for prior art, which repo rules it read, and
+what adjacent code it left unread. Every suggestion is a claim about code
+outside the diff, so that width is what the author weighs them by, and the
+section is printed even when the verdict is that the shape is sound.
+
+**It does overlap `/wtf-code-review`, on purpose, in one place.** Prior art is
+also the `reuse` rubric, which runs on the full pass, so a branch put through
+both may hear it twice. That is intended rather than wasteful, and the reason —
+timing is almost all of that finding's worth — is argued in the agent's own
+rules, where it has to be, since that is what stops the reviewer deferring the
+finding to the later review.
+
+Two of its other targets have no rubric row at all: an interface that will be
+awkward at the second call site, and a hardcoded decision the next caller needs
+parameterised — or its inverse, a parameter nothing will pass a second value
+to. Speculative generality is nobody's lens. Irreversibility is the mixed case:
+`dependencies` already covers migrations, config formats and breaking public
+interfaces, so what the design reviewer adds there is the rest of the class —
+a name taken in a shared namespace, a shape that becomes an interface by
+accident.
+
 ### The agents
 
 | Agent | Role |
@@ -379,7 +401,10 @@ references without closing.
 It shows the title and body before anything is public, and stops after reporting the URL.
 
 `~/.claude/reference/github-publishing.md` holds the guards that apply to all three tools
-that write outward — scrubbing text, looking at every image, delimiting a generated section
-so a rerun replaces it instead of stacking a second verdict below the first, and keeping
-what cannot be regenerated in a comment rather than in a body that will be. Extracted
-rather than written a third time, so a fix lands once.
+that write outward: who may write which part of a PR, scrubbing text, looking at every
+image, delimiting a generated section so a rerun replaces it instead of stacking a second
+verdict below the first, and keeping what cannot be regenerated in a comment rather than in
+a body that will be. Extracted rather than written a third time, so a fix lands once. The
+first of those is the one the other tools cross-reference most — the title and the author's
+prose are `/wtf-create-pr`'s alone, a delimited section belongs to whoever writes it, and a
+tool that finds the description stale reports the drift rather than repairing it.

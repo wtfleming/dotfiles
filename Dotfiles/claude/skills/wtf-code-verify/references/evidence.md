@@ -65,10 +65,27 @@ failure". Write the bytes down first, read them second.
 Paste under the change summary. Keep it short — a reviewer should be able to tell in
 fifteen seconds whether the claim was actually tested, and by what.
 
+**It describes the code, not the run that got there.** Every row states what the code in
+this PR does now. A defect this run found and fixed does not appear: the fix is a commit
+in the branch, so the diff already carries it, and narrating it here duplicates what the
+reviewer is about to read while leaving them to work out whether the ❌ still applies.
+
+The test is which before-and-after a sentence is about. Against the base branch it is the
+change itself and belongs here — "the resolver now returns 400" is what the PR is for.
+Against an earlier state of this same branch it is the run's history, and a row carrying
+an ❌ for code that no longer exists is the clearest case: it reads as a defect the
+reviewer should look for.
+
+That history is not thrown away, it is addressed to someone else. The author gets it in
+the terminal report, where a defect caught before the merge is the most valuable thing
+the run produced; the reviewer gets the state of the code they are being asked to
+approve. The one exception is a claim still unproven at the end — a gap, an environmental
+failure, a non-deterministic probe — which is a fact about this code and belongs here.
+
 ````markdown
 ## Verification
 
-**Verdict.** Verified with gaps — 3 of 4 expectations met, 1 defect found and fixed in `a91c` (see below).
+**Verdict.** Verified with gaps — 4 of 4 expectations met against this code; one path went unexercised (see **Not covered**).
 
 **Scope.** `feat/archived-posts` vs merge-base `2427dfb` — 4 files
 **Verified at.** `5544ef1` — the commit the probes actually ran against
@@ -78,7 +95,7 @@ fifteen seconds whether the claim was actually tested, and by what.
 | - | ----------- | ------------- | ------ |
 | 1 | editor with `includeArchived: true` sees archived id 7 | flag off → id 7 absent | ✅ 200, id 7 present |
 | 2 | anonymous caller is refused | valid session → 200 | ✅ 401 `UNAUTHENTICATED`, no `data.posts` |
-| 3 | `includeArchived: "banana"` → 400, field-level error | valid value → 200 | ❌ 500 `Boolean cannot represent a non boolean value` — fixed in `a91c`, now 400 |
+| 3 | `includeArchived: "banana"` → 400, field-level error | valid value → 200 | ✅ 400 `BAD_USER_INPUT`, error names the field |
 | 4 | `posts` with no new argument is unchanged | baseline `2427dfb` | ✅ byte-identical response |
 
 <details><summary>Raw output</summary>
@@ -169,24 +186,46 @@ real `.env` symlinked in, so assume the raw bytes carry a live credential; and f
 at *capture* time is still wrong — that is what launders a compile failure into "the
 expected failure" — which is why the scrub happens at this step and not the earlier one.
 
+**The body is the default channel**, for the reasons the reference gives under **Who may
+write what**. The merge is a script, not a recipe to retype —
+`~/.claude/scripts/publish-verify-section.sh merge <body> VERIFICATION.md <out>`, wrapped in
+the read and lost-update guards the reference shows. It replaces the section where it sits,
+leaves a marker the author only quoted alone, and refuses any merge that would touch a byte
+outside the section.
+
+**Establish whose PR it is before choosing the channel.** `gh pr view <n> --json
+author,headRepositoryOwner` — the field `/wtf-create-pr` already keys on for its own
+purposes. Nothing else in a verify run reads it: the drift check fetches
+`title,body,createdAt,commits,reviews,comments` and the resolver captures only
+`headRefOid`, so the manifest carries no ownership fact, and the execution gate never fires
+on a prose-claim run that needs no boot. Without the check the default channel is a
+read-modify-write over a contributor's own description. Say whose PR it is in the offer.
+
 ```bash
-gh pr comment <n> --body-file VERIFICATION.md      # a comment, reversible
+gh pr comment <n> --body-file VERIFICATION.md      # the fallback, and reversible
 ```
 
-Into the body instead: use the marker recipe in `~/.claude/reference/github-publishing.md`
-verbatim, with `VERIFICATION.md` as its `SECTION.md`. It is not repeated here on purpose —
-the copy that used to sit at this spot drifted from the one in the reference, and the failure
-mode of a stale copy is a filter that deletes whatever the author wrote below the section.
-The markers are `verify:start` / `verify:end`, which the reference names and every tool that
-writes this section shares.
+Fall back to a comment where the body is not available to write or not the right place for
+it: someone else's PR, a body the merge refused (doubled or out-of-order markers, or a
+change that would reach outside the section), a tripped lost-update check, or a user who
+asks for a comment. Say which channel was used, since the two are read differently — a
+comment is timestamped and attributable, a body section reads as current.
 
-Prefer a comment unless the user asks for the body: a verdict that a later run may retract
-is better timestamped and superseded than silently overwritten.
+**On a refusal, name the state you left behind.** Every refusal except "the user asked for a
+comment" means the live body is *already* wrong — a half-section, two verdicts oldest-first,
+or a section the merge would not touch — and the new verdict has just gone somewhere else. A
+reviewer opening that PR reads the body's older verdict as current, and the guard's own
+message went to stderr where nobody sees it. So report that the body still holds an
+unreconciled `verify:start` section that reads as current and needs a hand fix, alongside
+which channel was used. A run that recovered itself and left the PR misleading has not
+finished.
 
-Where the description drifted, propose the new title and body, show both, and ask before
-`gh pr edit` — carrying the survivors across per the reference. On someone else's PR,
-report the drift and stop; the wording is theirs to fix. Composing a description from
-scratch is `/wtf-create-pr`'s job, not this one's.
+**Where the description drifted, report it and hand off.** Name what drifted — the claim
+in the title or body, and the code that contradicts it — and point at `/wtf-create-pr`,
+whose update path routes an existing PR to `gh pr edit` and carries the survivors across.
+Do not propose replacement wording here. On someone else's PR the wording is theirs to
+fix; on your own it is one command away, and the drift you found is what that command
+needs to hear.
 
 Re-read the verdict line before posting. Verification sections are read as endorsements,
 and a "verified with gaps" whose gaps are buried below a fold reads as an unqualified
@@ -196,8 +235,8 @@ pass.
 
 Lead with the verdict in one line, then the evidence, then the path to the files.
 
-> **Verified with gaps.** 3 of 4 expectations met; probe 3 found a real defect — the
-> coercion error surfaced as a 500 rather than a 400 — fixed in `a91c` and re-run green.
+> **Verified with gaps.** 4 of 4 met after the fix; probe 3 initially returned a 500 rather
+> than a 400 — a real defect, fixed in `a91c` and re-run green.
 > The admin override path went unexercised. Files in `<scratch>/code-verify/`, PR section
 > in `VERIFICATION.md`.
 

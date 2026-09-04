@@ -51,6 +51,13 @@ jobs:
       - name: baseline-worktree smoke test
         run: Dotfiles/claude/tests/baseline-worktree-smoke.sh
 
+      # publish-verify-section.sh rewrites a public PR description, so a wrong answer
+      # deletes prose the author wrote somewhere that notifies watchers and cannot be
+      # taken back. It lived as a fenced block in a markdown reference until now, where
+      # the shellcheck glob could not see it and no test could run it.
+      - name: publish-verify-section smoke test
+        run: Dotfiles/claude/tests/publish-verify-section-smoke.sh
+
       # A skill, agent or command whose YAML header does not parse registers wrong or
       # not at all, and nothing else here would notice -- shellcheck skips markdown and
       # jq only sees settings.json.

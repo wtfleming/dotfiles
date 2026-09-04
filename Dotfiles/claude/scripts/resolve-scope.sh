@@ -293,6 +293,30 @@ scope_out_dir() {
   echo "${tmp%/}/wtf-scope/$(basename "$root")-$(hash12 "$root")/${slug}-$(hash12 "${scope:-auto}")"
 }
 
+# A phrase that names the default scope rather than a revision. `/wtf-code-review this
+# branch` is the natural way to ask for the default, and the argument-hint teaches the
+# vocabulary -- it offers "branch" and describes the default as "else the branch" -- but
+# the phrase has a space in it, so the shape dispatch below reads it as a subject and the
+# caller runs the subject procedure against prose no file implements.
+#
+# The list is deliberately closed: it holds only phrases meaning *the default*, never one
+# describing a different scope. "the last three commits" and "the auth changes" are a
+# revision and a subject respectively and must stay that way, or this becomes a natural
+# language parser with no boundary.
+is_default_scope_phrase() {
+  # Lower-cased and trimmed, so trailing whitespace and capitals do not decide it.
+  local p
+  p="$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')"
+  case "$p" in
+    "this branch"|"the branch"|"current branch"|"the current branch") return 0 ;;
+    "this diff"|"the diff"|"this change"|"this changeset") return 0 ;;
+    "my changes"|"these changes"|"the changes"|"current changes") return 0 ;;
+    "working tree"|"the working tree"|"my working tree") return 0 ;;
+    "uncommitted"|"uncommitted changes") return 0 ;;
+  esac
+  return 1
+}
+
 # Sets SHAPE, and PR_NUMBER for a pull request. Assigns to globals rather than echoing,
 # because `shape="$(scope_shape_of ...)"` runs in a subshell, and every `warn` raised in
 # here would be appended to a copy of WARNINGS that is discarded when it returns.
@@ -777,6 +801,26 @@ cmd_resolve() {
     else
       scope="$prefix$scope"
     fi
+  fi
+
+  # After the ref-and-path tests above and before the out dir is keyed, so a repo that
+  # really has a branch or a file called `the branch` still resolves to it, and a phrase
+  # that survives to here lands on the same artifact directory a bare invocation would --
+  # it is the same scope, so it must not be a second cache entry. Announced rather than
+  # silent: the manifest will say nothing was named, and that is only true after this.
+  # `show-ref` rather than `rev-parse`, because the question here is only whether the name
+  # is taken. A ref that exists without being commit-ish -- a tag pointing at a blob -- and
+  # an *ambiguous* name, where both a branch and a tag carry it, both fail `rev-parse
+  # --symbolic-full-name` and `^{commit}`; they would then fall through to the phrase list
+  # and a named ref would be answered with the default instead of an error. Answering a
+  # different scope silently is the worst outcome this script has.
+  if [ -n "$scope" ] \
+    && ! git show-ref --quiet -- "$scope" 2>/dev/null \
+    && ! git rev-parse --verify --quiet "$scope^{commit}" >/dev/null 2>&1 \
+    && [ ! -e "$scope" ] \
+    && is_default_scope_phrase "$scope"; then
+    warn "'$scope' names the default scope, not a revision; resolving as if nothing were named"
+    scope=""
   fi
 
   out="$(scope_out_dir "$scope" "$root")"

@@ -31,7 +31,11 @@ and let the agent work out its own.
 
 Print the report verbatim when it returns. Do not re-rank it, soften it, or
 defend the code — you are relaying an independent review, not negotiating with
-it.
+it. The report closes with a **Coverage** section carrying five entries —
+**Read whole**, **Followed out**, **Prior art**, **Repo rules**, **Not opened**.
+If it is absent, or any of those five is, say which rather than filling them in:
+an unaccounted read is not a wide one. They are named here because this command
+has only the `Agent` tool and cannot read the agent's own copy of the list.
 
 Then stop. The suggestions are the author's to weigh — a design review is
 advice, not a mandate, and the author knows the constraints and sunk cost the

@@ -355,6 +355,98 @@ rc=0
 ( cd "$WORK/republish" && PATH="$stub:$PATH" "$RESOLVE" resolve --scope HEAD ) >/dev/null 2>&1 || rc=$?
 check "a jq system error leaves the script at 1, not 2" "1" "$rc"
 
+echo "== a phrase naming the default scope resolves as the default, not as a subject =="
+# `/wtf-code-review this branch` is the natural way to ask for the default, and the
+# argument-hint teaches the word "branch" -- but the phrase has a space, so before this it
+# hit the whitespace rule and the caller ran the subject procedure against prose no file
+# implements. The two collision cases matter more than the happy path: the guard has to let
+# a real ref or a real path win, or naming one becomes unreachable.
+scratch_repo "$WORK/deictic"
+commit "$WORK/deictic" a.txt one base
+(cd "$WORK/deictic" && git checkout -q -b feature && :)
+commit "$WORK/deictic" b.txt two feature
+
+# Captured whole and sliced afterwards, never piped straight out of the resolver: `head`
+# closes the pipe on its first line while the resolver is still writing its second, the
+# resolver takes EPIPE, and `pipefail` turns that into a suite-ending failure. Every case
+# above uses `tail -1`, which drains the stream and cannot trip it.
+first_line() { printf '%s\n' "$1" | sed -n '1p'; }
+bare_out=$(cd "$WORK/deictic" && "$RESOLVE" resolve 2>/dev/null)
+bare=$(first_line "$bare_out")
+# Pin the baseline before comparing anything to it. Every check below asserts that a phrase
+# resolves to the same line as a bare invocation, and two empty strings satisfy that just as
+# well as two real ones -- so a resolver that produced nothing at all would pass the whole
+# section. Assert the baseline is a scope line first, and the comparisons mean something.
+case "$bare" in
+  "git diff"*) echo "  ok    the bare baseline is a real scope line" ;;
+  *) echo "  FAIL  the bare baseline is a real scope line: got '$bare'" >&2
+     failures=$((failures + 1)) ;;
+esac
+for phrase in "this branch" "the branch" "my changes" "THE Working Tree " "uncommitted"; do
+  phrase_out=$(cd "$WORK/deictic" && "$RESOLVE" resolve --scope "$phrase" 2>/dev/null)
+  out=$(first_line "$phrase_out")
+  check "'$phrase' resolves as the bare default" "$bare" "$out"
+done
+# Announced, not silent: the manifest says nothing was named, which is only true after the
+# phrase has been translated.
+err_out=$(cd "$WORK/deictic" && "$RESOLVE" resolve --scope 'this branch' 2>&1 >/dev/null)
+err=$(first_line "$err_out")
+case "$err" in
+  *"names the default scope"*) echo "  ok    the translation is announced on stderr" ;;
+  *) echo "  FAIL  the translation is announced on stderr: got '$err'" >&2; failures=$((failures + 1)) ;;
+esac
+
+# A phrase describing some *other* scope is still a subject, which is the boundary that
+# keeps the list from growing into a natural-language parser.
+rc=0; (cd "$WORK/deictic" && "$RESOLVE" resolve --scope 'the last three commits' >/dev/null 2>&1) || rc=$?
+check "a phrase naming a different scope still exits 2" "2" "$rc"
+
+# Collision 1: a real branch wins. `uncommitted` is a legal refname, so this one is
+# reachable -- the space-bearing phrases are not, since git refuses spaces in a refname.
+(cd "$WORK/deictic" && git checkout -q -b uncommitted && :)
+commit "$WORK/deictic" c.txt three uncommitted
+ref_out=$(cd "$WORK/deictic" && "$RESOLVE" resolve --scope uncommitted 2>/dev/null)
+out=$(first_line "$ref_out")
+case "$out" in
+  *"merge-base main uncommitted"*) echo "  ok    a real branch named 'uncommitted' still wins" ;;
+  *) echo "  FAIL  a real branch named 'uncommitted' still wins: got '$out'" >&2; failures=$((failures + 1)) ;;
+esac
+
+# Collision 3: a ref that exists without being commit-ish. Reported on the PR: the guard
+# tested only `rev-parse --verify <scope>^{commit}`, so a tag pointing at a blob fell
+# through to the phrase list and `uncommitted` was answered with the default instead of an
+# error. A ref named on the command line must never resolve to a different scope silently.
+# Two shapes, and neither `rev-parse` test sees either: a tag pointing at a blob is not
+# commit-ish, and a name carried by both a branch and a tag is *ambiguous*, which makes
+# `--symbolic-full-name` fail as though no ref existed at all.
+(cd "$WORK/deictic" && git update-ref refs/tags/uncommitted "$(git -C "$WORK/deictic" hash-object -w a.txt)")
+rc=0; (cd "$WORK/deictic" && "$RESOLVE" resolve --scope uncommitted >/dev/null 2>&1) || rc=$?
+check "an ambiguous ref name is not translated to the default" 1 "$rc"
+(cd "$WORK/deictic" && git branch -D uncommitted >/dev/null 2>&1) || true
+rc=0; (cd "$WORK/deictic" && "$RESOLVE" resolve --scope uncommitted >/dev/null 2>&1) || rc=$?
+check "a non-commit ref is not translated to the default" 1 "$rc"
+noterr=$( (cd "$WORK/deictic" && "$RESOLVE" resolve --scope uncommitted 2>&1 >/dev/null) || true )
+case "$noterr" in
+  *"names the default scope"*) echo "  FAIL  a non-commit ref was translated to the default" >&2
+     failures=$((failures + 1)) ;;
+  *) echo "  ok    and it is not reported as a default-scope phrase" ;;
+esac
+(cd "$WORK/deictic" && git update-ref -d refs/tags/uncommitted)
+
+# Collision 2: a real path wins. Committed and then modified, so the path scope has a diff
+# to resolve and the run reaches a manifest rather than the empty-diff guard.
+scratch_repo "$WORK/deictic-path"
+commit "$WORK/deictic-path" "the branch" one base
+(cd "$WORK/deictic-path" && printf 'changed\n' >> "the branch")
+out=$(cd "$WORK/deictic-path" && "$RESOLVE" resolve --scope 'the branch' 2>/dev/null | tail -1)
+check "a real path named 'the branch' still wins" "1" "$(field "$out" .file_count)"
+patherr_out=$(cd "$WORK/deictic-path" && "$RESOLVE" resolve --scope 'the branch' 2>&1 >/dev/null)
+err=$(first_line "$patherr_out")
+case "$err" in
+  *"names the default scope"*) echo "  FAIL  a real path was translated to the default" >&2; failures=$((failures + 1)) ;;
+  *) echo "  ok    a real path is not translated" ;;
+esac
+
 if [ "$failures" -gt 0 ]; then
   echo "$failures check(s) failed" >&2
   exit 1

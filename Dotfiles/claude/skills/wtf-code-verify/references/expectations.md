@@ -214,9 +214,13 @@ anything from it — a conventional-commit prefix, a changelog section, a releas
 — a `fix:` that has grown into a `feat:` is not cosmetic. Judge the prefix separately
 from the wording, and say which one moved.
 
-**What a rewrite must not touch** — `Closes #123`, checklists, screenshots, template
-sections. The rule and its consequences live in `~/.claude/reference/github-publishing.md`,
-shared with the other tools that write to a PR.
+**You are establishing the drift, not repairing it** — the title and the description
+belong to `/wtf-create-pr`, per the ownership rule in
+`~/.claude/reference/github-publishing.md`. So what this section produces is a finding, and
+it is worth as much as it is specific: quote the claim, name the code that
+contradicts it, and say whether it is the prefix or the wording that moved. "The
+description has drifted" sends the next command back to re-derive everything you just
+established.
 
 ## Verifying a subject with no diff
 

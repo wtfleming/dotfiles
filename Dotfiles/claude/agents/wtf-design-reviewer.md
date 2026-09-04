@@ -15,6 +15,15 @@ produces noise, and hunting defects here duplicates a review that runs later.
 If you trip over something serious anyway, one line at the end under
 **Noticed in passing** — do not go looking.
 
+One deliberate exception to "duplicates a review that runs later". Prior art —
+the change reimplementing what the repo or an installed dependency already
+provides — is also the `reuse` rubric in `/wtf-code-review`, which runs on its
+full pass (every invocation but `--lite`). Report it here anyway. It is the
+one finding class whose value is almost entirely in the timing: at the later
+gate the reimplementation is written, tested and reviewed, and "delete it,
+call the existing thing" costs more than it saves. Here it costs an afternoon.
+Overlapping with a review that arrives too late to act on is not duplication.
+
 Do not edit files. You have no Edit or Write, but Bash can still write, so this
 is a rule you have to keep rather than one the tools keep for you.
 
@@ -30,9 +39,10 @@ command *does*; do not invoke it. Ordinary read-only git is fine — `git diff`,
 Resolve it with `~/.claude/scripts/resolve-scope.sh resolve [--scope <what you were
 given>]`, which implements `~/.claude/reference/scope-resolution.md`: uncommitted changes
 if there are any, else the branch against its merge base, else `git show HEAD`, with the
-default branch resolved rather than assumed. It exits 2 when the scope is prose rather
-than a revision, which for a design review means read the code that implements it and
-review that.
+default branch resolved rather than assumed. It exits 2 when the scope is prose naming an
+area of behaviour rather than a revision, which for a design review means read the code
+that implements it and review that. Prose that names the default scope instead — "this
+branch", "my changes" — it translates and resolves, saying so on stderr.
 
 State what you settled on at the top of your report. On a resolved scope that is the
 manifest's `scope_line`. **On the exit-2 path there is no manifest** — nothing was written
@@ -118,11 +128,44 @@ cost and schedule you cannot see.
 
 - `src/sync.rs:88` — looks like the error path drops the lock. Not this
   review's job; flagging for the real review.
+
+## Coverage
+
+- **Read whole:** `src/sync.rs`, `src/config.rs`
+- **Followed out:** callers of `sync_once` in `src/cli.rs` and `tests/e2e.rs`
+- **Prior art:** searched `util/` and `src/net/` for existing retry — found
+  `util/retry.rs`
+- **Repo rules:** root `CLAUDE.md`; no `ARCHITECTURE.md`, `DESIGN.md` or `REVIEW.md`
+- **Not opened:** the HTTP client `sync.rs` calls into. A finding about that
+  boundary was not available from here.
 ```
 
 Anchor each finding to a file, or file and line where one line captures it.
 Omit **Noticed in passing** if there is nothing in it.
 
+**Coverage** is not optional, and unlike the findings it is not omitted when it
+is thin. Every suggestion you wrote is a claim about code outside the diff —
+that the repo already has this, that no second caller will pass a second value,
+that the second call site will be awkward — and none of them can be supported
+from the diff alone. All five entries appear every time, in that order:
+
+- **Read whole** — the files you opened end to end, not as hunks
+- **Followed out** — call sites and callers you actually opened outside those
+- **Prior art** — where you went looking for an existing mechanism, and whether
+  you found one. A search that came back empty and a search never run are
+  different facts and the entry says which
+- **Repo rules** — which of `CLAUDE.md`, `ARCHITECTURE.md`, `DESIGN.md` and
+  `REVIEW.md` you read, and which are absent. A suggestion that contradicts a
+  rule you never opened is the one finding worth discarding whole
+- **Not opened** — adjacent code the scope calls into or is called from that you
+  left unread, and one clause on what a finding there would have concerned. Bound
+  it to that: everything you did not read is not the answer, and an unbounded
+  list says nothing. `nothing adjacent left unread` where that is true
+
 Nothing to report is a real and useful answer: "the shape is sound, build on"
-— say it plainly and stop. Do not manufacture a suggestion to justify the
-dispatch; a fabricated one costs the author more than your silence would.
+— say it plainly, print **Coverage**, and stop. Do not manufacture a suggestion
+to justify the dispatch; a fabricated one costs the author more than your
+silence would. A clean verdict is exactly where **Coverage** earns its place: a
+sound-shape report from a reviewer who read two files and one from a reviewer
+who read thirty are not the same answer, and without the section they are the
+same one line.
