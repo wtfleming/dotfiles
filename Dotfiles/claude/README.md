@@ -39,15 +39,11 @@ read. Their reports are merged and deduplicated with the reviewer's, then verifi
 before printing: one `wtf-refuter` per Critical and Warning finding, each told to
 argue the finding is *wrong* and to answer refuted when unsure.
 
-The merge is where two lenses finding one defect becomes one line, and it used to
-be the single place in the command where a finding could vanish without the
-reader being told — everywhere else, "a dropped finding is reported, not hidden".
-So every candidate now gets a disposition, `kept`, `merged` or `dropped`, and the
-report prints the ones that are not in it. Each finding also carries the lens that
-raised it, which is what a disposition refers to and what shows which lens earned
-its dispatch. Collisions run down an ordered ladder — Pre-existing, then tier,
-then the statement naming a concrete failure, then the reviewer over a lens, then
-the longer evidence — because "keep the more specific statement" leaves two
+The merge is where two lenses finding one defect becomes one line. Each finding
+carries the lens that raised it, which shows which lens earned its dispatch, and a
+collision says which reports saw it however it was resolved. Collisions run down an
+ordered ladder — Pre-existing, then tier, then the statement naming a concrete
+failure, then the reviewer over a lens, then the longer evidence — because "keep the more specific statement" leaves two
 equally-tiered findings with nothing to separate them, and the model then picks by
 feel between reports its own agents wrote. The triage's **Definitely worth
 doing** list is refuted alongside the Criticals and Warnings; **Worth doing**

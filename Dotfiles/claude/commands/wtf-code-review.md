@@ -113,12 +113,16 @@ Spawn one `wtf-refuter` per finding, in parallel, dispatched exactly as
 **Verify** describes on the full pass — the finding verbatim, plus the scope and
 whose work it is, and nothing else.
 
-Then print the report with the refuted findings removed. Say how many were
-refuted and why — a dropped finding is reported, not hidden — and if everything
-was refuted, say so plainly and treat it as a result worth doubting rather than a
-clean bill of health. Both of those go **below the Suggestion triage**, for the
-reason the full pass puts its accounting there: the triage is work the reader
-might do, and the refutation count is a fact about how the pass ran.
+Then print the report with the refuted findings removed. **How many were refuted
+and why goes below the Suggestion triage** — a dropped finding is reported, not
+hidden, but a count of findings that are no longer there is a fact about how the
+pass ran, and the triage is work the reader might actually do.
+
+One verdict does not wait for the bottom. **If everything was refuted, say so with
+the report's header lines**, not in the accounting: it means nothing survived to
+be read, so a reader who stops after the triage has to have seen it. Say it
+plainly and treat it as a result worth doubting rather than a clean bill of
+health.
 
 Suggestions go through unchecked, left to that triage, which on this path
 verifies nothing and says so.
@@ -431,13 +435,16 @@ You already hold each report separately, so no agent has to be asked for this. I
 is what lets a reader see which lens earned its dispatch.
 
 **When two findings collide, work down this ladder and stop at the first rung that
-separates them:**
+separates them** — and whichever rung settles it, say which reports saw the
+finding. The ladder decides which statement survives, not how many agents found
+the defect, and a collision resolved on any rung below the first still collapsed
+two reports into one line:
 
 1. **Pre-existing wins over a tier.** A lens marks a problem the change did not
    cause **(pre-existing)** inline; in the merged report it goes under the
    reviewer's **Pre-existing** section with that tier leading it, and not under
    the tier itself. If any report filed it both ways, Pre-existing wins.
-2. **The higher tier wins,** and say which reports saw it.
+2. **The higher tier wins.**
 3. **The statement naming a concrete failing input or code path wins** over one
    describing a category of problem.
 4. **The reviewer's statement wins over a lens's.** It read the surrounding files
@@ -490,6 +497,15 @@ Spawn one `wtf-refuter` subagent per finding being verified, in parallel. It
 already knows to argue the code is correct, to re-run a command the finding
 claims to have observed, and to default to `refuted` when it cannot decide.
 
+**A refuter that returns nothing has not returned `refuted`.** Where one errors,
+times out or comes back unparseable, keep its finding in the report at the tier
+it arrived in, marked **(unverified — refuter returned no usable report)**, and
+give it its own line in the accounting. That default to `refuted` is a verdict a
+refuter reaches, not a substitute for one it never gave, so folding a failed
+agent into the refuted count deletes a finding nothing argued against — and on a
+Critical that is a blocker retracted by an infrastructure failure. This is the
+same rule as **no usable report** for a lens, and it exists for the same reason.
+
 How many that is depends on what the earlier passes found, so it cannot be
 announced with the lens count. **Say the number once you know it**, before you
 spawn them, and say what it brings the run's total to. The count that scales
@@ -527,6 +543,27 @@ Pre-existing format, keeping its **Scope**, **Tests** and **Lint** header lines 
 test result is the most load-bearing line in the report, and on the full pass this
 is its only airing. The surviving Suggestions print once, in the triage below.
 
+**Three facts join those header lines rather than the accounting**, because each
+says the pass reached less far than the findings below it suggest, and the
+accounting sits under an explicit invitation to stop reading:
+
+- **which lenses returned no usable report** — errored, timed out, or came back
+  unparseable. An agent that failed is not a dimension that came back clean, and
+  counting it as one is how a broken pass reads as a passing one.
+- **which lenses returned subject not found**: the lenses were handed the file
+  list the reviewer settled, so a lens that still could not find the subject
+  disagreed with the reviewer about what implements it. That lens reviewed
+  nothing, and printing it as no findings would say the opposite.
+- **if everything was refuted**, say so plainly and treat it as a result worth
+  doubting rather than a clean bill of health — that is also what a gate that
+  never bites looks like.
+
+Each is conditional: print the line only where it happened. They belong here for
+the same reason `Tests: not run` does — a reader deciding how much to trust the
+report needs them before the findings, not after the last thing they might act
+on. The counts stay below, where a reader who stops has lost nothing but
+bookkeeping.
+
 Do not carry the reviewer's **Correspondence** line into the merged header. The
 **Scope** line below already ends in the correspondence, written out as prose, and
 the second line restates it as a state word, a SHA and a scratch path — plumbing
@@ -557,32 +594,24 @@ stopped at the point the advice runs out.
 
 - how many findings were refuted, and why — a dropped finding is reported, not
   hidden
-- **lens coverage, on one line**, each lens labelled with what it returned:
+- **lens coverage, on one line**, carrying **every lens that was dispatched or
+  skipped**, each with what it returned:
 
   ```
-  Lenses: correctness, security, tests — clean · performance — n/a · dependencies — not dispatched (no manifest changes)
+  Lenses: correctness — 2 findings · security, maintainability — clean · reuse — not applicable · tests, resilience, performance, dependencies — not dispatched (prose-only listing)
   ```
 
-  Clean, **not applicable** and **not dispatched** are three different facts —
-  a lens that governed something and found it clean, one with no surface to
-  review, and one **Pick the lenses** excluded — so each lens carries its own
-  label and none is folded into another. What they do not need is a list and a
-  paragraph each. `not dispatched` keeps the check that excluded it, as a
-  parenthetical.
-- **which lenses returned no usable report** — errored, timed out, or came back
-  unparseable — on a line of its own, never on the line above. An agent that
-  failed is not a dimension that came back clean, and counting it as one is how
-  a broken pass reads as a passing one. This is the one lens state worth
-  interrupting the reader for, because it means the coverage is thinner than the
-  report looks.
-- **which lenses returned subject not found**, on its own line, should it happen:
-  the lenses were handed the file list the reviewer settled, so a lens that still
-  could not find the subject disagreed with the reviewer about what implements
-  it. That lens reviewed nothing, and printing it as no findings would say the
-  opposite.
-- if everything was refuted, say so plainly and treat it as a result worth
-  doubting rather than a clean bill of health — that is also what a gate that
-  never bites looks like
+  Findings, **clean**, **not applicable** and **not dispatched** are four
+  different facts — a lens that raised something, one that governed something and
+  found it clean, one with no surface to review, and one **Pick the lenses**
+  excluded — so each lens carries its own label and none is folded into another.
+  What they do not need is a list and a paragraph each. `not dispatched` keeps the
+  check that excluded it as a parenthetical, and that parenthetical names a check
+  **Pick the lenses** actually authorises — the prose-only listing is the only one,
+  and it skips its four lenses together. Write **not applicable** in full, the way
+  the lens itself reports it. A lens whose findings were all refuted is `clean`;
+  the count here is what survived. The two states hoisted into the header do not
+  reappear on this line.
 
 Then stop. The same close as above: the findings are the user's to triage, and
 fixes happen only if they ask — when they do, follow the next section.
