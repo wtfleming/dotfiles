@@ -11,9 +11,24 @@ the flag is the scope, and the scope may be empty.
 
 The full pass is the default: the reviewer, a dedicated agent per dimension, and
 a refuter per finding that survives to verification. `--lite` is the reviewer
-alone, with every finding its report prints verified the same way. Where the text
-below says *under `--lite`* it means that cheaper path; everything else describes
-the default.
+alone, with every finding its report prints verified the same way.
+
+**How the two paths are marked, because getting this wrong is the failure this
+command keeps having.** Scope is declared per section, once, in the heading line
+beneath the title: **both paths**, **`--lite` only**, or **full pass only**.
+Inside a section, prose with no mark of its own governs whatever the section
+governs, and a paragraph that deviates says so — *under `--lite`*, or *on the
+full pass*.
+
+**Silence means both paths, never one.** An unmarked paragraph in a both-paths
+section is a rule for both, so the cost of forgetting a mark is a rule applied
+somewhere it does not bite — a merge instruction reaching a path with nothing to
+merge, which is inert. The convention used to run the other way, with silence
+meaning the default path, and that made a forgotten mark *withhold* a rule from
+`--lite` with nothing to show for it: three defects on one branch, each a rule
+that landed on one path and silently skipped the other, twice printing the same
+finding to a user and once retracting a Critical. Over-applying is the safe
+failure and under-applying is not, so the default points at the safe one.
 
 `--deep` was the old name for what is now the default. If it arrives, say the
 flag is gone and run the default rather than treating it as a scope — a scope of
@@ -24,6 +39,8 @@ they will say which ones in a later message, and that happens in the main
 conversation where their intent lives — not here.
 
 ## Review
+
+**Both paths.**
 
 Launch the `wtf-change-reviewer` subagent on the scope. Dispatch it with the
 Agent tool, `subagent_type: "wtf-change-reviewer"`, and wait for it to
@@ -58,9 +75,10 @@ somewhere to print: promoted before the report goes out, it lands in the Warning
 section; promoted after, it belongs to a report already printed and to a triage
 it has been taken out of.
 
-The sort has to run here too, because both halves decide what the refuters are
-spent on. A dropped Suggestion gets none, and the cap's priority order ranks
-**Definitely worth doing** above **Worth doing** — neither is answerable before
+The sort has to run before this path spawns anything, because both halves decide
+what the refuters are spent on. A dropped Suggestion gets none, and the cap's
+priority order ranks **Definitely worth doing** above **Worth doing** — neither
+is answerable before
 the sort. Verify first and a run with nine Suggestions, three of them destined
 for the dropped count, spends three refuters on findings that will never print.
 The sort also sets where each finding sits in that order, which is the difference
@@ -97,6 +115,9 @@ close matters: do not launch into fixing anything. If the user replies asking
 for fixes, follow **If the user asks for fixes** below.
 
 ## Verify the findings
+
+**`--lite` only.** The full pass verifies in **Verify**, under the
+per-dimension pass.
 
 Under `--lite` the reviewer's findings reach the user checked by nobody, and
 the bias that objection rests on does not depend on how many agents ran: the
@@ -144,6 +165,8 @@ order and under the cap **Verify** sets. The triage still prints them; what it n
 longer does on this path is stand in for checking them.
 
 ## Triage the Suggestions
+
+**Both paths.**
 
 Suggestions are the most numerous tier and the least sorted: a rename worth
 two minutes sits next to a style nit nobody should spend time on, in the same
@@ -231,6 +254,9 @@ mis-tiered finding rather than a wasted agent, and the tier a reader trusts is
 worth more than the one that flatters the review.
 
 ## The per-dimension pass
+
+**Full pass only** — this section and every `###` under it. `--lite` stops where
+**Review** sends it.
 
 One reviewer covering six dimensions gives some of them a shallower pass than
 the others. This adds a dedicated pass per dimension, over the same scope the
@@ -663,6 +689,8 @@ fixes happen only if they ask — when they do, follow the next section.
 
 ## If the user asks for fixes
 
+**Both paths.**
+
 **Snapshot the tree before the first edit.** The cold review at the end reads the
 fix diff, and once the edits have landed nothing separates them from the change
 they repair. Take the snapshot first or that review is not available at all, and
@@ -915,6 +943,8 @@ this, and where the note belongs when findings are being posted are in
 rule binds.
 
 ## If the findings go to GitHub
+
+**Both paths.**
 
 A later message may ask for these findings to be posted on a PR. When it does,
 **every finding carries its tier with it, whether or not the user asked for
