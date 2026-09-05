@@ -769,6 +769,14 @@ exactly that. And a `stands` whose reasoning says the check was blocked, because
 the refuter declined to run the decisive command, is not the fix failing: relay
 it as **could not verify**.
 
+A third case is not a verdict at all. **A refuter that errors, times out or comes
+back unparseable has not said the fix took** — relay it as **not checked
+(refuter returned no usable report)** and name the finding it was holding. This
+is the fix-round half of the rule in **Verify**, and it bites harder here: there,
+a missing verdict would delete a finding; here, silence is indistinguishable from
+`refuted`, so an agent that failed reads as a repair that worked, on the one
+finding nobody is going to look at again.
+
 A finding that still stands goes back to the user with the refuter's reasoning
 verbatim. Do not quietly take another swing and re-verify — a fix that failed
 its check once is a fix a human should look at.
