@@ -119,9 +119,11 @@ for fixes, follow **If the user asks for fixes** below.
 **`--lite` only.** The full pass verifies in **Verify**, under the
 per-dimension pass.
 
-Under `--lite` the reviewer's findings reach the user checked by nobody, and
-the bias that objection rests on does not depend on how many agents ran: the
+Without this section a `--lite` report would reach the user checked by nobody,
+and the bias that objection rests on does not depend on how many agents ran: the
 agent that wrote a finding is the worst-placed to judge it, alone or in a crowd.
+That is the hole this closes; it is not a description of what `--lite` still
+does.
 
 So this path verifies what the full pass verifies: **every finding the report
 will print**, under the same 20-refuter cap and the same priority order — see
