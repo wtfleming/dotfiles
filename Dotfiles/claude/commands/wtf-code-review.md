@@ -426,8 +426,7 @@ is not evidence against one.
 ```
 
 You already hold each report separately, so no agent has to be asked for this. It
-is what lets a reader see which lens earned its dispatch, and what the disposition
-list below refers to.
+is what lets a reader see which lens earned its dispatch.
 
 **When two findings collide, work down this ladder and stop at the first rung that
 separates them:**
@@ -447,13 +446,6 @@ The ladder exists because "keep the more specific statement" leaves two
 equally-tiered findings with nothing to separate them, and the merging model then
 picks by feel — which is exactly the judgement it is worst placed to make, since
 the reports it is choosing between were written by its own agents.
-
-**Record a disposition for every candidate finding: `kept`, `merged` or
-`dropped`,** with the source it came from and a one-line reason. This is the one
-place in this command where a finding could disappear without the reader being
-told, and the rule everywhere else here is that a dropped finding is reported, not
-hidden. Two lenses raising one defect, collapsed silently, hides both which lens
-found it and that the collapse happened at all.
 
 Do not print the merged report yet — it has not been verified, and findings that
 are about to be retracted should not get a first airing.
@@ -543,12 +535,6 @@ Then:
 
 - how many findings were refuted, and why — a dropped finding is reported, not
   hidden
-- **what the merge did to findings that are not in the report above**: which were
-  merged into which, and which were dropped, each with the lens that raised it
-  and the reason. Omit the section entirely when nothing was merged or dropped,
-  the same way the triage omits a line reporting zero. This is the merge's half
-  of the same rule as the line above it — a finding two lenses found and one
-  report shows is a fact about the pass, not noise to tidy away
 - which lenses returned nothing, and — listed separately — which returned **not
   applicable**, and — listed separately again — which returned **no usable
   report** because they errored, timed out or came back unparseable. A lens that
