@@ -44,6 +44,17 @@ security issue that fits neither list still gets reported.
 - [ ] Migrations/rollouts reversible, or the irreversibility called out
 - [ ] New failure paths observable (a log line or error someone can act on)
 
+## Author's Finish Line
+
+Run this over your own change before handing it to any reviewer, human or agent.
+Everything here is cheaper not to write than to have someone else find.
+
+- [ ] No debug code, commented-out blocks, backup copies or scratch files
+- [ ] No path left dead by the change — the code you replaced is gone
+- [ ] Every touched file is one the task required; nothing swept up in passing
+- [ ] The commands you ran are reported exactly, with their results — not "tests pass"
+- [ ] Assumptions stated, and anything you did not actually run said plainly
+
 ## Feedback Format
 
 ```
