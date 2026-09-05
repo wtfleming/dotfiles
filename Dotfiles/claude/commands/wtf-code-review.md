@@ -156,6 +156,13 @@ and why goes below the Suggestion triage** — a dropped finding is reported, no
 hidden, but a count of findings that are no longer there is a fact about how the
 pass ran, and the triage is work the reader might actually do.
 
+**Break that count out by tier, against how many of each tier were verified** —
+`Refuted: Critical 0/2 · Warning 3/5 · Definitely worth doing 1/3`, naming only
+the tiers that had a finding in the verified set. The form is written out here
+rather than pointed at because the accounting bullet that defines it sits inside
+the per-dimension pass this path skips, and a bare total is what an agent
+reaching for the nearest rule would print.
+
 One verdict does not wait for the bottom. **If everything was refuted, say so with
 the report's header lines**, not in the accounting: it means nothing survived to
 be read, so a reader who stops after the triage has to have seen it. Say it
@@ -674,8 +681,20 @@ everything in it is a fact about how the pass ran. Put that first and a reader
 crosses agent bookkeeping to reach the advice; put it last and the report can be
 stopped at the point the advice runs out.
 
-- how many findings were refuted, and why — a dropped finding is reported, not
-  hidden
+- **how many findings were refuted, broken out by tier against how many of that
+  tier were verified**, and why — a dropped finding is reported, not hidden.
+  Write the counts as refuted-of-verified, naming only the tiers that had a
+  finding in the verified set:
+
+  ```
+  Refuted: Critical 0/2 · Warning 3/5 · Definitely worth doing 1/3
+  ```
+
+  A bare total cannot show which tiers the refuters are earning their spend in,
+  and that is the one question the accounting is placed to answer: the same
+  "4 refuted" is a gate doing real work on the tiers a wrong finding is expensive
+  in, and a gate firing only where it is cheapest. Read across runs it is also
+  what would justify moving this line — in either direction
 - **which findings a refuter failed to return a verdict on** — errored, timed out
   or came back unparseable — only where it happened. They print marked
   **(unverified — refuter returned no usable report)**, and this is the line that

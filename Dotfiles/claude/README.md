@@ -53,7 +53,9 @@ finding costs most, so the cap bites the top Suggestions before it bites a
 Critical. Anything past it prints marked `(unverified)` with the cap named as the
 reason, as does the **Worth doing** list, which gets no refuter at all: a
 refuter answers whether a finding is *true*, and below the top list a Suggestion
-turns instead on whether it is worth doing, which the triage judges. There is
+turns instead on whether it is worth doing, which the triage judges. The report
+breaks its refuted count out by tier against how many of each were verified, so
+which tiers the check earns its spend in is measured rather than argued. There is
 deliberately no linter lens — the reviewer already runs the real one.
 
 `reuse` and `resilience` are the two lenses with no counterpart in the checklist.
