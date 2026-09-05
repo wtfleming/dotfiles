@@ -113,12 +113,14 @@ Spawn one `wtf-refuter` per finding, in parallel, dispatched exactly as
 **Verify** describes on the full pass — the finding verbatim, plus the scope and
 whose work it is, and nothing else.
 
-Then print the report with the refuted findings removed, and say how many were
-refuted and why; a dropped finding is reported, not hidden. If everything was
-refuted, say so plainly and treat it as a result worth doubting rather than a
-clean bill of health.
+Then print the report with the refuted findings removed. Say how many were
+refuted and why — a dropped finding is reported, not hidden — and if everything
+was refuted, say so plainly and treat it as a result worth doubting rather than a
+clean bill of health. Both of those go **below the Suggestion triage**, for the
+reason the full pass puts its accounting there: the triage is work the reader
+might do, and the refutation count is a fact about how the pass ran.
 
-Suggestions go through unchecked, left to the triage below, which on this path
+Suggestions go through unchecked, left to that triage, which on this path
 verifies nothing and says so.
 
 ## Triage the Suggestions
