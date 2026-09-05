@@ -157,8 +157,9 @@ hidden, but a count of findings that are no longer there is a fact about how the
 pass ran, and the triage is work the reader might actually do.
 
 **Break that count out by tier, against how many of each tier were verified** —
-`Refuted: Critical 0/2 · Warning 3/5 · Definitely worth doing 1/3`, naming only
-the tiers that had a finding in the verified set. The form is written out here
+`Refuted: Critical 0/2 · Warning 3/5 · Pre-existing 1/2 · Definitely worth doing 1/3`,
+naming only the tiers that had a finding in the verified set. Pre-existing is one
+bucket of its own whatever tier it carries, as it is in the cap order. The form is written out here
 rather than pointed at because the accounting bullet that defines it sits inside
 the per-dimension pass this path skips, and a bare total is what an agent
 reaching for the nearest rule would print.
@@ -193,6 +194,7 @@ once, already classified:
 **Worth doing**
 - `src/api.ts:40` — <the finding as the reviewer wrote it> **(unverified)** — <one line: what the suggestion buys>
 
+_Unverified by design: **Worth doing**, and Pre-existing findings at Suggestion._
 _3 Suggestions judged not worth doing and dropped._
 ```
 
@@ -230,9 +232,17 @@ Suggestions land there, it is not sorting anything.
 
 **Definitely worth doing** is refuted alongside the Criticals and Warnings on
 both paths and **Worth doing** is not — see **Verify** — so the sort decides
-what gets checked as well as what a reader should reach for first. Say in the
-closing line that the lower list went unverified by design, and name anything in
-the top list that went unverified too, with its reason.
+what gets checked as well as what a reader should reach for first.
+
+That gets its own closing line, above the dropped count: *Unverified by design:
+**Worth doing**, and Pre-existing findings at Suggestion* — naming only the ones
+that actually carried a finding this run, and followed by anything in the top
+list that went unverified too, with its reason. It is a separate line because
+the dropped count is omitted when nothing was dropped, and a disclosure that
+rides on it disappears with it — a run with two **Worth doing** entries and
+nothing dropped is the ordinary case, not a corner. Omit this line in turn when
+both lower tiers are empty and the top list was fully verified, since it then
+reports nothing.
 
 The third list is the only place the triage itself may leave a Suggestion
 unprinted: nothing above carries one except the two cases named here — a
@@ -530,6 +540,16 @@ promoted ones included; Pre-existing findings at those two tiers; and the
 **Definitely worth doing** list. Nothing below that: **Worth doing**,
 Pre-existing at Suggestion and the dropped count go out unrefuted.
 
+**Everything in that set that prints carries (unverified).** For **Worth doing**
+the triage's marking rule already says so; a Pre-existing finding at Suggestion
+is not in either list, so nothing there reaches it and the rule has to be stated
+here. Unmarked, it prints in the Pre-existing section beside Criticals and
+Warnings that did survive a refuter, and posts to a PR as
+`**Suggestion (pre-existing)** — …` looking exactly as settled as they are. A
+tier leaving the verified set has to take the mark with it, or the narrowing is
+a check removed silently — which is the one thing this whole section is written
+to avoid.
+
 The line falls there because a refuter answers *is this true*, and the tiers
 divide on whether truth is the binding question. A true Critical is worth acting
 on almost by definition, so checking whether it is true checks everything that
@@ -670,6 +690,10 @@ It is already marked **(promoted from Suggestion)** where it sits, and the
 refutation line below already says how it fared; a second telling in the
 accounting is the same disclosure charged twice.
 
+In that Pre-existing section, a finding at Suggestion tier carries
+**(unverified)** — it is outside the verified set, and the triage's marking rule
+does not reach it because Pre-existing findings are not sorted into the lists.
+
 Then the **Suggestion triage**, carrying the Suggestions that remain:
 **Definitely worth doing** as it came back from the refuters, with any the cap
 did not reach marked **(unverified)**, and **Worth doing** as the reviewer wrote
@@ -687,8 +711,15 @@ stopped at the point the advice runs out.
   finding in the verified set:
 
   ```
-  Refuted: Critical 0/2 · Warning 3/5 · Definitely worth doing 1/3
+  Refuted: Critical 0/2 · Warning 3/5 · Pre-existing 1/2 · Definitely worth doing 1/3
   ```
+
+  **Pre-existing is one bucket of its own**, whatever tier its findings carry, as
+  it is in the cap order. It has to be named rather than folded into Critical or
+  Warning: this command files such a finding in its own section instead of the
+  tier's, so a reader folding it in and a reader keeping it out print different
+  denominators for the same run — and a number two runs disagree on cannot be read
+  across runs, which is the whole of what this line is for.
 
   A bare total cannot show which tiers the refuters are earning their spend in,
   and that is the one question the accounting is placed to answer: the same
