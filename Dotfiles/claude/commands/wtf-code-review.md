@@ -11,8 +11,9 @@ the flag is the scope, and the scope may be empty.
 
 The full pass is the default: the reviewer, a dedicated agent per dimension, and
 a refuter per finding that survives to verification. `--lite` is the reviewer
-alone, with its Criticals and Warnings verified. Where the text below says *under
-`--lite`* it means that cheaper path; everything else describes the default.
+alone, with every finding its report prints verified the same way. Where the text
+below says *under `--lite`* it means that cheaper path; everything else describes
+the default.
 
 `--deep` was the old name for what is now the default. If it arrives, say the
 flag is gone and run the default rather than treating it as a scope — a scope of
@@ -50,13 +51,20 @@ than the scope string is. **Only under `--lite`** may you say the scope is empty
 let the agent work out its own: it runs the same resolver you would, and with no batch
 behind it there is nothing to gain by resolving first.
 
-Under `--lite`, run the promotion half of **Triage the Suggestions** the moment
-the report returns, before deciding anything else with it. It is what gives a
-promoted finding somewhere to print: promoted before the report goes out, it
-lands in the Warning section; promoted after, it belongs to a report already
-printed and to a triage it has been taken out of. It also sets where the finding
-sits in the cap's priority order, which is the difference between a refuter and
-an **(unverified)** mark on a report that hit the cap.
+Under `--lite`, run **Triage the Suggestions** in full the moment the report
+returns — both halves, before deciding anything else with it, exactly as the full
+pass does before its own verify. The promotion is what gives a promoted finding
+somewhere to print: promoted before the report goes out, it lands in the Warning
+section; promoted after, it belongs to a report already printed and to a triage
+it has been taken out of.
+
+The sort has to run here too, because both halves decide what the refuters are
+spent on. A dropped Suggestion gets none, and the cap's priority order ranks
+**Definitely worth doing** above **Worth doing** — neither is answerable before
+the sort. Verify first and a run with nine Suggestions, three of them destined
+for the dropped count, spends three refuters on findings that will never print.
+The sort also sets where each finding sits in that order, which is the difference
+between a refuter and an **(unverified)** mark on a report that hit the cap.
 
 Then print the report verbatim — unless it carries a finding at all,
 in which case hold it and follow **Verify the findings** first. Do not re-rank
@@ -97,7 +105,8 @@ exactly as they would on the full pass.
 
 This is the one place `--lite` stops being cheap, and the cost is the diff's to
 set rather than this command's: a report carrying six Warnings and four
-Suggestions spawns ten refuters. Say the number before you spawn them, as the
+Suggestions the triage kept spawns ten refuters — count what survives the sort,
+not what the reviewer wrote. Say the number before you spawn them, as the
 full pass does, so it can be refused.
 
 Spawn one `wtf-refuter` per finding, in parallel, dispatched exactly as
@@ -115,8 +124,9 @@ be read, so a reader who stops after the triage has to have seen it. Say it
 plainly and treat it as a result worth doubting rather than a clean bill of
 health.
 
-Suggestions go through unchecked, left to that triage, which on this path
-verifies nothing and says so.
+Suggestions are verified here like everything else the report prints, in the
+order and under the cap **Verify** sets. The triage still prints them; what it no
+longer does on this path is stand in for checking them.
 
 ## Triage the Suggestions
 
@@ -151,8 +161,10 @@ its `file:line`, the finding as written, any qualifier it arrived with, and the
 one-line reason. The qualifier tracks what checked the finding, not which list
 it landed in: mark it **(unverified)** unless a refuter read it and let it stand.
 Both lists are refuted on both paths, so the mark is now the exception rather
-than the rule — it means the run hit the 20-refuter cap before reaching this
-finding, which **Verify** ranks last. So a bare Suggestion means one thing
+than the rule, and it has two causes: the run hit the 20-refuter cap before
+reaching this finding, which **Verify** ranks last, or the refuter it was sent to
+returned no usable report. The second spells that out in the mark itself, since a
+reader meeting it on a PR comment cannot see which happened otherwise. So a bare Suggestion means one thing
 everywhere, including on a PR comment, where the triage's closing line does not
 travel with it. That is the only place it appears, so a finding shortened here
 is shortened everywhere. Findings under **Pre-existing** are the exception and are
@@ -601,6 +613,10 @@ stopped at the point the advice runs out.
 
 - how many findings were refuted, and why — a dropped finding is reported, not
   hidden
+- **which findings a refuter failed to return a verdict on** — errored, timed out
+  or came back unparseable — only where it happened. They print marked
+  **(unverified — refuter returned no usable report)**, and this is the line that
+  says how many, so a reader can tell an agent that broke from a cap that bound
 - **how many findings went unverified because the cap bound**, and which — only
   where it bound. A report where every finding was checked says nothing here;
   one where six Suggestions went out unchecked has to say so, because the
@@ -622,8 +638,10 @@ stopped at the point the advice runs out.
   **Pick the lenses** actually authorises — the prose-only listing is the only one,
   and it skips its four lenses together. Write **not applicable** in full, the way
   the lens itself reports it. A lens whose findings were all refuted is `clean`;
-  the count here is what survived. The two states hoisted into the header do not
-  reappear on this line.
+  the count here is what survived. A lens in one of the two states hoisted into
+  the header is named here too, as `see above` — the line is a roster of all
+  eight, so a reader counting it can tell a lens that is missing from one that is
+  reported further up.
 
 Then stop. The same close as above: the findings are the user's to triage, and
 fixes happen only if they ask — when they do, follow the next section.

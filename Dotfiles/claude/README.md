@@ -21,11 +21,11 @@ that code as it stands, picks the files itself, and says which ones it picked.
 
 Under `--lite` it settles the scope, runs the project's test suite and linter,
 reviews the diff against the checklist, and prints findings as Critical, Warning
-or Suggestion — then stops. Criticals and Warnings are each checked by a
-`wtf-refuter` before the report prints, and refuted ones are dropped from it: a
-false Critical stops work that should not stop, and a false Warning spends an
-afternoon on a defect that was not there. So the cost scales with what the diff
-earns rather than sitting near zero. Suggestions go out unchecked and say so. The
+or Suggestion — then stops. Every finding it prints is checked by a
+`wtf-refuter` first, and refuted ones are dropped from it: a false Critical stops
+work that should not stop, and a false Warning spends an afternoon on a defect
+that was not there. So the cost scales with what the diff earns rather than
+sitting near zero. The
 reviewer has no `Edit` or `Write`, so a review cannot change anything.
 
 By default it does more: up to eight `wtf-lens` agents in parallel, one per
@@ -36,15 +36,16 @@ no surface there
 and disclosed in the report. That list comes from the scope artifact rather than
 from a second set of git commands, so it cannot disagree with the diff the lenses
 read. Their reports are merged and deduplicated with the reviewer's, then verified
-before printing: one `wtf-refuter` per Critical and Warning finding, each told to
-argue the finding is *wrong* and to answer refuted when unsure.
+before printing: one `wtf-refuter` per printed finding, each told to argue the
+finding is *wrong* and to answer refuted when unsure.
 
 The merge is where two lenses finding one defect becomes one line. Each finding
 carries the lens that raised it, which shows which lens earned its dispatch, and a
 collision says which reports saw it however it was resolved. Collisions run down an
 ordered ladder — Pre-existing, then tier, then the statement naming a concrete
-failure, then the reviewer over a lens, then the longer evidence — because "keep the more specific statement" leaves two
-equally-tiered findings with nothing to separate them, and the model then picks by
+failure, then the reviewer over a lens, then the longer evidence — because "keep
+the more specific statement" leaves two equally-tiered findings with nothing to
+separate them, and the model then picks by
 feel between reports its own agents wrote. Every finding the report prints
 is refuted, on both paths — both triage lists included, and Pre-existing findings
 at every tier — capped at 20 refuters and spent in the order a wrong finding
@@ -149,11 +150,12 @@ that has them. Edits only ever happen in the main session, one approval at a tim
 ### Cost
 
 A default run spawns one reviewer, up to eight lenses, and one refuter per verified
-finding — tens of agents on a real branch — and asking for fixes afterwards adds one
-more refuter per fixed Critical or Warning, Pre-existing ones at those tiers included,
-plus a cold review of the fix diff. It announces each fan-out before spawning
-it, so the spend can be refused, and `--lite` cuts it to the reviewer alone plus a
-refuter per Critical and Warning. For very large diffs, the built-in
+finding — tens of agents on a real branch, bounded by the 20-refuter cap — and asking
+for fixes afterwards adds one more refuter per fixed Critical or Warning, Pre-existing
+ones at those tiers included, plus a cold review of the fix diff. It announces each
+fan-out before spawning it, so the spend can be refused, and `--lite` cuts it to the
+reviewer alone plus a refuter per printed finding, under the same cap. For very large
+diffs, the built-in
 `/code-review ultra` is the maintained alternative.
 
 ## Resolving the scope
