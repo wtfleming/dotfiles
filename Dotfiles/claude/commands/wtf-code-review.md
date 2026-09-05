@@ -66,10 +66,10 @@ for the dropped count, spends three refuters on findings that will never print.
 The sort also sets where each finding sits in that order, which is the difference
 between a refuter and an **(unverified)** mark on a report that hit the cap.
 
-Then print the report verbatim — unless it carries a finding at all,
-in which case hold it and follow **Verify the findings** first. Do not re-rank
-the findings, soften them, or defend the code — you are relaying an independent
-review, not negotiating with it.
+Then, under `--lite`, print the report verbatim — unless it carries a finding at
+all, in which case hold it and follow **Verify the findings** first. Do not
+re-rank the findings, soften them, or defend the code — you are relaying an
+independent review, not negotiating with it.
 
 On the full pass, do not print it yet. Its findings are about to enter a verify
 pass that may retract some of them, and a finding that is about to be retracted
