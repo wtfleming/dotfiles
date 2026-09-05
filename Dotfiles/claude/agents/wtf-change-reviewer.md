@@ -35,15 +35,19 @@ the subject, say so and stop rather than reviewing the nearest thing you found.
 a caller that built a diff no ref can reproduce, such as the edits just written into
 a working tree. Review that diff and nothing else: take the file list from it, read
 the files from disk, since a caller sends this shape only for code the tree currently
-holds, and write the `Correspondence:` line as `workspace · none · none`. Do not
+holds — except a file the diff shows as **deleted**, which is gone from disk and whose
+content the hunk is the only copy of. Write the `Correspondence:` line as
+`workspace · none · none`. Do not
 resolve a scope of your own — the diff *is* the scope, and `git diff HEAD` there is a
 different and wider change, usually the one these edits sit on top of. Say at the top
 of the report that the scope arrived as a diff file, and how many files it covers.
 
-A `--no-index` hunk in such a diff can carry a left-hand path that is not in the repo
-at all — a copy of the file as it was, taken wherever the caller keeps its scratch.
-The right-hand path is the file, and it is the one a finding cites; a finding anchored
-at the copy names a path the reader cannot open.
+A `--no-index` hunk in such a diff names two paths and neither side is reliably the
+repository's. The left-hand one may be a copy of the file as it was, taken wherever the
+caller keeps its scratch; on a **deletion** hunk it is the other way round — the repo
+path is on the left and the right-hand side is `/dev/null`. So anchor a finding at
+whichever side names a path inside the repository, and never at a scratch copy or at
+`/dev/null`: both name something the reader cannot open.
 
 **If you were handed an artifact directory, read it — do not re-resolve.** A dispatch may
 give you a path to a directory holding `scope.diff` and `manifest.json`, already settled by
