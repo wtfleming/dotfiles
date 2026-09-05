@@ -9,8 +9,8 @@ about nothing. A tree that does not match the scope is worse, because it fails i
 direction only — see *Correspondence* below.
 
 This file is the single statement of the procedure. `wtf-code-verify`, `wtf-change-reviewer`,
-`wtf-design-reviewer`, `wtf-code-review`, `/wtf-code-review-no-lenses` and `/wtf-create-pr`
-all point here rather than restating it, so a fix lands once.
+`wtf-design-reviewer`, `wtf-code-review` and `/wtf-create-pr` all point here rather than
+restating it, so a fix lands once.
 
 ## Run the script
 

@@ -64,7 +64,8 @@ Before implementing:
 **Minimum code that solves the problem. Nothing speculative.**
 
 - No features beyond what was asked.
-- No abstractions for single-use code.
+- No abstractions for single-use code, and a passing test is not evidence that one
+  earns its place.
 - No "flexibility" or "configurability" that wasn't requested.
 - No error handling for impossible scenarios.
 - If you write 200 lines and it could be 50, rewrite it.
@@ -83,7 +84,11 @@ When editing existing code:
 
 When your changes create orphans:
 - Remove imports/variables/functions that YOUR changes made unused.
-- Don't remove pre-existing dead code unless asked.
+- Remove the code path you replaced. Superseding an implementation and leaving
+  the old one live is not caution — it is two behaviours where the repo had one.
+  Keep the old path only where compatibility was asked for, and say that is why.
+- Don't remove pre-existing dead code unless asked. Pre-existing means dead
+  before you arrived; what your own change killed is yours to delete.
 
 The test: Every changed line should trace directly to the user's request.
 
@@ -102,6 +107,16 @@ For multi-step tasks, state a brief plan:
 2. [Step] → verify: [check]
 3. [Step] → verify: [check]
 ```
+
+State the non-goals with it: one line naming what this task will *not* touch.
+It costs nothing before any code exists and gives the finished diff something to
+be checked against.
+
+Mid-task, stop and rewrite a smaller plan the moment the work starts adding
+layers for future use, stacking a workaround on a workaround, sweeping up
+unrelated code, or testing behaviour nobody asked for. Those four are visible in
+the diff rather than in your intent, which is what makes them usable as a brake
+while you are still moving.
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
@@ -140,6 +155,24 @@ if (isUniqueViolation(error)) {
 // Ingestion is idempotent, so a duplicate is a no-op rather than a failure.
 if (isUniqueViolation(error)) {
 ```
+
+## 6. Tests Follow the Change
+
+**Test what this change made true. Nothing else.**
+
+§4 pushes toward tests; this is its other half. Test sprawl costs what code
+sprawl costs, and it reads as diligence while doing it.
+
+- Extend the nearest existing test file before creating a new one.
+- Cover user-observable behaviour this change introduced or altered and nothing
+  already covers — not a private helper, not behaviour that was already there.
+- Don't stand up test infrastructure for one task. Where the task genuinely
+  needs it, that is a change of scope: say so in the plan.
+- Don't backfill coverage the change didn't touch. Mention the gap instead.
+
+Where a repo wires its tests up by hand — a CI step per file, a manifest, a
+registry — a new test file is a change to that wiring too. Check before adding
+one: a test nothing runs is worse than no test, because it reads as covered.
 
 ---
 

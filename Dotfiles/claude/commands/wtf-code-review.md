@@ -11,7 +11,7 @@ the flag is the scope, and the scope may be empty.
 
 The full pass is the default: the reviewer, a dedicated agent per dimension, and
 a refuter per finding that survives to verification. `--lite` is the reviewer
-alone, with only its Criticals verified. Where the text below says *under
+alone, with its Criticals and Warnings verified. Where the text below says *under
 `--lite`* it means that cheaper path; everything else describes the default.
 
 `--deep` was the old name for what is now the default. If it arrives, say the
@@ -50,10 +50,19 @@ than the scope string is. **Only under `--lite`** may you say the scope is empty
 let the agent work out its own: it runs the same resolver you would, and with no batch
 behind it there is nothing to gain by resolving first.
 
-Under `--lite`, print the report verbatim when it returns — unless it carries
-a Critical, in which case hold it and follow **Verify the Criticals** first. Do
-not re-rank the findings, soften them, or defend the code — you are relaying an
-independent review, not negotiating with it.
+Under `--lite`, run the promotion half of **Triage the Suggestions** the moment
+the report returns, before deciding anything else with it. A Suggestion whose
+content describes a failure becomes a Warning there, and a Warning is what this
+path now verifies — so judging the report by the tiers it arrived with would let
+exactly that finding print unchecked, which is the hole the verification exists
+to close. It is also what gives a promoted finding somewhere to print: promoted
+before the report goes out, it lands in the Warning section; promoted after, it
+belongs to a report already printed and to a triage it has been taken out of.
+
+Then print the report verbatim — unless it carries a Critical or a Warning,
+promoted ones included, in which case hold it and follow **Verify the top
+tiers** first. Do not re-rank the findings, soften them, or defend the code —
+you are relaying an independent review, not negotiating with it.
 
 Otherwise, do not print it yet. Its findings are about to enter a verify
 pass that may retract some of them, and a finding that is about to be retracted
@@ -67,14 +76,15 @@ own, and it goes after the report rather than into it. It is also where the
 Suggestions themselves are printed: leave the **Suggestion** section out of the
 report and let the triage carry them, so each one appears once, in the list
 that says what to do about it — or, if it is judged not worth doing, in the
-count of the ones dropped. That is the only rearrangement allowed — the
-findings still go out as written, in the tier they arrived in.
+count of the ones dropped. That is the only rearrangement allowed, and the
+promotion above is the only re-tiering: every other finding goes out as written,
+in the tier it arrived in.
 
 **Under `--lite`, stop here.** The findings are the user's to triage, and the
 close matters: do not launch into fixing anything. If the user replies asking
 for fixes, follow **If the user asks for fixes** below.
 
-## Verify the Criticals
+## Verify the top tiers
 
 Under `--lite` the reviewer's findings reach the user checked by nobody, and
 the bias that objection rests on does not depend on how many agents ran: the
@@ -83,26 +93,33 @@ agent that wrote a finding is the worst-placed to judge it, alone or in a crowd.
 Verifying all of them here would cost what the full pass costs, on the path
 chosen for being cheap — and unlike a lens, a refuter cannot ride along in the
 reviewer's batch, because a finding has to exist before anything can argue
-against it. So this path verifies **Critical findings only**:
+against it. So this path verifies the two tiers that ask for work:
+**Criticals and Warnings**, promoted ones included, and Pre-existing findings at
+those tiers.
 
 - Critical is the tier that claims to block the commit, so a false one is the
   most expensive finding in the report: it stops work that should not stop.
-- It is rare. Most runs carry none and spawn nothing, which is what keeps this
-  path as fast as the reviewer alone.
+- Warning is the tier a reader actually acts on, and the more numerous of the
+  two — which is what makes it worth checking rather than a reason to skip it.
+  An unchecked Warning is where a `--lite` run spends someone's afternoon on a
+  defect that was not there.
 
-Spawn one `wtf-refuter` per Critical, in parallel, dispatched exactly as
+This is the one place `--lite` stops being cheap, and the cost is the diff's to
+set rather than this command's: a report carrying six Warnings spawns six
+refuters. Say the number before you spawn them, as the full pass does, so it can
+be refused.
+
+Spawn one `wtf-refuter` per finding, in parallel, dispatched exactly as
 **Verify** describes on the full pass — the finding verbatim, plus the scope and
-whose work it is, and nothing else. Say how many before you spawn them.
+whose work it is, and nothing else.
 
-Then print the report with the refuted Criticals removed, and say how many were
-refuted and why; a dropped finding is reported, not hidden. If every Critical
-was refuted, say so plainly and treat it as a result worth doubting rather than
-a clean bill of health.
+Then print the report with the refuted findings removed, and say how many were
+refuted and why; a dropped finding is reported, not hidden. If everything was
+refuted, say so plainly and treat it as a result worth doubting rather than a
+clean bill of health.
 
-Warnings and Suggestions go through unchecked. Mark each Warning
-**(unverified)** so no reader mistakes an unchecked finding for a checked one,
-and leave the Suggestions to the triage below, which on this path verifies
-nothing and says so.
+Suggestions go through unchecked, left to the triage below, which on this path
+verifies nothing and says so.
 
 ## Triage the Suggestions
 
@@ -182,14 +199,11 @@ label the finding arrived with:
   **(promoted from Suggestion)**, and it does not reappear in the triage. A
   Pre-existing one stays in its section with the new tier leading it, marked
   the same way.
-- under `--lite`, there is no refuter to send it to: that path verifies
-  Criticals only, and a promotion never reaches Critical. Print it in the triage
-  under a third heading, **Reads as a Warning (unverified)**, as the reviewer
-  wrote it, so it is not mistaken for a nit. A Pre-existing one is the exception
-  again: it stays in its section with the new tier leading it, marked
-  **(promoted from Suggestion, unverified)** — the bullet above renders a
-  promotion a refuter survived, and nothing checked this one — and does not
-  appear in the triage.
+- under `--lite` it takes that same route, because this path now verifies
+  Warnings too: promote before the refuters are spawned, since the promotion is
+  what puts the finding in front of one at all. Same reporting — under Warning,
+  marked **(promoted from Suggestion)**, out of the triage, and a Pre-existing
+  one in its own section with the new tier leading it.
 
 Promotion is the one exception to the relaying rule, and it is narrow: a
 finding moves only when it states a concrete failure that the Warning
@@ -568,6 +582,31 @@ fixes happen only if they ask — when they do, follow the next section.
 
 ## If the user asks for fixes
 
+**Snapshot the tree before the first edit.** The cold review at the end reads the
+fix diff, and once the edits have landed nothing separates them from the change
+they repair. Take the snapshot first or that review is not available at all, and
+take it in two halves, because one command does not cover the tree:
+
+```sh
+git stash create                          # tracked changes, as a dangling commit; changes nothing on disk
+git ls-files --others --exclude-standard  # the untracked files it does not record
+```
+
+Copy each file the second command lists into `<scratch>/pre/`, keeping its
+repo-relative path. `git stash create` records **no untracked content**, and an
+untracked file is not a corner case here: the resolver folds untracked files into
+the reviewed diff, so a finding against a file that has never been committed is
+ordinary, and without the copies a fix to one leaves no trace in the diff below.
+
+Empty output from `git stash create` means no tracked change was pending, so `HEAD`
+is that half of the snapshot. It says nothing about the untracked half, which is why
+the second command runs either way. Where neither half can be had — no commit yet, or
+the session will not run the commands — the fix diff cannot be built, and the review
+below is reported `not run` with that reason rather than approximated from
+`git diff HEAD`: on an uncommitted scope that is the reviewed change and the fixes
+together, and a reviewer handed it re-reviews the branch while claiming to have read
+the repairs.
+
 Make only the edits the named findings describe — a review is not a mandate to
 refactor — and leave committing to the user. "Fix everything" means the three
 tiers; a **Pre-existing** finding is fixed only if the user names it, because
@@ -584,18 +623,40 @@ fixes were just written here, in the conversation the reviewer was deliberately
 kept out of. The original diff got a cold reviewer; the edits repairing it get
 nothing unless you dispatch it.
 
-Spawn one `wtf-refuter`, in parallel, per fixed Critical and Warning finding,
-per fixed **Definitely worth doing** Suggestion, and per fixed finding under the
-triage's **Reads as a Warning (unverified)** heading — that heading exists
-because the content is a Warning, so a fix to one is checked as a Warning's is.
+Spawn one `wtf-refuter`, in parallel, per fixed **Critical** and **Warning** and
+per fixed **Pre-existing** finding at either of those tiers. Fixed Suggestions
+get none — a promoted one is a Warning by the time it is fixed, so it is covered
+by the first clause rather than being an exception to this one.
+
+Pre-existing is named rather than left to "Critical and Warning" because this
+command files such a finding in its own section *instead of* the tier's, so an
+enumeration of tiers does not reach it — the verify pass spells it out for the
+same reason. The user had to name it to get it fixed at all, which makes it the
+last finding to check silently.
+
+This once covered every fixed finding, and the session that widened it measured
+what that bought: twelve refuters over six fix rounds, every one of them
+returning `refuted`, while the cold review below caught three defects those same
+refuters had just passed. One session is not a law, but the mechanism it exposes
+is structural — a refuter asks whether the old problem is gone, and a fix that
+resolves its finding answers yes no matter what else it did. So the fan-out
+scales its cost with the finding count and its yield with nothing, and the tiers
+kept here are the ones where a fix that quietly did not take costs more than the
+agent does.
+
 Send the finding **as the review wrote it**, plus the same scope-and-provenance
 data the verify pass sends — here that is the working tree, where the fixes
 landed, and whose work it is, so the correspondence you send is `workspace` — and
 nothing else: not the fix, not which lines
 it touched, not that a fix exists. The finding's `file:line` may have drifted
 under the edits; locating the code in the tree as it now stands is the
-refuter's job, not a reason to annotate the dispatch. Say how many refuters
-that is before spawning them.
+refuter's job, not a reason to annotate the dispatch. Say how many refuters that
+is before spawning them, and that a cold review of the fixes may follow: announce
+it as *N* refuters plus one review if the fix diff comes back non-empty. Whether
+that agent is dispatched is not settled until the diff is built, and a flat count
+of *N* + 1 announced here overstates the spend whenever it is not. A round that
+fixed only Suggestions spawns none at all: say the fixes go to the cold review
+alone rather than announcing zero refuters.
 
 Re-run the tests **and the linter** the reviewer's report named, in the same
 batch — neither depends on the verdicts, and serialising them behind it buys
@@ -627,8 +688,12 @@ tree is the user's own work or they have sanctioned it explicitly. The fix path
 already knows which, since it relays that provenance to every refuter it
 dispatches, and the session's own permissions are no guard here: a project that
 pre-approves its test or lint command runs it unprompted. Otherwise report both
-as `not run: tree is not the user's own work`, and say the fixes stand checked
-by the refuters alone.
+as `not run: tree is not the user's own work`, and name what is left standing
+behind the fixes: the fix review, and the refuters where any were spawned. On a
+Suggestions-only round there are none, and the fix review is the whole of the
+check — say that rather than crediting refuters that never ran. The fix review
+establishes that trust for itself and may decline the same runs for the same
+reason.
 
 **A `not run` says which kind it was.** This command's `allowed-tools` cannot cover
 this section, and not by oversight: the commands come from the reviewer's **Tests:**
@@ -652,22 +717,97 @@ A finding that still stands goes back to the user with the refuter's reasoning
 verbatim. Do not quietly take another swing and re-verify — a fix that failed
 its check once is a fix a human should look at.
 
+**Then review the fix diff, cold.** A refuter answers one question — is the
+finding it holds still there? — and a fix that resolves its finding while
+introducing a defect of its own answers that question correctly and says
+nothing. This step is for the second half. A round of fixing is itself a source
+of bugs, and none of the checks above see them: an assertion a fix made vacuous
+passes the suite by construction, and behaviour a fix changed that no finding
+mentioned passes the suite and the linter alike.
+
+Build the diff once the refuters and the re-runs have settled, a part per half of
+the snapshot:
+
+```sh
+git diff <snapshot> > <scratch>/fix.diff                                  # tracked files
+git diff --no-index -- <scratch>/pre/<path> <path> >> <scratch>/fix.diff  # untracked when you snapshotted
+git diff --no-index -- /dev/null <path> >> <scratch>/fix.diff             # created by the fixes
+```
+
+`/dev/null` belongs to the third line alone. Reaching for it on a file that
+already existed emits that whole file as added, so the reviewer reads lines the
+change under review wrote as lines the fixes wrote — inside a section titled a
+review of the fixes, which is worse than leaving the file out.
+
+Read `--no-index`'s exit status per line rather than as one rule. On the third it
+is always 1, since a created file always differs from `/dev/null`, and there that
+status is the diff rather than a failure. On the second it carries three
+different facts, and only one of them is a diff:
+
+- **0, and no output** — the fixes left that file alone. This is the ordinary
+  case: the snapshot copies every untracked file and the fixes touch few of them.
+- **1, with output** — the file changed, and the hunk is the fix.
+- **1, nothing on stdout, `error: Could not access '<path>'` on stderr** — the
+  fixes deleted or renamed it, and git will not diff a file that is gone. Nothing
+  is appended, so a finding answered by deleting a file the change had just added
+  would reach the reviewer as a diff that never mentions it. Record the deletion
+  by inverting the operands instead — `git diff --no-index -- <path> /dev/null >>
+  <scratch>/fix.diff`, run from `<scratch>/pre`, which emits a `deleted file` hunk
+  carrying the repo-relative path. A rename lands here as a deletion and has a
+  second half: the path it moved *to* takes whichever line its own presence in the
+  snapshot dictates, as any other file does — the second where `<scratch>/pre/`
+  holds a copy of it, and only the third where it holds none. Record just the
+  deletion and the diff shows the change's new file removed and never re-added,
+  which is this bullet's own failure inverted.
+
+Then dispatch a single `wtf-change-reviewer` with the path to that diff and
+nothing else: not the findings it answers, not which edit was which, not that
+the diff is a set of fixes at all. That is the cold-start rule the original
+review runs on, and it binds harder here — you wrote this code minutes ago. It is
+the conditional agent from the count above; say that it is being dispatched.
+
+Dispatch it after the refuter batch, never in it. It discovers and runs the
+suite and the linter itself, which is the same command in the same checkout as
+your re-run above, and that is the collision the split rule already describes.
+
+An empty fix diff means the edits changed nothing on disk — which is what it
+means only when every part above came back empty, the untracked ones included.
+Say so and dispatch nothing.
+
+What comes back is a review of the fixes, so print it in its own section under
+that name, marked **(unverified)** — nothing refutes it, and a verify pass on
+top of this one is a regress that ends nowhere. Do not act on it in the same
+turn. A fix round that produced its own findings is exactly the sequence a human
+should see before another edit lands on top of it; the user asks for a further
+round, or does not.
+
+**Only a Critical or a Warning from it is worth another round.** Say that when
+you print the report, and name its Suggestions as the half the loop is not gated
+on. A second reviewer reading code a first one has just rewritten disagrees with
+the rewrite as often as it finds a defect in it — on prose especially, where the
+disagreement is taste and each one costs a round that ends in another review.
+A Warning is different: every one this step has raised so far was a defect the
+fix itself had introduced.
+
 What this check does not cover, so it is not mistaken for more than it is:
 
 - A refuter confirms the finding is resolved, not that the fix broke nothing
-  else. The test and lint re-runs above are the only checks that cover
-  regressions, which is why their results — `not run: reason` included — belong
-  in the report.
-- Fixed **Worth doing** Suggestions go unverified — the same economics as the
-  verify pass — and are reported as such.
+  else. The cold review of the fix diff and the test and lint re-runs are the
+  checks that cover that, which is why their results — `not run: reason`
+  included — belong in the report.
+- Fixed Suggestions go unverified. The cold review reads them along with
+  everything else the fixes touched, but nothing checks the one claim a refuter
+  would have checked: that the finding is actually resolved.
 - The refuter defaults to `refuted` when the evidence is ambiguous, and that
   default now lands in the fix's favour — relay a verdict whose reasoning looks
   thin as exactly that. A `stands` whose reasoning says the check was blocked
   (the refuter declined to run the decisive command) is not the fix failing:
   relay it as **could not verify**.
-- A fix that reached beyond the finding's own hunk has changed code no refuter
-  was pointed at. Offer a fresh `/wtf-code-review` for it instead of
-  presenting the verdicts as if they covered it.
+- The fix review reads what the fixes touched and the refuters read one finding
+  each; neither reads the rest of the change, and that gap is widest when the
+  fixes were surgical. Nothing here re-reads the change as a whole with the
+  repairs in it — offer a fresh `/wtf-code-review` over the branch as it now
+  stands rather than presenting either as if it covered that.
 
 **A fix can strand a published verdict.** Where the scope is a PR, read its body
 (`gh pr view <n> --json body`) for a `<!-- verify:start -->` section and say the
@@ -706,10 +846,9 @@ as much as the tier does, and a suggestion nothing refuted should not land on
 the PR looking as settled as one that survived a refuter. A **Pre-existing**
 finding posts as its tier followed by **(pre-existing)** —
 `**Warning (pre-existing)** — …` — because the section heading that said so
-does not travel with it. The triage's **Reads as a Warning (unverified)**
-heading is the same shape of problem and takes the same answer: it posts as
-`**Suggestion (reads as a Warning, unverified)** — …`, the heading carried as a
-qualifier. Posting it as a Warning instead would be re-ranking, which the next
+does not travel with it. A promoted finding posts as the Warning the review
+settled on, marked **(promoted from Suggestion)** — posting it under the tier it
+arrived as would be re-ranking just as much as posting it higher, which the next
 line forbids.
 
 Do not re-rank on the way out. The tier that gets posted is the tier the review

@@ -76,9 +76,10 @@ home directory. Key consequences to keep in mind:
   - Verify a finding before acting on it; automated reviewers are wrong often
     enough that "it was reported" is not a reason to change code. Say in the
     reply how it was verified, not just that it was fixed.
-  - Declining is a legitimate outcome. Reply with the reason and leave the
-    thread **open** for a human to weigh in — resolving is for comments actually
-    addressed, and self-resolving a disagreement hides it.
+  - Declining is a legitimate outcome. Reply with the reason and leave it at
+    that — don't manage the thread's resolved state afterwards, and don't reopen
+    a thread something else resolved. CodeRabbit resolves one when it accepts the
+    reply, which is a verdict worth having rather than one to overrule.
   - Replies are public on this repo. Say what changed and why; don't paste
     internal reasoning, paths outside the repo, or machine-specific output.
 
