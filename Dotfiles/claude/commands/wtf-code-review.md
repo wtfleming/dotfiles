@@ -707,9 +707,28 @@ git diff --no-index -- /dev/null <path> >> <scratch>/fix.diff             # crea
 `/dev/null` belongs to the third line alone. Reaching for it on a file that
 already existed emits that whole file as added, so the reviewer reads lines the
 change under review wrote as lines the fixes wrote — inside a section titled a
-review of the fixes, which is worse than leaving the file out. `--no-index` exits
-1 whenever the files differ, so on both of those lines always; that status is the
-diff, not a failure.
+review of the fixes, which is worse than leaving the file out.
+
+Read `--no-index`'s exit status per line rather than as one rule. On the third it
+is always 1, since a created file always differs from `/dev/null`, and there that
+status is the diff rather than a failure. On the second it carries three
+different facts, and only one of them is a diff:
+
+- **0, and no output** — the fixes left that file alone. This is the ordinary
+  case: the snapshot copies every untracked file and the fixes touch few of them.
+- **1, with output** — the file changed, and the hunk is the fix.
+- **1, nothing on stdout, `error: Could not access '<path>'` on stderr** — the
+  fixes deleted or renamed it, and git will not diff a file that is gone. Nothing
+  is appended, so a finding answered by deleting a file the change had just added
+  would reach the reviewer as a diff that never mentions it. Record the deletion
+  by inverting the operands instead — `git diff --no-index -- <path> /dev/null >>
+  <scratch>/fix.diff`, run from `<scratch>/pre`, which emits a `deleted file` hunk
+  carrying the repo-relative path. A rename lands here as a deletion and has a
+  second half: the path it moved *to* takes whichever line its own presence in the
+  snapshot dictates, as any other file does — the second where `<scratch>/pre/`
+  holds a copy of it, and only the third where it holds none. Record just the
+  deletion and the diff shows the change's new file removed and never re-added,
+  which is this bullet's own failure inverted.
 
 Then dispatch a single `wtf-change-reviewer` with the path to that diff and
 nothing else: not the findings it answers, not which edit was which, not that
