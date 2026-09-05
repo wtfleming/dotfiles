@@ -19,6 +19,9 @@ brew install pandoc
 
 brew install uv
 
+# Codex CLI
+brew install --cask codex
+
 brew install shellcheck
 
 # YAML language server
