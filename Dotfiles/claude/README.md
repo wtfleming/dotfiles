@@ -154,8 +154,8 @@ finding — tens of agents on a real branch — and asking for fixes afterwards 
 more refuter per fixed Critical or Warning, Pre-existing ones at those tiers included,
 plus a cold review of the fix diff. It announces each fan-out before spawning
 it, so the spend can be refused, and `--lite` cuts it to the reviewer alone plus a
-refuter per Critical. For very large diffs, the built-in `/code-review ultra` is the
-maintained alternative.
+refuter per Critical and Warning. For very large diffs, the built-in
+`/code-review ultra` is the maintained alternative.
 
 ## Resolving the scope
 

@@ -11,7 +11,7 @@ the flag is the scope, and the scope may be empty.
 
 The full pass is the default: the reviewer, a dedicated agent per dimension, and
 a refuter per finding that survives to verification. `--lite` is the reviewer
-alone, with only its Criticals verified. Where the text below says *under
+alone, with its Criticals and Warnings verified. Where the text below says *under
 `--lite`* it means that cheaper path; everything else describes the default.
 
 `--deep` was the old name for what is now the default. If it arrives, say the
@@ -51,9 +51,9 @@ let the agent work out its own: it runs the same resolver you would, and with no
 behind it there is nothing to gain by resolving first.
 
 Under `--lite`, print the report verbatim when it returns — unless it carries
-a Critical, in which case hold it and follow **Verify the Criticals** first. Do
-not re-rank the findings, soften them, or defend the code — you are relaying an
-independent review, not negotiating with it.
+a Critical or a Warning, in which case hold it and follow **Verify the top
+tiers** first. Do not re-rank the findings, soften them, or defend the code —
+you are relaying an independent review, not negotiating with it.
 
 Otherwise, do not print it yet. Its findings are about to enter a verify
 pass that may retract some of them, and a finding that is about to be retracted
@@ -74,7 +74,7 @@ findings still go out as written, in the tier they arrived in.
 close matters: do not launch into fixing anything. If the user replies asking
 for fixes, follow **If the user asks for fixes** below.
 
-## Verify the Criticals
+## Verify the top tiers
 
 Under `--lite` the reviewer's findings reach the user checked by nobody, and
 the bias that objection rests on does not depend on how many agents ran: the
@@ -83,26 +83,33 @@ agent that wrote a finding is the worst-placed to judge it, alone or in a crowd.
 Verifying all of them here would cost what the full pass costs, on the path
 chosen for being cheap — and unlike a lens, a refuter cannot ride along in the
 reviewer's batch, because a finding has to exist before anything can argue
-against it. So this path verifies **Critical findings only**:
+against it. So this path verifies the two tiers that ask for work:
+**Criticals and Warnings**, promoted ones included, and Pre-existing findings at
+those tiers.
 
 - Critical is the tier that claims to block the commit, so a false one is the
   most expensive finding in the report: it stops work that should not stop.
-- It is rare. Most runs carry none and spawn nothing, which is what keeps this
-  path as fast as the reviewer alone.
+- Warning is the tier a reader actually acts on, and the more numerous of the
+  two — which is what makes it worth checking rather than a reason to skip it.
+  An unchecked Warning is where a `--lite` run spends someone's afternoon on a
+  defect that was not there.
 
-Spawn one `wtf-refuter` per Critical, in parallel, dispatched exactly as
+This is the one place `--lite` stops being cheap, and the cost is the diff's to
+set rather than this command's: a report carrying six Warnings spawns six
+refuters. Say the number before you spawn them, as the full pass does, so it can
+be refused.
+
+Spawn one `wtf-refuter` per finding, in parallel, dispatched exactly as
 **Verify** describes on the full pass — the finding verbatim, plus the scope and
-whose work it is, and nothing else. Say how many before you spawn them.
+whose work it is, and nothing else.
 
-Then print the report with the refuted Criticals removed, and say how many were
-refuted and why; a dropped finding is reported, not hidden. If every Critical
-was refuted, say so plainly and treat it as a result worth doubting rather than
-a clean bill of health.
+Then print the report with the refuted findings removed, and say how many were
+refuted and why; a dropped finding is reported, not hidden. If everything was
+refuted, say so plainly and treat it as a result worth doubting rather than a
+clean bill of health.
 
-Warnings and Suggestions go through unchecked. Mark each Warning
-**(unverified)** so no reader mistakes an unchecked finding for a checked one,
-and leave the Suggestions to the triage below, which on this path verifies
-nothing and says so.
+Suggestions go through unchecked, left to the triage below, which on this path
+verifies nothing and says so.
 
 ## Triage the Suggestions
 
@@ -182,14 +189,11 @@ label the finding arrived with:
   **(promoted from Suggestion)**, and it does not reappear in the triage. A
   Pre-existing one stays in its section with the new tier leading it, marked
   the same way.
-- under `--lite`, there is no refuter to send it to: that path verifies
-  Criticals only, and a promotion never reaches Critical. Print it in the triage
-  under a third heading, **Reads as a Warning (unverified)**, as the reviewer
-  wrote it, so it is not mistaken for a nit. A Pre-existing one is the exception
-  again: it stays in its section with the new tier leading it, marked
-  **(promoted from Suggestion, unverified)** — the bullet above renders a
-  promotion a refuter survived, and nothing checked this one — and does not
-  appear in the triage.
+- under `--lite` it takes that same route, because this path now verifies
+  Warnings too: promote before the refuters are spawned, since the promotion is
+  what puts the finding in front of one at all. Same reporting — under Warning,
+  marked **(promoted from Suggestion)**, out of the triage, and a Pre-existing
+  one in its own section with the new tier leading it.
 
 Promotion is the one exception to the relaying rule, and it is narrow: a
 finding moves only when it states a concrete failure that the Warning
@@ -609,11 +613,10 @@ fixes were just written here, in the conversation the reviewer was deliberately
 kept out of. The original diff got a cold reviewer; the edits repairing it get
 nothing unless you dispatch it.
 
-Spawn one `wtf-refuter`, in parallel, per fixed **Critical** and **Warning**, per
-fixed **Pre-existing** finding at either of those tiers, and per fixed finding
-under the triage's **Reads as a Warning (unverified)** heading — that heading
-exists because the content is a Warning, so a fix to one is checked as a
-Warning's is. Fixed Suggestions get none.
+Spawn one `wtf-refuter`, in parallel, per fixed **Critical** and **Warning** and
+per fixed **Pre-existing** finding at either of those tiers. Fixed Suggestions
+get none — a promoted one is a Warning by the time it is fixed, so it is covered
+by the first clause rather than being an exception to this one.
 
 Pre-existing is named rather than left to "Critical and Warning" because this
 command files such a finding in its own section *instead of* the tier's, so an
@@ -833,10 +836,9 @@ as much as the tier does, and a suggestion nothing refuted should not land on
 the PR looking as settled as one that survived a refuter. A **Pre-existing**
 finding posts as its tier followed by **(pre-existing)** —
 `**Warning (pre-existing)** — …` — because the section heading that said so
-does not travel with it. The triage's **Reads as a Warning (unverified)**
-heading is the same shape of problem and takes the same answer: it posts as
-`**Suggestion (reads as a Warning, unverified)** — …`, the heading carried as a
-qualifier. Posting it as a Warning instead would be re-ranking, which the next
+does not travel with it. A promoted finding posts as the Warning the review
+settled on, marked **(promoted from Suggestion)** — posting it under the tier it
+arrived as would be re-ranking just as much as posting it higher, which the next
 line forbids.
 
 Do not re-rank on the way out. The tier that gets posted is the tier the review
