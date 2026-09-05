@@ -96,8 +96,7 @@ direction, and no delimiter prevents it.
 
 A tool that edits code where a published section may exist therefore reads the body for the
 markers and says the verdict is stale, naming what would refresh it. **The tools this binds
-today are `/wtf-code-review`, `/wtf-code-review-no-lenses`, `wtf-deslop` and
-`wtf-code-verify`** — named rather than left as a class, because a class with no membership
+today are `/wtf-code-review`, `wtf-deslop` and `wtf-code-verify`** — named rather than left as a class, because a class with no membership
 list gets wired into whichever members someone remembers. Add a tool to that list when it
 starts editing code.
 

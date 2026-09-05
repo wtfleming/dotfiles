@@ -76,38 +76,11 @@ path against the behaviour of the failure path.
 There is no fix flag; the review itself never edits. The report lands in the
 conversation, so to act on it, say which findings — "fix the first two" — and
 the fixes happen in the main session, which knows what you were trying to do.
-Each fixed Critical or Warning is then checked by one fresh `wtf-refuter`
-arguing against the fixed tree, so the fixes get the same independent
-verification the findings did. Committing stays yours.
-
-### The single-agent variant
-
-`/wtf-code-review-no-lenses` is the same command with the lenses folded back
-into the reviewer. It dispatches no `wtf-lens` at all: the eight rubrics ride
-along in the reviewer's own prompt, and the one agent that already diffed the
-change and read its files works through them in one pass. It exists because most
-of a full run's tokens go on eight agents each re-reading the same scope before
-any of them writes a line.
-
-```
-/wtf-code-review-no-lenses main
-```
-
-Everything downstream is unchanged — same report, same promotion rule, same
-`wtf-refuter` per Critical and Warning. What it gives up is the isolation: eight
-agents each with one rubric and a full context budget go deeper than one agent
-holding eight, and a lens that finds nothing is a fact about coverage that a
-single reviewer has to be asked for. So it asks: the reviewer closes with a
-**Dimensions** section accounting for each rubric as findings, `no findings` or
-`not applicable`, and the command relays it rather than filling in the gaps.
-
-The two are meant to be run against the same PR and compared, so keep them in
-step. What differs is the dispatch machinery and nothing else: spawning the
-lenses, `Pick the lenses`, and the two-round launch on a subject scope. The
-rubric table and everything downstream of it — the promotion rule, the verify
-pass, the triage, the fix and GitHub sections — belong in both, and a change to
-one of those is a change to both. Retuning a rubric row is the case to watch:
-it reads like a change about the lenses, and it is not.
+Every fixed finding is then checked by a fresh `wtf-refuter` arguing against the
+fixed tree, and the fix diff itself goes to a cold `wtf-change-reviewer` told
+nothing about which findings it answers — a refuter only asks whether its own
+finding is gone, so a repair that resolves it and introduces a defect of its own
+passes unremarked. Committing stays yours.
 
 ### Design review, earlier in the cycle
 
