@@ -58,7 +58,6 @@ Why? Missing finally block ← Root cause
 ## Rules
 
 - Evidence over intuition
-- Don't stack patches around a wrong premise. Each fix that works around the last
-  is evidence the premise is wrong, not that the next one will hold
 - Change one thing at a time
 - If stuck after 2 attempts, step back and re-hypothesize
+- Fixes that work around the last fix mean the premise is wrong

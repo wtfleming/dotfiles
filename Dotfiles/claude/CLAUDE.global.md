@@ -64,7 +64,8 @@ Before implementing:
 **Minimum code that solves the problem. Nothing speculative.**
 
 - No features beyond what was asked.
-- No abstractions for single-use code.
+- No abstractions for single-use code, and a passing test is not evidence that one
+  earns its place.
 - No "flexibility" or "configurability" that wasn't requested.
 - No error handling for impossible scenarios.
 - If you write 200 lines and it could be 50, rewrite it.
@@ -168,7 +169,6 @@ sprawl costs, and it reads as diligence while doing it.
 - Don't stand up test infrastructure for one task. Where the task genuinely
   needs it, that is a change of scope: say so in the plan.
 - Don't backfill coverage the change didn't touch. Mention the gap instead.
-- A passing test is not evidence that an abstraction earns its place.
 
 Where a repo wires its tests up by hand — a CI step per file, a manifest, a
 registry — a new test file is a change to that wiring too. Check before adding
