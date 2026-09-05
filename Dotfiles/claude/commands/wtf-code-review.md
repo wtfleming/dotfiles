@@ -71,7 +71,7 @@ in which case hold it and follow **Verify the findings** first. Do not re-rank
 the findings, soften them, or defend the code — you are relaying an independent
 review, not negotiating with it.
 
-Otherwise, do not print it yet. Its findings are about to enter a verify
+On the full pass, do not print it yet. Its findings are about to enter a verify
 pass that may retract some of them, and a finding that is about to be retracted
 should not get a first airing here any more than in the merged report below.
 Say that the reviewer returned and how many findings it brought, and hold the
@@ -112,6 +112,16 @@ full pass does, so it can be refused.
 Spawn one `wtf-refuter` per finding, in parallel, dispatched exactly as
 **Verify** describes on the full pass — the finding verbatim, plus the scope and
 whose work it is, and nothing else.
+
+**A refuter that returns no usable report is handled here as it is there**: the
+finding stays, at the tier it arrived in, marked **(unverified — refuter
+returned no usable report)**, and is never counted among the refuted — see
+**Verify** for why. The cross-reference is load-bearing rather than tidy,
+because that rule and the accounting bullet that reports it both sit inside the
+per-dimension pass this path skips, and an agent reading only this section would
+fold a timed-out refuter into the refuted count and drop the finding it was
+holding. On a Critical that is a blocker retracted by an infrastructure failure.
+Report how many on this path with the refuted count, below the triage.
 
 Then print the report with the refuted findings removed. **How many were refuted
 and why goes below the Suggestion triage** — a dropped finding is reported, not
