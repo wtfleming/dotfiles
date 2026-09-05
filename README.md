@@ -146,12 +146,10 @@ fresh-context code review. See [`Dotfiles/claude/README.md`](Dotfiles/claude/REA
 `Dotfiles/codex/config.toml` shows model and reasoning effort, current directory,
 git branch, context usage and capacity, and the five-hour rate limit.
 
-Unlike the file copies above, `sync-dotfiles.sh` merges only `tui.status_line`
-into `~/.codex/config.toml`, preserving local settings and comments. The merge
-helper uses `uv` (installed by the dependency script) to run Python with a pinned
-`tomlkit` dependency; its first run may download that dependency and Python.
-Edit the repo config and sync again to change the footer. Codex's `/statusline`
-picker changes the local setting, which the next sync replaces.
+`sync-dotfiles.sh` copies this file to `~/.codex/config.toml`, replacing the
+entire local config. Keep any settings you want to retain in the repo copy.
+Changes made locally, including through Codex's `/statusline` picker, are
+overwritten on the next sync.
 
 ## Layout
 
