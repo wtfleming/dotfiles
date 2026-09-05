@@ -493,18 +493,28 @@ fixes happen only if they ask — when they do, follow the next section.
 
 **Snapshot the tree before the first edit.** The cold review at the end reads the
 fix diff, and once the edits have landed nothing separates them from the change
-they repair. Take the snapshot first or that review is not available at all:
+they repair. Take the snapshot first or that review is not available at all, and
+take it in two halves, because one command does not cover the tree:
 
 ```sh
-git stash create   # a dangling commit of the tree as it stands; changes nothing on disk
+git stash create                          # tracked changes, as a dangling commit; changes nothing on disk
+git ls-files --others --exclude-standard  # the untracked files it does not record
 ```
 
-Empty output means the tree was already clean, so `HEAD` is the snapshot. Where
-neither can be had — no commit yet, or the session will not run the command — the
-fix diff cannot be built, and the review below is reported `not run` with that
-reason rather than approximated from `git diff HEAD`: on an uncommitted scope that
-is the reviewed change and the fixes together, and a reviewer handed it re-reviews
-the branch while claiming to have read the repairs.
+Copy each file the second command lists into `<scratch>/pre/`, keeping its
+repo-relative path. `git stash create` records **no untracked content**, and an
+untracked file is not a corner case here: the resolver folds untracked files into
+the reviewed diff, so a finding against a file that has never been committed is
+ordinary, and without the copies a fix to one leaves no trace in the diff below.
+
+Empty output from `git stash create` means no tracked change was pending, so `HEAD`
+is that half of the snapshot. It says nothing about the untracked half, which is why
+the second command runs either way. Where neither half can be had — no commit yet, or
+the session will not run the commands — the fix diff cannot be built, and the review
+below is reported `not run` with that reason rather than approximated from
+`git diff HEAD`: on an uncommitted scope that is the reviewed change and the fixes
+together, and a reviewer handed it re-reviews the branch while claiming to have read
+the repairs.
 
 Make only the edits the named findings describe — a review is not a mandate to
 refactor — and leave committing to the user. "Fix everything" means the three
@@ -537,8 +547,11 @@ data the verify pass sends — here that is the working tree, where the fixes
 landed, and whose work it is — and nothing else: not the fix, not which lines
 it touched, not that a fix exists. The finding's `file:line` may have drifted
 under the edits; locating the code in the tree as it now stands is the
-refuter's job, not a reason to annotate the dispatch. Say how many refuters
-that is before spawning them.
+refuter's job, not a reason to annotate the dispatch. Say how many refuters that
+is before spawning them, and that a cold review of the fixes may follow: announce
+it as *N* refuters plus one review if the fix diff comes back non-empty. Whether
+that agent is dispatched is not settled until the diff is built, and a flat count
+of *N* + 1 announced here overstates the spend whenever it is not.
 
 Re-run the tests **and the linter** the reviewer's report named, in the same
 batch — neither depends on the verdicts, and serialising them behind it buys
@@ -604,28 +617,35 @@ of bugs, and none of the checks above see them: an assertion a fix made vacuous
 passes the suite by construction, and behaviour a fix changed that no finding
 mentioned passes the suite and the linter alike.
 
-Build the diff once the refuters and the re-runs have settled:
+Build the diff once the refuters and the re-runs have settled, a part per half of
+the snapshot:
 
 ```sh
-git diff <snapshot> > <scratch>/fix.diff
+git diff <snapshot> > <scratch>/fix.diff                                  # tracked files
+git diff --no-index -- <scratch>/pre/<path> <path> >> <scratch>/fix.diff  # untracked when you snapshotted
+git diff --no-index -- /dev/null <path> >> <scratch>/fix.diff             # created by the fixes
 ```
 
-A file the fixes *created* is untracked and appears in no such diff — append
-each one with `git diff --no-index -- /dev/null <file>`, which exits 1 whenever
-the files differ, so here always; that status is the diff, not a failure.
+`/dev/null` belongs to the third line alone. Reaching for it on a file that
+already existed emits that whole file as added, so the reviewer reads lines the
+change under review wrote as lines the fixes wrote — inside a section titled a
+review of the fixes, which is worse than leaving the file out. `--no-index` exits
+1 whenever the files differ, so on both of those lines always; that status is the
+diff, not a failure.
 
 Then dispatch a single `wtf-change-reviewer` with the path to that diff and
 nothing else: not the findings it answers, not which edit was which, not that
 the diff is a set of fixes at all. That is the cold-start rule the original
-review runs on, and it binds harder here — you wrote this code minutes ago.
-Count the agent in the total you announce.
+review runs on, and it binds harder here — you wrote this code minutes ago. It is
+the conditional agent from the count above; say that it is being dispatched.
 
 Dispatch it after the refuter batch, never in it. It discovers and runs the
 suite and the linter itself, which is the same command in the same checkout as
 your re-run above, and that is the collision the split rule already describes.
 
-An empty fix diff means the edits changed nothing on disk. Say so and dispatch
-nothing.
+An empty fix diff means the edits changed nothing on disk — which is what it
+means only when every part above came back empty, the untracked ones included.
+Say so and dispatch nothing.
 
 What comes back is a review of the fixes, so print it in its own section under
 that name, marked **(unverified)** — nothing refutes it, and a verify pass on
@@ -646,10 +666,10 @@ What this check does not cover, so it is not mistaken for more than it is:
   (the refuter declined to run the decisive command) is not the fix failing:
   relay it as **could not verify**.
 - The fix review reads what the fixes touched and the refuters read one finding
-  each; neither reads the rest of the change. Where the fixes reached well
-  beyond the hunks the findings named, offer a fresh `/wtf-code-review-no-lenses` over
-  the branch as it now stands rather than presenting either as if it covered
-  that.
+  each; neither reads the rest of the change, and that gap is widest when the
+  fixes were surgical. Nothing here re-reads the change as a whole with the
+  repairs in it — offer a fresh `/wtf-code-review-no-lenses` over the branch as it now
+  stands rather than presenting either as if it covered that.
 
 **A fix can strand a published verdict.** Where the scope is a PR, read its body
 (`gh pr view <n> --json body`) for a `<!-- verify:start -->` section and say the

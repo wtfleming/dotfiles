@@ -40,6 +40,11 @@ resolve a scope of your own — the diff *is* the scope, and `git diff HEAD` the
 different and wider change, usually the one these edits sit on top of. Say at the top
 of the report that the scope arrived as a diff file, and how many files it covers.
 
+A `--no-index` hunk in such a diff can carry a left-hand path that is not in the repo
+at all — a copy of the file as it was, taken wherever the caller keeps its scratch.
+The right-hand path is the file, and it is the one a finding cites; a finding anchored
+at the copy names a path the reader cannot open.
+
 **If you were handed an artifact directory, read it — do not re-resolve.** A dispatch may
 give you a path to a directory holding `scope.diff` and `manifest.json`, already settled by
 whoever spawned you. Read the diff from that file and take the file list, the scope line and
