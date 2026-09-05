@@ -521,9 +521,16 @@ nothing.
 ### Report
 
 Print the merged report of what survived, in the reviewer's Critical / Warning /
-Pre-existing format, keeping its Scope / Tests / Lint header lines — the test
-result is the most load-bearing line in the report, and on the full pass this
+Pre-existing format, keeping its **Scope**, **Tests** and **Lint** header lines — the
+test result is the most load-bearing line in the report, and on the full pass this
 is its only airing. The surviving Suggestions print once, in the triage below.
+
+Do not carry the reviewer's **Correspondence** line into the merged header. The
+**Scope** line below already ends in the correspondence, written out as prose, and
+the second line restates it as a state word, a SHA and a scratch path — plumbing
+this pass has already used. It stays in the reviewer's own template because
+`--lite` prints that report verbatim, and there it is the only channel this command
+has for the correspondence it must send to its refuters.
 
 The **Scope** line is the manifest's `scope_line`, which already carries the
 correspondence. Say it even when it is `same`: a reader cannot tell "the tree
@@ -531,37 +538,49 @@ holds the reviewed code" from "nobody checked" unless the report distinguishes
 them, and every finding below was read out of one tree or the other. Where
 `base_stale` is set, say that too — the scope may be wider than the branch.
 
-Then:
-
-- how many findings were refuted, and why — a dropped finding is reported, not
-  hidden
-- which lenses returned nothing, and — listed separately — which returned **not
-  applicable**, and — listed separately again — which returned **no usable
-  report** because they errored, timed out or came back unparseable. A lens that
-  governed something and found it clean, a lens that had no surface to review,
-  and a lens that never reported are three different facts about how far the
-  pass reached, and collapsing any of them into another overstates coverage. The
-  third is the one that most looks like the first: an agent that failed is not a
-  dimension that came back clean, and counting it as one is how a broken pass
-  reads as a passing one. All three are worth printing, and hiding any of
-  them makes the lenses look like one. Then — separately again — which
-  lenses were **not dispatched** by **Pick the lenses**, each with the check
-  that excluded it, so a reader can tell a lens this command skipped from one
-  that looked and found no surface. And, should it happen, which returned
-  **subject not found**: on a subject the lenses are handed the file list the
-  reviewer settled, so a lens that still could not find the subject disagreed
-  with the reviewer about what implements it. Print it as its own line, never
-  as no findings — that lens reviewed nothing
-- which findings were promoted from Suggestion to Warning and how each fared
-  — a promotion is this command's own re-tiering, so it is disclosed alongside
-  the refutations rather than folded into the reviewer's count
-- if everything was refuted, say so plainly and treat it as a result worth
-  doubting rather than a clean bill of health — that is also what a gate that
-  never bites looks like
+A finding promoted from Suggestion to Warning needs nothing said about it here.
+It is already marked **(promoted from Suggestion)** where it sits, and the
+refutation line below already says how it fared; a second telling in the
+accounting is the same disclosure charged twice.
 
 Then the **Suggestion triage**, carrying the Suggestions that remain: the
 **Definitely worth doing** list as it came back from the refuters, and the
 **Worth doing** list marked **(unverified)**.
+
+**Then, last, the accounting for the pass.** It goes below the triage rather than
+between it and the report: everything above it is work the reader might do, and
+everything in it is a fact about how the pass ran. Put that first and a reader
+crosses agent bookkeeping to reach the advice; put it last and the report can be
+stopped at the point the advice runs out.
+
+- how many findings were refuted, and why — a dropped finding is reported, not
+  hidden
+- **lens coverage, on one line**, each lens labelled with what it returned:
+
+  ```
+  Lenses: correctness, security, tests — clean · performance — n/a · dependencies — not dispatched (no manifest changes)
+  ```
+
+  Clean, **not applicable** and **not dispatched** are three different facts —
+  a lens that governed something and found it clean, one with no surface to
+  review, and one **Pick the lenses** excluded — so each lens carries its own
+  label and none is folded into another. What they do not need is a list and a
+  paragraph each. `not dispatched` keeps the check that excluded it, as a
+  parenthetical.
+- **which lenses returned no usable report** — errored, timed out, or came back
+  unparseable — on a line of its own, never on the line above. An agent that
+  failed is not a dimension that came back clean, and counting it as one is how
+  a broken pass reads as a passing one. This is the one lens state worth
+  interrupting the reader for, because it means the coverage is thinner than the
+  report looks.
+- **which lenses returned subject not found**, on its own line, should it happen:
+  the lenses were handed the file list the reviewer settled, so a lens that still
+  could not find the subject disagreed with the reviewer about what implements
+  it. That lens reviewed nothing, and printing it as no findings would say the
+  opposite.
+- if everything was refuted, say so plainly and treat it as a result worth
+  doubting rather than a clean bill of health — that is also what a gate that
+  never bites looks like
 
 Then stop. The same close as above: the findings are the user's to triage, and
 fixes happen only if they ask — when they do, follow the next section.
