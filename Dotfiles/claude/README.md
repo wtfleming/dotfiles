@@ -45,10 +45,11 @@ collision says which reports saw it however it was resolved. Collisions run down
 ordered ladder — Pre-existing, then tier, then the statement naming a concrete
 failure, then the reviewer over a lens, then the longer evidence — because "keep the more specific statement" leaves two
 equally-tiered findings with nothing to separate them, and the model then picks by
-feel between reports its own agents wrote. The triage's **Definitely worth
-doing** list is refuted alongside the Criticals and Warnings; **Worth doing**
-arrives marked `(unverified)` rather than spending an agent apiece on nits, and
-under `--lite` both lists carry the mark. There is
+feel between reports its own agents wrote. Every finding the report prints
+is refuted, on both paths — both triage lists included, and Pre-existing findings
+at every tier — capped at 20 refuters and spent in the order a wrong finding
+costs most, so the cap bites nits before it bites a Critical. Anything past it
+prints marked `(unverified)` with the cap named as the reason. There is
 deliberately no linter lens — the reviewer already runs the real one.
 
 `reuse` and `resilience` are the two lenses with no counterpart in the checklist.

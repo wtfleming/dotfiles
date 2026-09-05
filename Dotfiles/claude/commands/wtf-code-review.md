@@ -51,18 +51,17 @@ let the agent work out its own: it runs the same resolver you would, and with no
 behind it there is nothing to gain by resolving first.
 
 Under `--lite`, run the promotion half of **Triage the Suggestions** the moment
-the report returns, before deciding anything else with it. A Suggestion whose
-content describes a failure becomes a Warning there, and a Warning is what this
-path now verifies — so judging the report by the tiers it arrived with would let
-exactly that finding print unchecked, which is the hole the verification exists
-to close. It is also what gives a promoted finding somewhere to print: promoted
-before the report goes out, it lands in the Warning section; promoted after, it
-belongs to a report already printed and to a triage it has been taken out of.
+the report returns, before deciding anything else with it. It is what gives a
+promoted finding somewhere to print: promoted before the report goes out, it
+lands in the Warning section; promoted after, it belongs to a report already
+printed and to a triage it has been taken out of. It also sets where the finding
+sits in the cap's priority order, which is the difference between a refuter and
+an **(unverified)** mark on a report that hit the cap.
 
-Then print the report verbatim — unless it carries a Critical or a Warning,
-promoted ones included, in which case hold it and follow **Verify the top
-tiers** first. Do not re-rank the findings, soften them, or defend the code —
-you are relaying an independent review, not negotiating with it.
+Then print the report verbatim — unless it carries a finding at all,
+in which case hold it and follow **Verify the findings** first. Do not re-rank
+the findings, soften them, or defend the code — you are relaying an independent
+review, not negotiating with it.
 
 Otherwise, do not print it yet. Its findings are about to enter a verify
 pass that may retract some of them, and a finding that is about to be retracted
@@ -84,30 +83,22 @@ in the tier it arrived in.
 close matters: do not launch into fixing anything. If the user replies asking
 for fixes, follow **If the user asks for fixes** below.
 
-## Verify the top tiers
+## Verify the findings
 
 Under `--lite` the reviewer's findings reach the user checked by nobody, and
 the bias that objection rests on does not depend on how many agents ran: the
 agent that wrote a finding is the worst-placed to judge it, alone or in a crowd.
 
-Verifying all of them here would cost what the full pass costs, on the path
-chosen for being cheap — and unlike a lens, a refuter cannot ride along in the
-reviewer's batch, because a finding has to exist before anything can argue
-against it. So this path verifies the two tiers that ask for work:
-**Criticals and Warnings**, promoted ones included, and Pre-existing findings at
-those tiers.
-
-- Critical is the tier that claims to block the commit, so a false one is the
-  most expensive finding in the report: it stops work that should not stop.
-- Warning is the tier a reader actually acts on, and the more numerous of the
-  two — which is what makes it worth checking rather than a reason to skip it.
-  An unchecked Warning is where a `--lite` run spends someone's afternoon on a
-  defect that was not there.
+So this path verifies what the full pass verifies: **every finding the report
+will print**, under the same 20-refuter cap and the same priority order — see
+**Verify**. What makes `--lite` cheap is skipping eight lenses, not leaving
+findings unchecked, and a finding this path prints is one a reader acts on
+exactly as they would on the full pass.
 
 This is the one place `--lite` stops being cheap, and the cost is the diff's to
-set rather than this command's: a report carrying six Warnings spawns six
-refuters. Say the number before you spawn them, as the full pass does, so it can
-be refused.
+set rather than this command's: a report carrying six Warnings and four
+Suggestions spawns ten refuters. Say the number before you spawn them, as the
+full pass does, so it can be refused.
 
 Spawn one `wtf-refuter` per finding, in parallel, dispatched exactly as
 **Verify** describes on the full pass — the finding verbatim, plus the scope and
@@ -158,10 +149,10 @@ when nothing was dropped, since a line reporting zero dropped findings reports
 nothing. Each Suggestion that *is* printed lands in exactly one list, carrying
 its `file:line`, the finding as written, any qualifier it arrived with, and the
 one-line reason. The qualifier tracks what checked the finding, not which list
-it landed in: mark it **(unverified)** unless a refuter read it and let it
-stand, which happens only to the **Definitely worth doing** list on the full
-pass. Everything else carries the mark — both lists under `--lite`, and
-**Worth doing** on the full pass. So a bare Suggestion means one thing
+it landed in: mark it **(unverified)** unless a refuter read it and let it stand.
+Both lists are refuted on both paths, so the mark is now the exception rather
+than the rule — it means the run hit the 20-refuter cap before reaching this
+finding, which **Verify** ranks last. So a bare Suggestion means one thing
 everywhere, including on a PR comment, where the triage's closing line does not
 travel with it. That is the only place it appears, so a finding shortened here
 is shortened everywhere. Findings under **Pre-existing** are the exception and are
@@ -174,25 +165,21 @@ is small and the payoff is clear and durable — a misleading name on something
 public, dead code that will be mistaken for live, a comment that states
 something false. **Worth doing** is the rest of the genuine
 improvements — right to take, fine to defer. Keep the top list short; if most
-Suggestions land there, it is not sorting anything — and on the full pass it is
-also spending a refuter on each one, which is the second reason to keep it
-short.
+Suggestions land there, it is not sorting anything.
 
-Whether the triage verifies anything depends on the path, and its closing line
-says which. Under `--lite` it is a judgement and nothing else: nothing is
-dispatched to check a Suggestion. Otherwise the **Definitely worth doing**
-list is refuted alongside the Criticals and Warnings — see **Verify** — and only
-the **Worth doing** list goes out unchecked. The sorting is what makes that
-affordable: it is the difference between verifying the tier and verifying the
-few findings the triage is actively steering the reader towards.
+Both lists are refuted alongside the Criticals and Warnings on both paths — see
+**Verify** — so the sort no longer decides what gets checked, only what a reader
+should reach for first and, where the cap binds, which Suggestions still had a
+refuter to spend. Say in the closing line whether anything here went unverified
+and why.
 
 The third list is the only place the triage itself may leave a Suggestion
 unprinted: nothing above carries one except the two cases named here — a
-Pre-existing one, and one promoted to Warning. On the full pass there is one
-further route out, and it is not the triage's: a refuter kills the finding, and
-it leaves with the other refuted findings, counted in that line rather than
-this one. Every other Suggestion the reviewer wrote is either in a list or in
-the dropped count.
+Pre-existing one, and one promoted to Warning. There is one further route out on
+either path, and it is not the triage's: a refuter kills the finding, and it
+leaves with the other refuted findings, counted in that line rather than this
+one. Every other Suggestion the reviewer wrote is either in a list or in the
+dropped count.
 
 One shape does not belong in either list. A Suggestion whose content describes
 something that *breaks* — a specific input and a wrong result, a leak, an
@@ -205,17 +192,16 @@ label the finding arrived with:
   **(promoted from Suggestion)**, and it does not reappear in the triage. A
   Pre-existing one stays in its section with the new tier leading it, marked
   the same way.
-- under `--lite` it takes that same route, because this path now verifies
-  Warnings too: promote before the refuters are spawned, since the promotion is
-  what puts the finding in front of one at all. Same reporting — under Warning,
+- under `--lite` it takes that same route. Same reporting — under Warning,
   marked **(promoted from Suggestion)**, out of the triage, and a Pre-existing
   one in its own section with the new tier leading it.
 
 Promotion is the one exception to the relaying rule, and it is narrow: a
 finding moves only when it states a concrete failure that the Warning
 definition covers. "Could be cleaner" does not move. When unsure, do not
-promote — a wrongly promoted nit costs a refuter; a wrongly kept one is still
-in the triage for the user to see.
+promote — both get a refuter either way, so the cost of being wrong is a
+mis-tiered finding rather than a wasted agent, and the tier a reader trusts is
+worth more than the one that flatters the review.
 
 ## The per-dimension pass
 
@@ -467,26 +453,47 @@ agents each under quiet pressure to justify their dispatch, which is exactly the
 pressure that produces plausible findings that are not real.
 
 First run **Triage the Suggestions** in full, before any `wtf-refuter` is
-spawned — both halves of it, because both decide what gets verified. The
-promotion moves a Suggestion that states a concrete failure up to Warning, so it
-gets a refuter rather than an unverified pass. The sort then splits what is left
-into **Definitely worth doing**, **Worth doing** and the dropped count, and the
-first of those is verified too. Say how many were promoted and how many landed
-in the top list.
+spawned — both halves of it, because both decide what the refuters are spent on.
+The promotion moves a Suggestion that states a concrete failure up to Warning;
+the sort splits what is left into **Definitely worth doing**, **Worth doing** and
+the dropped count. Both lists are verified, so what the triage settles here is
+the order the cap spends in, and which findings are outside it entirely — a
+dropped Suggestion gets no refuter. Say how many were promoted and how many
+landed in each list.
 
-Refute the Critical and Warning findings — promoted ones included, and
-Pre-existing ones at those tiers, since a ticket for a bug that is not there
-costs as much as a fix for one — plus the **Definitely worth doing**
-Suggestions. Those last are the ones the triage has just told the reader not to
-skip, and an unchecked finding a reader is being steered towards is the one that
-costs most when it is wrong. Carry the **Worth doing** Suggestions through
-marked **(unverified)** and say how many went unchecked: they are the bulk of
-the tier, and one agent apiece to verify a naming nit is most of the spend for
-least of the value. Never drop one silently to save the spawn — an unverified
-finding the reader knows is unverified is honest; one that disappears is not.
+**Refute every finding the report will print.** Criticals and Warnings, promoted
+ones included; Pre-existing findings at every tier they carry; and both triage
+lists, **Definitely worth doing** and **Worth doing**. The rule is the printing,
+not the tier: a finding a reader can act on is a finding worth being sure about,
+and the tiers this used to exempt are the ones a reader acts on most casually,
+which is where a wrong finding costs an afternoon rather than an argument.
 
-A dropped Suggestion gets no refuter either. The triage judged it not worth
-acting on, so a verdict on it changes nothing; it stays a count.
+A dropped Suggestion gets no refuter. The triage judged it not worth acting on,
+so a verdict on it changes nothing; it stays a count.
+
+**The cap is 20 refuters.** Below it, everything printed gets one. At it, the
+spend stops being the diff's to set — a report carrying eighty findings would
+otherwise spawn eighty agents, and a run nobody can afford to finish verifies
+nothing. Where more than 20 findings would be verified, spend them down this
+order and stop:
+
+1. Critical
+2. Warning, promoted ones included
+3. Pre-existing at Critical or Warning
+4. **Definitely worth doing**
+5. **Worth doing**
+6. Pre-existing at Suggestion
+
+The order is what a wrong finding costs, highest first, so the cap always bites
+the cheapest end. Everything past it prints marked **(unverified)** and is
+counted in the accounting, with the cap named as the reason — never dropped to
+save the spawn, and never left looking checked. An unverified finding the reader
+knows is unverified is honest; one that disappears, or one that passes for
+verified, is not.
+
+Say the cap bound when it did, and how many went unchecked because of it. A run
+that hits 20 is telling you something about the diff as much as about the
+report.
 
 A **Definitely worth doing** Suggestion a refuter kills leaves the report with
 the other refuted findings and is counted in the same line — it is not demoted
@@ -582,9 +589,9 @@ It is already marked **(promoted from Suggestion)** where it sits, and the
 refutation line below already says how it fared; a second telling in the
 accounting is the same disclosure charged twice.
 
-Then the **Suggestion triage**, carrying the Suggestions that remain: the
-**Definitely worth doing** list as it came back from the refuters, and the
-**Worth doing** list marked **(unverified)**.
+Then the **Suggestion triage**, carrying the Suggestions that remain, both lists
+as they came back from the refuters — and any the cap did not reach marked
+**(unverified)**.
 
 **Then, last, the accounting for the pass.** It goes below the triage rather than
 between it and the report: everything above it is work the reader might do, and
@@ -594,6 +601,11 @@ stopped at the point the advice runs out.
 
 - how many findings were refuted, and why — a dropped finding is reported, not
   hidden
+- **how many findings went unverified because the cap bound**, and which — only
+  where it bound. A report where every finding was checked says nothing here;
+  one where six Suggestions went out unchecked has to say so, because the
+  **(unverified)** marks on them are otherwise the only trace of a decision this
+  command made rather than the review
 - **lens coverage, on one line**, carrying **every lens that was dispatched or
   skipped**, each with what it returned:
 
