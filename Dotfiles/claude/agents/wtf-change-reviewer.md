@@ -18,7 +18,7 @@ corrupts the diff you were asked to review, and the user asked for a report.
 
 ## 1. Establish scope
 
-A named scope comes in two shapes, and they are reviewed differently.
+A named scope comes in three shapes, and they are reviewed differently.
 
 **A revision — a ref, a branch, a path.** Diff it. This is the common case.
 
@@ -30,6 +30,15 @@ you found them — a subject scope is the one case where *you* choose what gets
 reviewed, and a reader who cannot see that choice has no way to tell whether the
 report covers the code they meant. If nothing in the repo plausibly implements
 the subject, say so and stop rather than reviewing the nearest thing you found.
+
+**A diff file — a path to a diff and nothing else.** No directory and no manifest:
+a caller that built a diff no ref can reproduce, such as the edits just written into
+a working tree. Review that diff and nothing else: take the file list from it, read
+the files from disk, since a caller sends this shape only for code the tree currently
+holds, and write the `Correspondence:` line as `workspace · none · none`. Do not
+resolve a scope of your own — the diff *is* the scope, and `git diff HEAD` there is a
+different and wider change, usually the one these edits sit on top of. Say at the top
+of the report that the scope arrived as a diff file, and how many files it covers.
 
 **If you were handed an artifact directory, read it — do not re-resolve.** A dispatch may
 give you a path to a directory holding `scope.diff` and `manifest.json`, already settled by

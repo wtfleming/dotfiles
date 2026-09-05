@@ -568,6 +568,21 @@ fixes happen only if they ask — when they do, follow the next section.
 
 ## If the user asks for fixes
 
+**Snapshot the tree before the first edit.** The cold review at the end reads the
+fix diff, and once the edits have landed nothing separates them from the change
+they repair. Take the snapshot first or that review is not available at all:
+
+```sh
+git stash create   # a dangling commit of the tree as it stands; changes nothing on disk
+```
+
+Empty output means the tree was already clean, so `HEAD` is the snapshot. Where
+neither can be had — no commit yet, or the session will not run the command — the
+fix diff cannot be built, and the review below is reported `not run` with that
+reason rather than approximated from `git diff HEAD`: on an uncommitted scope that
+is the reviewed change and the fixes together, and a reviewer handed it re-reviews
+the branch while claiming to have read the repairs.
+
 Make only the edits the named findings describe — a review is not a mandate to
 refactor — and leave committing to the user. "Fix everything" means the three
 tiers; a **Pre-existing** finding is fixed only if the user names it, because
@@ -584,10 +599,16 @@ fixes were just written here, in the conversation the reviewer was deliberately
 kept out of. The original diff got a cold reviewer; the edits repairing it get
 nothing unless you dispatch it.
 
-Spawn one `wtf-refuter`, in parallel, per fixed Critical and Warning finding,
-per fixed **Definitely worth doing** Suggestion, and per fixed finding under the
-triage's **Reads as a Warning (unverified)** heading — that heading exists
-because the content is a Warning, so a fix to one is checked as a Warning's is.
+Spawn one `wtf-refuter`, in parallel, per fixed finding: every Critical and
+Warning, every Suggestion from both printed lists — **Definitely worth doing**
+and **Worth doing** alike — and every finding under the triage's **Reads as a
+Warning (unverified)** heading, which exists because the content is a Warning,
+so a fix to one is checked as a Warning's is. The verify pass leaves **Worth
+doing** unchecked and this one does not, because the population is different:
+there it is the whole tier, most of which nobody will act on, and here it is
+only the ones an edit has just been written for. A nit is cheap to report and no
+cheaper to break.
+
 Send the finding **as the review wrote it**, plus the same scope-and-provenance
 data the verify pass sends — here that is the working tree, where the fixes
 landed, and whose work it is, so the correspondence you send is `workspace` — and
@@ -628,7 +649,8 @@ already knows which, since it relays that provenance to every refuter it
 dispatches, and the session's own permissions are no guard here: a project that
 pre-approves its test or lint command runs it unprompted. Otherwise report both
 as `not run: tree is not the user's own work`, and say the fixes stand checked
-by the refuters alone.
+by the refuters and the fix review alone — the fix review establishes that trust
+for itself and may decline the same runs for the same reason.
 
 **A `not run` says which kind it was.** This command's `allowed-tools` cannot cover
 this section, and not by oversight: the commands come from the reviewer's **Tests:**
@@ -652,22 +674,60 @@ A finding that still stands goes back to the user with the refuter's reasoning
 verbatim. Do not quietly take another swing and re-verify — a fix that failed
 its check once is a fix a human should look at.
 
+**Then review the fix diff, cold.** A refuter answers one question — is the
+finding it holds still there? — and a fix that resolves its finding while
+introducing a defect of its own answers that question correctly and says
+nothing. This step is for the second half. A round of fixing is itself a source
+of bugs, and none of the checks above see them: an assertion a fix made vacuous
+passes the suite by construction, and behaviour a fix changed that no finding
+mentioned passes the suite and the linter alike.
+
+Build the diff once the refuters and the re-runs have settled:
+
+```sh
+git diff <snapshot> > <scratch>/fix.diff
+```
+
+A file the fixes *created* is untracked and appears in no such diff — append
+each one with `git diff --no-index -- /dev/null <file>`, which exits 1 whenever
+the files differ, so here always; that status is the diff, not a failure.
+
+Then dispatch a single `wtf-change-reviewer` with the path to that diff and
+nothing else: not the findings it answers, not which edit was which, not that
+the diff is a set of fixes at all. That is the cold-start rule the original
+review runs on, and it binds harder here — you wrote this code minutes ago.
+Count the agent in the total you announce.
+
+Dispatch it after the refuter batch, never in it. It discovers and runs the
+suite and the linter itself, which is the same command in the same checkout as
+your re-run above, and that is the collision the split rule already describes.
+
+An empty fix diff means the edits changed nothing on disk. Say so and dispatch
+nothing.
+
+What comes back is a review of the fixes, so print it in its own section under
+that name, marked **(unverified)** — nothing refutes it, and a verify pass on
+top of this one is a regress that ends nowhere. Do not act on it in the same
+turn. A fix round that produced its own findings is exactly the sequence a human
+should see before another edit lands on top of it; the user asks for a further
+round, or does not.
+
 What this check does not cover, so it is not mistaken for more than it is:
 
 - A refuter confirms the finding is resolved, not that the fix broke nothing
-  else. The test and lint re-runs above are the only checks that cover
-  regressions, which is why their results — `not run: reason` included — belong
-  in the report.
-- Fixed **Worth doing** Suggestions go unverified — the same economics as the
-  verify pass — and are reported as such.
+  else. The cold review of the fix diff and the test and lint re-runs are the
+  checks that cover that, which is why their results — `not run: reason`
+  included — belong in the report.
 - The refuter defaults to `refuted` when the evidence is ambiguous, and that
   default now lands in the fix's favour — relay a verdict whose reasoning looks
   thin as exactly that. A `stands` whose reasoning says the check was blocked
   (the refuter declined to run the decisive command) is not the fix failing:
   relay it as **could not verify**.
-- A fix that reached beyond the finding's own hunk has changed code no refuter
-  was pointed at. Offer a fresh `/wtf-code-review` for it instead of
-  presenting the verdicts as if they covered it.
+- The fix review reads what the fixes touched and the refuters read one finding
+  each; neither reads the rest of the change. Where the fixes reached well
+  beyond the hunks the findings named, offer a fresh `/wtf-code-review` over
+  the branch as it now stands rather than presenting either as if it covered
+  that.
 
 **A fix can strand a published verdict.** Where the scope is a PR, read its body
 (`gh pr view <n> --json body`) for a `<!-- verify:start -->` section and say the
