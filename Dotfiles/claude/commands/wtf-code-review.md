@@ -77,15 +77,20 @@ should not get a first airing here any more than in the merged report below.
 Say that the reviewer returned and how many findings it brought, and hold the
 rest. The relaying rule still applies to the report you eventually print.
 
-Then, below the report, add the **Suggestion triage** described under
-**Triage the Suggestions** — the one place this command adds an opinion of its
-own, and it goes after the report rather than into it. It is also where the
-Suggestions themselves are printed: leave the **Suggestion** section out of the
-report and let the triage carry them, so each one appears once, in the list
-that says what to do about it — or, if it is judged not worth doing, in the
-count of the ones dropped. That is the only rearrangement allowed, and the
-promotion above is the only re-tiering: every other finding goes out as written,
-in the tier it arrived in.
+**On both paths, the triage is where the Suggestions are printed.** Leave the
+**Suggestion** section out of the report and let the triage carry them, so each
+one appears once, in the list that says what to do about it — or, if it is
+judged not worth doing, in the count of the ones dropped. That is the only
+rearrangement allowed, and the promotion above is the only re-tiering: every
+other finding goes out as written, in the tier it arrived in. The reviewer's
+template does emit a `## Suggestion` section, so a path that skips this rule
+prints every Suggestion twice.
+
+Then, under `--lite`, add the **Suggestion triage** described under **Triage the
+Suggestions** below the report — the one place this command adds an opinion of
+its own, and it goes after the report rather than into it. The full pass places
+its own copy in **Report**, after its findings; this is the same section, sited
+for a path that has no merge step to wait for.
 
 **Under `--lite`, stop here.** The findings are the user's to triage, and the
 close matters: do not launch into fixing anything. If the user replies asking

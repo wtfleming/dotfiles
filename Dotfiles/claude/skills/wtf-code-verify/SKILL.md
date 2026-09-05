@@ -122,11 +122,13 @@ code, a response field, an exit code, a rendered file, a log line, a pixel. "The
 is no longer invalidated twice" is not an observable. "The second request returns 200
 with the updated title instead of the stale one" is.
 
-**Start from the review, if there was one.** An unverified review finding is the best
-expectation available: someone already thought it was suspicious and nobody settled it
-either way. A Warning reading "this could 500 on a null slug" is a hypothesis with an
-input and a predicted observable already attached — which is exactly the shape of a line
-below. Review produces hypotheses; this is the tool that closes them, and a finding that
+**Start from the review, if there was one.** A surviving review finding is the best
+expectation available: someone already thought it was suspicious, and a refuter argued
+against it and lost. A Warning reading "this could 500 on a null slug" is a hypothesis
+with an input and a predicted observable already attached — which is exactly the shape of
+a line below. A finding still marked **(unverified)** is worth more rather than less: it
+means nobody settled it either way, because the review's refuter cap bound before
+reaching it or the agent it was sent to failed. Review produces hypotheses; this is the tool that closes them, and a finding that
 turns out to be wrong is as useful to the author as one that turns out to be real.
 
 Three kinds, and the second is where the bugs actually are:

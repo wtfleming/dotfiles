@@ -237,9 +237,9 @@ review.
 
 It assumes `/wtf-code-review` has already run over the same scope, which is how it is
 normally used, so it does not re-report what a reader could have found. It starts instead
-from the review's *unverified* findings — the best expectations available, since someone
-already thought each one was suspicious and nobody settled it either way. Review produces
-hypotheses; this closes them, and a finding that turns out to be wrong is as useful to the
+from the review's *surviving* findings — the best expectations available, since someone
+already thought each one was suspicious and a refuter argued against it and lost. Review
+produces hypotheses; this closes them, and a finding that turns out to be wrong is as useful to the
 author as one that turns out to be real.
 
 The idea it turns on is that a green check proves nothing on its own — it may have been
