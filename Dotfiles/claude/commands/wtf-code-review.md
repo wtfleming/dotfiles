@@ -10,8 +10,9 @@ Split those into a scope and the optional flag `--lite`. Everything that is not
 the flag is the scope, and the scope may be empty.
 
 The full pass is the default: the reviewer, a dedicated agent per dimension, and
-a refuter per finding that survives to verification. `--lite` is the reviewer
-alone, with every finding its report prints verified the same way.
+a refuter per finding that reaches verification — the tiers a reader acts on,
+not every line the report prints. `--lite` is the reviewer alone, verifying that
+same set the same way.
 
 **How the two paths are marked, because getting this wrong is the failure this
 command keeps having.** Scope is declared per section, once, in the heading line
@@ -76,13 +77,11 @@ section; promoted after, it belongs to a report already printed and to a triage
 it has been taken out of.
 
 The sort has to run before this path spawns anything, because both halves decide
-what the refuters are spent on. A dropped Suggestion gets none, and the cap's
-priority order ranks **Definitely worth doing** above **Worth doing** — neither
-is answerable before
-the sort. Verify first and a run with nine Suggestions, three of them destined
-for the dropped count, spends three refuters on findings that will never print.
-The sort also sets where each finding sits in that order, which is the difference
-between a refuter and an **(unverified)** mark on a report that hit the cap.
+what the refuters are spent on. **Definitely worth doing** is the only
+Suggestion list that gets one, so which list a finding lands in *is* whether it
+meets a refuter — and that is not answerable before the sort. Verify first and a
+run with nine Suggestions, two of them destined for the top list, spends seven
+refuters on findings that were never going to get one.
 
 Then, under `--lite`, print the report verbatim — unless it carries a finding at
 all, in which case hold it and follow **Verify the findings** first. Do not
@@ -125,19 +124,20 @@ agent that wrote a finding is the worst-placed to judge it, alone or in a crowd.
 That is the hole this closes; it is not a description of what `--lite` still
 does.
 
-So this path verifies what the full pass verifies: **every finding the report
-will print**, under the same 25-refuter cap and the same priority order — see
-**Verify**. What makes `--lite` cheap is skipping eight lenses, not leaving
-findings unchecked, and a finding this path prints is one a reader acts on
+So this path verifies what the full pass verifies: **every Critical and Warning,
+Pre-existing findings at those two tiers, and the Definitely worth doing list**,
+under the same 25-refuter cap and the same priority order — see **Verify**. What
+makes `--lite` cheap is skipping eight lenses, not leaving the tiers a reader
+acts on unchecked, and a finding this path verifies is one a reader trusts
 exactly as they would on the full pass.
 
-This is the one place `--lite` stops being cheap, and the cost is the diff's to
-set rather than this command's: a report carrying six Warnings and four
-Suggestions the triage kept spawns ten refuters — count what survives the sort,
-not what the reviewer wrote. Say the number before you spawn them, as the
-full pass does, so it can be refused.
+The cost is the diff's to set rather than this command's: a report carrying six
+Warnings and two **Definitely worth doing** Suggestions spawns eight refuters —
+count what the triage leaves in the verified set, not what the reviewer wrote.
+Say the number before you spawn them, as the full pass does, so it can be
+refused.
 
-Spawn one `wtf-refuter` per finding, in parallel, dispatched exactly as
+Spawn one `wtf-refuter` per finding being verified, in parallel, dispatched as
 **Verify** describes on the full pass — the finding verbatim, plus the scope and
 whose work it is, and nothing else.
 
@@ -162,9 +162,9 @@ be read, so a reader who stops after the triage has to have seen it. Say it
 plainly and treat it as a result worth doubting rather than a clean bill of
 health.
 
-Suggestions are verified here like everything else the report prints, in the
-order and under the cap **Verify** sets. The triage still prints them; what it no
-longer does on this path is stand in for checking them.
+Only the **Definitely worth doing** Suggestions are verified here, in the order
+and under the cap **Verify** sets. Below that list the triage is the whole of
+the check, and the report says so rather than implying a refuter that never ran.
 
 ## Triage the Suggestions
 
@@ -184,7 +184,7 @@ once, already classified:
 - `src/api.ts:12` — <the finding as the reviewer wrote it> — <one line: what it buys, and why now — the fix is small and the cost of leaving it compounds>
 
 **Worth doing**
-- `src/api.ts:40` — <the finding as the reviewer wrote it> — <one line: what the suggestion buys>
+- `src/api.ts:40` — <the finding as the reviewer wrote it> **(unverified)** — <one line: what the suggestion buys>
 
 _3 Suggestions judged not worth doing and dropped._
 ```
@@ -200,16 +200,18 @@ nothing. Each Suggestion that *is* printed lands in exactly one list, carrying
 its `file:line`, the finding as written, any qualifier it arrived with, and the
 one-line reason. The qualifier tracks what checked the finding, not which list
 it landed in: mark it **(unverified)** unless a refuter read it and let it stand.
-Both lists are refuted on both paths, so the mark is now the exception rather
-than the rule, and it has two causes: the run hit the 25-refuter cap before
-reaching this finding, which **Verify** ranks last, or the refuter it was sent to
-returned no usable report. The second spells that out in the mark itself, since a
-reader meeting it on a PR comment cannot see which happened otherwise. So a bare Suggestion means one thing
-everywhere, including on a PR comment, where the triage's closing line does not
-travel with it. That is the only place it appears, so a finding shortened here
-is shortened everywhere. Findings under **Pre-existing** are the exception and are
-not sorted into these lists, whatever tier they carry — they are tickets, not
-work for this change, and they stay in that section of the report, once. The
+On **Worth doing** that is every entry, since the list gets no refuter at all;
+on **Definitely worth doing** it is the exception, and means either that the run
+hit the 25-refuter cap before reaching this finding or that the refuter it was
+sent to returned no usable report. The second spells that out in the mark
+itself, since a reader meeting it on a PR comment cannot see which happened
+otherwise. So a bare **(unverified)** means one thing everywhere — nothing
+argued against this finding — including on a PR comment, where the triage's
+closing line does not travel with it. That is the only place it appears, so a
+finding shortened here is shortened everywhere. Findings under **Pre-existing**
+are the exception and are not sorted into these lists, whatever tier they
+carry — they are tickets, not work for this change, and they stay in that
+section of the report, once. The
 promotion rule below still applies to them: tier follows content there as
 anywhere, and the section does not change that.
 **Definitely worth doing** is for the few a reader should not skip: the change
@@ -219,19 +221,20 @@ something false. **Worth doing** is the rest of the genuine
 improvements — right to take, fine to defer. Keep the top list short; if most
 Suggestions land there, it is not sorting anything.
 
-Both lists are refuted alongside the Criticals and Warnings on both paths — see
-**Verify** — so the sort no longer decides what gets checked, only what a reader
-should reach for first and, where the cap binds, which Suggestions still had a
-refuter to spend. Say in the closing line whether anything here went unverified
-and why.
+**Definitely worth doing** is refuted alongside the Criticals and Warnings on
+both paths and **Worth doing** is not — see **Verify** — so the sort decides
+what gets checked as well as what a reader should reach for first. Say in the
+closing line that the lower list went unverified by design, and name anything in
+the top list that went unverified too, with its reason.
 
 The third list is the only place the triage itself may leave a Suggestion
 unprinted: nothing above carries one except the two cases named here — a
 Pre-existing one, and one promoted to Warning. There is one further route out on
 either path, and it is not the triage's: a refuter kills the finding, and it
 leaves with the other refuted findings, counted in that line rather than this
-one. Every other Suggestion the reviewer wrote is either in a list or in the
-dropped count.
+one. That route is open to **Definitely worth doing** alone, since nothing
+below it is sent to a refuter. Every other Suggestion the reviewer wrote is
+either in a list or in the dropped count.
 
 One shape does not belong in either list. A Suggestion whose content describes
 something that *breaks* — a specific input and a wrong result, a leak, an
@@ -251,9 +254,9 @@ label the finding arrived with:
 Promotion is the one exception to the relaying rule, and it is narrow: a
 finding moves only when it states a concrete failure that the Warning
 definition covers. "Could be cleaner" does not move. When unsure, do not
-promote — both get a refuter either way, so the cost of being wrong is a
-mis-tiered finding rather than a wasted agent, and the tier a reader trusts is
-worth more than the one that flatters the review.
+promote — a wrongly promoted nit now costs a refuter as well as a tier, since
+Warning is verified and most of the Suggestion tier is not, and the tier a
+reader trusts is worth more than the one that flatters the review.
 
 ## The per-dimension pass
 
@@ -511,33 +514,47 @@ First run **Triage the Suggestions** in full, before any `wtf-refuter` is
 spawned — both halves of it, because both decide what the refuters are spent on.
 The promotion moves a Suggestion that states a concrete failure up to Warning;
 the sort splits what is left into **Definitely worth doing**, **Worth doing** and
-the dropped count. Both lists are verified, so what the triage settles here is
-the order the cap spends in, and which findings are outside it entirely — a
-dropped Suggestion gets no refuter. Say how many were promoted and how many
-landed in each list.
+the dropped count. Only the first of those three is verified, so what the triage
+settles here is which Suggestions meet a refuter at all. Say how many were
+promoted and how many landed in each list.
 
-**Refute every finding the report will print.** Criticals and Warnings, promoted
-ones included; Pre-existing findings at every tier they carry; and both triage
-lists, **Definitely worth doing** and **Worth doing**. The rule is the printing,
-not the tier: a finding a reader can act on is a finding worth being sure about,
-and the tiers this used to exempt are the ones a reader acts on most casually,
-which is where a wrong finding costs an afternoon rather than an argument.
+**Refute the tiers where being wrong is expensive.** Criticals and Warnings,
+promoted ones included; Pre-existing findings at those two tiers; and the
+**Definitely worth doing** list. Nothing below that: **Worth doing**,
+Pre-existing at Suggestion and the dropped count go out unrefuted.
 
-A dropped Suggestion gets no refuter. The triage judged it not worth acting on,
-so a verdict on it changes nothing; it stays a count.
+The line falls there because a refuter answers *is this true*, and the tiers
+divide on whether truth is the binding question. A true Critical is worth acting
+on almost by definition, so checking whether it is true checks everything that
+matters — and a false one either blocks a merge or gets an implementer to change
+working code to satisfy it, which is the most expensive thing this pipeline can
+produce. A Suggestion instead turns on whether it is worth doing, which no
+refuter judges and the triage already does.
 
-**The cap is 25 refuters.** Below it, everything printed gets one. At it, the
-spend stops being the diff's to set — a report carrying eighty findings would
-otherwise spawn eighty agents, and a run nobody can afford to finish verifies
-nothing. Where more than 25 findings would be verified, spend them down this
-order and stop:
+**Definitely worth doing** is the one place the two questions collapse into each
+other, which is why it keeps its refuters. Its examples are claims of fact about
+the codebase that a reader cannot cheaply check — a misleading public name, dead
+code that reads as live, a comment stating something false, logic the repo
+already implements elsewhere — and where the fact is wrong the suggestion is
+worth nothing rather than less. It earns a refuter for the same reason a Warning
+does.
+
+**Worth doing** is defined as right to take, fine to defer. A reader who defers
+one pays nothing for its being wrong, and a reader who acts on one meets the
+false premise while implementing it, in front of the cold review the fix path
+already runs over the repairs. That is the check it gets, and the report says so
+instead of implying a refuter it never had.
+
+**The cap is 25 refuters.** Below it, everything in the verified set gets one.
+At it, the spend stops being the diff's to set — a report carrying eighty
+findings would otherwise spawn eighty agents, and a run nobody can afford to
+finish verifies nothing. Where more than 25 findings would be verified, spend
+them down this order and stop:
 
 1. Critical
 2. Warning, promoted ones included
 3. Pre-existing at Critical or Warning
 4. **Definitely worth doing**
-5. **Worth doing**
-6. Pre-existing at Suggestion
 
 The order is what a wrong finding costs, highest first, so the cap always bites
 the cheapest end. Everything past it prints marked **(unverified)** and is
@@ -548,7 +565,9 @@ verified, is not.
 
 Say the cap bound when it did, and how many went unchecked because of it. A run
 that hits 25 is telling you something about the diff as much as about the
-report.
+report, and it says more now than it used to: with the lower Suggestion tiers
+out of the verified set, reaching the cap takes 25 findings a reader was meant
+to act on.
 
 A **Definitely worth doing** Suggestion a refuter kills leaves the report with
 the other refuted findings and is counted in the same line — it is not demoted
@@ -644,9 +663,10 @@ It is already marked **(promoted from Suggestion)** where it sits, and the
 refutation line below already says how it fared; a second telling in the
 accounting is the same disclosure charged twice.
 
-Then the **Suggestion triage**, carrying the Suggestions that remain, both lists
-as they came back from the refuters — and any the cap did not reach marked
-**(unverified)**.
+Then the **Suggestion triage**, carrying the Suggestions that remain:
+**Definitely worth doing** as it came back from the refuters, with any the cap
+did not reach marked **(unverified)**, and **Worth doing** as the reviewer wrote
+it, every entry carrying that mark.
 
 **Then, last, the accounting for the pass.** It goes below the triage rather than
 between it and the report: everything above it is work the reader might do, and
@@ -661,10 +681,11 @@ stopped at the point the advice runs out.
   **(unverified — refuter returned no usable report)**, and this is the line that
   says how many, so a reader can tell an agent that broke from a cap that bound
 - **how many findings went unverified because the cap bound**, and which — only
-  where it bound. A report where every finding was checked says nothing here;
-  one where six Suggestions went out unchecked has to say so, because the
-  **(unverified)** marks on them are otherwise the only trace of a decision this
-  command made rather than the review
+  where it bound. A report where the whole verified set was checked says nothing
+  here; one where six Warnings went out unchecked has to say so, because their
+  **(unverified)** marks are otherwise indistinguishable from the ones **Worth
+  doing** carries by design, and one of those two is a decision this command made
+  rather than the review
 - **lens coverage, on one line**, carrying **every lens that was dispatched or
   skipped**, each with what it returned:
 

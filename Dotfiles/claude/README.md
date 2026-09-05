@@ -21,10 +21,10 @@ that code as it stands, picks the files itself, and says which ones it picked.
 
 Under `--lite` it settles the scope, runs the project's test suite and linter,
 reviews the diff against the checklist, and prints findings as Critical, Warning
-or Suggestion — then stops. Every finding it prints is checked by a
-`wtf-refuter` first, and refuted ones are dropped from it: a false Critical stops
-work that should not stop, and a false Warning spends an afternoon on a defect
-that was not there. So the cost scales with what the diff earns rather than
+or Suggestion — then stops. Criticals, Warnings and the top-tier Suggestions are
+checked by a `wtf-refuter` first, and refuted ones are dropped: a false Critical
+stops work that should not stop, and a false Warning spends an afternoon on a
+defect that was not there. So the cost scales with what the diff earns rather than
 sitting near zero. The
 reviewer has no `Edit` or `Write`, so a review cannot change anything.
 
@@ -36,8 +36,8 @@ no surface there
 and disclosed in the report. That list comes from the scope artifact rather than
 from a second set of git commands, so it cannot disagree with the diff the lenses
 read. Their reports are merged and deduplicated with the reviewer's, then verified
-before printing: one `wtf-refuter` per printed finding, each told to argue the
-finding is *wrong* and to answer refuted when unsure.
+before printing: one `wtf-refuter` per finding in the verified tiers, each told to
+argue the finding is *wrong* and to answer refuted when unsure.
 
 The merge is where two lenses finding one defect becomes one line. Each finding
 carries the lens that raised it, which shows which lens earned its dispatch, and a
@@ -46,11 +46,14 @@ ordered ladder — Pre-existing, then tier, then the statement naming a concrete
 failure, then the reviewer over a lens, then the longer evidence — because "keep
 the more specific statement" leaves two equally-tiered findings with nothing to
 separate them, and the model then picks by
-feel between reports its own agents wrote. Every finding the report prints
-is refuted, on both paths — both triage lists included, and Pre-existing findings
-at every tier — capped at 25 refuters and spent in the order a wrong finding
-costs most, so the cap bites nits before it bites a Critical. Anything past it
-prints marked `(unverified)` with the cap named as the reason. There is
+feel between reports its own agents wrote. Criticals, Warnings, Pre-existing
+findings at those two tiers and the **Definitely worth doing** Suggestions are
+refuted on both paths — capped at 25 refuters and spent in the order a wrong
+finding costs most, so the cap bites the top Suggestions before it bites a
+Critical. Anything past it prints marked `(unverified)` with the cap named as the
+reason, as does the **Worth doing** list, which gets no refuter at all: a
+refuter answers whether a finding is *true*, and below the top list a Suggestion
+turns instead on whether it is worth doing, which the triage judges. There is
 deliberately no linter lens — the reviewer already runs the real one.
 
 `reuse` and `resilience` are the two lenses with no counterpart in the checklist.
@@ -149,12 +152,13 @@ that has them. Edits only ever happen in the main session, one approval at a tim
 
 ### Cost
 
-A default run spawns one reviewer, up to eight lenses, and one refuter per verified
-finding — tens of agents on a real branch, bounded by the 25-refuter cap — and asking
-for fixes afterwards adds one more refuter per fixed Critical or Warning, Pre-existing
-ones at those tiers included, plus a cold review of the fix diff. It announces each
-fan-out before spawning it, so the spend can be refused, and `--lite` cuts it to the
-reviewer alone plus a refuter per printed finding, under the same cap. For very large
+A default run spawns one reviewer, up to eight lenses, and one refuter per finding in
+the verified tiers — Criticals, Warnings, Pre-existing at those tiers and the top
+Suggestion list, bounded by the 25-refuter cap — and asking for fixes afterwards adds
+one more refuter per fixed Critical or Warning, Pre-existing ones at those tiers
+included, plus a cold review of the fix diff. It announces each fan-out before spawning
+it, so the spend can be refused, and `--lite` cuts it to the reviewer alone plus that
+same refuter set, under the same cap. For very large
 diffs, the built-in
 `/code-review ultra` is the maintained alternative.
 
@@ -238,7 +242,8 @@ review.
 It assumes `/wtf-code-review` has already run over the same scope, which is how it is
 normally used, so it does not re-report what a reader could have found. It starts instead
 from the review's *surviving* findings — the best expectations available, since someone
-already thought each one was suspicious and a refuter argued against it and lost. Review
+already thought each one was suspicious and, at the tiers that get one, a refuter argued
+against it and lost. Review
 produces hypotheses; this closes them, and a finding that turns out to be wrong is as useful to the
 author as one that turns out to be real.
 
