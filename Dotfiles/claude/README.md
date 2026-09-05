@@ -48,7 +48,7 @@ the more specific statement" leaves two equally-tiered findings with nothing to
 separate them, and the model then picks by
 feel between reports its own agents wrote. Every finding the report prints
 is refuted, on both paths — both triage lists included, and Pre-existing findings
-at every tier — capped at 20 refuters and spent in the order a wrong finding
+at every tier — capped at 25 refuters and spent in the order a wrong finding
 costs most, so the cap bites nits before it bites a Critical. Anything past it
 prints marked `(unverified)` with the cap named as the reason. There is
 deliberately no linter lens — the reviewer already runs the real one.
@@ -150,7 +150,7 @@ that has them. Edits only ever happen in the main session, one approval at a tim
 ### Cost
 
 A default run spawns one reviewer, up to eight lenses, and one refuter per verified
-finding — tens of agents on a real branch, bounded by the 20-refuter cap — and asking
+finding — tens of agents on a real branch, bounded by the 25-refuter cap — and asking
 for fixes afterwards adds one more refuter per fixed Critical or Warning, Pre-existing
 ones at those tiers included, plus a cold review of the fix diff. It announces each
 fan-out before spawning it, so the spend can be refused, and `--lite` cuts it to the

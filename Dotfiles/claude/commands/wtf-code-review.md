@@ -126,7 +126,7 @@ That is the hole this closes; it is not a description of what `--lite` still
 does.
 
 So this path verifies what the full pass verifies: **every finding the report
-will print**, under the same 20-refuter cap and the same priority order — see
+will print**, under the same 25-refuter cap and the same priority order — see
 **Verify**. What makes `--lite` cheap is skipping eight lenses, not leaving
 findings unchecked, and a finding this path prints is one a reader acts on
 exactly as they would on the full pass.
@@ -201,7 +201,7 @@ its `file:line`, the finding as written, any qualifier it arrived with, and the
 one-line reason. The qualifier tracks what checked the finding, not which list
 it landed in: mark it **(unverified)** unless a refuter read it and let it stand.
 Both lists are refuted on both paths, so the mark is now the exception rather
-than the rule, and it has two causes: the run hit the 20-refuter cap before
+than the rule, and it has two causes: the run hit the 25-refuter cap before
 reaching this finding, which **Verify** ranks last, or the refuter it was sent to
 returned no usable report. The second spells that out in the mark itself, since a
 reader meeting it on a PR comment cannot see which happened otherwise. So a bare Suggestion means one thing
@@ -526,10 +526,10 @@ which is where a wrong finding costs an afternoon rather than an argument.
 A dropped Suggestion gets no refuter. The triage judged it not worth acting on,
 so a verdict on it changes nothing; it stays a count.
 
-**The cap is 20 refuters.** Below it, everything printed gets one. At it, the
+**The cap is 25 refuters.** Below it, everything printed gets one. At it, the
 spend stops being the diff's to set — a report carrying eighty findings would
 otherwise spawn eighty agents, and a run nobody can afford to finish verifies
-nothing. Where more than 20 findings would be verified, spend them down this
+nothing. Where more than 25 findings would be verified, spend them down this
 order and stop:
 
 1. Critical
@@ -547,7 +547,7 @@ knows is unverified is honest; one that disappears, or one that passes for
 verified, is not.
 
 Say the cap bound when it did, and how many went unchecked because of it. A run
-that hits 20 is telling you something about the diff as much as about the
+that hits 25 is telling you something about the diff as much as about the
 report.
 
 A **Definitely worth doing** Suggestion a refuter kills leaves the report with
