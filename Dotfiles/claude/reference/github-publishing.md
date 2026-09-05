@@ -96,9 +96,9 @@ direction, and no delimiter prevents it.
 
 A tool that edits code where a published section may exist therefore reads the body for the
 markers and says the verdict is stale, naming what would refresh it. **The tools this binds
-today are `/wtf-code-review`, `wtf-deslop` and `wtf-code-verify`** — named rather than left as a class, because a class with no membership
-list gets wired into whichever members someone remembers. Add a tool to that list when it
-starts editing code.
+today are `/wtf-code-review`, `wtf-deslop` and `wtf-code-verify`** — named rather than
+left as a class, because a class with no membership list gets wired into whichever
+members someone remembers. Add a tool to that list when it starts editing code.
 
 `wtf-code-verify` is on it for the case that looks like an exemption and is not. It writes
 the section itself, so a run that posts has already replaced any stale one — but it also

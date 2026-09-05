@@ -47,7 +47,7 @@ repository's. The left-hand one may be a copy of the file as it was, taken where
 caller keeps its scratch; on a **deletion** hunk it is the other way round — the repo
 path is on the left and the right-hand side is `/dev/null`. So anchor a finding at
 whichever side names a path inside the repository, and never at a scratch copy or at
-`/dev/null`: both name something the reader cannot open.
+`/dev/null`: both name something outside the code under review.
 
 **If you were handed an artifact directory, read it — do not re-resolve.** A dispatch may
 give you a path to a directory holding `scope.diff` and `manifest.json`, already settled by

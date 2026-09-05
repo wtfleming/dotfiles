@@ -32,6 +32,12 @@
 # Usage:
 #   resolve-scope.sh resolve [--scope <ref|range|path|PR#|PR-url>] [--base <ref>]
 #   resolve-scope.sh base
+#
+# The two subcommands have different callers, and only the first has the artifact.
+# `resolve` serves the review tools named above. `base` is called on its own by
+# /wtf-create-pr, which needs the default branch and never reads scope.diff or
+# manifest.json -- so a change to `base`'s output or its die-rather-than-default
+# behaviour reaches a caller that none of the paragraphs above describe.
 
 set -Eeuo pipefail
 

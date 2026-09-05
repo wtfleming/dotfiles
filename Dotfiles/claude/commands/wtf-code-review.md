@@ -50,8 +50,17 @@ than the scope string is. **Only under `--lite`** may you say the scope is empty
 let the agent work out its own: it runs the same resolver you would, and with no batch
 behind it there is nothing to gain by resolving first.
 
-Under `--lite`, print the report verbatim when it returns — unless it carries
-a Critical or a Warning, in which case hold it and follow **Verify the top
+Under `--lite`, run the promotion half of **Triage the Suggestions** the moment
+the report returns, before deciding anything else with it. A Suggestion whose
+content describes a failure becomes a Warning there, and a Warning is what this
+path now verifies — so judging the report by the tiers it arrived with would let
+exactly that finding print unchecked, which is the hole the verification exists
+to close. It is also what gives a promoted finding somewhere to print: promoted
+before the report goes out, it lands in the Warning section; promoted after, it
+belongs to a report already printed and to a triage it has been taken out of.
+
+Then print the report verbatim — unless it carries a Critical or a Warning,
+promoted ones included, in which case hold it and follow **Verify the top
 tiers** first. Do not re-rank the findings, soften them, or defend the code —
 you are relaying an independent review, not negotiating with it.
 
@@ -67,8 +76,9 @@ own, and it goes after the report rather than into it. It is also where the
 Suggestions themselves are printed: leave the **Suggestion** section out of the
 report and let the triage carry them, so each one appears once, in the list
 that says what to do about it — or, if it is judged not worth doing, in the
-count of the ones dropped. That is the only rearrangement allowed — the
-findings still go out as written, in the tier they arrived in.
+count of the ones dropped. That is the only rearrangement allowed, and the
+promotion above is the only re-tiering: every other finding goes out as written,
+in the tier it arrived in.
 
 **Under `--lite`, stop here.** The findings are the user's to triage, and the
 close matters: do not launch into fixing anything. If the user replies asking

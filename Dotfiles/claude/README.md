@@ -21,9 +21,11 @@ that code as it stands, picks the files itself, and says which ones it picked.
 
 Under `--lite` it settles the scope, runs the project's test suite and linter,
 reviews the diff against the checklist, and prints findings as Critical, Warning
-or Suggestion — then stops. Any Critical is checked by a `wtf-refuter` before the
-report prints, since a false Critical stops work that should not stop; most runs
-have none and so spend nothing. Warnings arrive marked `(unverified)`. The
+or Suggestion — then stops. Criticals and Warnings are each checked by a
+`wtf-refuter` before the report prints, and refuted ones are dropped from it: a
+false Critical stops work that should not stop, and a false Warning spends an
+afternoon on a defect that was not there. So the cost scales with what the diff
+earns rather than sitting near zero. Suggestions go out unchecked and say so. The
 reviewer has no `Edit` or `Write`, so a review cannot change anything.
 
 By default it does more: up to eight `wtf-lens` agents in parallel, one per
