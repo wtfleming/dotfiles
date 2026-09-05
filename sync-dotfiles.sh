@@ -106,6 +106,12 @@ run touch ~/src/dotfiles/Dotfiles/emacs.d/my-customized.el
 # machine. Never cp it — the deployed copy holds machine-local customizations.
 run touch ~/.emacs.d/my-customized.el
 
+# Codex CLI
+if [ ! -d ~/.codex ]; then
+    run mkdir ~/.codex
+fi
+run cp ~/src/dotfiles/Dotfiles/codex/config.toml ~/.codex/config.toml
+
 # claude code
 if [ ! -d ~/.claude ]; then
     run mkdir ~/.claude

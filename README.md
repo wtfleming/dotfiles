@@ -140,11 +140,22 @@ socket: it is wasted work in any Emacs `emacsclient` cannot reach.
 `Dotfiles/claude/` deploys to `~/.claude/` and includes `/wtf-code-review`, a
 fresh-context code review. See [`Dotfiles/claude/README.md`](Dotfiles/claude/README.md).
 
+## Codex CLI
+
+`install-dependencies-macos.sh` installs Codex through Homebrew. The footer in
+`Dotfiles/codex/config.toml` shows model and reasoning effort, current directory,
+git branch, context usage and capacity, and the five-hour rate limit.
+
+`sync-dotfiles.sh` copies this file to `~/.codex/config.toml`, replacing the
+entire local config. Keep any settings you want to retain in the repo copy.
+Changes made locally, including through Codex's `/statusline` picker, are
+overwritten on the next sync.
+
 ## Layout
 
 See `CLAUDE.md` for the full layout and repo conventions. Highlights:
 
-- `Dotfiles/` — shell, git, tmux, ssh, emacs, and Claude Code configs
+- `Dotfiles/` — shell, git, tmux, ssh, emacs, Claude Code, and Codex configs
 - `bin/` — helper scripts deployed to `~/bin/`
 - `*.org` — machine setup notes
 
