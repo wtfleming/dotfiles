@@ -144,15 +144,15 @@ that has them. Edits only ever happen in the main session, one approval at a tim
   without touching an agent definition.
 - A project's own `REVIEW.md`, `AGENTS.md` or `CLAUDE.md` wins where it conflicts.
   `REVIEW.md` is the name Anthropic's own code review reads.
-- The eight lens rubrics live in the commands, not in `wtf-lens`, so they can
-  be retuned without editing an agent — but there are two copies of the table
-  now, one per command, and a retune means editing both.
+- The eight lens rubrics live in the command, not in `wtf-lens`, so they can be
+  retuned without editing an agent.
 
 ### Cost
 
 A default run spawns one reviewer, up to eight lenses, and one refuter per verified
 finding — tens of agents on a real branch — and asking for fixes afterwards adds one
-more refuter per fixed Critical or Warning. It announces each fan-out before spawning
+more refuter per fixed Critical or Warning, Pre-existing ones at those tiers included,
+plus a cold review of the fix diff. It announces each fan-out before spawning
 it, so the spend can be refused, and `--lite` cuts it to the reviewer alone plus a
 refuter per Critical. For very large diffs, the built-in `/code-review ultra` is the
 maintained alternative.

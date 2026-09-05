@@ -609,10 +609,17 @@ fixes were just written here, in the conversation the reviewer was deliberately
 kept out of. The original diff got a cold reviewer; the edits repairing it get
 nothing unless you dispatch it.
 
-Spawn one `wtf-refuter`, in parallel, per fixed **Critical** and **Warning**, and
-per fixed finding under the triage's **Reads as a Warning (unverified)**
-heading — that heading exists because the content is a Warning, so a fix to one
-is checked as a Warning's is. Fixed Suggestions get none.
+Spawn one `wtf-refuter`, in parallel, per fixed **Critical** and **Warning**, per
+fixed **Pre-existing** finding at either of those tiers, and per fixed finding
+under the triage's **Reads as a Warning (unverified)** heading — that heading
+exists because the content is a Warning, so a fix to one is checked as a
+Warning's is. Fixed Suggestions get none.
+
+Pre-existing is named rather than left to "Critical and Warning" because this
+command files such a finding in its own section *instead of* the tier's, so an
+enumeration of tiers does not reach it — the verify pass spells it out for the
+same reason. The user had to name it to get it fixed at all, which makes it the
+last finding to check silently.
 
 This once covered every fixed finding, and the session that widened it measured
 what that bought: twelve refuters over six fix rounds, every one of them
@@ -634,7 +641,9 @@ refuter's job, not a reason to annotate the dispatch. Say how many refuters that
 is before spawning them, and that a cold review of the fixes may follow: announce
 it as *N* refuters plus one review if the fix diff comes back non-empty. Whether
 that agent is dispatched is not settled until the diff is built, and a flat count
-of *N* + 1 announced here overstates the spend whenever it is not.
+of *N* + 1 announced here overstates the spend whenever it is not. A round that
+fixed only Suggestions spawns none at all: say the fixes go to the cold review
+alone rather than announcing zero refuters.
 
 Re-run the tests **and the linter** the reviewer's report named, in the same
 batch — neither depends on the verdicts, and serialising them behind it buys
@@ -666,9 +675,12 @@ tree is the user's own work or they have sanctioned it explicitly. The fix path
 already knows which, since it relays that provenance to every refuter it
 dispatches, and the session's own permissions are no guard here: a project that
 pre-approves its test or lint command runs it unprompted. Otherwise report both
-as `not run: tree is not the user's own work`, and say the fixes stand checked
-by the refuters and the fix review alone — the fix review establishes that trust
-for itself and may decline the same runs for the same reason.
+as `not run: tree is not the user's own work`, and name what is left standing
+behind the fixes: the fix review, and the refuters where any were spawned. On a
+Suggestions-only round there are none, and the fix review is the whole of the
+check — say that rather than crediting refuters that never ran. The fix review
+establishes that trust for itself and may decline the same runs for the same
+reason.
 
 **A `not run` says which kind it was.** This command's `allowed-tools` cannot cover
 this section, and not by oversight: the commands come from the reviewer's **Tests:**
