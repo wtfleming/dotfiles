@@ -220,9 +220,14 @@ closing line does not travel with it. That is the only place it appears, so a
 finding shortened here is shortened everywhere. Findings under **Pre-existing**
 are the exception and are not sorted into these lists, whatever tier they
 carry — they are tickets, not work for this change, and they stay in that
-section of the report, once. The
-promotion rule below still applies to them: tier follows content there as
-anywhere, and the section does not change that.
+section of the report, once. A Suggestion-tier one carries **(unverified)**
+there, on both paths: nothing below the top list is refuted on either, and a
+tier that has left the verified set takes the mark with it or the narrowing is a
+check removed silently. Unmarked it would sit beside Criticals and Warnings that
+did survive a refuter, and post to a PR as `**Suggestion (pre-existing)** — …`
+looking exactly as settled as they are. The promotion rule below still applies
+to them: tier follows content there as anywhere, and the section does not change
+that.
 **Definitely worth doing** is for the few a reader should not skip: the change
 is small and the payoff is clear and durable — a misleading name on something
 public, dead code that will be mistaken for live, a comment that states
@@ -234,15 +239,29 @@ Suggestions land there, it is not sorting anything.
 both paths and **Worth doing** is not — see **Verify** — so the sort decides
 what gets checked as well as what a reader should reach for first.
 
-That gets its own closing line, above the dropped count: *Unverified by design:
-**Worth doing**, and Pre-existing findings at Suggestion* — naming only the ones
-that actually carried a finding this run, and followed by anything in the top
-list that went unverified too, with its reason. It is a separate line because
-the dropped count is omitted when nothing was dropped, and a disclosure that
-rides on it disappears with it — a run with two **Worth doing** entries and
-nothing dropped is the ordinary case, not a corner. Omit this line in turn when
-both lower tiers are empty and the top list was fully verified, since it then
-reports nothing.
+That gets its own closing line, above the dropped count. It carries two clauses,
+and each prints only when it has something of its own to say:
+
+- *Unverified by design: **Worth doing**, and Pre-existing findings at
+  Suggestion* — naming only the tiers that actually carried a finding this run,
+  and absent entirely when neither did.
+- anything in the top list that went unverified, with its reason — which stands
+  on its own where the first clause is absent, rather than trailing a lead-in
+  with nothing after the colon.
+
+The two conditions are separate because they come apart on ordinary runs: a
+report with no **Worth doing** entries and no Pre-existing Suggestions, whose one
+**Definitely worth doing** entry went to a refuter that returned no usable
+report, has nothing for the first clause and something for the second. A cap that
+bit the top list produces the same shape, but it takes 25 findings at the higher
+tiers to get there; the broken refuter needs nothing else to be true. Omit the
+line altogether only when both clauses are empty, since it then reports
+nothing.
+
+It is a line of its own rather than part of the dropped count because that count
+is omitted when nothing was dropped, and a disclosure riding on it disappears
+with it — a run with two **Worth doing** entries and nothing dropped is the
+ordinary case, not a corner.
 
 The third list is the only place the triage itself may leave a Suggestion
 unprinted: nothing above carries one except the two cases named here — a
@@ -538,17 +557,9 @@ promoted and how many landed in each list.
 **Refute the tiers where being wrong is expensive.** Criticals and Warnings,
 promoted ones included; Pre-existing findings at those two tiers; and the
 **Definitely worth doing** list. Nothing below that: **Worth doing**,
-Pre-existing at Suggestion and the dropped count go out unrefuted.
-
-**Everything in that set that prints carries (unverified).** For **Worth doing**
-the triage's marking rule already says so; a Pre-existing finding at Suggestion
-is not in either list, so nothing there reaches it and the rule has to be stated
-here. Unmarked, it prints in the Pre-existing section beside Criticals and
-Warnings that did survive a refuter, and posts to a PR as
-`**Suggestion (pre-existing)** — …` looking exactly as settled as they are. A
-tier leaving the verified set has to take the mark with it, or the narrowing is
-a check removed silently — which is the one thing this whole section is written
-to avoid.
+Pre-existing at Suggestion and the dropped count go out unrefuted. Everything in
+that set that prints carries **(unverified)** — **Triage the Suggestions**
+states that for both paths, which is why it is not restated here.
 
 The line falls there because a refuter answers *is this true*, and the tiers
 divide on whether truth is the binding question. A true Critical is worth acting
@@ -689,10 +700,6 @@ A finding promoted from Suggestion to Warning needs nothing said about it here.
 It is already marked **(promoted from Suggestion)** where it sits, and the
 refutation line below already says how it fared; a second telling in the
 accounting is the same disclosure charged twice.
-
-In that Pre-existing section, a finding at Suggestion tier carries
-**(unverified)** — it is outside the verified set, and the triage's marking rule
-does not reach it because Pre-existing findings are not sorted into the lists.
 
 Then the **Suggestion triage**, carrying the Suggestions that remain:
 **Definitely worth doing** as it came back from the refuters, with any the cap
