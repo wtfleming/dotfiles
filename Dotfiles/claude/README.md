@@ -76,11 +76,12 @@ path against the behaviour of the failure path.
 There is no fix flag; the review itself never edits. The report lands in the
 conversation, so to act on it, say which findings — "fix the first two" — and
 the fixes happen in the main session, which knows what you were trying to do.
-Every fixed finding is then checked by a fresh `wtf-refuter` arguing against the
-fixed tree, and the fix diff itself goes to a cold `wtf-change-reviewer` told
-nothing about which findings it answers — a refuter only asks whether its own
-finding is gone, so a repair that resolves it and introduces a defect of its own
-passes unremarked. Committing stays yours.
+Each fixed Critical or Warning is then checked by a fresh `wtf-refuter` arguing
+against the fixed tree, and the fix diff itself goes to a cold
+`wtf-change-reviewer` told nothing about which findings it answers. The second
+is the one that earns its keep: a refuter only asks whether its own finding is
+gone, so a repair that resolves it and introduces a defect of its own passes
+unremarked. Committing stays yours.
 
 ### Design review, earlier in the cycle
 

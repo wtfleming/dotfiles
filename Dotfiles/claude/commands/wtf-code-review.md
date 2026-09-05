@@ -609,15 +609,20 @@ fixes were just written here, in the conversation the reviewer was deliberately
 kept out of. The original diff got a cold reviewer; the edits repairing it get
 nothing unless you dispatch it.
 
-Spawn one `wtf-refuter`, in parallel, per fixed finding: every Critical and
-Warning, every Suggestion from both printed lists — **Definitely worth doing**
-and **Worth doing** alike — and every finding under the triage's **Reads as a
-Warning (unverified)** heading, which exists because the content is a Warning,
-so a fix to one is checked as a Warning's is. The verify pass leaves **Worth
-doing** unchecked and this one does not, because the population is different:
-there it is the whole tier, most of which nobody will act on, and here it is
-only the ones an edit has just been written for. A nit is cheap to report and no
-cheaper to break.
+Spawn one `wtf-refuter`, in parallel, per fixed **Critical** and **Warning**, and
+per fixed finding under the triage's **Reads as a Warning (unverified)**
+heading — that heading exists because the content is a Warning, so a fix to one
+is checked as a Warning's is. Fixed Suggestions get none.
+
+This once covered every fixed finding, and the session that widened it measured
+what that bought: twelve refuters over six fix rounds, every one of them
+returning `refuted`, while the cold review below caught three defects those same
+refuters had just passed. One session is not a law, but the mechanism it exposes
+is structural — a refuter asks whether the old problem is gone, and a fix that
+resolves its finding answers yes no matter what else it did. So the fan-out
+scales its cost with the finding count and its yield with nothing, and the tiers
+kept here are the ones where a fix that quietly did not take costs more than the
+agent does.
 
 Send the finding **as the review wrote it**, plus the same scope-and-provenance
 data the verify pass sends — here that is the working tree, where the fixes
@@ -751,12 +756,23 @@ turn. A fix round that produced its own findings is exactly the sequence a human
 should see before another edit lands on top of it; the user asks for a further
 round, or does not.
 
+**Only a Critical or a Warning from it is worth another round.** Say that when
+you print the report, and name its Suggestions as the half the loop is not gated
+on. A second reviewer reading code a first one has just rewritten disagrees with
+the rewrite as often as it finds a defect in it — on prose especially, where the
+disagreement is taste and each one costs a round that ends in another review.
+A Warning is different: every one this step has raised so far was a defect the
+fix itself had introduced.
+
 What this check does not cover, so it is not mistaken for more than it is:
 
 - A refuter confirms the finding is resolved, not that the fix broke nothing
   else. The cold review of the fix diff and the test and lint re-runs are the
   checks that cover that, which is why their results — `not run: reason`
   included — belong in the report.
+- Fixed Suggestions go unverified. The cold review reads them along with
+  everything else the fixes touched, but nothing checks the one claim a refuter
+  would have checked: that the finding is actually resolved.
 - The refuter defaults to `refuted` when the evidence is ambiguous, and that
   default now lands in the fix's favour — relay a verdict whose reasoning looks
   thin as exactly that. A `stands` whose reasoning says the check was blocked
