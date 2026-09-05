@@ -720,6 +720,14 @@ correct, so against the fixed tree `refuted` means the problem is gone and
 fidelity matters — because a user who asked for fixes and reads "3 refuted"
 will hear the fixes failing.
 
+Two verdicts do not mean what they say, and each is relayed as what it is rather
+than as a standing warning printed every round. The refuter defaults to
+`refuted` where the evidence is ambiguous, and on the fixed tree that default
+falls in the fix's favour — so relay a `resolved` whose reasoning looks thin as
+exactly that. And a `stands` whose reasoning says the check was blocked, because
+the refuter declined to run the decisive command, is not the fix failing: relay
+it as **could not verify**.
+
 A finding that still stands goes back to the user with the refuter's reasoning
 verbatim. Do not quietly take another swing and re-verify — a fix that failed
 its check once is a fix a human should look at.
@@ -796,25 +804,17 @@ disagreement is taste and each one costs a round that ends in another review.
 A Warning is different: every one this step has raised so far was a defect the
 fix itself had introduced.
 
-What this check does not cover, so it is not mistaken for more than it is:
+Close with the two gaps that change what the reader does next, and nothing
+further — a longer standing disclaimer printed identically every round is one a
+reader learns to skip, taking these with it:
 
-- A refuter confirms the finding is resolved, not that the fix broke nothing
-  else. The cold review of the fix diff and the test and lint re-runs are the
-  checks that cover that, which is why their results — `not run: reason`
-  included — belong in the report.
 - Fixed Suggestions go unverified. The cold review reads them along with
   everything else the fixes touched, but nothing checks the one claim a refuter
   would have checked: that the finding is actually resolved.
-- The refuter defaults to `refuted` when the evidence is ambiguous, and that
-  default now lands in the fix's favour — relay a verdict whose reasoning looks
-  thin as exactly that. A `stands` whose reasoning says the check was blocked
-  (the refuter declined to run the decisive command) is not the fix failing:
-  relay it as **could not verify**.
-- The fix review reads what the fixes touched and the refuters read one finding
-  each; neither reads the rest of the change, and that gap is widest when the
-  fixes were surgical. Nothing here re-reads the change as a whole with the
-  repairs in it — offer a fresh `/wtf-code-review` over the branch as it now
-  stands rather than presenting either as if it covered that.
+- Nothing here re-reads the change as a whole with the repairs in it. The fix
+  review reads what the fixes touched and each refuter reads one finding, and
+  that gap is widest when the fixes were surgical — offer a fresh
+  `/wtf-code-review` over the branch as it now stands.
 
 **A fix can strand a published verdict.** Where the scope is a PR, read its body
 (`gh pr view <n> --json body`) for a `<!-- verify:start -->` section and say the
