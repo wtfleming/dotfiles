@@ -245,8 +245,9 @@ review.
 It assumes `/wtf-code-review` has already run over the same scope, which is how it is
 normally used, so it does not re-report what a reader could have found. It starts instead
 from the review's *surviving* findings — the best expectations available, since someone
-already thought each one was suspicious and, at the tiers that get one, a refuter argued
-against it and lost. Review
+already thought each one was suspicious and, wherever a refuter reached it, one argued
+against it and lost. Findings no refuter reached — below the verified tiers, past the cap,
+or sent to one that returned nothing usable — print marked `(unverified)`. Review
 produces hypotheses; this closes them, and a finding that turns out to be wrong is as useful to the
 author as one that turns out to be real.
 

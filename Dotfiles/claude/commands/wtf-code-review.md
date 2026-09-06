@@ -557,9 +557,11 @@ promoted and how many landed in each list.
 **Refute the tiers where being wrong is expensive.** Criticals and Warnings,
 promoted ones included; Pre-existing findings at those two tiers; and the
 **Definitely worth doing** list. Nothing below that: **Worth doing**,
-Pre-existing at Suggestion and the dropped count go out unrefuted. Everything in
-that set that prints carries **(unverified)** — **Triage the Suggestions**
-states that for both paths, which is why it is not restated here.
+Pre-existing at Suggestion and the dropped count go out unrefuted. **Worth
+doing** and Pre-existing at Suggestion therefore print marked **(unverified)**,
+named rather than left to a pronoun so it cannot be read as reaching the
+verified set — **Triage the Suggestions** states the mark for both paths, which
+is why it is not restated here.
 
 The line falls there because a refuter answers *is this true*, and the tiers
 divide on whether truth is the binding question. A true Critical is worth acting
