@@ -171,8 +171,9 @@ Where the project has no coverage tool and adding one is a larger change than th
 under review, do not add one. Say the line is a judgement rather than a measurement and
 name what the probes exercised, which is the honest form of the same sentence. Where the
 change has no executable lines at all — prose, a config the run never loads — there is
-nothing to measure: write `Coverage: N/A` with that reason, which is a different fact from
-a judgement and should not be dressed as one.
+nothing to measure: write the template's own line as `**Covered.** N/A — no executable
+lines changed`, which is a different fact from a judgement and should not be dressed as
+one.
 
 ## Tier 0 — a test in one package
 

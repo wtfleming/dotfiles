@@ -338,8 +338,8 @@ row is reported green, dispatch `wtf-verify-refuter` with the Agent tool — one
 row, since a shared dispatch lets a strong row carry a weak one. Give it the expectation,
 the discriminator claimed for it, the probe that was run and the raw captures from both
 sides — the probe because re-running it is the only way it can settle non-determinism
-rather than allege it. Not your reasoning about them: that is the thing under test, and it is the same argument that keeps the
-adversary blind at §3.
+rather than allege it. Not your reasoning about them: that is the thing under test, and
+it is the same argument that keeps the adversary blind at §3.
 
 It answers `stands` or `refuted`, and a refuted green is neither a pass nor a defect —
 it is a **Not verified** whose reason you now have in writing, so demote the row and

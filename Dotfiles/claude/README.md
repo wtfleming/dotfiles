@@ -299,9 +299,9 @@ tool produces itself.
 Two more checks answer *is this actually guarded*. The probes run under the project's
 coverage tool, so **Covered** is measured against the changed lines rather than recalled —
 a changed line with zero hits is the most useful thing the run can hand a reviewer, and
-the number is deliberately not reported. And the line the change turns on is deliberately broken with the project's own
-suite running unscoped: green there means nothing guards the change today, which is the
-strongest argument the promotion triage can make.
+the number itself is left out. And the line the change turns on is deliberately broken
+with the project's own suite running unscoped: green there means nothing guards the change
+today, which is the strongest argument the promotion triage can make.
 
 It reports one of four verdicts. `Not verified` is neither a pass nor a defect and says
 which of the three inconclusive shapes it was; `Falsified` — a real defect, found before
