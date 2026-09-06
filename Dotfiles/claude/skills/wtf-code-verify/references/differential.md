@@ -194,21 +194,31 @@ both take the same input by construction, so generated input costs a loop rather
 harness: a few thousand cases through each side, diffed per case.
 
 ```bash
+OUT=<scratch>/code-verify    # the run's scratch directory, per evidence.md
 BASE=$(~/.claude/skills/wtf-code-verify/scripts/baseline-worktree.sh path baseline)
 for f in corpus/*; do
-  a=$("$BASE/bin/render" "$f") && b=$(./bin/render "$f") \
-    || { echo "NOT VERIFIED: $f"; continue; }
-  [ "$a" = "$b" ] || echo "DIFFERS: $f"
+  n=$(basename "$f")
+  eb=0; "$BASE/bin/render" "$f" > "$OUT/$n.base" 2> "$OUT/$n.base.err" || eb=$?
+  eh=0; ./bin/render        "$f" > "$OUT/$n.head" 2> "$OUT/$n.head.err" || eh=$?
+  [ "$eb" = 0 ] && [ "$eh" = 0 ] || { echo "NOT VERIFIED: $f (exit $eb/$eh)"; continue; }
+  cmp -s "$OUT/$n.base" "$OUT/$n.head" || echo "DIFFERS: $f"
 done
 ```
 
-The exit status is checked as well as the output, because a case where **both** sides fail
-produces two identical empty results and a clean comparison — an equivalence proof that
-reads strongest exactly where nothing ran. Same rule as everywhere else here: a case that
-did not execute is `Not verified`, never a pass. Nothing is written to disk, so stderr
-stays on the terminal where each failing case explains itself as it happens; where the
-output is binary or too large to hold, render both sides into the scratch directory under
-names that carry the case, and diff those.
+Both sides run unconditionally and both statuses are kept. A case where **both** fail
+produces two identical empty outputs and a clean comparison — an equivalence proof that
+reads strongest exactly where nothing ran — and a baseline failure and a HEAD failure are
+different verdicts in the table above, so `NOT VERIFIED` has to say which side. Same rule
+as everywhere else here: a case that did not execute is `Not verified`, never a pass. A
+bootstrap gap in the baseline prints on every case, which is what tells you it is the
+worktree rather than the corpus.
+
+`cmp` over files rather than `[ "$a" = "$b" ]` over two `$(...)` captures, because command
+substitution strips every trailing newline and swallows NUL bytes: a refactor that changed
+nothing but the final newline of each output would run a few thousand cases and print
+nothing at all. The captures are named per case so a later one cannot overwrite the
+evidence for an earlier failure, and they live under the scratch directory rather than the
+repo under review, which the report's residue line would otherwise have to account for.
 
 Draw the cases from the project's own fixtures or corpus where one exists, and from a
 generator where it does not — a property-testing library the project already depends on
