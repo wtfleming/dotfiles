@@ -196,22 +196,19 @@ harness: a few thousand cases through each side, diffed per case.
 ```bash
 BASE=$(~/.claude/skills/wtf-code-verify/scripts/baseline-worktree.sh path baseline)
 for f in corpus/*; do
-  b=0; "$BASE/bin/render" "$f" > "$OUT/base.out" 2> "$OUT/base.err" || b=$?
-  h=0; ./bin/render "$f" > "$OUT/head.out" 2> "$OUT/head.err" || h=$?
-  [ "$b" = 0 ] && [ "$h" = 0 ] || { echo "NOT VERIFIED: $f (exit $b/$h)"; continue; }
-  diff -q "$OUT/base.out" "$OUT/head.out" >/dev/null || echo "DIFFERS: $f"
+  a=$("$BASE/bin/render" "$f") && b=$(./bin/render "$f") \
+    || { echo "NOT VERIFIED: $f"; continue; }
+  [ "$a" = "$b" ] || echo "DIFFERS: $f"
 done
 ```
 
-Files and exit statuses rather than a bare `diff` of two process substitutions, because a
-case where **both** sides fail produces two identical empty outputs and a clean `diff` —
-an equivalence proof that reads strongest exactly where nothing ran. Same rule as
-everywhere else here: a case that did not execute is `Not verified`, never a pass.
-
-Into `$OUT` rather than the working directory, which for this loop is the repo under
-review: files a probe leaves in the tree are residue the report then has to account for.
-The `.err` captures are where a `NOT VERIFIED` case says what went wrong — read them
-before concluding the corpus is at fault.
+The exit status is checked as well as the output, because a case where **both** sides fail
+produces two identical empty results and a clean comparison — an equivalence proof that
+reads strongest exactly where nothing ran. Same rule as everywhere else here: a case that
+did not execute is `Not verified`, never a pass. Nothing is written to disk, so stderr
+stays on the terminal where each failing case explains itself as it happens; where the
+output is binary or too large to hold, render both sides into the scratch directory under
+names that carry the case, and diff those.
 
 Draw the cases from the project's own fixtures or corpus where one exists, and from a
 generator where it does not — a property-testing library the project already depends on
