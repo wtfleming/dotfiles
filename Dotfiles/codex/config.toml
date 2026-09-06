@@ -1,3 +1,10 @@
+# Top-level keys must stay above [tui] -- after a table header TOML reads them
+# as members of that table, so approval_policy would silently become
+# tui.approval_policy and go unread.
+approval_policy = "on-request"
+approvals_reviewer = "auto_review"
+sandbox_mode = "workspace-write"
+
 # Codex CLI footer, in display order. Edit here and run sync-dotfiles.sh.
 [tui]
 status_line = [
