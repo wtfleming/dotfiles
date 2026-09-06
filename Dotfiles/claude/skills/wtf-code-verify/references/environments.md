@@ -9,6 +9,8 @@ with each tier and each language. Pick the tier in SKILL.md §5 first.
 - What CI already runs
 - Pinned toolchains (mise, asdf)
 - Per-language quick reference
+- Turn the instrumentation up
+- Coverage of a single run
 - Tier 0 — a test in one package
 - Tier 1 — headless script, CLI, or a real build
 - Does a clean tree of this branch work?
@@ -114,6 +116,60 @@ Exit codes are not uniform across runners, so read the output rather than trusti
 single convention: ExUnit exits **2** on a failed test, ERT exits 1, cargo exits 101.
 `mix test` also compiles under `MIX_ENV=test` on its own, so a dev-profile compile in
 the bootstrap neither helps nor hinders it.
+
+## Turn the instrumentation up
+
+The cost of a run is the tier. The flags are free, and they decide whether a failure the
+code already has is in the bytes you capture or absent from them. Set them before the
+first run: after a surprising result you are rerunning, and on a differential you are
+rerunning both sides.
+
+| | Make the run loud |
+| --- | --- |
+| **Node** | `NODE_OPTIONS='--unhandled-rejections=strict --throw-deprecation --trace-warnings'`. `strict` raises the rejection even where the app has installed a handler that logs it and carries on, which the default mode defers to |
+| **Rust** | `RUST_BACKTRACE=1`, and `RUSTFLAGS='-D warnings'` for a build probe. A debug build keeps the overflow checks and `debug_assert!`s that a release build drops, so prefer it unless the claim is about release behaviour |
+| **Elixir** | `--warnings-as-errors` on the compile, and `config :logger, level: :debug` for the probe — a crashed `GenServer` is logged and nowhere else, and the caller sees a retry or a default |
+| **Erlang** | run under the `test` profile rather than a stale one, and turn `logger` up to `debug` on the console — a supervisor restart is otherwise silent, and the caller sees only a slow reply |
+| **Elisp** | `(setq debug-on-error t)` guarantees a backtrace under `--batch` rather than the message alone; `byte-compile-error-on-warn` where the probe compiles |
+| **Postgres** | `log_statement=all`, `log_min_duration_statement=0`. This is the cheap source of the per-request query count the scale section of `expectations.md` asks for, and the only one that reads as a number rather than an impression |
+
+Set them **identically on both sides** of a differential. They change what the output
+contains, so a flag on one side alone produces a difference that is about your flags.
+
+Two are worth having on even when nothing is suspected. Strict unhandled rejections turns
+an async failure a handler swallowed into a non-zero exit, which is the most common way a
+Node probe passes while the thing it exercised failed. And statement logging costs nothing until you
+read it, at which point it answers a question — how many queries — that no amount of
+staring at a response body will.
+
+## Coverage of a single run
+
+The report's **Covered / Not covered** line is a claim about what executed. Running the
+probes under the project's coverage tool is what turns it into something observed. Scope
+it to the changed files, and read which changed lines never ran.
+
+| | One run, with coverage |
+| --- | --- |
+| **Node** | `vitest run --coverage`, `jest --coverage`, or `c8 -- <cmd>` when the probe is a script rather than a test |
+| **Rust** | `cargo llvm-cov` where `cargo-llvm-cov` is installed, or `cargo tarpaulin` where the project already uses it |
+| **Elixir** | `mix test --cover`, or `mix coveralls.html` where `excoveralls` is a dependency |
+| **Erlang** | `rebar3 eunit --cover` / `rebar3 ct --cover`, then `rebar3 cover` for the report |
+| **Elisp** | `undercover.el` if the project already has it; otherwise say the line is a judgement |
+
+`c8` and `llvm-cov` instrument a **process** rather than a test run, which is what makes
+them usable at tiers 1 and 2: start the service under the tool, drive it with the probes,
+stop it, read the report. A tier-3 run gets its coverage from the server side the same
+way.
+
+**Report the uncovered lines, never the percentage.** A number over a changed file invites
+a target, and the probe list is not trying to cover a file — it is trying to exercise a
+claim. The finding is the specific changed lines with zero hits, quoted as `file:line`,
+because each one is code this run did not execute in a report that will be read as though
+it did.
+
+Where the project has no coverage tool and adding one is a larger change than the one
+under review, do not add one. Say the line is a judgement rather than a measurement and
+name what the probes exercised, which is the honest form of the same sentence.
 
 ## Tier 0 — a test in one package
 

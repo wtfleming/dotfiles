@@ -7,12 +7,37 @@ judgement, not a reflex.
 
 ## Contents
 
+- Does anything guard this change today?
 - Triage
 - Where the test goes
 - Match the idiom
 - Prove it fails without the fix
 - When the project has no harness at that level
 - Clean up what you did not promote
+
+## Does anything guard this change today?
+
+Ask before triaging, because the answer decides what the triage is worth. Break the line
+the change turns on — SKILL.md §4's mechanism, in a worktree so there is nothing to
+restore — and run the project's **own** test command, unscoped. If it stays green, nothing
+in the suite guards the change, and the next person to touch this code has no signal at
+all.
+
+That is a different question from the coverage run behind the report's **Covered** line,
+and the two disagree usefully. Coverage says a changed line was executed. This says
+something asserted on what it did. A line run by a test that never looks at its result is
+covered and unguarded, which is the worse of the two states precisely because it reads as
+the better one.
+
+Point the break at the behaviour rather than at compilation. Deleting the function turns
+everything red and proves nothing; invert a condition, drop a guard, return the other of
+two values, change a constant — each asks whether any assertion in the suite cares. One
+break is enough. This is a question about the change, not a mutation run over the
+codebase, and a second break costs another full suite run to answer the same thing.
+
+Where it comes back green, report it on its own line and carry it into the triage below.
+"Nothing in the project would have caught this" is the strongest argument for promoting a
+probe that any of the rows in the table can make.
 
 ## Triage
 

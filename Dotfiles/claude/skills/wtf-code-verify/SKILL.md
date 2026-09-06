@@ -118,9 +118,10 @@ different kinds — classify each one.
 
 Before running anything, write the list. Each line pairs an input or action with an
 observable — something you could show to someone who has never read the code: a status
-code, a response field, an exit code, a rendered file, a log line, a pixel. "The cache
-is no longer invalidated twice" is not an observable. "The second request returns 200
-with the updated title instead of the stale one" is.
+code, a response field, an exit code, a rendered file, a log line, a pixel, a row that
+is or is not there afterwards. "The cache is no longer invalidated twice" is not an
+observable. "The second request returns 200 with the updated title instead of the stale
+one" is.
 
 **Start from the review, if there was one.** A surviving review finding is the best
 expectation available: someone already thought it was suspicious, and at the tiers a
@@ -140,7 +141,17 @@ Three kinds, and the second is where the bugs actually are:
   400 belongs, a bad parameter silently defaulting instead of erroring, an auth check
   that fails open, a stack trace in the response body. `references/expectations.md`
   carries the catalogue; the point is that the expectation names *how* it fails, not just that it does.
+  It carries how to *produce* the conditions too — an expired credential, a dependency that
+  is slow rather than down, twenty callers at once — because a case with no mechanism beside
+  it is a case that quietly drops out between being written and being run.
 - **regression** — what worked before still works. The change's blast radius.
+
+**The response is not the whole observable.** What a run leaves behind is the other half:
+the duplicate row from the retry, the record left half-written when the second call failed,
+the cache entry nothing invalidated, the email sent on a path that was supposed to refuse.
+None of it reaches the caller, so no assertion on the response can be falsified by any of
+it. Snapshot the state, run, diff it — `references/expectations.md` has the shape, and why
+the negative cases are where it pays.
 
 Cover a claim per meaningful area of the change rather than one probe for the whole
 thing, and pick the cheapest tier that can see each claim (§5) so breadth stays
@@ -225,6 +236,10 @@ cheapest first — pick one per claim:
    was there without asking git what it thinks the file should look like. A break left
    behind survives an interrupted run as an uncommitted edit nobody attributes, and the next
    `git commit -am` ships it.
+
+   The same break aimed at the project's **own** test suite rather than at your probe
+   answers a different question — whether anything guards the change today — and §9 is
+   where that one lands.
 3. **Run it against the base.** The full differential, and the only form that shows *the
    change* caused the difference. Costs a worktree and a bootstrap —
    `references/differential.md`.
@@ -285,9 +300,24 @@ and covers the detail per tier, per language and per isolation mechanism.
 
 ## 6. Run
 
+**Turn the instrumentation up before the first run, not after a surprise.** The cost of
+the run is the tier; the flags are free, and they decide whether a failure the code
+already has appears in the bytes you are about to capture — strict unhandled rejections,
+warnings as errors, backtraces on, statement logging in the database. Set them identically
+on both sides of a differential, since they change what the output contains.
+`references/environments.md` has them per language.
+
 Capture raw stdout, stderr and the exit code to files, verbatim — write the bytes first
 and read them second. `references/evidence.md` has the layout, and why summarizing at
 capture time is what launders a compile failure into "the expected failure".
+
+**Then read the whole capture, not the line you predicted.** A probe that returned the
+expected 200 also produced a stderr stream, a log and an exit code, and nothing else in
+this skill will ever look at them. The unhandled rejection under a passing assertion, the
+error-level line from a background job that failed where no caller could see, the
+deprecation warning that is a scheduled break, the query log that grew with the fixture:
+each is a defect only execution reveals, sitting in a file you have already written.
+`references/evidence.md` has what to read for and what to do with what you find.
 
 Serialize anything that binds a port or touches a database, and give each run a fresh
 entity or a reset between; `references/environments.md` has the tier-2 detail.
@@ -300,6 +330,21 @@ entity or a reset between; `references/environments.md` has the tier-2 detail.
 | **Verified with gaps** | what you ran passed, but part of the change or subject went unexercised — name the part |
 | **Not verified** | the probe could not discriminate: green on the base too, red for environmental reasons, or non-deterministic. Say which of the three, and what would tell them apart |
 | **Falsified** | an expectation failed for a real reason. A defect, found before the merge |
+
+### Refute the greens
+
+The table above is applied by the same agent that designed the probes, and a probe's
+author is the reader least able to see that it would have passed anyway. So before any
+row is reported green, dispatch `wtf-verify-refuter` with the Agent tool — one per ✅
+row, since a shared dispatch lets a strong row carry a weak one. Give it the expectation,
+the discriminator claimed for it and the raw captures from both sides. Not your reasoning
+about them: that is the thing under test, and it is the same argument that keeps the
+adversary blind at §3.
+
+It answers `stands` or `refuted`, and a refuted green is neither a pass nor a defect —
+it is a **Not verified** whose reason you now have in writing, so demote the row and
+carry the reason rather than dropping it. Skip the pass for a row that came out red: a
+probe that failed for the reason it predicted has already discriminated.
 
 `Not verified` is not a pass and not a defect, and the pull towards recording it as one
 or the other is strong. Say which of the three it was, and never loosen a probe until it
@@ -323,8 +368,12 @@ Lead with the verdict in one line. Then the evidence, then the lines that are wo
 to a reviewer than another passing assertion — `references/evidence.md` has the terminal
 and PR forms, and why each of these earns its place:
 
-- **Coverage** — which parts of the change or subject a probe actually exercised, and
-  which it did not.
+- **Coverage** — which parts of the change or subject a probe actually executed, and
+  which it did not. Measure it rather than recalling it: run the probes under the
+  project's coverage tool and read the result against the changed lines. A changed line
+  with zero hits is the most useful thing this run can hand a reviewer, and until it is
+  measured this is the one line of the report that is a judgement.
+  `references/evidence.md` has what to report, `references/environments.md` the invocation.
 - **CI overlap** — what already runs on every push, so this run's contribution is legible.
 - **Residue** — rows, files, containers, worktrees, ports left behind, or explicitly
   nothing. Tear the worktrees down:
@@ -340,9 +389,9 @@ those four lines have no probe, and they are where an unbacked claim gets in. Ea
 is a fact about the world with a command that establishes it: read `.github/workflows`
 before writing what CI covers, run `git status` and `docker ps` and
 `baseline-worktree.sh path` before writing *Residue: none*, re-read the PR body before
-saying it still describes the change, and list what the probes touched rather than what
-you meant them to touch. Where you could not check, write what you assumed and say it is
-an assumption.
+saying it still describes the change, and take **Covered** from a coverage run over the
+changed lines rather than from the probes you meant to write. Where you could not check,
+write what you assumed and say it is an assumption.
 
 That is the same standard the rest of this skill applies to the code under test, turned on
 the report about it. A verification section is read as the output of a process that
@@ -381,6 +430,14 @@ did **not** cover. A bare "Verified ✅" tells them a run happened and gives the
 review with, while reading as a broader endorsement than the run earned.
 
 ## 9. Offer to promote the probes
+
+First find out whether anything guards the change today, because the answer decides how
+much the triage is worth. Break the line the change turns on — §4's mechanism, in a
+worktree so nothing has to be restored — and run the project's **own** test command,
+unscoped. Green means nothing in the suite guards the change, which is a finding in its
+own right and the strongest argument the triage below can make.
+`references/promotion.md` has it, including why that answer and the coverage run disagree
+in a useful way.
 
 A probe worth writing is often worth keeping, but not always — and offering to promote
 all of them is how a suite gets slow, flaky and eventually ignored. Triage, then ask.

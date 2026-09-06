@@ -10,6 +10,8 @@ correct will run cleanly, pass, and tell you nothing.
 - The tautology trap
 - The negative-case catalogue
 - How it fails, not just that it does
+- Producing the condition
+- The state afterwards is an observable
 - Verifying prose against code
 - Verifying a PR's title and description
 - Verifying a subject with no diff
@@ -123,6 +125,74 @@ the metric, the error-tracker event — and ask whether it names the input, the 
 the operation. `Error: undefined` with no correlation id means the code is correct and
 the next incident is going to be a long one. It is the only part of the failure path that
 nobody exercises until the moment they need it.
+
+## Producing the condition
+
+Much of the catalogue above describes a *state* rather than an input, and a case whose
+state you have no way to produce is a case that drops quietly out of the plan between
+being written and being run. The mechanism is not a detail of the case; without one you
+have a worry.
+
+**The clock.** An expired credential is a different code path from a missing one, and the
+only reason it goes untried is that nobody has an expired one to hand. Mint it rather than
+wait for it: sign a token with an `exp` in the past, insert the row with its timestamp
+backdated past the window, set the TTL to a second and sleep it. Where the project already
+controls time in its own tests — an injected clock, a `Mox`-style stub, `libfaketime` —
+reach for that first. It is the only form that also reaches a scheduler, a backoff, a
+retention sweep or a DST boundary, none of which will otherwise ever be exercised.
+
+**A dependency that misbehaves.** Down is the easy case and the rare one: stop the
+container and everything fails fast and loudly. The expensive failures are slow, flapping
+or wrong — the timeout nobody reached in development, the retry that amplifies, the
+fallback that never fires. Point the client at a stub you control and make it sleep past
+the timeout, return a 500, return a 200 with a truncated body, or close the connection
+mid-response. Each one asks the question the catalogue asks: open or closed, and did this
+change decide which?
+
+**Two at once.** Concurrency needs no framework. The same request fired in parallel from
+the shell is enough to expose the duplicate row, the lost update, and the constraint that
+only holds under a lock the code does not take.
+
+```bash
+seq 20 | xargs -P 20 -I{} curl -s -o /dev/null -w '%{http_code}\n' <url> | sort | uniq -c
+```
+
+Expect one `201` and nineteen `409`s, then count the rows. Two winners is the finding, and
+it is invisible to every probe that runs one request at a time.
+
+**A partial failure.** Kill the process between two writes, or make the second of two
+dependent calls fail. What the run leaves behind is the observable — the next section.
+
+Each of these produces a real condition rather than a description of one, which is what
+keeps it on this skill's side of the line. And each is worth exactly what the expectation
+attached to it is worth: name the refusal before you produce the condition, not after you
+see what happened.
+
+## The state afterwards is an observable
+
+A probe that reads the response and stops has checked the half of the behaviour a caller
+can see. The other half is what the run left in the world, and that is where the writes
+nobody intended live: the duplicate row from the retry, the record half-written when the
+second call failed, the cache entry nothing invalidated, the job enqueued twice, the email
+sent on a path that was supposed to refuse. None of it reaches the caller, so no assertion
+on the response can be falsified by any of it.
+
+Snapshot, run, diff. The snapshot is whatever is cheap for the store in question — row
+counts per table, a `SELECT` of the entity, `SCAN` over the cache prefix, the queue depth,
+`find` over the directory the process writes to.
+
+```bash
+psql -c 'SELECT relname, n_live_tup FROM pg_stat_user_tables ORDER BY relname' > before.txt
+# ... run the probe ...
+diff before.txt after.txt
+```
+
+The negative cases are where it pays. "Rejected with a 400" is satisfied by a handler that
+validates *after* it writes, and the two responses are identical — the row is the only
+witness. So write the expected state change into the plan beside the response you expect:
+**empty** on a refusal, exactly one row on a create, unchanged on a read. Deciding afterwards whether
+what you see looks reasonable is the after-the-fact expectation this file opens by warning
+about, arriving through the one observable nobody wrote down.
 
 ## Verifying prose against code
 

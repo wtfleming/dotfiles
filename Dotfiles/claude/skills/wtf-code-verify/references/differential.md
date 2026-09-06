@@ -189,6 +189,32 @@ land at `<repo>` and `<repo>-head`, which are siblings of *different length*.
 cover the refactored paths — an equivalence proof over trivial input proves the trivial
 case, and the report should say what the input covered.
 
+The cheapest way to make the input rich is to stop choosing it. Both trees are built and
+both take the same input by construction, so generated input costs a loop rather than a
+harness: a few thousand cases through each side, diffed per case.
+
+```bash
+BASE=$(~/.claude/skills/wtf-code-verify/scripts/baseline-worktree.sh path baseline)
+for f in corpus/*; do
+  diff <("$BASE/bin/render" "$f") <(./bin/render "$f") >/dev/null || echo "DIFFERS: $f"
+done
+```
+
+Draw the cases from the project's own fixtures or corpus where one exists, and from a
+generator where it does not — a property-testing library the project already depends on
+(`proptest`, `StreamData`, `fast-check`) is a generator you do not have to write, used
+here for its inputs rather than for its assertions. Adding one the project does not have
+is a bigger change than the one under review; where that is the only option, say the
+equivalence rests on the inputs you picked by hand.
+
+Two things make this worth more than a hand-picked fixture. It reaches the case the author
+did not think of, which is the same argument the adversary pass at SKILL.md §3 rests on.
+And a difference it finds arrives with the input that produced it, small enough to paste
+into the report or into a promoted test — where a fixture that happens to agree tells you
+only that one input agreed. Say how many cases ran and where they came from: "10,000
+generated payloads" and "the 340-record fixture" are different claims, and an empty `diff`
+looks identical under both.
+
 **Performance** claims a threshold, not a boolean. One run of each is noise. Take at
 least five runs per side, report median and spread, and state the threshold before
 measuring. Two distributions that overlap have not demonstrated anything, however
