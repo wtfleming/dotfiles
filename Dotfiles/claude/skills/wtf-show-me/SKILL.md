@@ -187,8 +187,9 @@ a desktop.
 
 **Write it to this session's scratch directory, not the working tree.** A
 `show-me-*.html` dropped in the repo turns up in `git status`, reads as
-something the branch meant to add, and gets committed with it — after which it
-is public, and it was written to be thrown away. Then open it:
+something the branch meant to add, and gets committed with it — a file in the
+history of a change it had nothing to do with, when it was written to be thrown
+away. Then open it:
 
 ```
 Bash(open <scratch>/show-me/{topic}.html)
@@ -201,6 +202,6 @@ with no network. If it wants a framework, the subject has outgrown this skill.
 
 Adapted from the `show-me` skill in
 [humanlayer/skills](https://github.com/humanlayer/skills) (MIT — see `LICENSE`).
-The form catalogue and its examples are upstream's; the destination table, the
-"never draw what you have not read" rule and the scratch-directory placement
-are local.
+The form catalogue and its examples are upstream's. Local: the destination
+table, the "never draw what you have not read" rule, the scratch-directory
+placement for the HTML branch, and the `/wtf-create-pr` handoff.

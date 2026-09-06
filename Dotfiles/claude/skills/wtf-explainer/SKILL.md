@@ -76,7 +76,8 @@ Two forms, one decision: **what travels?**
   `references/flat-format.md`.
 
 If nothing moves at all, stop — the user wants a diagram, not this skill.
-That is `wtf-show-me`.
+That is `wtf-show-me` for a quick sketch of a shape, `artifact-diagramming`
+for a finished static diagram.
 
 ## Start with the knowledge, not the code
 

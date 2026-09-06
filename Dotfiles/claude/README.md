@@ -262,10 +262,8 @@ describing one. It is gated there: most changes are not shapes, and where there 
 there is no section.
 
 Adapted from the `show-me` skill in [humanlayer/skills](https://github.com/humanlayer/skills)
-(MIT). The form catalogue and its examples are upstream's. Local: the destination table, the
-"never draw what you have not read" rule, the scratch-directory placement for the HTML
-branch (upstream writes to the cwd, where it lands in `git status` and gets committed with
-the branch), and the `/wtf-create-pr` handoff.
+(MIT). The form catalogue and its examples are upstream's; the skill's own footer records
+what diverges, and is the one place that list is kept.
 
 ## Verifying that it works
 
