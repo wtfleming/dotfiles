@@ -283,11 +283,26 @@ of the parent, the PR claims the parent's commits as its own and the diff is unr
 | Title | plain and descriptive; it gets absorbed | judged as a permanent commit subject |
 | Body | what this slice does, and where it sits in the stack | both directions, in full |
 | Ticket reference | mention it; leave the closing keyword off | id plus keyword |
-| Shape sketch | this slice's shape only | in full |
+| Shape sketch | this slice's shape, plus where it sits in the stack | in full |
 | Visual evidence | skip — a half-built state, in a body that will be rewritten | both gates |
 | Verification section | skip — superseded when the rest of the stack lands | quoted, per the body section |
 
 Two things no PR skips: the credential scrub, and pushing before opening.
+
+**Where it sits in the stack is worth drawing, even here.** Everything else in this column
+does less, because a mid-stack PR is superseded when the stack lands. Position is the
+exception: the diff shows the slice and cannot show the slice's place, so a reviewer
+opening `c` has nothing telling them `b` is underneath it and `a` under that. It is the one
+shape a PR body carries that the Files Changed tab cannot, and it costs three lines:
+
+```text
+main
+└── a  #41
+    └── b  #42
+        └── c  #43  ← this PR
+```
+
+Use the PR numbers where they exist; branch names alone leave the reviewer searching.
 
 The closing keyword is worth its own line. GitHub closes a linked issue only when the PR
 merges into the repository's **default** branch, so a `Closes #412` mid-stack is inert —
@@ -485,8 +500,8 @@ verdict in front of a reviewer that no run behind it supports.
 wrong medium for a shape: a restructure that moves files, a control-flow change, a new
 interaction between two components. Written out, the reviewer rebuilds the picture from a
 paragraph and rebuilds it slightly wrong; drawn as a five-line tree, they have it before
-they reach the diff. The forms are in `~/.claude/skills/wtf-show-me/SKILL.md` — the
-`diff`-shaped ones, since what a PR is about is what changed — and they are maintained
+they reach the diff. **Read `~/.claude/skills/wtf-show-me/SKILL.md` before drawing one**;
+take the `diff`-shaped forms, since what a PR is about is what changed. They are maintained
 there rather than repeated here, for the reason §4 gives about the title.
 
 Three things follow from where it sits. **Mermaid is available here in a way it is not in
