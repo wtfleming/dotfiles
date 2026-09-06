@@ -94,6 +94,15 @@ echo "== a commit scope is one commit, and HEAD is a commit =="
 out=$(cd "$WORK/range" && "$RESOLVE" resolve --scope HEAD 2>/dev/null | tail -1)
 check "HEAD is a commit, not a branch" "commit" "$(field "$out" .shape)"
 
+echo "== a scope whose slug starts with a dash still publishes =="
+# scope_out_dir maps every character outside [A-Za-z0-9._-] to `-`, so `@` and the PR
+# shape `#N` both name a directory beginning with one. Passed to `ln` unguarded it was
+# read as flags -- `ln: illegal option -- 4` -- and the resolve died after the diff had
+# already been paid for, publishing nothing. `@` reaches that code offline, where the PR
+# shape needs the network.
+out=$(cd "$WORK/range" && "$RESOLVE" resolve --scope '@' 2>/dev/null | tail -1)
+check "a dash-leading slug publishes a manifest" "commit" "$(field "$out" .shape)"
+
 echo "== correspondence tracks the checkout =="
 out=$(cd "$WORK/range" && "$RESOLVE" resolve --scope HEAD~1 2>/dev/null | tail -1)
 check "an older commit is scope-behind" "scope-behind" "$(field "$out" .correspondence)"

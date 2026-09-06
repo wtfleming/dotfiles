@@ -159,17 +159,20 @@ it to the changed files, and read which changed lines never ran.
 `c8` and `llvm-cov` instrument a **process** rather than a test run, which is what makes
 them usable at tiers 1 and 2: start the service under the tool, drive it with the probes,
 stop it, read the report. A tier-3 run gets its coverage from the server side the same
-way.
+way. The BEAM tools are the exception: `mix test --cover` and `rebar3 cover` collect the
+node they run in, so a tier-2 probe driving a service on its own node collects nothing
+unless `:cover` is started against that node — report it unmeasured rather than clean.
 
-**Report the uncovered lines, never the percentage.** A number over a changed file invites
-a target, and the probe list is not trying to cover a file — it is trying to exercise a
-claim. The finding is the specific changed lines with zero hits, quoted as `file:line`,
-because each one is code this run did not execute in a report that will be read as though
-it did.
+**Report the uncovered lines, never the percentage** — the specific changed lines with
+zero hits, quoted as `file:line`. `evidence.md` has what the report says and why the
+number is not part of it.
 
 Where the project has no coverage tool and adding one is a larger change than the one
 under review, do not add one. Say the line is a judgement rather than a measurement and
-name what the probes exercised, which is the honest form of the same sentence.
+name what the probes exercised, which is the honest form of the same sentence. Where the
+change has no executable lines at all — prose, a config the run never loads — there is
+nothing to measure: write `Coverage: N/A` with that reason, which is a different fact from
+a judgement and should not be dressed as one.
 
 ## Tier 0 — a test in one package
 

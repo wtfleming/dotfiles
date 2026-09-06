@@ -742,11 +742,14 @@ publish_scope() {
   # rename *onto* the symlink rather than through it; NOT a plain `mv`, which follows an
   # existing symlink and deposits the new link inside the old target, leaving readers on
   # the stale tree. Where neither flag exists the direct form is still better than none.
+  # `--` because the leaf name is derived, not chosen: scope_out_dir maps every character
+  # outside [A-Za-z0-9._-] to `-`, so a scope of `#49` or `@` yields a name starting with
+  # one and `ln` reads it as flags -- `ln: illegal option -- 4`, and no pointer published.
   link="$out.new.$$"
-  ln -sfn "$(basename "$final")" "$link"
+  ln -sfn -- "$(basename "$final")" "$link"
   if ! mv -h "$link" "$out" 2>/dev/null && ! mv -T "$link" "$out" 2>/dev/null; then
     rm -f "$link"
-    ln -sfn "$(basename "$final")" "$out"
+    ln -sfn -- "$(basename "$final")" "$out"
   fi
 
   # The swap orphans the previous target, which the old unconditional `rm -rf` used to

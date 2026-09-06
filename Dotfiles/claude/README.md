@@ -273,9 +273,9 @@ unhandled rejections, warnings as errors, statement logging — and the capture 
 past the line the plan predicted, because the swallowed exception under a passing
 assertion, the error-level line from a worker no caller hears from, and the query log that
 grows with the fixture are all defects execution reveals and nothing else goes looking for.
-What the run left behind counts too: the duplicate row, the cache entry nothing
-invalidated, the email sent on a path that was supposed to refuse. None of that reaches
-the caller, so no assertion on a response can be falsified by any of it.
+What the run left behind counts too — the duplicate row, the send on a path that was
+supposed to refuse — since none of that reaches the caller, so no assertion on a response
+can be falsified by any of it.
 
 Beyond behaviour it covers the things only execution reveals. `references/compatibility.md`
 handles the window where two versions coexist — new code against the old schema and old
@@ -299,8 +299,7 @@ tool produces itself.
 Two more checks answer *is this actually guarded*. The probes run under the project's
 coverage tool, so **Covered** is measured against the changed lines rather than recalled —
 a changed line with zero hits is the most useful thing the run can hand a reviewer, and
-the number is deliberately not reported, since a percentage over a changed file invites a
-target. And the line the change turns on is deliberately broken with the project's own
+the number is deliberately not reported. And the line the change turns on is deliberately broken with the project's own
 suite running unscoped: green there means nothing guards the change today, which is the
 strongest argument the promotion triage can make.
 

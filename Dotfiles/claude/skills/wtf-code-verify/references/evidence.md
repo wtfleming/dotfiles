@@ -64,8 +64,8 @@ failure". Write the bytes down first, read them second.
 
 ## Read the whole capture
 
-The captures exist to be quoted, and the pull is to read exactly as far as the line the
-plan predicted and no further. Everything past it was produced by the same run at no extra
+The captures exist to be quoted, and the temptation is to read exactly as far as the line
+the plan predicted and no further. Everything past it was produced by the same run at no extra
 cost, and nothing else in this skill will ever look at it.
 
 Read every capture, the green ones included, for what nobody predicted:
@@ -99,7 +99,7 @@ instrument a process rather than a test run, which is what makes this work at ti
 
 What goes in the report is the changed lines with **zero hits**, as `file:line`. Not the
 percentage: a number over a changed file invites a target, and the probes were never
-trying to cover a file. A gap named as `resolver.ts:88-94` is a place a reviewer can go
+trying to cover a file. A gap named as `resolver.ts:91` is a place a reviewer can go
 and look; the same gap named from recollection is only where you already knew you had not
 been.
 
@@ -153,8 +153,8 @@ the unabridged capture stays in <scratch>/code-verify/raw/>
 
 </details>
 
-**Covered.** The resolver's authorisation branch and argument coercion — 34 of 41 changed lines executed under the probes.
-**Not covered.** The admin override path (`resolver.ts:88-94`) — needs a second seeded
+**Covered.** The resolver's authorisation branch and argument coercion.
+**Not covered.** The admin override path (`resolver.ts:91`) — needs a second seeded
 role. The subscription resolver shares the same guard and this PR does not touch it.
 **CI.** Unit suite and lint run on every push; none of the four above is in CI today.
 **Residue.** None — compose dependencies down, worktree removed.

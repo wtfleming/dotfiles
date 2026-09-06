@@ -196,9 +196,17 @@ harness: a few thousand cases through each side, diffed per case.
 ```bash
 BASE=$(~/.claude/skills/wtf-code-verify/scripts/baseline-worktree.sh path baseline)
 for f in corpus/*; do
-  diff <("$BASE/bin/render" "$f") <(./bin/render "$f") >/dev/null || echo "DIFFERS: $f"
+  b=0; "$BASE/bin/render" "$f" > base.out 2> base.err || b=$?
+  h=0; ./bin/render "$f" > head.out 2> head.err || h=$?
+  [ "$b" = 0 ] && [ "$h" = 0 ] || { echo "NOT VERIFIED: $f (exit $b/$h)"; continue; }
+  diff -q base.out head.out >/dev/null || echo "DIFFERS: $f"
 done
 ```
+
+Files and exit statuses rather than a bare `diff` of two process substitutions, because a
+case where **both** sides fail produces two identical empty outputs and a clean `diff` —
+an equivalence proof that reads strongest exactly where nothing ran. Same rule as
+everywhere else here: a case that did not execute is `Not verified`, never a pass.
 
 Draw the cases from the project's own fixtures or corpus where one exists, and from a
 generator where it does not — a property-testing library the project already depends on

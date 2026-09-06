@@ -18,8 +18,11 @@ judgement, not a reflex.
 ## Does anything guard this change today?
 
 Ask before triaging, because the answer decides what the triage is worth. Break the line
-the change turns on — SKILL.md §4's mechanism, in a worktree so there is nothing to
-restore — and run the project's **own** test command, unscoped. If it stays green, nothing
+the change turns on — SKILL.md §4's mechanism, in a worktree of **HEAD** so there is
+nothing to restore — and run the project's **own** test command, unscoped. That worktree
+is `baseline-worktree.sh create --head <branch>`, not a bare `create`: without `--head`
+the only tree the script builds is the baseline at the merge base, where the line you mean
+to break may not exist at all and a green suite would say nothing. If it stays green, nothing
 in the suite guards the change, and the next person to touch this code has no signal at
 all.
 

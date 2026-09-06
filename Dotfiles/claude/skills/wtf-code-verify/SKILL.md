@@ -146,12 +146,11 @@ Three kinds, and the second is where the bugs actually are:
   it is a case that quietly drops out between being written and being run.
 - **regression** — what worked before still works. The change's blast radius.
 
-**The response is not the whole observable.** What a run leaves behind is the other half:
-the duplicate row from the retry, the record left half-written when the second call failed,
-the cache entry nothing invalidated, the email sent on a path that was supposed to refuse.
-None of it reaches the caller, so no assertion on the response can be falsified by any of
-it. Snapshot the state, run, diff it — `references/expectations.md` has the shape, and why
-the negative cases are where it pays.
+**The response is not the whole observable.** What a run leaves behind is the other half —
+the duplicate row, the send on a path that was supposed to refuse — and none of it reaches
+the caller, so no assertion on the response can be falsified by any of it. Snapshot the
+state, run, diff it: `references/expectations.md` has the rest of the list, and why the
+negative cases are where it pays.
 
 Cover a claim per meaningful area of the change rather than one probe for the whole
 thing, and pick the cheapest tier that can see each claim (§5) so breadth stays
@@ -300,12 +299,12 @@ and covers the detail per tier, per language and per isolation mechanism.
 
 ## 6. Run
 
-**Turn the instrumentation up before the first run, not after a surprise.** The cost of
-the run is the tier; the flags are free, and they decide whether a failure the code
-already has appears in the bytes you are about to capture — strict unhandled rejections,
-warnings as errors, backtraces on, statement logging in the database. Set them identically
-on both sides of a differential, since they change what the output contains.
-`references/environments.md` has them per language.
+**Turn the instrumentation up before the first run, not after a surprise.** The flags
+decide whether a failure the code already has appears in the bytes you are about to
+capture — strict unhandled rejections, warnings as errors, backtraces on, statement
+logging in the database. Set them identically on both sides of a differential, since they
+change what the output contains. `references/environments.md` has them per language, and
+why they are worth setting before anything looks wrong.
 
 Capture raw stdout, stderr and the exit code to files, verbatim — write the bytes first
 and read them second. `references/evidence.md` has the layout, and why summarizing at
@@ -337,8 +336,9 @@ The table above is applied by the same agent that designed the probes, and a pro
 author is the reader least able to see that it would have passed anyway. So before any
 row is reported green, dispatch `wtf-verify-refuter` with the Agent tool — one per ✅
 row, since a shared dispatch lets a strong row carry a weak one. Give it the expectation,
-the discriminator claimed for it and the raw captures from both sides. Not your reasoning
-about them: that is the thing under test, and it is the same argument that keeps the
+the discriminator claimed for it, the probe that was run and the raw captures from both
+sides — the probe because re-running it is the only way it can settle non-determinism
+rather than allege it. Not your reasoning about them: that is the thing under test, and it is the same argument that keeps the
 adversary blind at §3.
 
 It answers `stands` or `refuted`, and a refuted green is neither a pass nor a defect —
@@ -433,7 +433,7 @@ review with, while reading as a broader endorsement than the run earned.
 
 First find out whether anything guards the change today, because the answer decides how
 much the triage is worth. Break the line the change turns on — §4's mechanism, in a
-worktree so nothing has to be restored — and run the project's **own** test command,
+worktree of HEAD so nothing has to be restored — and run the project's **own** test command,
 unscoped. Green means nothing in the suite guards the change, which is a finding in its
 own right and the strongest argument the triage below can make.
 `references/promotion.md` has it, including why that answer and the coverage run disagree
