@@ -14,10 +14,11 @@ description: >-
   that shows how X works", "explorable explanation", "learning simulation".
   Also use when editing an existing project built from this skill — look for a
   stations table in world.js and a sim.js pacing state machine. SKIP for: a
-  single chart, graph, plot or dashboard (use dataviz); a static diagram or
-  flowchart (use artifact-diagramming); a slide deck; a game with win
-  conditions and scoring; a 3D scene needing WebGL or real perspective; a UI
-  mockup.
+  single chart, graph, plot or dashboard (use dataviz); a quick sketch of a
+  shape — a call tree, a file tree, a diff of either (use wtf-show-me); a
+  static diagram or flowchart (use artifact-diagramming); a slide deck; a game
+  with win conditions and scoring; a 3D scene needing WebGL or real
+  perspective; a UI mockup.
 ---
 
 # Interactive explainers
@@ -75,6 +76,7 @@ Two forms, one decision: **what travels?**
   `references/flat-format.md`.
 
 If nothing moves at all, stop — the user wants a diagram, not this skill.
+That is `wtf-show-me`.
 
 ## Start with the knowledge, not the code
 
