@@ -56,6 +56,7 @@ procedure returns a confident review of a scope nobody asked for.
 | `correspondence`, `correspondence_note` | see below |
 | `scope_head` | the commit the findings are about; `git show <scope_head>:<path>` reads it |
 | `diff_path` | hand this to an agent instead of a description |
+| `branch_base_sha` | where the branch under review begins: the merge base of `scope_head` with the default branch, resolved on **every** shape including the ones whose `base_sha` is null. It is what separates "already on the default branch" from "introduced by an earlier commit of this branch", which a scope narrower than the branch — a commit, a path, the working tree — cannot otherwise tell apart. Only the first is pre-existing. Null when no default branch resolves; costs no fetch of its own, and a stale ref only moves it backwards, widening what counts as the branch's own work |
 | `base_stale`, `base_stale_reason` | the fetch failed; the merge base may be behind. `base_stale` is always a boolean, including on the shapes that consult no base — only `base_stale_reason` is null. To ask whether a base was consulted at all, read `base_ref == null` or `default_branch_resolved`; `base_stale == false` means "no failed fetch", not "fetched and fresh" |
 | `fell_through` | which auto steps produced nothing, and why |
 | `file_list_source` | `git-apply-numstat` normally. `fallback-headers` means the list was scraped from the diff's headers and may be incomplete — **say so** rather than presenting `files` as settled |

@@ -136,9 +136,16 @@ one.
 
 Tier by consequence, not by which lens you are: Critical blocks the change,
 Warning should be fixed, Suggestion is optional. Mark a real problem your lens
-found that the change did not introduce as **(pre-existing)** — it does not block
-the change, but the reader should still learn it is there. On a subject scope
-there is no change and the marker does not apply; tier every finding on its own.
+found that is **already on the default branch** as **(pre-existing)** — it does
+not block the change, but the reader should still learn it is there.
+
+Code an *earlier commit of this branch* introduced is not that. On a scope
+narrower than the branch — one commit, a path, the working tree — it sits outside
+your diff and still merges with this PR, so it is this branch's to fix: mark it
+**(earlier on this branch)** and tier it normally. `branch_base_sha` in the
+manifest is where the branch begins; blame the line and ask whether its commit is
+an ancestor of that point. On a subject scope there is no change and neither
+marker applies; tier every finding on its own.
 
 If you found nothing, say `## Lens: <name> — no findings.` and stop. If your
 lens had no surface here at all, say `## Lens: <name> — not applicable.`

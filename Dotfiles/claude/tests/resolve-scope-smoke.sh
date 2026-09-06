@@ -103,6 +103,27 @@ echo "== a scope whose slug starts with a dash still publishes =="
 out=$(cd "$WORK/range" && "$RESOLVE" resolve --scope '@' 2>/dev/null | tail -1)
 check "a dash-leading slug publishes a manifest" "commit" "$(field "$out" .shape)"
 
+echo "== the branch base is where the branch begins, not where the scope does =="
+# A scope narrower than the branch -- one commit, a path, the working tree -- leaves the
+# branch's earlier commits out of the diff. Without this field an agent cannot tell code
+# they introduced from code that has been on the default branch for years, and reports both
+# as pre-existing: the one tier a fix round skips unless asked, so the branch's own defect
+# merges inside the PR that caused it. `base_sha` cannot stand in -- it is null on exactly
+# these shapes.
+scratch_repo "$WORK/branchbase"
+commit "$WORK/branchbase" a.txt one base
+mainhead=$(git -C "$WORK/branchbase" rev-parse HEAD)
+git -C "$WORK/branchbase" checkout -q -b feature
+commit "$WORK/branchbase" b.txt two "first on the branch"
+commit "$WORK/branchbase" c.txt three "second on the branch"
+out=$(cd "$WORK/branchbase" && "$RESOLVE" resolve --scope HEAD 2>/dev/null | tail -1)
+check "a commit scope resolves the branch base" "$mainhead" "$(field "$out" .branch_base_sha)"
+check "and its own base stays null" "null" "$(field "$out" .base_sha)"
+printf 'dirty\n' >> "$WORK/branchbase/c.txt"
+out=$(cd "$WORK/branchbase" && "$RESOLVE" resolve 2>/dev/null | tail -1)
+check "the worktree shape resolves it too" "$mainhead" "$(field "$out" .branch_base_sha)"
+git -C "$WORK/branchbase" checkout -q -- c.txt
+
 echo "== correspondence tracks the checkout =="
 out=$(cd "$WORK/range" && "$RESOLVE" resolve --scope HEAD~1 2>/dev/null | tail -1)
 check "an older commit is scope-behind" "scope-behind" "$(field "$out" .correspondence)"

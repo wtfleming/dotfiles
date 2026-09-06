@@ -902,6 +902,27 @@ cmd_resolve() {
 
   classify_correspondence "$SHAPE" "$SCOPE_HEAD" "$workspace_head" "$workspace_dirty"
 
+  # Where the branch under review begins, which is a different question from `base_sha`.
+  # `base_sha` is the comparison point for *this scope* and is null on every shape narrower
+  # than a branch -- a single commit, a path, the working tree. An agent handed one of those
+  # therefore cannot tell code an earlier commit of the same branch introduced from code that
+  # has been on the default branch for years, so it reports both as pre-existing. That tier
+  # means "somebody else's ticket, do not fix it here", and the fix path skips it unless the
+  # user names it, so the effect is that a defect the branch introduced merges inside the very
+  # PR that introduced it.
+  #
+  # No fetch of its own. `need_base` already fetched for the shapes that consult a base, and
+  # for the rest this resolves the default branch locally. A stale remote-tracking ref only
+  # moves the merge base backwards, which widens what counts as the branch's own work -- the
+  # safe direction, since it over-reports work as this branch's rather than handing a real
+  # defect to a ticket nobody writes.
+  local branch_base_sha branch_base_ref
+  branch_base_ref="$BASE"
+  [ -n "$branch_base_ref" ] || branch_base_ref="$(resolve_default_branch || true)"
+  branch_base_sha=""
+  [ -z "$SCOPE_HEAD" ] || [ -z "$branch_base_ref" ] \
+    || branch_base_sha="$(git merge-base "$SCOPE_HEAD" "$branch_base_ref" 2>/dev/null || true)"
+
   local file_count
   files_from_diff "$diff" "$tmp/files.json"
   file_count="$(jq length < "$tmp/files.json")"
@@ -929,6 +950,7 @@ cmd_resolve() {
     --arg scope_line "$scope_line" \
     --arg base_ref "$BASE" \
     --arg base_sha "$BASE_SHA" \
+    --arg branch_base_sha "$branch_base_sha" \
     --arg scope_head "$SCOPE_HEAD" \
     --arg head_label "$HEAD_LABEL" \
     --arg workspace_head "$workspace_head" \
@@ -955,6 +977,7 @@ cmd_resolve() {
       fell_through: $fell_through,
       base_ref: (if $base_ref == "" then null else $base_ref end),
       base_sha: (if $base_sha == "" then null else $base_sha end),
+      branch_base_sha: (if $branch_base_sha == "" then null else $branch_base_sha end),
       default_branch_resolved: $default_branch_resolved,
       base_stale: ($base_stale_reason != ""),
       base_stale_reason: (if $base_stale_reason == "" then null else $base_stale_reason end),

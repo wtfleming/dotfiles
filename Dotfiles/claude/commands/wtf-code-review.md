@@ -1047,7 +1047,10 @@ as much as the tier does, and a suggestion nothing refuted should not land on
 the PR looking as settled as one that survived a refuter. A **Pre-existing**
 finding posts as its tier followed by **(pre-existing)** —
 `**Warning (pre-existing)** — …` — because the section heading that said so
-does not travel with it. A promoted finding posts as the Warning the review
+does not travel with it. **(earlier on this branch)** travels for the opposite
+reason: it marks a finding the branch caused but this scope did not, which is
+work to do before the merge rather than a ticket, and nothing else on the comment
+says so. A promoted finding posts as the Warning the review
 settled on, marked **(promoted from Suggestion)** — posting it under the tier it
 arrived as would be re-ranking just as much as posting it higher, which the next
 line forbids.
