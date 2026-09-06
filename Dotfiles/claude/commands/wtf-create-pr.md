@@ -283,6 +283,7 @@ of the parent, the PR claims the parent's commits as its own and the diff is unr
 | Title | plain and descriptive; it gets absorbed | judged as a permanent commit subject |
 | Body | what this slice does, and where it sits in the stack | both directions, in full |
 | Ticket reference | mention it; leave the closing keyword off | id plus keyword |
+| Shape sketch | this slice's shape only | in full |
 | Visual evidence | skip — a half-built state, in a body that will be rewritten | both gates |
 | Verification section | skip — superseded when the rest of the stack lands | quoted, per the body section |
 
@@ -480,6 +481,27 @@ that reports on it, where it is read as evidence rather than as a claim. Writing
 nothing and adopting a stale one are the same error at different distances: both put a
 verdict in front of a reviewer that no run behind it supports.
 
+**Show the shape when the change has one.** Some changes are shapes, and prose is the
+wrong medium for a shape: a restructure that moves files, a control-flow change, a new
+interaction between two components. Written out, the reviewer rebuilds the picture from a
+paragraph and rebuilds it slightly wrong; drawn as a five-line tree, they have it before
+they reach the diff. The forms are in `~/.claude/skills/wtf-show-me/SKILL.md` — the
+`diff`-shaped ones, since what a PR is about is what changed — and they are maintained
+there rather than repeated here, for the reason §4 gives about the title.
+
+Three things follow from where it sits. **Mermaid is available here in a way it is not in
+a terminal**, because GitHub renders it in a body. **It is body prose, so it is scrubbed
+like body prose** — a file tree carries real paths and a call tree carries real symbol
+names, and the `## Never` rule on internal hostnames and work identity reaches every node
+of it. And **it is subject to the two-directions test above**: a sketch showing a shape
+the diff does not have is a false claim standing in the most readable part of the body,
+where a reader takes it as checked rather than as described.
+
+Most changes are not shapes, and the gate is the one §3 already states in its own context:
+a sketch manufactured so the body looks thorough is worse than none, because the next real
+one arrives in the same voice. Where there is no shape, there is no section — not an empty
+one, and not a tree of the two files that happened to change.
+
 ## 6. Visual evidence
 
 Attach before/after images or video when the change has a visual element *and* the
@@ -512,7 +534,9 @@ player and cannot take alt text, so describe it in the body instead.
 
 Prefer SVG for anything generated — a chart, a diagram, a rendered plan. It is text, so
 unlike a raster image it can be grepped for secrets before it goes up and diffed between
-runs, and it is a fraction of the size.
+runs, and it is a fraction of the size. Before either, check the shape does not go in the
+body as a fenced tree or diff per §5: that needs no attachment at all, and it survives
+being read in an email notification, where an attachment is a link.
 
 Do not escalate work to produce a picture. If a run already had the browser open, the pair
 costs seconds; opening one for the screenshot alone almost never pays.

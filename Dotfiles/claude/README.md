@@ -217,8 +217,12 @@ vehicle drives through (the RollerCoaster-Tycoon-style tour), and a flat 2D
 schematic with a focus ring for architectures where many things move at once.
 
 It triggers on requests like "build an interactive explainer for how X works"
-or "visualise this pipeline"; a single chart is `dataviz`'s job and a static
-diagram is `artifact-diagramming`'s.
+or "visualise this pipeline"; a single chart is `dataviz`'s job, a static
+diagram is `artifact-diagramming`'s, and a quick sketch of a shape belongs to
+`wtf-show-me` below. That last line is the one that needed drawing: "explain
+how X works visually" reads as this skill's trigger and is usually a request
+for a five-line tree, so without it the expensive skill wins the cheap
+question.
 
 Adapted from [learnscape](https://github.com/LaurentiuGabriel/learnscape)
 (MIT). The PacketPost template under `assets/template/` is vendored from
@@ -233,6 +237,33 @@ SKILL.md, a knowledge-base phase before any code (`NOTES.md`, reviewed for
 accuracy, feeding the fidelity ledger), the flat-schematic form
 (`references/flat-format.md`), and a verification fallback via the
 chrome-devtools MCP for machines without Playwright.
+
+## Sketching a shape
+
+`wtf-show-me` draws the shape of a system, a change or a flow: pseudocode, a call tree, a
+component tree, a shallow file tree, Mermaid, or any of those rendered as a `diff` when the
+point is what changed. It is deliberately explicit-invoke — "show me how X works", "what
+shape is this change" — because a skill that fires on every "how does this work" adds a
+picture to answers that read fine as prose, and a diagram restating the paragraph above it
+costs the reader twice.
+
+Two rules carry most of its weight. It **picks a form by destination first**, which is the
+adaptation upstream did not need: a Mermaid fence renders in a GitHub body and stays raw
+arrow syntax in a terminal, and getting that wrong looks like a rendering bug rather than a
+wrong choice. And it **never draws what it has not read** — every node names a real symbol
+at a real path. A diagram is read as *checked* in a way a sentence is not: a reader who
+would question "it calls `launchAgent` next" accepts the same claim without a blink once it
+is a node in a tree, so an inferred call tree is not a rough sketch but a confident wrong
+map.
+
+`/wtf-create-pr` reads the same file when a change has a shape, which is where it pays
+best — a reviewer opening a restructure gets the file move rather than a paragraph
+describing one. It is gated there: most changes are not shapes, and where there is no shape
+there is no section.
+
+Adapted from the `show-me` skill in [humanlayer/skills](https://github.com/humanlayer/skills)
+(MIT). The form catalogue and its examples are upstream's; the skill's own footer records
+what diverges, and is the one place that list is kept.
 
 ## Verifying that it works
 
@@ -382,12 +413,19 @@ point at which someone sees that filename before it is public.
 
 The title gets judged separately from its conventional-commit prefix, because on a squash
 merge it becomes the permanent commit subject on the default branch and a `fix:` that grew
-into a `feat:` during the branch is a wrong version bump rather than a wording nit. Visual
-evidence passes two gates before it is attached: is there a *before* to compare against,
-and is the repo private — GitHub serves public-repo attachments from a host readable by
-anyone with the link, and a screenshot carries names, avatars, internal hostnames and a
-token in the URL bar, none of which can be scrubbed by rule the way text can. Text stays
-text; a screenshot of a JSON response is unsearchable, uncopyable and undiffable.
+into a `feat:` during the branch is a wrong version bump rather than a wording nit. A change
+that *is* a shape — a restructure, a control-flow change, a new interaction — gets drawn in
+the body per `wtf-show-me` above rather than described, since a five-line tree lands before
+the reviewer reaches the diff; it is body prose, so it is scrubbed like body prose, and it
+is subject to the same two-direction test, a sketch of a shape the diff does not have being
+a false claim in the most readable part of the page.
+
+Visual evidence passes two gates before it is attached: is there a *before* to compare
+against, and is the repo private — GitHub serves public-repo attachments from a host
+readable by anyone with the link, and a screenshot carries names, avatars, internal
+hostnames and a token in the URL bar, none of which can be scrubbed by rule the way text
+can. Text stays text; a screenshot of a JSON response is unsearchable, uncopyable and
+undiffable.
 
 How much of that to do is decided by the base, which is the one thing that separates a PR
 in the middle of a stack from the PR that lands the work. An intermediate PR is reviewed as
