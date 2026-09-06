@@ -210,7 +210,7 @@ the reviewer to settle it. A prose subject is now the only shape that still runs
 
 ## Interactive explainers
 
-`wtf-explainer` builds interactive, self-narrating explainers of complex
+`wtf-simulate` builds interactive, self-narrating explainers of complex
 technical systems — a real simulation underneath, station-by-station narration
 on top, in one dependency-free static page. Two forms: an isometric town a
 vehicle drives through (the RollerCoaster-Tycoon-style tour), and a flat 2D

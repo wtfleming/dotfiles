@@ -1,5 +1,5 @@
 ---
-name: wtf-explainer
+name: wtf-simulate
 description: >-
   Build an interactive, self-narrating explainer that teaches a complex
   technical system or process — a real simulation underneath, station-by-station

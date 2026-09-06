@@ -12,7 +12,7 @@ nothing about the network changed between them.
 
 Pure static site. No build step, no dependencies, no network calls.
 
-> **This is the reference example for the `wtf-explainer` skill.** It is a
+> **This is the reference example for the `wtf-simulate` skill.** It is a
 > complete, working explainer, not a scaffold. Copy the directory and replace
 > `js/model.js`, `js/world.js`, the landmark functions in `js/render.js` and the
 > panels in `js/ui.js` with your own subject. `js/iso.js`, `js/sim.js` and
@@ -152,7 +152,7 @@ python3 -m http.server --bind 127.0.0.1 8000 & pid=$!
 trap 'kill "$pid" 2>/dev/null' EXIT
 sleep 1
 if kill -0 "$pid" 2>/dev/null; then
-  node path/to/wtf-explainer/scripts/smoke.mjs http://127.0.0.1:8000/
+  node path/to/wtf-simulate/scripts/smoke.mjs http://127.0.0.1:8000/
 else
   echo "FAIL: server did not start (port 8000 busy?)" >&2
   false
