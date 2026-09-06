@@ -8,7 +8,7 @@ description: >-
   X works", "sketch this", "diagram this", "draw the flow", "what shape is this
   change", "/wtf-show-me". Also read by /wtf-create-pr when a PR body needs the
   shape of a change. NOT for: something the reader drives, where a slider moves
-  real numbers or a state machine steps (that is wtf-explainer); a chart, plot
+  real numbers or a state machine steps (that is wtf-simulate); a chart, plot
   or dashboard of data (dataviz); or an ordinary prose answer nobody asked to
   see drawn.
 ---
@@ -23,7 +23,7 @@ twice: once to read the paragraph, once to discover the picture added nothing.
 
 Everything here is static. **If the reader needs to drive it** — a slider that
 moves real numbers, a state machine they step through, a tour that pauses —
-stop and use `wtf-explainer`, which builds a running simulation. If nothing
+stop and use `wtf-simulate`, which builds a running simulation. If nothing
 moves, it belongs here.
 
 ## Pick by destination first
