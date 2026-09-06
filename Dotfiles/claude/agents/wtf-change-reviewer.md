@@ -229,8 +229,8 @@ Optional. Naming, redundant comments, dead code, style drift.
   this file has none.
 
 ## Pre-existing
-Not caused by this change; does not block it. Each deserves its own ticket
-rather than a fix in this branch.
+Already on the default branch; not caused by this change and not this branch's
+to fix. Each deserves its own ticket.
 
 - **Critical** · **`src/db.ts:17`** — Query string built with the caller's
   `name` unescaped; a quoted value runs as SQL. Parameterise it.
@@ -251,14 +251,60 @@ Rules for the report:
   on which one you have. `0 in files under review` is worth printing too: it is
   what tells the reader a red suite is not this area's problem.
 - "No Critical findings" is a valid and useful result — say it plainly.
-- A real problem in code you had to read but the change did not introduce goes
-  under **Pre-existing**, led by the tier it would deserve, and **nowhere
-  else** — the three tiers above are the list of things to fix in this change,
-  and this author did not cause it. Each of these deserves its own ticket,
+- A real problem in code you had to read that is **already on the default
+  branch** goes under **Pre-existing**, led by the tier it would deserve, and
+  **nowhere else** — the three tiers above are the list of things to fix in this
+  change, and this author did not cause it. Each of these deserves its own ticket,
   so every finding appears exactly once: a Critical that is pre-existing
   lives under Pre-existing, not under Critical. Saying nothing
   would mean nobody ever finds out it is there. This covers bugs you noticed,
   not bulk lint noise on untouched lines, which stays out of the report.
+- **The branch is not the scope, and pre-existing is about the branch.** A scope
+  narrower than the whole branch — one commit, a path, the working tree — leaves
+  the branch's earlier commits outside the diff you were handed. Code *they*
+  introduced is not pre-existing: it merges with this PR, whereas Pre-existing
+  says "somebody else's ticket" and is the one section a fix round skips unless
+  the user names it. So a finding there would be triaged out of the very change
+  that caused it. File it under its own tier instead, marked **(earlier on this
+  branch)**.
+
+  `branch_base_sha` in the manifest is where the branch begins — it is resolved
+  on every shape, including the ones whose `base_sha` is null. Blame the line and
+  ask whether its commit predates that point:
+
+  ```sh
+  c=$(git blame -L <line>,<line> --porcelain <scope_head> -- <path> | head -1 | cut -d' ' -f1)
+  git merge-base --is-ancestor "$c" <branch_base_sha>   # exit 0 → pre-existing
+  ```
+
+  **Drop `<scope_head>` from the blame when `correspondence` is `workspace`** and
+  blame the working tree instead. There the reviewed content is on disk rather
+  than in the commit, so a finding's line number addresses a working-tree line,
+  and blaming the committed blob at that number reads whatever content the
+  uncommitted edit shifted into place — routinely a pre-branch commit. A line the
+  uncommitted change itself added comes back as the all-zero sha, which fails
+  `--is-ancestor`, correctly: it is this change's own work. An untracked file has no
+  committed blame at all — `git blame` exits saying `no such path … in HEAD`, leaving `$c`
+  empty — and the resolver folds untracked files into the diff, so this is ordinary rather
+  than exotic. An empty or all-zero `$c` is the same answer as the ancestor test's
+  non-zero exit: the line is this change's, not pre-existing. Do not read it as an error
+  to work around.
+
+  Blame names the last commit to touch a line, so one an earlier branch commit
+  merely moved reads as this branch's work. That is the safe direction: it lands
+  under a tier someone fixes rather than in a ticket nobody writes.
+
+  Two answers mean the distinction could not be made, and both call for saying so
+  rather than guessing which side a finding falls on. **Null** — it could not be
+  computed: no base ref resolved, a `scope_head` this clone does not have (ordinary
+  on a fork PR, whose head OID comes from the API unfetched), or two histories with
+  no common ancestor. **Equal to `scope_head`** — the head is already contained in
+  the base, as it is for a commit that has landed there, so the merge base collapses
+  onto it and every line tests as pre-existing, a commit being its own ancestor.
+
+  Both answers are about the base the resolver actually used — `--base` where the
+  caller gave one, the default branch otherwise — not about the default branch
+  specifically.
 - On a subject scope there is no change, so nothing is pre-existing in the sense
   that section means: omit it and file every finding under its own tier. The
   line it draws — this author caused it, this author did not — has nothing to

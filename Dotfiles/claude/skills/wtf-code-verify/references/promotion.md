@@ -7,12 +7,58 @@ judgement, not a reflex.
 
 ## Contents
 
+- Does anything guard this change today?
 - Triage
 - Where the test goes
 - Match the idiom
 - Prove it fails without the fix
 - When the project has no harness at that level
 - Clean up what you did not promote
+
+## Does anything guard this change today?
+
+Ask before triaging, because the answer decides what the triage is worth. Break the line
+the change turns on — SKILL.md §4's mechanism, in a worktree of **HEAD** so there is
+nothing to restore — and run the project's **own** test command, unscoped. That worktree
+is `baseline-worktree.sh create --head <branch>`, not a bare `create`: without `--head`
+the only tree the script builds is the baseline at the merge base, where the line you mean
+to break may not exist at all and a green suite would say nothing. If it stays green, nothing
+in the suite guards the change, and the next person to touch this code has no signal at
+all.
+
+`create` refuses a branch already merged into the base it resolves — the merge base
+collapses onto the head, so the pair would be two copies of one tree — and a change that
+has already landed is an ordinary way to arrive here. Where the branch came in as a merge
+commit the error names the fork point and the exact rerun; take it and pass
+`--base <fork-point>`. A branch that was fast-forwarded leaves no merge commit to recover
+the fork from, so the error can only say that nothing lies between the two — find the
+fork yourself, from `git reflog show <branch>` or the last commit the base does not
+contain, and pass that. The question is what guards this code now, not what guarded it
+while the branch was open, so a merged head is a reason to supply the base rather than to
+skip the check.
+
+**Do this before the report's Residue line is composed.** The pair is residue, so in
+section order it gets built after that line has said the tree is clean — possibly after
+the section has been posted to the PR — and the next `create` then refuses without
+`--force`. The one pair serves *Prove it fails without the fix* below as well, so build it
+once here, keep it through both, then `baseline-worktree.sh remove` and compose Residue
+over a tree that is actually clean.
+
+That is a different question from the coverage run behind the report's **Covered** line,
+and the two disagree usefully. Coverage says a changed line was executed. This says
+something asserted on what it did. A line run by a test that never looks at its result is
+covered and unguarded, which is the worse of the two states precisely because it reads as
+the better one.
+
+Point the break at the behaviour rather than at compilation. Deleting the function turns
+everything red and proves nothing; invert a condition, drop a guard, return the other of
+two values, change a constant — each asks whether any assertion in the suite cares. One
+break is enough. This is a question about the change, not a mutation run over the
+codebase, and a second break costs another full suite run to answer the same thing.
+
+Where it comes back green, report it on its own line and carry it into the triage below.
+"Nothing in the project would have caught this" is the strongest argument for promoting a
+probe that any of the rows in the table can make.
 
 ## Triage
 

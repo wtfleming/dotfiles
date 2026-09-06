@@ -4,6 +4,8 @@
 
 - Where things go
 - Capturing output
+- Read the whole capture
+- Measuring what the probes reached
 - The PR verification section
 - Variants: refactor, performance, flagged
 - Posting it to the PR
@@ -60,6 +62,58 @@ cleanest signal of the three.
 Summarizing as you capture is how a `Cannot find module` gets recorded as "the expected
 failure". Write the bytes down first, read them second.
 
+## Read the whole capture
+
+The captures exist to be quoted, and the temptation is to read exactly as far as the line
+the plan predicted and no further. Everything past it was produced by the same run at no extra
+cost, and nothing else in this skill will ever look at it.
+
+Read every capture, the green ones included, for what nobody predicted:
+
+- a stack trace, an exception, a `panic`, a `CRASH` or a `FATAL` under a passing assertion
+- an unhandled rejection, or work that settled after the process meant to be done
+- log lines at error or warn level, especially from a worker or a background job — that
+  failure reaches no caller, so no assertion on a response can be falsified by it
+- a deprecation warning, which is a break scheduled for the next upgrade
+- a query log longer than the operation justifies, or one that grows with the fixture
+  size. What goes in the report is the **count** and the shape of the repeated statement,
+  never the logged lines: a statement log carries its parameters inline, and the scrub
+  that guards anything published works by naming the key rather than the value — which a
+  `parameters: $1 = '…'` line does not have. "42 queries, the same `SELECT … FROM posts
+  WHERE id = $1` each time" is the whole of the finding anyway
+- a non-zero exit under output that reads as success, and its mirror: a zero exit from a
+  runner that reports its failures on stderr
+
+Each of those is a defect only execution reveals, which is the whole remit of this skill —
+and alone among the things here it costs one read of a file already on disk.
+
+What it means depends on where it also appears. A line present only on HEAD is a finding
+about the change, and joins the report as a falsification or a gap. One present in the
+baseline capture too — which any differential has already produced — is pre-existing, and
+worth a single line saying so. Report it either way; what it must not do is quietly move
+the verdict in either direction, since neither "it was already broken" nor "something
+looked wrong" is one of the four.
+
+## Measuring what the probes reached
+
+**Covered / Not covered** is a claim about what executed, and it is the line a reviewer
+leans on hardest. Run the probes under the project's coverage tool, scoped to the changed
+files — `environments.md` has the invocation per ecosystem, including the two tools that
+instrument a process rather than a test run, which is what makes this work at tiers 1 and
+2.
+
+What goes in the report is the changed lines with **zero hits**, as `file:line`. Not the
+percentage: a number over a changed file invites a target, and the probes were never
+trying to cover a file. A gap named as `resolver.ts:91` is a place a reviewer can go
+and look; the same gap named from recollection is only where you already knew you had not
+been.
+
+Where the project has no coverage tool, do not add one for this — say the line is a
+judgement rather than a measurement, and name what the probes exercised. Where the change
+has no executable lines at all — prose, a config the run never loads — there is nothing to
+measure: write `**Covered.** N/A — no executable lines changed`, which is a different fact
+from a judgement and should not be dressed as one.
+
 ## The PR verification section
 
 Paste under the change summary. Keep it short — a reviewer should be able to tell in
@@ -108,8 +162,8 @@ the unabridged capture stays in <scratch>/code-verify/raw/>
 </details>
 
 **Covered.** The resolver's authorisation branch and argument coercion.
-**Not covered.** The admin override path — needs a second seeded role. The subscription
-resolver shares the same guard and this PR does not touch it.
+**Not covered.** The admin override path (`resolver.ts:91`) — needs a second seeded
+role. The subscription resolver shares the same guard and this PR does not touch it.
 **CI.** Unit suite and lint run on every push; none of the four above is in CI today.
 **Residue.** None — compose dependencies down, worktree removed.
 ````
@@ -120,7 +174,8 @@ result from a result that means something: it says how you know each ✅ would h
 
 The **Not covered** line is the most useful sentence in the section. Every probe is
 narrow; naming the gap tells a reviewer where to look, and its absence invites them to
-assume there isn't one.
+assume there isn't one. Take it from a coverage run over the changed lines rather than
+from memory of what you ran — the section above has how.
 
 **Verified at** is `git rev-parse --short HEAD`, taken when the probes run — not the merge
 base, which **Scope** already carries and which is a different commit for a different
@@ -252,7 +307,7 @@ the ones a reader most relies on. Each has a command that settles it:
 
 | Line | What establishes it |
 | ---- | ------------------- |
-| **Covered / Not covered** | the probes actually run, listed from the scratch directory — not the expectation list, which is what you intended to run |
+| **Covered / Not covered** | a coverage run over the changed lines, read for the ones with zero hits — not the expectation list, which is what you intended to run, and not the probe list, which is what you ran rather than what it reached |
 | **CI** | reading `.github/workflows` or equivalent, this run, not from memory of the repo |
 | **Residue** | `git status --porcelain`, `docker compose ps`, `git worktree list`, and the scratch path — checked after teardown, not predicted before it |
 | **PR description** | the body re-read at the end, since your own commits may have outdated it since you looked |

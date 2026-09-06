@@ -261,7 +261,21 @@ Expectations are written down and shown to you *before* anything runs, in three 
 positive, negative, regression — because a probe built on the wrong idea of correct runs
 cleanly, passes, and tells you nothing. The negative cases are dispatched to the
 `wtf-verify-adversary` agent, which sees only the diff: whoever wrote the code has
-already imagined the inputs it handles, and the bugs are in the ones they did not.
+already imagined the inputs it handles, and the bugs are in the ones they did not. The
+conditions those cases need are produced rather than hoped for — a token minted already
+expired, a stub that answers slowly instead of not at all, twenty callers at once — since
+a case with no mechanism beside it drops quietly out of the plan between being written and
+being run.
+
+Running is the expensive part, so the run is made to say as much as it can. The
+instrumentation goes up before the first probe rather than after a surprise — strict
+unhandled rejections, warnings as errors, statement logging — and the capture is then read
+past the line the plan predicted, because the swallowed exception under a passing
+assertion, the error-level line from a worker no caller hears from, and the query log that
+grows with the fixture are all defects execution reveals and nothing else goes looking for.
+What the run left behind counts too — the duplicate row, the send on a path that was
+supposed to refuse — since none of that reaches the caller, so no assertion on a response
+can be falsified by any of it.
 
 Beyond behaviour it covers the things only execution reveals. `references/compatibility.md`
 handles the window where two versions coexist — new code against the old schema and old
@@ -274,6 +288,20 @@ wall-clock is noise. And on a PR it verifies the title and description in both
 directions: every claim in the body true, *and* every meaningful change accounted for —
 because what review produces is usually an omission nobody went back to write up, and a
 squash merge makes that title the permanent commit subject on `main`.
+
+Before a row is reported green it goes to a `wtf-verify-refuter` — one per result, given
+the expectation, the discriminator and the raw bytes but not the reasoning about them,
+and asked to show the probe would have been green anyway. A refuted green demotes to
+`Not verified` rather than disappearing. It is the refuter pass from the review command
+pointed at the one artifact that had nothing adversarial aimed at it: the verdict this
+tool produces itself.
+
+Two more checks answer *is this actually guarded*. The probes run under the project's
+coverage tool, so **Covered** is measured against the changed lines rather than recalled —
+a changed line with zero hits is the most useful thing the run can hand a reviewer, and
+the number itself is left out. And the line the change turns on is deliberately broken
+with the project's own suite running unscoped: green there means nothing guards the change
+today, which is the strongest argument the promotion triage can make.
 
 It reports one of four verdicts. `Not verified` is neither a pass nor a defect and says
 which of the three inconclusive shapes it was; `Falsified` — a real defect, found before

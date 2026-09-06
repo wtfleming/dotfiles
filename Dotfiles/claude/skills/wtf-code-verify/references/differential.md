@@ -189,6 +189,78 @@ land at `<repo>` and `<repo>-head`, which are siblings of *different length*.
 cover the refactored paths — an equivalence proof over trivial input proves the trivial
 case, and the report should say what the input covered.
 
+The cheapest way to make the input rich is to stop choosing it. Both trees are built and
+both take the same input by construction, so generated input costs a loop rather than a
+harness: a few thousand cases through each side, diffed per case.
+
+```bash
+OUT='<scratch>'/code-verify  # quoted: a bare <scratch> is two redirections, per expectations.md
+BASE=$(~/.claude/skills/wtf-code-verify/scripts/baseline-worktree.sh path baseline)
+for f in corpus/*; do
+  n=$(basename "$f")
+  eb=0; "$BASE/bin/render" "$f" > "$OUT/$n.base" 2> "$OUT/$n.base.err" || eb=$?
+  eh=0; ./bin/render        "$f" > "$OUT/$n.head" 2> "$OUT/$n.head.err" || eh=$?
+  [ "$eb" = 0 ] && [ "$eh" = 0 ] || { echo "NOT VERIFIED: $f (exit $eb/$eh)"; continue; }
+  cmp -s "$OUT/$n.base"     "$OUT/$n.head";     co=$?
+  cmp -s "$OUT/$n.base.err" "$OUT/$n.head.err"; ce=$?
+  if [ "$co" -gt 1 ] || [ "$ce" -gt 1 ]; then
+    echo "NOT VERIFIED: $f (cmp exit $co/$ce — a capture could not be read)"
+  elif [ "$co" = 1 ]; then echo "DIFFERS: $f"
+  elif [ "$ce" = 1 ]; then echo "DIFFERS (stderr only): $f"
+  else
+    rm -f "$OUT/$n.base" "$OUT/$n.head" "$OUT/$n.base.err" "$OUT/$n.head.err"
+  fi
+done
+```
+
+Both sides run unconditionally and both statuses are kept. A case where **both** fail
+produces two identical empty outputs and a clean comparison — an equivalence proof that
+reads strongest exactly where nothing ran — and a baseline failure and a HEAD failure are
+different verdicts in the table above, so `NOT VERIFIED` has to say which side. Same rule
+as everywhere else here: a case that did not execute is `Not verified`, never a pass. A
+bootstrap gap in the baseline prints on every case, which is what tells you it is the
+worktree rather than the corpus.
+
+`cmp` over files rather than `[ "$a" = "$b" ]` over two `$(...)` captures, because command
+substitution strips every trailing newline and swallows NUL bytes: a refactor that changed
+nothing but the final newline of each output would run a few thousand cases and print
+nothing at all. The captures are named per case so a later one cannot overwrite the
+evidence for an earlier failure, and they live under the scratch directory rather than the
+repo under review, which the report's residue line would otherwise have to account for. A
+case that matched on **both** streams has its four files removed as the loop goes: the
+per-case naming exists to protect failure evidence, and a corpus of ten thousand cases
+would otherwise leave forty thousand files and gigabytes of scratch that nobody is going
+to read. The delete sits in an `if` body rather than to the right of an `&&`, so a failing
+`rm` cannot fall through to an `||` and report a matching case as `DIFFERS`.
+
+`cmp`'s status is read as three outcomes rather than two, for the same reason the exit
+codes above are: 1 is "these differ" and anything higher is "I could not read one of
+them", which is a case that did not execute rather than a behavioural finding. Collapsing
+them with `||` would report an unreadable capture as `DIFFERS` — a fabricated difference,
+which is the one result this method must never invent.
+
+Stderr is compared before anything is deleted, and a difference there is reported rather
+than pruned. Two sides can agree on every byte of output while HEAD emits a deprecation
+warning, an error-level line from a background job, or a stack trace under a passing
+result — the findings `evidence.md` sends you to the captures for. Deleting the `.err`
+files on a stdout match would throw exactly those away unread, which is why the match has
+to cover both.
+
+Draw the cases from the project's own fixtures or corpus where one exists, and from a
+generator where it does not — a property-testing library the project already depends on
+(`proptest`, `StreamData`, `fast-check`) is a generator you do not have to write, used
+here for its inputs rather than for its assertions. Adding one the project does not have
+is a bigger change than the one under review; where that is the only option, say the
+equivalence rests on the inputs you picked by hand.
+
+Two things make this worth more than a hand-picked fixture. It reaches the case the author
+did not think of, which is the same argument the adversary pass at SKILL.md §3 rests on.
+And a difference it finds arrives with the input that produced it, small enough to paste
+into the report or into a promoted test — where a fixture that happens to agree tells you
+only that one input agreed. Say how many cases ran and where they came from: "10,000
+generated payloads" and "the 340-record fixture" are different claims, and an empty `diff`
+looks identical under both.
+
 **Performance** claims a threshold, not a boolean. One run of each is noise. Take at
 least five runs per side, report median and spread, and state the threshold before
 measuring. Two distributions that overlap have not demonstrated anything, however

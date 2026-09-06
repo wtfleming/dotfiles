@@ -742,11 +742,14 @@ publish_scope() {
   # rename *onto* the symlink rather than through it; NOT a plain `mv`, which follows an
   # existing symlink and deposits the new link inside the old target, leaving readers on
   # the stale tree. Where neither flag exists the direct form is still better than none.
+  # `--` because the leaf name is derived, not chosen: scope_out_dir maps every character
+  # outside [A-Za-z0-9._-] to `-`, so a scope of `#49` or `@` yields a name starting with
+  # one and `ln` reads it as flags -- `ln: illegal option -- 4`, and no pointer published.
   link="$out.new.$$"
-  ln -sfn "$(basename "$final")" "$link"
+  ln -sfn -- "$(basename "$final")" "$link"
   if ! mv -h "$link" "$out" 2>/dev/null && ! mv -T "$link" "$out" 2>/dev/null; then
     rm -f "$link"
-    ln -sfn "$(basename "$final")" "$out"
+    ln -sfn -- "$(basename "$final")" "$out"
   fi
 
   # The swap orphans the previous target, which the old unconditional `rm -rf` used to
@@ -899,6 +902,37 @@ cmd_resolve() {
 
   classify_correspondence "$SHAPE" "$SCOPE_HEAD" "$workspace_head" "$workspace_dirty"
 
+  # Where the branch under review begins, which is a different question from `base_sha`.
+  # `base_sha` is the comparison point for *this scope* and is null on every shape narrower
+  # than a branch -- a single commit, a path, the working tree. An agent handed one of those
+  # therefore cannot tell code an earlier commit of the same branch introduced from code that
+  # has been on the default branch for years, so it reports both as pre-existing. That tier
+  # means "somebody else's ticket, do not fix it here", and the fix path skips it unless the
+  # user names it, so the effect is that a defect the branch introduced merges inside the very
+  # PR that introduced it.
+  #
+  # No fetch of its own. `need_base` already fetched for the shapes that consult a base, and
+  # for the rest this resolves the default branch locally. A stale remote-tracking ref only
+  # moves the merge base backwards, which widens what counts as the branch's own work -- the
+  # safe direction, since it over-reports work as this branch's rather than handing a real
+  # defect to a ticket nobody writes.
+  local branch_base_sha branch_base_ref
+  branch_base_ref="$BASE"
+  [ -n "$branch_base_ref" ] || branch_base_ref="$(resolve_default_branch || true)"
+  #
+  # Three different things produce an empty result here, and consumers are told to say the
+  # distinction could not be made for all of them. Only the merge-base failure is worth a
+  # warning: it is the one a reader would misdiagnose, since it happens with the base ref
+  # resolving perfectly well. Two ways in -- a PR head taken from the API and never fetched
+  # is not in this clone (`merge-base` exits 128 while `origin/main` is right there), and
+  # two histories with no common ancestor exit 1 with no output.
+  branch_base_sha=""
+  if [ -n "$SCOPE_HEAD" ] && [ -n "$branch_base_ref" ]; then
+    branch_base_sha="$(git merge-base "$SCOPE_HEAD" "$branch_base_ref" 2>/dev/null || true)"
+    [ -n "$branch_base_sha" ] \
+      || warn "no merge base between $SCOPE_HEAD and $branch_base_ref, so the branch base is null despite the base ref resolving; either the head is not in this clone or the two share no history"
+  fi
+
   local file_count
   files_from_diff "$diff" "$tmp/files.json"
   file_count="$(jq length < "$tmp/files.json")"
@@ -926,6 +960,7 @@ cmd_resolve() {
     --arg scope_line "$scope_line" \
     --arg base_ref "$BASE" \
     --arg base_sha "$BASE_SHA" \
+    --arg branch_base_sha "$branch_base_sha" \
     --arg scope_head "$SCOPE_HEAD" \
     --arg head_label "$HEAD_LABEL" \
     --arg workspace_head "$workspace_head" \
@@ -952,6 +987,7 @@ cmd_resolve() {
       fell_through: $fell_through,
       base_ref: (if $base_ref == "" then null else $base_ref end),
       base_sha: (if $base_sha == "" then null else $base_sha end),
+      branch_base_sha: (if $branch_base_sha == "" then null else $branch_base_sha end),
       default_branch_resolved: $default_branch_resolved,
       base_stale: ($base_stale_reason != ""),
       base_stale_reason: (if $base_stale_reason == "" then null else $base_stale_reason end),
