@@ -309,7 +309,11 @@ measured with the loud flags **off**, because their cost scales with the thing b
 
 **Run under the project's coverage tool in the same pass.** §8 reports which changed lines
 a probe reached, and taking that from a second run over the same probes pays the expensive
-part twice and measures bytes other than the ones the report quotes.
+part twice and measures bytes other than the ones the report quotes. The timing exception
+covers this too: coverage instruments the process or the node, so it costs time the claim
+would be measuring. A timing probe runs on its own, quiet and uninstrumented; the coverage
+pass answers what the probes reached, which is a different question from how long they
+took.
 `references/environments.md` has the invocation per ecosystem.
 
 Capture raw stdout, stderr and the exit code to files, verbatim — write the bytes first
@@ -345,11 +349,14 @@ row and **in parallel**, since a shared dispatch lets a strong row carry a weak 
 serial fan-out spends a round-trip per row at the very end of an already long run. Hold
 back any two whose probes bind the same port, container name or database, and run those one
 at a time: §6's serialisation rule governs a re-run exactly as it governs the first run, and
-a refuter whose re-run dies on a collision answers `refuted` under its own tie-break rather
-than reporting the collision.
+a refuter whose re-run dies on a collision cannot settle the row, so it falls to its own
+tie-break and answers `refuted` — the green becomes *Not verified* for a reason that is
+about your scheduling rather than about the code.
 
 Give it the expectation, the discriminator claimed for it, the probe that was run and the
-raw captures from both sides — the probe because re-running it is the only way it can
+raw captures from every side the probe ran on — a tier-0 or tier-1 probe may only have
+run against HEAD, and the refuter is written for that, reading a baseline capture where
+one exists. The probe travels because re-running it is the only way it can
 settle non-determinism rather than allege it. **Say whose work the tree is**, which §0 has
 already established: the refuter treats silence as untrusted and will not re-run anything
 on a tree it cannot place, so an unstated provenance silently removes the one check that

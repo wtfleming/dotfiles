@@ -166,8 +166,15 @@ seq 20 | xargs -P 20 -I{} \
 a deadlock is exactly what this is looking for, and it hangs every one of the twenty
 requests; `sort` prints nothing until EOF, so an unbounded run ends as a tool timeout with
 no captured bytes and the row records *Not verified, environmental* when the truth was the
-finding. A `000` in the `uniq -c` table is `curl` saying the request never completed — read
-it as a result, not as a probe to retry.
+finding.
+
+A `000` in the table is only "no HTTP response arrived", which covers the finding and the
+setup failure alike — a timeout against a held lock, but equally a refused connection, a
+DNS failure or a TLS error. `curl`'s exit status is what separates them, so capture it
+alongside the code (`-w '%{http_code} '` then `echo $?`, or run the probe through a wrapper
+that prints both). 28 is the timeout and is a result about the endpoint; 6 and 7 are the
+name and the connection, and mean the probe never reached the service — environmental, and
+a reason to fix the setup rather than to record a finding.
 
 Where the contract is a unique create, expect one `201` and nineteen `409`s, then count
 the rows; an endpoint documented as idempotent expects twenty successes and one row. The
@@ -197,14 +204,19 @@ counts per table, a `SELECT` of the entity, `SCAN` over the cache prefix, the qu
 `find` over the directory the process writes to.
 
 ```bash
+OUT='<scratch>'/code-verify   # not the working directory, per differential.md
 snapshot() { psql -v ON_ERROR_STOP=1 -Atc "SELECT 'posts', count(*) FROM posts
                         UNION ALL SELECT 'audit_log', count(*) FROM audit_log"; }
-snapshot > before.txt || { echo 'snapshot failed' >&2; exit 1; }
-[ -s before.txt ] || { echo 'empty snapshot, not an unchanged one' >&2; exit 1; }
+snapshot > "$OUT/before.txt" || { echo 'snapshot failed' >&2; exit 1; }
+[ -s "$OUT/before.txt" ] || { echo 'empty snapshot, not an unchanged one' >&2; exit 1; }
 # ... run the probe ...
-snapshot > after.txt || { echo 'snapshot failed' >&2; exit 1; }
-diff before.txt after.txt
+snapshot > "$OUT/after.txt" || { echo 'snapshot failed' >&2; exit 1; }
+diff "$OUT/before.txt" "$OUT/after.txt"
 ```
+
+The snapshots go to the scratch directory for the reason every other capture does: pasted
+into a repository checkout, a bare `before.txt` writes into the tree under review, and
+`before` and `after` are ordinary enough names to land on something.
 
 Check the exit status and the emptiness, because a snapshot that never reached the
 database is a zero-byte file and two of those diff clean — reading as *unchanged*, which

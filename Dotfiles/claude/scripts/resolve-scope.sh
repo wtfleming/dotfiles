@@ -923,13 +923,14 @@ cmd_resolve() {
   # Three different things produce an empty result here, and consumers are told to say the
   # distinction could not be made for all of them. Only the merge-base failure is worth a
   # warning: it is the one a reader would misdiagnose, since it happens with the base ref
-  # resolving perfectly well -- a PR head taken from the API and never fetched is not in
-  # this clone, so `merge-base` exits 128 while `origin/main` is right there.
+  # resolving perfectly well. Two ways in -- a PR head taken from the API and never fetched
+  # is not in this clone (`merge-base` exits 128 while `origin/main` is right there), and
+  # two histories with no common ancestor exit 1 with no output.
   branch_base_sha=""
   if [ -n "$SCOPE_HEAD" ] && [ -n "$branch_base_ref" ]; then
     branch_base_sha="$(git merge-base "$SCOPE_HEAD" "$branch_base_ref" 2>/dev/null || true)"
     [ -n "$branch_base_sha" ] \
-      || warn "no merge base between $SCOPE_HEAD and $branch_base_ref, so the branch base is null despite the base ref resolving; the head is probably not in this clone"
+      || warn "no merge base between $SCOPE_HEAD and $branch_base_ref, so the branch base is null despite the base ref resolving; either the head is not in this clone or the two share no history"
   fi
 
   local file_count

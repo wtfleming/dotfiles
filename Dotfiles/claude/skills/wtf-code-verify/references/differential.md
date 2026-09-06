@@ -201,10 +201,12 @@ for f in corpus/*; do
   eb=0; "$BASE/bin/render" "$f" > "$OUT/$n.base" 2> "$OUT/$n.base.err" || eb=$?
   eh=0; ./bin/render        "$f" > "$OUT/$n.head" 2> "$OUT/$n.head.err" || eh=$?
   [ "$eb" = 0 ] && [ "$eh" = 0 ] || { echo "NOT VERIFIED: $f (exit $eb/$eh)"; continue; }
-  if ! cmp -s "$OUT/$n.base" "$OUT/$n.head"; then
-    echo "DIFFERS: $f"
-  elif ! cmp -s "$OUT/$n.base.err" "$OUT/$n.head.err"; then
-    echo "DIFFERS (stderr only): $f"
+  cmp -s "$OUT/$n.base"     "$OUT/$n.head";     co=$?
+  cmp -s "$OUT/$n.base.err" "$OUT/$n.head.err"; ce=$?
+  if [ "$co" -gt 1 ] || [ "$ce" -gt 1 ]; then
+    echo "NOT VERIFIED: $f (cmp exit $co/$ce — a capture could not be read)"
+  elif [ "$co" = 1 ]; then echo "DIFFERS: $f"
+  elif [ "$ce" = 1 ]; then echo "DIFFERS (stderr only): $f"
   else
     rm -f "$OUT/$n.base" "$OUT/$n.head" "$OUT/$n.base.err" "$OUT/$n.head.err"
   fi
@@ -230,6 +232,12 @@ per-case naming exists to protect failure evidence, and a corpus of ten thousand
 would otherwise leave forty thousand files and gigabytes of scratch that nobody is going
 to read. The delete sits in an `if` body rather than to the right of an `&&`, so a failing
 `rm` cannot fall through to an `||` and report a matching case as `DIFFERS`.
+
+`cmp`'s status is read as three outcomes rather than two, for the same reason the exit
+codes above are: 1 is "these differ" and anything higher is "I could not read one of
+them", which is a case that did not execute rather than a behavioural finding. Collapsing
+them with `||` would report an unreadable capture as `DIFFERS` — a fabricated difference,
+which is the one result this method must never invent.
 
 Stderr is compared before anything is deleted, and a difference there is reported rather
 than pruned. Two sides can agree on every byte of output while HEAD emits a deprecation

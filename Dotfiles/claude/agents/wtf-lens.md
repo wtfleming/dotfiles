@@ -150,11 +150,12 @@ came from.
 
 Three answers leave the distinction unmade, and each calls for saying so rather
 than guessing. **No manifest**, where you were handed a bare scope and so have no
-`branch_base_sha` at all. A **null** one, meaning it could not be computed —
-either no default branch resolved, or a `scope_head` this clone does not have.
-And one **equal to `scope_head`**, where the head is already on the default
-branch, so the merge base has collapsed onto it and every line would test as
-pre-existing. Guessing toward **(pre-existing)** is the expensive direction: that
+`branch_base_sha` at all. A **null** one, meaning it could not be computed — no
+base ref resolved, a `scope_head` this clone does not have, or two histories with
+no common ancestor. And one **equal to `scope_head`**, where the head is already
+contained in the base, so the merge base has collapsed onto it and every line
+would test as pre-existing. The base is the one the resolver used: `--base` where
+the caller gave one, the default branch otherwise. Guessing toward **(pre-existing)** is the expensive direction: that
 is the one section a fix round skips.
 
 On a subject scope there is no change and neither marker applies; tier every

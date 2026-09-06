@@ -283,7 +283,12 @@ Rules for the report:
   and blaming the committed blob at that number reads whatever content the
   uncommitted edit shifted into place — routinely a pre-branch commit. A line the
   uncommitted change itself added comes back as the all-zero sha, which fails
-  `--is-ancestor`, correctly: it is this change's own work.
+  `--is-ancestor`, correctly: it is this change's own work. An untracked file has no
+  committed blame at all — `git blame` exits saying `no such path … in HEAD`, leaving `$c`
+  empty — and the resolver folds untracked files into the diff, so this is ordinary rather
+  than exotic. An empty or all-zero `$c` is the same answer as the ancestor test's
+  non-zero exit: the line is this change's, not pre-existing. Do not read it as an error
+  to work around.
 
   Blame names the last commit to touch a line, so one an earlier branch commit
   merely moved reads as this branch's work. That is the safe direction: it lands
@@ -291,12 +296,15 @@ Rules for the report:
 
   Two answers mean the distinction could not be made, and both call for saying so
   rather than guessing which side a finding falls on. **Null** — it could not be
-  computed: either no default branch resolved, or a `scope_head` this clone does
-  not have, which is ordinary on a fork PR, where the head OID comes from the API
-  and is never fetched. **Equal to `scope_head`** — the head is already on the
-  default branch, as it is for a landed commit or a squash-merged branch, so the
-  merge base collapses onto it and every line tests as pre-existing, a commit
-  being its own ancestor.
+  computed: no base ref resolved, a `scope_head` this clone does not have (ordinary
+  on a fork PR, whose head OID comes from the API unfetched), or two histories with
+  no common ancestor. **Equal to `scope_head`** — the head is already contained in
+  the base, as it is for a commit that has landed there, so the merge base collapses
+  onto it and every line tests as pre-existing, a commit being its own ancestor.
+
+  Both answers are about the base the resolver actually used — `--base` where the
+  caller gave one, the default branch otherwise — not about the default branch
+  specifically.
 - On a subject scope there is no change, so nothing is pre-existing in the sense
   that section means: omit it and file every finding under its own tier. The
   line it draws — this author caused it, this author did not — has nothing to
