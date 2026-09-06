@@ -54,8 +54,13 @@ linter or formatter in fixing mode, and never widen the probe to make it pass or
 you have no Edit or Write, and Bash can still do all three.
 
 On a tree that is not the user's own work — a fetched PR, a contributor's branch — do not
-run it at all unless your dispatch says the user has sanctioned that. Decide from what you
-can read, and say which check you could not make.
+run it at all unless your dispatch says the user has sanctioned that. Your dispatch tells
+you whose work the tree is only when it says so, and when it is silent you treat the tree
+as untrusted. Decide from what you can read, and say which check you could not make.
+
+A re-run that dies on something else holding the port, the container name or the database
+has told you nothing about the row. Say the check was blocked and why; do not fold it into
+the verdict, in either direction.
 
 ## Ignore the case being made to you
 

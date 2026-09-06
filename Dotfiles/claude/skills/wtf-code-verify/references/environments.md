@@ -131,16 +131,25 @@ rerunning both sides.
 | **Elixir** | `--warnings-as-errors` on the compile, and `config :logger, level: :debug` for the probe — a crashed `GenServer` is logged and nowhere else, and the caller sees a retry or a default |
 | **Erlang** | run under the `test` profile rather than a stale one, and turn `logger` up to `debug` on the console — a supervisor restart is otherwise silent, and the caller sees only a slow reply |
 | **Elisp** | `(setq debug-on-error t)` guarantees a backtrace under `--batch` rather than the message alone; `byte-compile-error-on-warn` where the probe compiles |
-| **Postgres** | `log_statement=all`, `log_min_duration_statement=0`. This is the cheap source of the per-request query count the scale section of `expectations.md` asks for, and the only one that reads as a number rather than an impression |
+| **Postgres** | `log_statement=all`, `log_min_duration_statement=0`, bounded to the run: `PGOPTIONS='-c log_statement=all -c log_min_duration_statement=0'`, `-c` on a throwaway compose container, or a session-level `SET` where the probe holds one connection. **Not `ALTER SYSTEM` or an edit to `postgresql.conf`** on a database you did not start — both survive the run and a restart, and every statement afterwards writes its literal parameters to the server log: a role's password, a reset token, a customer's email, in a file outside the scratch directory that no publish-time scrub reaches. This is the cheap source of the per-request query count the scale section of `expectations.md` asks for, and the only one that reads as a number rather than an impression |
 
 Set them **identically on both sides** of a differential. They change what the output
 contains, so a flag on one side alone produces a difference that is about your flags.
 
+**A timing claim is the exception: measure it with these off.** Their cost is not a
+constant that cancels — one synchronous log write per statement scales with the statement
+count, which is the quantity a performance change most often moves. An N+1 fix taking a
+request from two hundred queries to two, timed under statement logging, has its baseline
+paying two hundred log writes against HEAD's two, and identical flags on both sides leave
+that in the measurement. A debug Rust build and a BEAM `logger` at `:debug` carry the same
+problem. Where a loud run is wanted as well, run it twice and take the numbers from the
+quiet one.
+
 Two are worth having on even when nothing is suspected. Strict unhandled rejections turns
 an async failure a handler swallowed into a non-zero exit, which is the most common way a
-Node probe passes while the thing it exercised failed. And statement logging costs nothing until you
-read it, at which point it answers a question — how many queries — that no amount of
-staring at a response body will.
+Node probe passes while the thing it exercised failed. And statement logging costs little outside a
+timing run, and answers a question — how many queries — that no amount of staring at a
+response body will.
 
 ## Coverage of a single run
 
@@ -163,17 +172,10 @@ way. The BEAM tools are the exception: `mix test --cover` and `rebar3 cover` col
 node they run in, so a tier-2 probe driving a service on its own node collects nothing
 unless `:cover` is started against that node — report it unmeasured rather than clean.
 
-**Report the uncovered lines, never the percentage** — the specific changed lines with
-zero hits, quoted as `file:line`. `evidence.md` has what the report says and why the
-number is not part of it.
-
-Where the project has no coverage tool and adding one is a larger change than the one
-under review, do not add one. Say the line is a judgement rather than a measurement and
-name what the probes exercised, which is the honest form of the same sentence. Where the
-change has no executable lines at all — prose, a config the run never loads — there is
-nothing to measure: write the template's own line as `**Covered.** N/A — no executable
-lines changed`, which is a different fact from a judgement and should not be dressed as
-one.
+Do not add a coverage tool the project does not have: that is a larger change than the one
+under review. What the report says — uncovered lines rather than a percentage, and the
+wording for a project with no tool or a change with no executable lines — is in
+`evidence.md`.
 
 ## Tier 0 — a test in one package
 

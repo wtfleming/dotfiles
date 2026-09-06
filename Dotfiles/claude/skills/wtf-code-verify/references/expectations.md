@@ -156,10 +156,18 @@ only holds under a lock the code does not take.
 ```bash
 URL='http://localhost:3000/posts'   # a variable, since a bare <placeholder> is a redirect
 seq 20 | xargs -P 20 -I{} \
-  curl -s -o /dev/null -w '%{http_code}\n' -X POST -H 'Content-Type: application/json' \
+  curl -s -o /dev/null -w '%{http_code}\n' --connect-timeout 2 --max-time 10 \
+       -X POST -H 'Content-Type: application/json' \
        -d '{"slug":"the-same-slug-each-time"}' "$URL" \
   | sort | uniq -c
 ```
+
+**The time bounds are load-bearing here, more than in an ordinary probe.** A lock wait or
+a deadlock is exactly what this is looking for, and it hangs every one of the twenty
+requests; `sort` prints nothing until EOF, so an unbounded run ends as a tool timeout with
+no captured bytes and the row records *Not verified, environmental* when the truth was the
+finding. A `000` in the `uniq -c` table is `curl` saying the request never completed — read
+it as a result, not as a probe to retry.
 
 Where the contract is a unique create, expect one `201` and nineteen `409`s, then count
 the rows; an endpoint documented as idempotent expects twenty successes and one row. The
@@ -189,13 +197,20 @@ counts per table, a `SELECT` of the entity, `SCAN` over the cache prefix, the qu
 `find` over the directory the process writes to.
 
 ```bash
-snapshot() { psql -Atc "SELECT 'posts', count(*) FROM posts
+snapshot() { psql -v ON_ERROR_STOP=1 -Atc "SELECT 'posts', count(*) FROM posts
                         UNION ALL SELECT 'audit_log', count(*) FROM audit_log"; }
-snapshot > before.txt
+snapshot > before.txt || { echo 'snapshot failed' >&2; exit 1; }
+[ -s before.txt ] || { echo 'empty snapshot, not an unchanged one' >&2; exit 1; }
 # ... run the probe ...
-snapshot > after.txt
+snapshot > after.txt || { echo 'snapshot failed' >&2; exit 1; }
 diff before.txt after.txt
 ```
+
+Check the exit status and the emptiness, because a snapshot that never reached the
+database is a zero-byte file and two of those diff clean — reading as *unchanged*, which
+is one of the assertions below. A container not yet accepting connections, an unset
+`PGDATABASE` and a typo in the table list all produce it. With `count(*)` a healthy
+snapshot always has rows, so emptiness discriminates cleanly.
 
 `count(*)` rather than `pg_stat_user_tables`: `n_live_tup` there is an estimate the stats
 collector flushes on its own schedule, so a probe that holds its connection open can write

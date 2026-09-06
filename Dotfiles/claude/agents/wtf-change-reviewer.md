@@ -277,11 +277,26 @@ Rules for the report:
   git merge-base --is-ancestor "$c" <branch_base_sha>   # exit 0 → pre-existing
   ```
 
+  **Drop `<scope_head>` from the blame when `correspondence` is `workspace`** and
+  blame the working tree instead. There the reviewed content is on disk rather
+  than in the commit, so a finding's line number addresses a working-tree line,
+  and blaming the committed blob at that number reads whatever content the
+  uncommitted edit shifted into place — routinely a pre-branch commit. A line the
+  uncommitted change itself added comes back as the all-zero sha, which fails
+  `--is-ancestor`, correctly: it is this change's own work.
+
   Blame names the last commit to touch a line, so one an earlier branch commit
   merely moved reads as this branch's work. That is the safe direction: it lands
-  under a tier someone fixes rather than in a ticket nobody writes. Where
-  `branch_base_sha` is null — no default branch resolved — say the distinction
-  could not be made rather than guessing which side a finding falls on.
+  under a tier someone fixes rather than in a ticket nobody writes.
+
+  Two answers mean the distinction could not be made, and both call for saying so
+  rather than guessing which side a finding falls on. **Null** — it could not be
+  computed: either no default branch resolved, or a `scope_head` this clone does
+  not have, which is ordinary on a fork PR, where the head OID comes from the API
+  and is never fetched. **Equal to `scope_head`** — the head is already on the
+  default branch, as it is for a landed commit or a squash-merged branch, so the
+  merge base collapses onto it and every line tests as pre-existing, a commit
+  being its own ancestor.
 - On a subject scope there is no change, so nothing is pre-existing in the sense
   that section means: omit it and file every finding under its own tier. The
   line it draws — this author caused it, this author did not — has nothing to

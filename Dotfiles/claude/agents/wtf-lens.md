@@ -144,8 +144,21 @@ narrower than the branch — one commit, a path, the working tree — it sits ou
 your diff and still merges with this PR, so it is this branch's to fix: mark it
 **(earlier on this branch)** and tier it normally. `branch_base_sha` in the
 manifest is where the branch begins; blame the line and ask whether its commit is
-an ancestor of that point. On a subject scope there is no change and neither
-marker applies; tier every finding on its own.
+an ancestor of that point — blaming the working tree rather than `scope_head`
+where `correspondence` is `workspace`, since that is the tree your line numbers
+came from.
+
+Three answers leave the distinction unmade, and each calls for saying so rather
+than guessing. **No manifest**, where you were handed a bare scope and so have no
+`branch_base_sha` at all. A **null** one, meaning it could not be computed —
+either no default branch resolved, or a `scope_head` this clone does not have.
+And one **equal to `scope_head`**, where the head is already on the default
+branch, so the merge base has collapsed onto it and every line would test as
+pre-existing. Guessing toward **(pre-existing)** is the expensive direction: that
+is the one section a fix round skips.
+
+On a subject scope there is no change and neither marker applies; tier every
+finding on its own.
 
 If you found nothing, say `## Lens: <name> — no findings.` and stop. If your
 lens had no surface here at all, say `## Lens: <name> — not applicable.`

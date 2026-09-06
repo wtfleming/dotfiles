@@ -304,7 +304,13 @@ decide whether a failure the code already has appears in the bytes you are about
 capture — strict unhandled rejections, warnings as errors, backtraces on, statement
 logging in the database. Set them identically on both sides of a differential, since they
 change what the output contains. `references/environments.md` has them per language, and
-why they are worth setting before anything looks wrong.
+why they are worth setting before anything looks wrong. One exception: a timing claim is
+measured with the loud flags **off**, because their cost scales with the thing being timed.
+
+**Run under the project's coverage tool in the same pass.** §8 reports which changed lines
+a probe reached, and taking that from a second run over the same probes pays the expensive
+part twice and measures bytes other than the ones the report quotes.
+`references/environments.md` has the invocation per ecosystem.
 
 Capture raw stdout, stderr and the exit code to files, verbatim — write the bytes first
 and read them second. `references/evidence.md` has the layout, and why summarizing at
@@ -335,11 +341,23 @@ entity or a reset between; `references/environments.md` has the tier-2 detail.
 The table above is applied by the same agent that designed the probes, and a probe's
 author is the reader least able to see that it would have passed anyway. So before any
 row is reported green, dispatch `wtf-verify-refuter` with the Agent tool — one per ✅
-row, since a shared dispatch lets a strong row carry a weak one. Give it the expectation,
-the discriminator claimed for it, the probe that was run and the raw captures from both
-sides — the probe because re-running it is the only way it can settle non-determinism
-rather than allege it. Not your reasoning about them: that is the thing under test, and
-it is the same argument that keeps the adversary blind at §3.
+row and **in parallel**, since a shared dispatch lets a strong row carry a weak one and a
+serial fan-out spends a round-trip per row at the very end of an already long run. Hold
+back any two whose probes bind the same port, container name or database, and run those one
+at a time: §6's serialisation rule governs a re-run exactly as it governs the first run, and
+a refuter whose re-run dies on a collision answers `refuted` under its own tie-break rather
+than reporting the collision.
+
+Give it the expectation, the discriminator claimed for it, the probe that was run and the
+raw captures from both sides — the probe because re-running it is the only way it can
+settle non-determinism rather than allege it. **Say whose work the tree is**, which §0 has
+already established: the refuter treats silence as untrusted and will not re-run anything
+on a tree it cannot place, so an unstated provenance silently removes the one check that
+separates non-determinism from an allegation. An ordinary run over the user's own branch
+says so plainly; a fetched PR or a contributor's branch is named as such, and their
+sanction to execute it is relayed only where they gave it. Not your reasoning about them:
+that is the thing under test, and it is the same argument that keeps the adversary blind
+at §3.
 
 It answers `stands` or `refuted`, and a refuted green is neither a pass nor a defect —
 it is a **Not verified** whose reason you now have in writing, so demote the row and
@@ -369,14 +387,15 @@ to a reviewer than another passing assertion — `references/evidence.md` has th
 and PR forms, and why each of these earns its place:
 
 - **Coverage** — which parts of the change or subject a probe actually executed, and
-  which it did not. Measure it rather than recalling it: run the probes under the
-  project's coverage tool and read the result against the changed lines. A changed line
+  which it did not. Measure it rather than recalling it: read §6's coverage result
+  against the changed lines. A changed line
   with zero hits is the most useful thing this run can hand a reviewer, and until it is
   measured this is the one line of the report that is a judgement.
   `references/evidence.md` has what to report, `references/environments.md` the invocation.
 - **CI overlap** — what already runs on every push, so this run's contribution is legible.
 - **Residue** — rows, files, containers, worktrees, ports left behind, or explicitly
-  nothing. Tear the worktrees down:
+  nothing. A setting you turned up on something you did not start counts: a database's
+  statement logging, a service's log level. Tear the worktrees down:
   `~/.claude/skills/wtf-code-verify/scripts/baseline-worktree.sh remove`.
 - **PR description** — whether the title and body still describe the change, or what
   drifted. Only when the scope is a PR. Report the drift; do not fix it.
@@ -438,6 +457,16 @@ unscoped. Green means nothing in the suite guards the change, which is a finding
 own right and the strongest argument the triage below can make.
 `references/promotion.md` has it, including why that answer and the coverage run disagree
 in a useful way.
+
+**Where the change has no executable line to break** — prose, a config the run never
+loads — there is nothing to guard and nothing to measure. Say so and go straight to the
+triage, the way §8's Covered line takes `N/A — no executable lines changed`.
+
+**Run this check before §8 composes its Residue line, not after.** It builds a worktree
+pair, so in section order it creates the residue that the line has already declared
+absent — in a section that may by then have been posted to the PR — and leaves the next
+`create` refusing without `--force`. Take its answer, report it on its own line, tear the
+pair down, and compose Residue over a tree that is actually clean.
 
 A probe worth writing is often worth keeping, but not always — and offering to promote
 all of them is how a suite gets slow, flaky and eventually ignored. Triage, then ask.

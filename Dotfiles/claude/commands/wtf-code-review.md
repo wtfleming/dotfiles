@@ -520,10 +520,17 @@ finding. The ladder decides which statement survives, not how many agents found
 the defect, and a collision resolved on any rung below the first still collapsed
 two reports into one line:
 
-1. **Pre-existing wins over a tier.** A lens marks a problem the change did not
-   cause **(pre-existing)** inline; in the merged report it goes under the
-   reviewer's **Pre-existing** section with that tier leading it, and not under
-   the tier itself. If any report filed it both ways, Pre-existing wins.
+1. **Pre-existing wins over a tier, except against (earlier on this branch).** A
+   lens marks a problem **already on the default branch** **(pre-existing)**
+   inline; in the merged report it goes under the reviewer's **Pre-existing**
+   section with that tier leading it, and not under the tier itself. If any
+   report filed it both ways, Pre-existing wins — unless the other report marked
+   it **(earlier on this branch)**, which wins instead and keeps the finding
+   under its own tier, carrying that mark. That exception is the whole of what
+   the mark is for: it is the verdict of a report that ran the blame test, and an
+   unqualified **(pre-existing)** is what an agent files when it did not — so
+   letting the bare mark win here would put a defect this branch introduced into
+   the one section a fix round skips.
 2. **The higher tier wins.**
 3. **The statement naming a concrete failing input or code path wins** over one
    describing a category of problem.

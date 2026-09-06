@@ -123,6 +123,21 @@ printf 'dirty\n' >> "$WORK/branchbase/c.txt"
 out=$(cd "$WORK/branchbase" && "$RESOLVE" resolve 2>/dev/null | tail -1)
 check "the worktree shape resolves it too" "$mainhead" "$(field "$out" .branch_base_sha)"
 git -C "$WORK/branchbase" checkout -q -- c.txt
+# Both cases above leave BASE empty, so both take the resolve_default_branch arm. Point an
+# explicit --base at a commit the default branch does not hold, or replacing the other arm
+# with an empty string passes the whole suite.
+firstonbranch=$(git -C "$WORK/branchbase" rev-parse HEAD~1)
+git -C "$WORK/branchbase" branch other-base "$firstonbranch"
+out=$(cd "$WORK/branchbase" && "$RESOLVE" resolve --scope HEAD --base other-base 2>/dev/null | tail -1)
+check "--base moves the branch base" "$firstonbranch" "$(field "$out" .branch_base_sha)"
+
+# Null is a documented state consumers branch on, and the jq guard that produces it is the
+# kind that regresses to an empty string without anyone noticing.
+scratch_repo "$WORK/nobase" oddname
+commit "$WORK/nobase" a.txt one base
+printf 'dirty\n' >> "$WORK/nobase/a.txt"
+out=$(cd "$WORK/nobase" && "$RESOLVE" resolve 2>/dev/null | tail -1)
+check "no resolvable base leaves the branch base null" "null" "$(field "$out" .branch_base_sha)"
 
 echo "== correspondence tracks the checkout =="
 out=$(cd "$WORK/range" && "$RESOLVE" resolve --scope HEAD~1 2>/dev/null | tail -1)
@@ -185,6 +200,12 @@ out=$(cd "$WORK/step3" && "$RESOLVE" resolve 2>/dev/null | tail -1)
 check "auto step 3 step" "auto-3-head" "$(field "$out" .resolution_step)"
 check "auto step 3 shape" "commit" "$(field "$out" .shape)"
 check "auto step 3 records the two it skipped" "2" "$(field "$out" '.fell_through | length')"
+# The head is already on the default branch here, so the merge base collapses onto it. That
+# is not a failure and the field is not null -- but the ancestor test consumers run against
+# it answers "pre-existing" for every line, a commit being its own ancestor, so they are
+# told to read this equality as the distinction being undrawable.
+check "auto step 3 collapses the branch base onto the head" \
+  "$(field "$out" .scope_head)" "$(field "$out" .branch_base_sha)"
 
 echo "== a path scope picks up untracked files under it =="
 scratch_repo "$WORK/pathscope"

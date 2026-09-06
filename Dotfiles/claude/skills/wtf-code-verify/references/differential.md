@@ -194,14 +194,20 @@ both take the same input by construction, so generated input costs a loop rather
 harness: a few thousand cases through each side, diffed per case.
 
 ```bash
-OUT=<scratch>/code-verify    # the run's scratch directory, per evidence.md
+OUT='<scratch>'/code-verify  # quoted: a bare <scratch> is two redirections, per expectations.md
 BASE=$(~/.claude/skills/wtf-code-verify/scripts/baseline-worktree.sh path baseline)
 for f in corpus/*; do
   n=$(basename "$f")
   eb=0; "$BASE/bin/render" "$f" > "$OUT/$n.base" 2> "$OUT/$n.base.err" || eb=$?
   eh=0; ./bin/render        "$f" > "$OUT/$n.head" 2> "$OUT/$n.head.err" || eh=$?
   [ "$eb" = 0 ] && [ "$eh" = 0 ] || { echo "NOT VERIFIED: $f (exit $eb/$eh)"; continue; }
-  cmp -s "$OUT/$n.base" "$OUT/$n.head" || echo "DIFFERS: $f"
+  if ! cmp -s "$OUT/$n.base" "$OUT/$n.head"; then
+    echo "DIFFERS: $f"
+  elif ! cmp -s "$OUT/$n.base.err" "$OUT/$n.head.err"; then
+    echo "DIFFERS (stderr only): $f"
+  else
+    rm -f "$OUT/$n.base" "$OUT/$n.head" "$OUT/$n.base.err" "$OUT/$n.head.err"
+  fi
 done
 ```
 
@@ -218,7 +224,19 @@ substitution strips every trailing newline and swallows NUL bytes: a refactor th
 nothing but the final newline of each output would run a few thousand cases and print
 nothing at all. The captures are named per case so a later one cannot overwrite the
 evidence for an earlier failure, and they live under the scratch directory rather than the
-repo under review, which the report's residue line would otherwise have to account for.
+repo under review, which the report's residue line would otherwise have to account for. A
+case that matched on **both** streams has its four files removed as the loop goes: the
+per-case naming exists to protect failure evidence, and a corpus of ten thousand cases
+would otherwise leave forty thousand files and gigabytes of scratch that nobody is going
+to read. The delete sits in an `if` body rather than to the right of an `&&`, so a failing
+`rm` cannot fall through to an `||` and report a matching case as `DIFFERS`.
+
+Stderr is compared before anything is deleted, and a difference there is reported rather
+than pruned. Two sides can agree on every byte of output while HEAD emits a deprecation
+warning, an error-level line from a background job, or a stack trace under a passing
+result — the findings `evidence.md` sends you to the captures for. Deleting the `.err`
+files on a stdout match would throw exactly those away unread, which is why the match has
+to cover both.
 
 Draw the cases from the project's own fixtures or corpus where one exists, and from a
 generator where it does not — a property-testing library the project already depends on

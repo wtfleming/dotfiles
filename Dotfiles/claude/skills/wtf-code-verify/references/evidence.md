@@ -75,7 +75,12 @@ Read every capture, the green ones included, for what nobody predicted:
 - log lines at error or warn level, especially from a worker or a background job — that
   failure reaches no caller, so no assertion on a response can be falsified by it
 - a deprecation warning, which is a break scheduled for the next upgrade
-- a query log longer than the operation justifies, or one that grows with the fixture size
+- a query log longer than the operation justifies, or one that grows with the fixture
+  size. What goes in the report is the **count** and the shape of the repeated statement,
+  never the logged lines: a statement log carries its parameters inline, and the scrub
+  that guards anything published works by naming the key rather than the value — which a
+  `parameters: $1 = '…'` line does not have. "42 queries, the same `SELECT … FROM posts
+  WHERE id = $1` each time" is the whole of the finding anyway
 - a non-zero exit under output that reads as success, and its mirror: a zero exit from a
   runner that reports its failures on stderr
 
@@ -104,7 +109,10 @@ and look; the same gap named from recollection is only where you already knew yo
 been.
 
 Where the project has no coverage tool, do not add one for this — say the line is a
-judgement rather than a measurement, and name what the probes exercised.
+judgement rather than a measurement, and name what the probes exercised. Where the change
+has no executable lines at all — prose, a config the run never loads — there is nothing to
+measure: write `**Covered.** N/A — no executable lines changed`, which is a different fact
+from a judgement and should not be dressed as one.
 
 ## The PR verification section
 
