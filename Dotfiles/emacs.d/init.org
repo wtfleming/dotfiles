@@ -1329,6 +1329,7 @@ of them do.
                      (mode . clojure-mode)
                      (mode . conf-toml-mode)
                      (derived-mode . elixir-mode)
+                     (mode . heex-ts-mode)
                      (mode . emacs-lisp-mode)
                      (mode . java-mode)
                      (mode . json-ts-mode)
@@ -1340,6 +1341,7 @@ of them do.
                      (mode . thrift-mode)
                      (mode . typescript-mode)
                      (mode . typescript-ts-mode) ; ts is short for tree-sitter
+                     (mode . tsx-ts-mode)
                      (mode . web-mode)
                      ))
                    ("org-mode" (mode . org-mode))
@@ -1737,6 +1739,7 @@ of them do.
     :ensure t
     :commands (lsp lsp-deferred)
     :hook ((elixir-ts-mode . lsp-deferred)
+           (heex-ts-mode . lsp-deferred)
            (rust-mode . lsp-deferred)
            ;; (clojure-mode . lsp)
            ;; (clojurec-mode . lsp)
@@ -2101,6 +2104,9 @@ of them do.
   (use-package web-mode
     :ensure t
     :mode
+    ;; This block runs after the treesit one and :mode prepends, so anything
+    ;; listed here wins. .eex/.leex/.heex and .tsx/.jsx are left out on
+    ;; purpose -- heex-ts-mode and tsx-ts-mode own them.
     (("\\.phtml\\'" . web-mode)
      ("\\.tpl\\.php\\'" . web-mode)
      ("\\.jsp\\'" . web-mode)
@@ -2109,9 +2115,7 @@ of them do.
      ("\\.mustache\\'" . web-mode)
      ("\\.djhtml\\'" . web-mode)
      ("\\.jst.ejs\\'" . web-mode)
-     ("\\.html?\\'" . web-mode)
-     ("\\.jsx$" . web-mode)
-     ("\\.tsx$" . web-mode))
+     ("\\.html?\\'" . web-mode))
     :custom
     (web-mode-markup-indent-offset 2)
     (web-mode-css-indent-offset 2)

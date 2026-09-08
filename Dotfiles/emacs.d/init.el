@@ -1232,6 +1232,7 @@ both; the caller can retitle or edit the existing page."
                    (mode . clojure-mode)
                    (mode . conf-toml-mode)
                    (derived-mode . elixir-mode)
+                   (mode . heex-ts-mode)
                    (mode . emacs-lisp-mode)
                    (mode . java-mode)
                    (mode . json-ts-mode)
@@ -1243,6 +1244,7 @@ both; the caller can retitle or edit the existing page."
                    (mode . thrift-mode)
                    (mode . typescript-mode)
                    (mode . typescript-ts-mode) ; ts is short for tree-sitter
+                   (mode . tsx-ts-mode)
                    (mode . web-mode)
                    ))
                  ("org-mode" (mode . org-mode))
@@ -1623,6 +1625,7 @@ both; the caller can retitle or edit the existing page."
   :ensure t
   :commands (lsp lsp-deferred)
   :hook ((elixir-ts-mode . lsp-deferred)
+         (heex-ts-mode . lsp-deferred)
          (rust-mode . lsp-deferred)
          ;; (clojure-mode . lsp)
          ;; (clojurec-mode . lsp)
@@ -1983,6 +1986,9 @@ both; the caller can retitle or edit the existing page."
 (use-package web-mode
   :ensure t
   :mode
+  ;; This block runs after the treesit one and :mode prepends, so anything
+  ;; listed here wins. .eex/.leex/.heex and .tsx/.jsx are left out on
+  ;; purpose -- heex-ts-mode and tsx-ts-mode own them.
   (("\\.phtml\\'" . web-mode)
    ("\\.tpl\\.php\\'" . web-mode)
    ("\\.jsp\\'" . web-mode)
@@ -1991,9 +1997,7 @@ both; the caller can retitle or edit the existing page."
    ("\\.mustache\\'" . web-mode)
    ("\\.djhtml\\'" . web-mode)
    ("\\.jst.ejs\\'" . web-mode)
-   ("\\.html?\\'" . web-mode)
-   ("\\.jsx$" . web-mode)
-   ("\\.tsx$" . web-mode))
+   ("\\.html?\\'" . web-mode))
   :custom
   (web-mode-markup-indent-offset 2)
   (web-mode-css-indent-offset 2)
