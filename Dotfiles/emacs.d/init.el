@@ -1231,7 +1231,8 @@ both; the caller can retitle or edit the existing page."
                   (or
                    (mode . clojure-mode)
                    (mode . conf-toml-mode)
-                   (mode . elixir-mode)
+                   (derived-mode . elixir-mode)
+                   (mode . heex-ts-mode)
                    (mode . emacs-lisp-mode)
                    (mode . java-mode)
                    (mode . json-ts-mode)
@@ -1243,6 +1244,7 @@ both; the caller can retitle or edit the existing page."
                    (mode . thrift-mode)
                    (mode . typescript-mode)
                    (mode . typescript-ts-mode) ; ts is short for tree-sitter
+                   (mode . tsx-ts-mode)
                    (mode . web-mode)
                    ))
                  ("org-mode" (mode . org-mode))
@@ -1622,7 +1624,8 @@ both; the caller can retitle or edit the existing page."
 (use-package lsp-mode
   :ensure t
   :commands (lsp lsp-deferred)
-  :hook ((elixir-mode . lsp-deferred)
+  :hook ((elixir-ts-mode . lsp-deferred)
+         (heex-ts-mode . lsp-deferred)
          (rust-mode . lsp-deferred)
          ;; (clojure-mode . lsp)
          ;; (clojurec-mode . lsp)
@@ -1728,6 +1731,14 @@ both; the caller can retitle or edit the existing page."
          ;;("\\.json\\'" .  json-ts-mode)
          ;;("\\.Dockerfile\\'" . dockerfile-ts-mode)
          ;;("\\.prisma\\'" . prisma-ts-mode)
+         ;; These modes ship with Emacs 30 and register themselves, but from
+         ;; the file body rather than an autoload -- so nothing ever loads
+         ;; them to begin with. heex-ts-mode claims all of .eex/.leex/.heex
+         ;; once loaded, so web-mode's .eex and .leex entries are dropped
+         ;; below rather than losing to it partway through a session.
+         ("\\.exs?\\'" . elixir-ts-mode)
+         ("mix\\.lock\\'" . elixir-ts-mode)
+         ("\\.[hl]?eex\\'" . heex-ts-mode)
          ;; More modes defined here...
          )
   :preface
@@ -1752,7 +1763,11 @@ both; the caller can retitle or edit the existing page."
                (tsx . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.23.2" "tsx/src"))
                (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.23.2" "typescript/src"))
                (yaml . ("https://github.com/ikatyang/tree-sitter-yaml" "v0.5.0"))
-               (prisma "https://github.com/victorhqc/tree-sitter-prisma")))
+               (prisma "https://github.com/victorhqc/tree-sitter-prisma")
+               ;; `elixir-ts-mode' parses embedded ~H sigils with the heex
+               ;; grammar, so it needs both of these, not just `elixir'.
+               (elixir "https://github.com/elixir-lang/tree-sitter-elixir")
+               (heex "https://github.com/phoenixframework/tree-sitter-heex")))
       (add-to-list 'treesit-language-source-alist grammar)
       ;; Only install `grammar' if we don't already have it
       ;; installed. However, if you want to *update* a grammar then
@@ -1810,7 +1825,7 @@ both; the caller can retitle or edit the existing page."
 ;; (add-hook 'c++-mode-hook (lambda () (subword-mode +1)))
 ;; (add-hook 'clojure-mode-hook (lambda () (subword-mode +1)))
 ;; (add-hook 'csharp-mode-hook (lambda () (subword-mode +1)))
-(add-hook 'elixir-mode-hook (lambda () (subword-mode +1)))
+(add-hook 'elixir-ts-mode-hook (lambda () (subword-mode +1)))
 ;; (add-hook 'go-mode-hook (lambda () (subword-mode +1)))
 ;; (add-hook 'java-mode-hook (lambda () (subword-mode +1)))
 (add-hook 'just-mode-hook (lambda () (subword-mode +1)))
@@ -1971,6 +1986,9 @@ both; the caller can retitle or edit the existing page."
 (use-package web-mode
   :ensure t
   :mode
+  ;; This block runs after the treesit one and :mode prepends, so anything
+  ;; listed here wins. .eex/.leex/.heex and .tsx/.jsx are left out on
+  ;; purpose -- heex-ts-mode and tsx-ts-mode own them.
   (("\\.phtml\\'" . web-mode)
    ("\\.tpl\\.php\\'" . web-mode)
    ("\\.jsp\\'" . web-mode)
@@ -1979,11 +1997,7 @@ both; the caller can retitle or edit the existing page."
    ("\\.mustache\\'" . web-mode)
    ("\\.djhtml\\'" . web-mode)
    ("\\.jst.ejs\\'" . web-mode)
-   ("\\.html?\\'" . web-mode)
-   ("\\.jsx$" . web-mode)
-   ("\\.tsx$" . web-mode)
-   ("\\.eex\\'" . web-mode)
-   ("\\.leex\\'" . web-mode))
+   ("\\.html?\\'" . web-mode))
   :custom
   (web-mode-markup-indent-offset 2)
   (web-mode-css-indent-offset 2)
