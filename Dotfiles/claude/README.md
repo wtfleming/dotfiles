@@ -21,11 +21,7 @@ that code as it stands, picks the files itself, and says which ones it picked.
 
 Under `--lite` it settles the scope, runs the project's test suite and linter,
 reviews the diff against the checklist, and prints findings as Critical, Warning
-or Suggestion — then stops. Criticals, Warnings and the top-tier Suggestions are
-checked by a `wtf-refuter` first, and refuted ones are dropped: a false Critical
-stops work that should not stop, and a false Warning spends an afternoon on a
-defect that was not there. So the cost scales with what the diff earns rather than
-sitting near zero. The
+or Suggestion — then stops. The
 reviewer has no `Edit` or `Write`, so a review cannot change anything.
 
 By default it does more: up to eight `wtf-lens` agents in parallel, one per
@@ -35,9 +31,11 @@ no surface there
 (tests, resilience, performance, dependencies), decided from the file list alone
 and disclosed in the report. That list comes from the scope artifact rather than
 from a second set of git commands, so it cannot disagree with the diff the lenses
-read. Their reports are merged and deduplicated with the reviewer's, then verified
-before printing: one `wtf-refuter` per finding in the verified tiers, each told to
-argue the finding is *wrong* and to answer refuted when unsure.
+read. Their reports are merged and deduplicated with the reviewer's, then printed.
+
+Neither path spawns an agent to re-check the findings. A `wtf-refuter` per finding
+once did, and it was the largest fan-out in a run while almost never retracting
+anything; whoever fixes a finding meets its premise while implementing it anyway.
 
 The merge is where two lenses finding one defect becomes one line. Each finding
 carries the lens that raised it, which shows which lens earned its dispatch, and a
@@ -46,17 +44,7 @@ ordered ladder — Pre-existing, then tier, then the statement naming a concrete
 failure, then the reviewer over a lens, then the longer evidence — because "keep
 the more specific statement" leaves two equally-tiered findings with nothing to
 separate them, and the model then picks by
-feel between reports its own agents wrote. Criticals, Warnings, Pre-existing
-findings at those two tiers and the **Definitely worth doing** Suggestions are
-refuted on both paths — capped at 25 refuters and spent in the order a wrong
-finding costs most, so the cap bites the top Suggestions before it bites a
-Critical. Anything past it prints marked `(unverified)` with the cap named as the
-reason, as do the **Worth doing** list and Pre-existing findings at Suggestion,
-which get no refuter at all: a refuter answers whether a finding is *true*, and
-below the top list a Suggestion turns instead on whether it is worth doing,
-which the triage judges. The report
-breaks its refuted count out by tier against how many of each were verified, so
-which tiers the check earns its spend in is measured rather than argued. There is
+feel between reports its own agents wrote. There is
 deliberately no linter lens — the reviewer already runs the real one.
 
 `reuse` and `resilience` are the two lenses with no counterpart in the checklist.
@@ -82,12 +70,9 @@ path against the behaviour of the failure path.
 There is no fix flag; the review itself never edits. The report lands in the
 conversation, so to act on it, say which findings — "fix the first two" — and
 the fixes happen in the main session, which knows what you were trying to do.
-Each fixed Critical or Warning is then checked by a fresh `wtf-refuter` arguing
-against the fixed tree, and the fix diff itself goes to a cold
-`wtf-change-reviewer` told nothing about which findings it answers. The second
-is the one that earns its keep: a refuter only asks whether its own finding is
-gone, so a repair that resolves it and introduces a defect of its own passes
-unremarked. Committing stays yours.
+The fix diff then goes to a cold `wtf-change-reviewer`
+told nothing about which findings it answers, since a round of fixing is itself a
+source of bugs. Checking that each fix resolved its finding is left to you. Committing stays yours.
 
 ### Design review, earlier in the cycle
 
@@ -137,10 +122,9 @@ accident.
 |---|---|
 | `wtf-change-reviewer` | scope, tests, lint, the full review |
 | `wtf-lens` | one dimension only; dispatched up to eight times per review |
-| `wtf-refuter` | tries to kill a single finding |
 | `wtf-design-reviewer` | shape of the change, Suggestion-only; dispatched by `/wtf-design-review` |
 
-All four are read-only — no `Edit`, no `Write`, and no ability to spawn an agent
+All three are read-only — no `Edit`, no `Write`, and no ability to spawn an agent
 that has them. Edits only ever happen in the main session, one approval at a time.
 
 ### Tuning it
@@ -155,13 +139,9 @@ that has them. Edits only ever happen in the main session, one approval at a tim
 
 ### Cost
 
-A default run spawns one reviewer, up to eight lenses, and one refuter per finding in
-the verified tiers — Criticals, Warnings, Pre-existing at those tiers and the top
-Suggestion list, bounded by the 25-refuter cap — and asking for fixes afterwards adds
-one more refuter per fixed Critical or Warning, Pre-existing ones at those tiers
-included, plus a cold review of the fix diff. It announces each fan-out before spawning
-it, so the spend can be refused, and `--lite` cuts it to the reviewer alone plus that
-same refuter set, under the same cap. For very large
+A default run spawns one reviewer and up to eight lenses, and asking for fixes
+afterwards adds a cold review of the fix diff. It announces each fan-out before
+spawning it, so the spend can be refused, and `--lite` cuts it to the reviewer alone. For very large
 diffs, the built-in
 `/code-review ultra` is the maintained alternative.
 
@@ -171,7 +151,7 @@ diffs, the built-in
 here has to settle before it reads a line: **what code is under review**, and **does the
 working tree actually hold it**.
 
-The first matters because a full run dispatches eight lenses plus one refuter per finding,
+The first matters because a full run dispatches eight lenses beside the reviewer,
 each of which used to run its own git commands. "The same scope" then held only for as
 long as every agent derived it identically — an instruction, not a fact. Now the diff is
 produced once, written to `scope.diff`, and handed over by path, with `manifest.json`
@@ -179,9 +159,8 @@ carrying the file list projected from that same diff.
 
 The second is the sharper one, because it fails in one direction only. Reviewing `HEAD~3`,
 or a fetched PR, is ordinary, and in both the files on disk are not the files under
-review. `wtf-refuter` reads the working tree by default and answers `refuted` when it
-cannot decide — so a refuter pointed at the wrong tree does not find the line a finding
-names, cannot decide, and kills it. The mismatch does not add noise; it silently deletes
+review. Every agent here drops a finding it cannot support — so one pointed at the wrong
+tree does not find the line a finding names, and drops it. The mismatch does not add noise; it silently deletes
 true findings. The manifest reports one of seven correspondence states, distinguishing the
 two ancestor directions, keeping "not present locally" separate from "divergent", and
 splitting a clean checkout at the reviewed commit from one carrying uncommitted edits.
@@ -275,11 +254,8 @@ review.
 
 It assumes `/wtf-code-review` has already run over the same scope, which is how it is
 normally used, so it does not re-report what a reader could have found. It starts instead
-from the review's *surviving* findings — the best expectations available, since someone
-already thought each one was suspicious and, wherever a refuter reached it, one argued
-against it and lost. Findings no refuter reached — below the verified tiers, past the cap,
-or sent to one that returned nothing usable — print marked `(unverified)`. Review
-produces hypotheses; this closes them, and a finding that turns out to be wrong is as useful to the
+from the review's findings — the best expectations available, since someone already
+thought each one was suspicious. Review produces hypotheses; this closes them, and a finding that turns out to be wrong is as useful to the
 author as one that turns out to be real.
 
 The idea it turns on is that a green check proves nothing on its own — it may have been
@@ -323,9 +299,8 @@ squash merge makes that title the permanent commit subject on `main`.
 Before a row is reported green it goes to a `wtf-verify-refuter` — one per result, given
 the expectation, the discriminator and the raw bytes but not the reasoning about them,
 and asked to show the probe would have been green anyway. A refuted green demotes to
-`Not verified` rather than disappearing. It is the refuter pass from the review command
-pointed at the one artifact that had nothing adversarial aimed at it: the verdict this
-tool produces itself.
+`Not verified` rather than disappearing. It aims an adversary at the one
+artifact that would otherwise have none: the verdict this tool produces itself.
 
 Two more checks answer *is this actually guarded*. The probes run under the project's
 coverage tool, so **Covered** is measured against the changed lines rather than recalled —

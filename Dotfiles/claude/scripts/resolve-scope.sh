@@ -3,7 +3,7 @@
 #
 # Several tools here -- /wtf-code-review and its lenses, wtf-change-reviewer,
 # wtf-design-reviewer, wtf-code-verify -- work the scope out from
-# prose instructions. On the full pass that is eight lens agents plus one refuter per finding,
+# prose instructions. On the full pass that is eight lens agents beside the reviewer,
 # each running its own git commands, and "the same scope" holds only for as long as every
 # one of them derives it identically. This produces the diff once, writes it to a file,
 # and hands every agent the path.
@@ -11,8 +11,8 @@
 # The second thing it settles is whether the working tree actually holds the code under
 # review. Reviewing HEAD~3, or a branch that is not checked out, is ordinary -- and in
 # both the files on disk are not the files being reviewed. An agent reading the working
-# tree there judges the wrong code, and wtf-refuter answers `refuted` when it cannot
-# decide, so the mismatch does not add noise: it silently deletes true findings. Hence
+# tree there judges the wrong code, and an agent drops a finding it cannot locate, so
+# the mismatch does not add noise: it silently deletes true findings. Hence
 # `correspondence`, which callers disclose and adapt to rather than abort on.
 #
 # One invariant the consumers rely on: **if manifest.json exists, the scope is non-empty.**

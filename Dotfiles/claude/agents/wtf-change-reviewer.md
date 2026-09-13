@@ -36,8 +36,7 @@ a caller that built a diff no ref can reproduce, such as the edits just written 
 a working tree. Review that diff and nothing else: take the file list from it, read
 the files from disk, since a caller sends this shape only for code the tree currently
 holds — except a file the diff shows as **deleted**, which is gone from disk and whose
-content the hunk is the only copy of. Write the `Correspondence:` line as
-`workspace · none · none`. Do not
+content the hunk is the only copy of. Do not
 resolve a scope of your own — the diff *is* the scope, and `git diff HEAD` there is a
 different and wider change, usually the one these edits sit on top of. Say at the top
 of the report that the scope arrived as a diff file, and how many files it covers.
@@ -74,20 +73,12 @@ context the diff does not carry.
 
 It exits **2** when the scope is not a PR, a range, a ref or a path — that is a subject,
 and the subject procedure above applies instead. **Nothing is written on that path**, so
-the two manifest-backed header lines below do not apply to it: state the subject, the files
-you settled on and how you found them, and write the `Correspondence:` line as
-`workspace · none · none` — you read the tree as it stands, which is what a subject means.
+the manifest-backed scope line below does not apply to it: state the subject, the files
+you settled on and how you found them.
 
 Otherwise, state the scope you settled on at the top of your report, using the manifest's
 `scope_line` rather than composing your own: it already names the ref, the file count,
 which step settled it and how the tree corresponds.
-
-Then give `correspondence`, `scope_head` and the artifact directory their own
-**Correspondence:** header line, as three fields. `scope_line` is prose written for a
-reader and names none of them in a form anything downstream can use — and whoever
-dispatched you may have only your report to relay from, so a refuter's instruction to read
-the scope's blobs depends on those three surviving the hop. Write `none` for the directory
-where you resolved the scope yourself and there is no artifact to point at.
 
 **Check `correspondence` before you read a file.** On `workspace` or `same`, read files
 from disk as usual. On anything else the working tree is not the code under review. Read the reviewed
@@ -203,7 +194,6 @@ than inventing one.
 # Code Review
 
 **Scope:** <what you diffed> — <N> files, +<A>/-<B>
-**Correspondence:** <state> · <scope_head> · <artifact directory, or "none">
 **Tests:** <command> → <pass / N failed / not run: reason>
 **Lint:** <command> → <clean / N issues / not run: reason>
 

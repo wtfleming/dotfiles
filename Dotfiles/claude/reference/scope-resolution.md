@@ -189,10 +189,9 @@ Reviewing `HEAD~3`, or a branch that is not checked out, is ordinary — and in 
 files on disk are **not** the files under review. An agent that reads the working tree
 there judges the wrong code.
 
-This fails in one direction only, which is why it earns a field of its own. `wtf-refuter`
-reads the working tree unless told otherwise and answers `refuted` when it cannot decide.
-A refuter pointed at the wrong tree does not find the line a finding names, cannot decide,
-and kills it. So a mismatch does not add noise — **it silently deletes true findings.**
+This fails in one direction only, which is why it earns a field of its own. Every agent
+here drops a finding it cannot support, so one pointed at the wrong tree does not find the
+line a finding names, and drops it. So a mismatch does not add noise — **it silently deletes true findings.**
 
 `correspondence` takes one of seven values, and `correspondence_note` carries the sentence to
 disclose for each:
