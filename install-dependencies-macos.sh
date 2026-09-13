@@ -69,3 +69,8 @@ brew install node gh
 if [ ! -d /Applications/Docker.app ]; then
     brew install --cask docker
 fi
+
+# Docker Sandboxes CLI; independent of Docker Desktop. Homebrew refuses to load
+# formulae from a third-party tap until it is trusted. Run `sbx login` afterwards.
+brew trust docker/tap
+brew install docker/tap/sbx

@@ -43,6 +43,22 @@ brew install ast-grep
 /plugin marketplace add ast-grep/claude-skill
 /plugin install ast-grep
 
+** Docker Sandboxes (sbx)
+Runs coding agents in isolated microVMs. Needs Apple silicon and macOS 14+, but not
+Docker Desktop.
+https://docs.docker.com/ai/sandboxes/install/
+
+#+begin_src sh
+brew trust docker/tap
+brew install docker/tap/sbx
+#+end_src
+
+install-dependencies-macos.sh does the above; signing in is a browser OAuth flow, so
+run it by hand once:
+#+begin_src sh
+sbx login
+#+end_src
+
 * emacs
 ** Verified build recipe (emacs 30.2, Apple Silicon)
 This is the recipe that actually produced the emacs 30.2 in use. Confirmed against
