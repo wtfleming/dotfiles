@@ -310,11 +310,11 @@ The lenses and their rubrics:
 
 | Lens | Looks for |
 |---|---|
-| `correctness` | logic errors, off-by-one, wrong operator, null/empty/zero/max edges, races, unhandled promises, missing await |
+| `correctness` | logic errors, off-by-one, wrong operator, null/empty/zero/max edges, races, unhandled promises, missing await, two locks taken in different orders on two paths, a lock or guard held across an await or a blocking call, a lock not released on the path that throws, two processes each waiting synchronously on the other |
 | `security` | unvalidated input at boundaries, hardcoded secrets, injection, sensitive data in logs and errors, authz gaps |
 | `tests` | new branches with no test, uncovered edge cases, tests that cannot fail, flakiness, fixtures that hide the bug, an invariant a handful of examples cannot pin where the repo's tests already use a property-based harness |
 | `maintainability` | unclear names, functions doing several things, unactionable error messages, comments explaining *what*, changes bundling unrelated concerns |
-| `resilience` | outbound calls with no timeout, retries with no backoff or no cap, a failure swallowed into a default that reads as success, multi-step work that leaves inconsistent state when it fails halfway, a retried write that is not idempotent, a call the code assumes cannot fail |
+| `resilience` | outbound calls with no timeout, retries with no backoff or no cap, a failure swallowed into a default that reads as success, multi-step work that leaves inconsistent state when it fails halfway, a retried write that is not idempotent, a call the code assumes cannot fail, work that can reach a state nothing moves it out of — a retry counter that never resets, a queued item no sweep reclaims, a wait nothing wakes, a restart that repeats without making progress |
 | `reuse` | logic the repo already implements elsewhere, a second copy of something within the diff itself, a hand-rolled version of what a dependency already in the manifest provides, a new abstraction where an existing one would have served, code shared between two things that only look alike — and code the change orphaned but did not remove: a function whose last caller went away, a config key nothing reads, a flag now permanently on with its dead branch intact |
 | `performance` | N+1 queries, work inside loops that belongs outside, resource leaks, blocking calls in async paths, unbounded growth |
 | `dependencies` | new dependencies (necessity, maintenance, transitive weight), breaking changes to public interfaces, config formats or CLI flags, irreversible migrations |
@@ -366,6 +366,13 @@ whether the two copies have to change together, not by how alike they look.
 was handed; `resilience` asks what happens when something the code *calls* fails,
 hangs or half-succeeds. A missing `await` stays with `correctness` — it is wrong
 regardless of whether the callee misbehaves.
+
+A deadlock stays with `correctness` by that same test, even though `resilience`
+owns hangs: an inverted lock order, or a guard held across a suspension point, is
+wrong whatever the things it calls do, where the hang `resilience` owns arrives
+from outside. The two lenses divide one hang by where it originates, and the
+clause sits beside `races` because it is the same kind of defect — a fact about
+how this code interleaves with itself.
 
 `performance` and `resilience` divide by path, not by subject. `performance` owns
 the happy path — what this costs when it works and the input is large.

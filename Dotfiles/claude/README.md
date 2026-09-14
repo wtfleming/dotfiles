@@ -59,7 +59,11 @@ two copies have to change together rather than by how alike they look.
 `resilience` asks what happens when something the code *calls* fails, hangs or
 half-succeeds: missing timeouts, retries without backoff, failures swallowed into
 a default that reads as success, half-completed work that leaves inconsistent
-state.
+state, and work that reaches a state nothing moves it out of. That last one is
+the liveness half of Alpern-Schneider, which both of the lens's trial runs found
+by luck before it was named -- a queued row no sweep reclaims, a retry counter
+that never resets. Its safety half is mostly `correctness`, which is why deadlock
+sits there beside `races` rather than here beside the hangs.
 
 Both of its neighbours get an explicit boundary in the command, since a lens that
 bleeds into the one beside it produces the same finding twice in different words.
