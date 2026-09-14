@@ -279,10 +279,35 @@ check "the ambiguity is a stop" "1" "$rc"
 # status-only check would pass if this fell through to "neither a ref nor a path".
 check "and it names both readings" "1" "$(printf '%s' "$err" | grep -c 'both a PR number and a commit' || true)"
 check "and it does not reach gh" "0" "$(printf '%s' "$err" | grep -c 'gh pr diff' || true)"
-# The advice the refusal gives has to work, or it sends the caller in a circle. `^!` does
-# not -- `rev-parse --verify` rejects it and the scope lands back on this same branch.
+# The advice the refusal gives has to work, or it sends the caller in a circle. `^!` is not
+# offered because it is read as a ref and dies at the merge base instead of naming a commit.
 out="$(cd "$WORK/numeric" && "$RESOLVE" resolve --scope '1382439^0' | tail -1)"
 check "the commit form it recommends resolves" "commit" "$(field "$out" .shape)"
+
+# A digits-named *branch* takes different advice: `^0` resolves, but to the tip commit
+# alone, so a caller following it reviews one commit of a branch that has many.
+git -C "$WORK/numeric" checkout -q -b 4521
+commit "$WORK/numeric" b.txt three third
+git -C "$WORK/numeric" checkout -q main
+branch_err="$( (cd "$WORK/numeric" && "$RESOLVE" resolve --scope 4521) 2>&1 >/dev/null || true )"
+check "a digits-named branch is named as a branch" "1" "$(printf '%s' "$branch_err" | grep -c 'both a PR number and a branch' || true)"
+check "and the spelling it offers is the full ref" "1" "$(printf '%s' "$branch_err" | grep -c "refs/heads/4521" || true)"
+branch_out="$(cd "$WORK/numeric" && "$RESOLVE" resolve --scope 'refs/heads/4521' 2>/dev/null | tail -1)"
+check "which resolves as a branch, not one commit" "branch" "$(field "$branch_out" .shape)"
+
+# A ref that exists without being commit-ish -- a tag on a blob -- passes `^{commit}`, so
+# `show-ref` is what keeps it from being handed to `gh pr diff` as a PR number.
+git -C "$WORK/numeric" tag 7654321 "$(git -C "$WORK/numeric" hash-object -w "$WORK/numeric/a.txt")"
+blob_err="$( (cd "$WORK/numeric" && "$RESOLVE" resolve --scope 7654321) 2>&1 >/dev/null || true )"
+check "a non-commit-ish ref is refused too" "1" "$(printf '%s' "$blob_err" | grep -c 'does not name a commit' || true)"
+check "and it does not reach gh either" "0" "$(printf '%s' "$blob_err" | grep -c 'gh pr diff' || true)"
+
+# The guard must not widen. Both of these die for want of a remote, which is the point --
+# the assertion is on which refusal they get, not on reaching GitHub.
+plain_err="$( (cd "$WORK/numeric" && "$RESOLVE" resolve --scope 999999) 2>&1 >/dev/null || true )"
+check "digits naming nothing local are still a PR" "0" "$(printf '%s' "$plain_err" | grep -c 'both a PR number and' || true)"
+hashed_err="$( (cd "$WORK/numeric" && "$RESOLVE" resolve --scope '#1382439') 2>&1 >/dev/null || true )"
+check "and '#N' still bypasses the guard" "0" "$(printf '%s' "$hashed_err" | grep -c 'both a PR number and' || true)"
 
 echo "== an empty scope is never written =="
 scratch_repo "$WORK/empty"

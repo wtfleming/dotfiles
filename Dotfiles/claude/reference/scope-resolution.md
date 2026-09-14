@@ -63,7 +63,7 @@ procedure returns a confident review of a scope nobody asked for.
 | `warnings` | anything the resolver could not do cleanly; disclose these the way you disclose `base_stale` |
 
 `scope_line` exists so that a reviewer, nine lenses and a merged report describe one scope
-in one form rather than nine. Use it rather than composing your own.
+in one form rather than ten. Use it rather than composing your own.
 
 ## A phrase that names the default counts as naming nothing
 

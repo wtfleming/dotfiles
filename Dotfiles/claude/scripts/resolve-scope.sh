@@ -328,9 +328,9 @@ is_default_scope_phrase() {
 # here would be appended to a copy of WARNINGS that is discarded when it returns.
 #
 # `scope` has already been rewritten to a repo-relative path by the caller where it named
-# one. Order matters: a PR before a ref because bare digits almost never name one -- with
-# the case where they name both refused rather than ordered -- a ref
-# before a path because that is git's own convention, a path last.
+# one. Order matters: a PR before a ref because bare digits almost never name one, a ref
+# before a path because that is git's own convention, a path last. Where digits name both a
+# PR and a local name, the scope is refused rather than ordered.
 scope_shape_of() {
   local scope=$1 full is_ref url_slug here_slug
   [ -n "$scope" ] || { SHAPE=worktree; return 0; }
@@ -369,10 +369,27 @@ scope_shape_of() {
       # a number GitHub has never issued, never mentioning the commit that was sitting
       # right there -- and `gh`'s failure does not distinguish "no such PR" from a token
       # or network problem, so no fallback can tell which happened. Refuse and name both
-      # readings instead. `#N` and `N^0` are the two ways to say which was meant; `^!` is
-      # not, since `rev-parse --verify` rejects it and the scope would land back here.
-      if git rev-parse --verify --quiet "$scope^{commit}" >/dev/null 2>&1; then
-        die "'$scope' is both a PR number and a commit in this checkout. Pass '#$scope' for the PR, or '$scope^0' for the commit."
+      # readings instead. `^!` is not a way to say which was meant: it is read as a ref
+      # below and dies at the merge base, rather than naming the one commit it looks like.
+      #
+      # `show-ref` as well as `^{commit}`, matching the check at the call site: a tag
+      # pointing at a blob is a name that exists without resolving to a commit, and
+      # `^{commit}` alone hands it to `gh pr diff` -- a local ref answered with an
+      # unrelated PR's diff.
+      if git show-ref --quiet -- "$scope" 2>/dev/null \
+        || git rev-parse --verify --quiet "$scope^{commit}" >/dev/null 2>&1; then
+        full="$(git rev-parse --symbolic-full-name "$scope" 2>/dev/null || true)"
+        case "$full" in
+          # A branch means "against its merge base"; `^0` would answer its tip commit
+          # alone, which is a narrower scope than the one that was asked for. The full ref
+          # spelling is the one that survives this branch and still reads as a branch.
+          refs/heads/*|refs/remotes/*)
+            die "'$scope' is both a PR number and a branch in this checkout. Pass '#$scope' for the PR, or '$full' for the branch." ;;
+        esac
+        if git rev-parse --verify --quiet "$scope^{commit}" >/dev/null 2>&1; then
+          die "'$scope' is both a PR number and a commit in this checkout. Pass '#$scope' for the PR, or '$scope^0' for the commit."
+        fi
+        die "'$scope' is both a PR number and a ref in this checkout, and that ref does not name a commit, so there is no revision spelling to offer. Pass '#$scope' for the PR, or rename the ref."
       fi
       SHAPE="pr"; PR_NUMBER="$scope"; return 0 ;;
   esac
@@ -953,7 +970,7 @@ cmd_resolve() {
     || die "the diff resolved but no files could be read from it; refusing to write a manifest that would claim an empty scope"
 
   # Composed once, here, so that nine lenses and a merged report describe one scope in one
-  # form rather than nine.
+  # form rather than ten.
   local scope_line
   scope_line="$RESOLVED_BY — $file_count files"
   [ "$RESOLUTION_STEP" = explicit ] || scope_line="$scope_line ($RESOLUTION_STEP, nothing named)"

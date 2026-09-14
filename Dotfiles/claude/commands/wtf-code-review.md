@@ -374,6 +374,13 @@ from outside. The two lenses divide one hang by where it originates, and the
 clause sits beside `races` because it is the same kind of defect — a fact about
 how this code interleaves with itself.
 
+Two processes each waiting on the other is the case that test reads least clearly,
+since the other party *is* something this code calls, and it stays with
+`correctness` too: the cycle is a fact about how the two were written to interleave,
+not about either one misbehaving. `resilience`'s "a wait nothing wakes" is a wait
+this code never arranges to end — a queued item no sweep reclaims — not one held
+shut by a peer that is itself waiting.
+
 `performance` and `resilience` divide by path, not by subject. `performance` owns
 the happy path — what this costs when it works and the input is large.
 `resilience` owns the failure path. A leaked handle belongs to whichever path
@@ -391,6 +398,14 @@ proposed without that reading is how a review comes to recommend a CloudWatch
 alarm to a package that defines none. `resilience` lost "a new failure path
 nothing logs" to this lens for the same reason: two rubrics claiming one clause is
 how the same finding arrives twice in different words.
+
+`observability` is also the only lens whose remedies *add* data to log output, so
+two of its clauses are bounded by `security` rather than divided from it. The
+identifier it asks for is one that finds the record — a record, request or
+correlation id — never an email, an account number or a credential; and logging an
+error's cause means its type and message, not an unredacted payload. `security`
+reads the diff, not this lens's output, so nothing downstream catches a remedy that
+trades a missing log line for a leaked one.
 
 Almost everything `observability` writes is an assertion that something is *not*
 there — nothing logs this, no metric covers that — which gives it `reuse`'s
@@ -505,7 +520,7 @@ this is a fact about how the pass ran. It carries **every lens that was
 dispatched or skipped**, each with what it returned:
 
 ```
-Lenses: correctness — 2 findings · security, maintainability — clean · reuse — not applicable · tests, resilience, performance, dependencies — not dispatched (prose-only listing)
+Lenses: correctness — 2 findings · security, maintainability — clean · reuse — not applicable · tests, resilience, observability, performance, dependencies — not dispatched (prose-only listing)
 ```
 
 Findings, **clean**, **not applicable** and **not dispatched** are four

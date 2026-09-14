@@ -61,7 +61,7 @@ half-succeeds: missing timeouts, retries without backoff, failures swallowed int
 a default that reads as success, half-completed work that leaves inconsistent
 state, and work that reaches a state nothing moves it out of. That last one is
 the liveness half of Alpern-Schneider, which both of the lens's trial runs found
-by luck before it was named -- a queued row no sweep reclaims, a retry counter
+by luck before it was named — a queued row no sweep reclaims, a retry counter
 that never resets. Its safety half is mostly `correctness`, which is why deadlock
 sits there beside `races` rather than here beside the hangs.
 
