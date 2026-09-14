@@ -3,7 +3,7 @@
 #
 # Several tools here -- /wtf-code-review and its lenses, wtf-change-reviewer,
 # wtf-design-reviewer, wtf-code-verify -- work the scope out from
-# prose instructions. On the full pass that is eight lens agents beside the reviewer,
+# prose instructions. On the full pass that is nine lens agents beside the reviewer,
 # each running its own git commands, and "the same scope" holds only for as long as every
 # one of them derives it identically. This produces the diff once, writes it to a file,
 # and hands every agent the path.
@@ -67,13 +67,13 @@ RESOLVED_BY=""
 RESOLUTION_STEP=explicit
 
 # Untracked files above this go into the diff as a stub rather than inline. A single
-# untracked 200MB CSV would otherwise become a 200MB scope.diff that eight agents are
+# untracked 200MB CSV would otherwise become a 200MB scope.diff that nine agents are
 # each told to read in full.
 MAX_INLINE_BYTES=1048576
 # And a budget across all of them, because the per-file cap alone does not bound the total:
 # four hundred files of just under the per-file limit clear every check individually and
 # still build a diff nobody can read. Ten times the per-file cap -- high enough that
-# ordinary untracked work never trips it, low enough to bite well before eight agents'
+# ordinary untracked work never trips it, low enough to bite well before nine agents'
 # context does.
 MAX_UNTRACKED_TOTAL_BYTES=10485760
 # Past this many untracked files the per-file `git diff` calls dominate the run, so say so
@@ -329,9 +329,10 @@ is_default_scope_phrase() {
 #
 # `scope` has already been rewritten to a repo-relative path by the caller where it named
 # one. Order matters: a PR before a ref because bare digits almost never name one, a ref
-# before a path because that is git's own convention, a path last.
+# before a path because that is git's own convention, a path last. Where digits name both a
+# PR and a local name, the scope is refused rather than ordered.
 scope_shape_of() {
-  local scope=$1 full is_ref url_slug here_slug
+  local scope=$1 full is_ref branch_ref url_slug here_slug
   [ -n "$scope" ] || { SHAPE=worktree; return 0; }
 
   # A leading dash reaches `git diff` in option position, where `--output=<path>` truncates
@@ -361,7 +362,52 @@ scope_shape_of() {
       return 0 ;;
     '#'[0-9]*)     SHAPE="pr"; PR_NUMBER="${scope#\#}"; return 0 ;;
     ''|*[!0-9]*)   ;;
-    *)             SHAPE="pr"; PR_NUMBER="$scope"; return 0 ;;
+    *)
+      # Bare digits almost never name a ref, but an abbreviated SHA is all decimal digits
+      # about one time in twenty-seven at seven characters, and both readings of one then
+      # exist at once. Taken as a PR it either publishes an unrelated PR's diff or dies on
+      # a number GitHub has never issued, never mentioning the commit that was sitting
+      # right there -- and `gh`'s failure does not distinguish "no such PR" from a token
+      # or network problem, so no fallback can tell which happened. Refuse and name both
+      # readings instead. `^!` is not a way to say which was meant: `rev-parse --verify`
+      # rejects it, so it reads as whatever ref it is suffixed to or fails as neither a
+      # ref nor a path -- never as the single commit it looks like.
+      #
+      # Matched on `refs/*` rather than tested with `show-ref`, which matches a pattern
+      # from the tail of the full name: `show-ref -- 4521` matches `refs/heads/feature/4521`
+      # and would refuse a PR number in any repo that names branches after tickets. The
+      # name test has to be exact, and `symbolic-full-name` is exact. It also covers the
+      # case `^{commit}` misses on its own -- a tag pointing at a blob resolves to
+      # `refs/tags/<name>` here, where `^{commit}` fails and would hand a local ref to
+      # `gh pr diff` as a PR number.
+      full="$(git rev-parse --symbolic-full-name "$scope" 2>/dev/null || true)"
+      case "$full" in refs/*) ;; *) full="" ;; esac
+      # An *ambiguous* name -- a branch and a tag both carrying it -- resolves to neither
+      # above, and the branch spelling would then be the one reading never offered. Asked
+      # for by full path, because `--verify` matches that path exactly where a bare pattern
+      # matches from the tail.
+      branch_ref=""
+      if git show-ref --verify --quiet "refs/heads/$scope" 2>/dev/null; then
+        branch_ref="refs/heads/$scope"
+      fi
+      if [ -n "$full" ] || [ -n "$branch_ref" ] \
+        || git rev-parse --verify --quiet "$scope^{commit}" >/dev/null 2>&1; then
+        case "$full" in
+          # A branch means "against its merge base"; `^0` would answer its tip commit
+          # alone, which is a narrower scope than the one that was asked for. The full ref
+          # spelling is the one that survives this branch and still reads as a branch.
+          refs/heads/*|refs/remotes/*)
+            die "'$scope' is both a PR number and a branch in this checkout. Pass '#$scope' for the PR, or '$full' for the branch." ;;
+        esac
+        if [ -n "$branch_ref" ]; then
+          die "'$scope' is a PR number and an ambiguous ref in this checkout -- a branch and a tag both carry it. Pass '#$scope' for the PR, '$branch_ref' for the branch, or '$scope^0' for the commit the bare name resolves to."
+        fi
+        if git rev-parse --verify --quiet "$scope^{commit}" >/dev/null 2>&1; then
+          die "'$scope' is both a PR number and a commit in this checkout. Pass '#$scope' for the PR, or '$scope^0' for the commit."
+        fi
+        die "'$scope' is both a PR number and a ref in this checkout, and that ref does not name a commit, so there is no revision spelling to offer. Pass '#$scope' for the PR, or rename the ref."
+      fi
+      SHAPE="pr"; PR_NUMBER="$scope"; return 0 ;;
   esac
 
   case "$scope" in
@@ -513,7 +559,7 @@ files_from_diff() {
     warn "git apply could not parse the diff; the file list was recovered from its headers and may be incomplete"
     # Both sides, because a deleted file's `+++` line is /dev/null. Scraping only `+++`
     # reports a change that deletes a source file and edits a README as prose-only, and
-    # prose-only is what skips four lenses.
+    # prose-only is what skips five lenses.
     # `|| :` because grep exits 1 when it selects nothing, which pipefail turns into a
     # silent abort -- on a rename-only or mode-only diff, which is exactly the shape that
     # reaches this fallback, and which the empty-file-list `die` below exists to report.
@@ -939,8 +985,8 @@ cmd_resolve() {
   [ "$file_count" -gt 0 ] \
     || die "the diff resolved but no files could be read from it; refusing to write a manifest that would claim an empty scope"
 
-  # Composed once, here, so that eight lenses and a merged report describe one scope in one
-  # form rather than nine.
+  # Composed once, here, so that nine lenses and a merged report describe one scope in one
+  # form rather than ten.
   local scope_line
   scope_line="$RESOLVED_BY — $file_count files"
   [ "$RESOLUTION_STEP" = explicit ] || scope_line="$scope_line ($RESOLUTION_STEP, nothing named)"

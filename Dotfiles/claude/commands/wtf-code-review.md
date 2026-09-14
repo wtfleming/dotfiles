@@ -181,8 +181,8 @@ worth more than the one that flatters the review.
 
 One reviewer covering six dimensions gives some of them a shallower pass than
 the others. This adds a dedicated pass per dimension, over the same scope the
-reviewer reads — plus `reuse` and `resilience`, which the reviewer's checklist
-does not cover at all.
+reviewer reads — plus `reuse`, `resilience` and `observability`, which the
+reviewer's checklist does not cover at all.
 
 **`--lite` skips this section and the rest of the per-dimension pass**, stopping
 where **Review** says to. It skips the *pass*, not the file: **If the user asks
@@ -238,8 +238,8 @@ breaks no cold-start rule. Where it comes from depends on what the user gave:
   What must never ride along is anything the reviewer concluded.
 
 A subject belongs in the second branch for the reason the paragraph above
-opens with: prose is not something a lens can pin files with, so eight lenses
-each resolving it on their own is precisely the eight-guesses failure, and the
+opens with: prose is not something a lens can pin files with, so nine lenses
+each resolving it on their own is precisely the nine-guesses failure, and the
 merged Scope line would then name a file set that several findings did not come
 from. It costs the batched launch — say so when you announce the agents, since
 a subject is now the **only** shape where the pass runs in two rounds rather
@@ -268,18 +268,19 @@ pass as prose.
 Check `manifest.file_list_source` first. `fallback-headers` means the list was
 scraped from the diff's headers rather than parsed, so it may be missing files —
 and a listing missing a code file is exactly what makes a change read as
-prose-only and skip four lenses. Dispatch all eight there, and say why.
+prose-only and skip five lenses. Dispatch all nine there, and say why.
 
-A subject has no diff to list, so skip the check and dispatch all eight, and say
+A subject has no diff to list, so skip the check and dispatch all nine, and say
 so.
 
 The manifest cannot describe an empty scope — the script falls through or exits
 rather than writing one, and records why in `fell_through`. So an empty listing
 here means something went wrong rather than that every file is prose: dispatch
-all eight and say so.
+all nine and say so.
 
-Skip `tests`, `resilience`, `performance` and `dependencies` when every path
-in the listing is prose, and say so. Prose is an allowlist, not a judgement:
+Skip `tests`, `resilience`, `performance`, `dependencies` and `observability`
+when every path in the listing is prose, and say so. Prose is an allowlist, not
+a judgement:
 `.md`, `.markdown`, `.rst`, `.adoc`, `.txt`, and the extensionless `README`,
 `LICENSE`, `CHANGELOG` and `NOTICE`. Anything else — config, a script, an
 extension not listed, a file with none — is code. So is a Markdown file that is
@@ -309,14 +310,15 @@ The lenses and their rubrics:
 
 | Lens | Looks for |
 |---|---|
-| `correctness` | logic errors, off-by-one, wrong operator, null/empty/zero/max edges, races, unhandled promises, missing await |
+| `correctness` | logic errors, off-by-one, wrong operator, null/empty/zero/max edges, races, unhandled promises, missing await, two locks taken in different orders on two paths, a lock or guard held across an await or a blocking call, a lock not released on the path that throws, two processes each waiting synchronously on the other |
 | `security` | unvalidated input at boundaries, hardcoded secrets, injection, sensitive data in logs and errors, authz gaps |
 | `tests` | new branches with no test, uncovered edge cases, tests that cannot fail, flakiness, fixtures that hide the bug, an invariant a handful of examples cannot pin where the repo's tests already use a property-based harness |
 | `maintainability` | unclear names, functions doing several things, unactionable error messages, comments explaining *what*, changes bundling unrelated concerns |
-| `resilience` | outbound calls with no timeout, retries with no backoff or no cap, a failure swallowed into a default that reads as success, multi-step work that leaves inconsistent state when it fails halfway, a retried write that is not idempotent, a call the code assumes cannot fail, a new failure path nothing logs |
+| `resilience` | outbound calls with no timeout, retries with no backoff or no cap, a failure swallowed into a default that reads as success, multi-step work that leaves inconsistent state when it fails halfway, a retried write that is not idempotent, a call the code assumes cannot fail, work that can reach a state nothing moves it out of — a retry counter that never resets, a queued item no sweep reclaims, a wait nothing wakes, a restart that repeats without making progress |
 | `reuse` | logic the repo already implements elsewhere, a second copy of something within the diff itself, a hand-rolled version of what a dependency already in the manifest provides, a new abstraction where an existing one would have served, code shared between two things that only look alike — and code the change orphaned but did not remove: a function whose last caller went away, a config key nothing reads, a flag now permanently on with its dead branch intact |
 | `performance` | N+1 queries, work inside loops that belongs outside, resource leaks, blocking calls in async paths, unbounded growth |
 | `dependencies` | new dependencies (necessity, maintenance, transitive weight), breaking changes to public interfaces, config formats or CLI flags, irreversible migrations |
+| `observability` | a new failure path nothing logs, a new endpoint, worker or scheduled job with no counter or timing for its errors, latency or backlog, an async handoff that drops the request or correlation context, an error caught and logged without its cause, a log line carrying no identifier that would let someone find the affected record, a path the surrounding module instruments that this one does not, a signal that can drift from what it reports — and telemetry that costs more than it earns: a line raised in severity or emitted unconditionally where the code it replaced returned early |
 
 There is deliberately no linter lens. The reviewer already ran the project's real
 linter and reported it; a model imitating static analysis is strictly worse than
@@ -365,6 +367,20 @@ was handed; `resilience` asks what happens when something the code *calls* fails
 hangs or half-succeeds. A missing `await` stays with `correctness` — it is wrong
 regardless of whether the callee misbehaves.
 
+A deadlock stays with `correctness` by that same test, even though `resilience`
+owns hangs: an inverted lock order, or a guard held across a suspension point, is
+wrong whatever the things it calls do, where the hang `resilience` owns arrives
+from outside. The two lenses divide one hang by where it originates, and the
+clause sits beside `races` because it is the same kind of defect — a fact about
+how this code interleaves with itself.
+
+Two processes each waiting on the other is the case that test reads least clearly,
+since the other party *is* something this code calls, and it stays with
+`correctness` too: the cycle is a fact about how the two were written to interleave,
+not about either one misbehaving. `resilience`'s "a wait nothing wakes" is a wait
+this code never arranges to end — a queued item no sweep reclaims — not one held
+shut by a peer that is itself waiting.
+
 `performance` and `resilience` divide by path, not by subject. `performance` owns
 the happy path — what this costs when it works and the input is large.
 `resilience` owns the failure path. A leaked handle belongs to whichever path
@@ -372,6 +388,37 @@ leaks it: not closed on the way through is `performance`, skipped because an
 exception jumped over the cleanup is `resilience`. A retry that hammers a
 struggling dependency is `resilience`; the loop that makes each attempt expensive
 is `performance`.
+
+`resilience` and `observability` divide by question. `resilience` asks whether the
+code survives the failure; `observability` asks whether anyone can tell it
+happened. A finding whose remedy is "add a log line or a metric" belongs to
+`observability` even where `resilience` is what noticed it — the observability
+pass is the one that has read what this repo already emits, and a telemetry remedy
+proposed without that reading is how a review comes to recommend a CloudWatch
+alarm to a package that defines none. `resilience` lost "a new failure path
+nothing logs" to this lens for the same reason: two rubrics claiming one clause is
+how the same finding arrives twice in different words.
+
+`observability` is also the only lens whose remedies *add* data to log output, so
+two of its clauses are bounded by `security` rather than divided from it. The
+identifier it asks for is one that finds the record — a record, request or
+correlation id — never an email, an account number or a credential; and logging an
+error's cause means its type and message, not an unredacted payload. `security`
+reads the diff, not this lens's output, so nothing downstream catches a remedy that
+trades a missing log line for a leaked one.
+
+Almost everything `observability` writes is an assertion that something is *not*
+there — nothing logs this, no metric covers that — which gives it `reuse`'s
+evidence bar for the same reason. Search before asserting the absence, and count
+the emitters that are not in the file: a middleware that already logs every
+request, a line the platform emits for free, a wrapper the call passes through on
+its way out. "This should probably have a metric" is not reportable.
+
+It also carries a bar of its own on pre-existing gaps, because an absence has
+usually been there a while and the lens would otherwise inventory the repo's
+telemetry rather than review the change. Report one only where *this change* is
+what makes it matter: a silent path this diff puts in front of users, a signal
+this diff has just made load-bearing.
 
 ### Synthesise
 
@@ -384,6 +431,16 @@ That is a first pass, not the whole job. Deduplicate on the underlying **defect*
 not the exact line — two agents describing the same problem routinely anchor a few
 lines apart, so a shared anchor is evidence of a duplicate and a differing anchor
 is not evidence against one.
+
+A shared anchor between `observability` and another lens is the common false
+duplicate, because one line can carry both a defect and the absence of the signal
+that would reveal it — a log call that throws is also a log call with nothing in
+it, a wrongly cached negative is also a negative nothing records. Check the
+remedies before collapsing them: two findings proposing different fixes are two
+defects, however close their anchors. The ladder below decides which *statement*
+survives and is no help here, and it leans one way when misapplied — the other
+lens usually names the more dramatic failing path, so it wins rung 3 and the
+telemetry gap is what silently leaves the report.
 
 **Tag each merged finding with where it came from** — the lens name, or `reviewer`:
 
@@ -463,7 +520,7 @@ this is a fact about how the pass ran. It carries **every lens that was
 dispatched or skipped**, each with what it returned:
 
 ```
-Lenses: correctness — 2 findings · security, maintainability — clean · reuse — not applicable · tests, resilience, performance, dependencies — not dispatched (prose-only listing)
+Lenses: correctness — 2 findings · security, maintainability — clean · reuse — not applicable · tests, resilience, observability, performance, dependencies — not dispatched (prose-only listing)
 ```
 
 Findings, **clean**, **not applicable** and **not dispatched** are four
@@ -473,9 +530,9 @@ excluded — so each lens carries its own label and none is folded into another.
 What they do not need is a list and a paragraph each. `not dispatched` keeps the
 check that excluded it as a parenthetical, and that parenthetical names a check
 **Pick the lenses** actually authorises — the prose-only listing is the only one,
-and it skips its four lenses together. Write **not applicable** in full, the way
+and it skips its five lenses together. Write **not applicable** in full, the way
 the lens itself reports it. A lens in one of the two states hoisted into the
-header is named here too, as `see above` — the line is a roster of all eight, so
+header is named here too, as `see above` — the line is a roster of all nine, so
 a reader counting it can tell a lens that is missing from one that is reported
 further up.
 
