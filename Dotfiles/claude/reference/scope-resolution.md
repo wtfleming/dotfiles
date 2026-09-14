@@ -62,7 +62,7 @@ procedure returns a confident review of a scope nobody asked for.
 | `file_list_source` | `git-apply-numstat` normally. `fallback-headers` means the list was scraped from the diff's headers and may be incomplete — **say so** rather than presenting `files` as settled |
 | `warnings` | anything the resolver could not do cleanly; disclose these the way you disclose `base_stale` |
 
-`scope_line` exists so that a reviewer, eight lenses and a merged report describe one scope
+`scope_line` exists so that a reviewer, nine lenses and a merged report describe one scope
 in one form rather than nine. Use it rather than composing your own.
 
 ## A phrase that names the default counts as naming nothing

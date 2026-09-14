@@ -42,7 +42,6 @@ security issue that fits neither list still gets reported.
 - [ ] New dependency justified: necessary, maintained, reasonable transitive weight
 - [ ] Breaking changes to public interfaces, config formats, CLI flags
 - [ ] Migrations/rollouts reversible, or the irreversibility called out
-- [ ] New failure paths observable (a log line or error someone can act on)
 
 ## Author's Finish Line
 
