@@ -369,16 +369,21 @@ scope_shape_of() {
       # a number GitHub has never issued, never mentioning the commit that was sitting
       # right there -- and `gh`'s failure does not distinguish "no such PR" from a token
       # or network problem, so no fallback can tell which happened. Refuse and name both
-      # readings instead. `^!` is not a way to say which was meant: it is read as a ref
-      # below and dies at the merge base, rather than naming the one commit it looks like.
+      # readings instead. `^!` is not a way to say which was meant: `rev-parse --verify`
+      # rejects it, so it reads as whatever ref it is suffixed to or fails as neither a
+      # ref nor a path -- never as the single commit it looks like.
       #
-      # `show-ref` as well as `^{commit}`, matching the check at the call site: a tag
-      # pointing at a blob is a name that exists without resolving to a commit, and
-      # `^{commit}` alone hands it to `gh pr diff` -- a local ref answered with an
-      # unrelated PR's diff.
-      if git show-ref --quiet -- "$scope" 2>/dev/null \
-        || git rev-parse --verify --quiet "$scope^{commit}" >/dev/null 2>&1; then
-        full="$(git rev-parse --symbolic-full-name "$scope" 2>/dev/null || true)"
+      # Matched on `refs/*` rather than tested with `show-ref`, which matches a pattern
+      # from the tail of the full name: `show-ref -- 4521` matches `refs/heads/feature/4521`
+      # and would refuse a PR number in any repo that names branches after tickets. The
+      # name test has to be exact, and `symbolic-full-name` is exact. It also covers the
+      # case `^{commit}` misses on its own -- a tag pointing at a blob resolves to
+      # `refs/tags/<name>` here, where `^{commit}` fails and would hand a local ref to
+      # `gh pr diff` as a PR number.
+      full="$(git rev-parse --symbolic-full-name "$scope" 2>/dev/null || true)"
+      is_ref=false
+      case "$full" in refs/*) is_ref=true ;; esac
+      if [ "$is_ref" = true ] || git rev-parse --verify --quiet "$scope^{commit}" >/dev/null 2>&1; then
         case "$full" in
           # A branch means "against its merge base"; `^0` would answer its tip commit
           # alone, which is a narrower scope than the one that was asked for. The full ref
