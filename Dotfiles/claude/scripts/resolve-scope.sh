@@ -328,7 +328,8 @@ is_default_scope_phrase() {
 # here would be appended to a copy of WARNINGS that is discarded when it returns.
 #
 # `scope` has already been rewritten to a repo-relative path by the caller where it named
-# one. Order matters: a PR before a ref because bare digits almost never name one, a ref
+# one. Order matters: a PR before a ref because bare digits almost never name one -- with
+# the case where they name both refused rather than ordered -- a ref
 # before a path because that is git's own convention, a path last.
 scope_shape_of() {
   local scope=$1 full is_ref url_slug here_slug
@@ -361,7 +362,19 @@ scope_shape_of() {
       return 0 ;;
     '#'[0-9]*)     SHAPE="pr"; PR_NUMBER="${scope#\#}"; return 0 ;;
     ''|*[!0-9]*)   ;;
-    *)             SHAPE="pr"; PR_NUMBER="$scope"; return 0 ;;
+    *)
+      # Bare digits almost never name a ref, but an abbreviated SHA is all decimal digits
+      # about one time in twenty-seven at seven characters, and both readings of one then
+      # exist at once. Taken as a PR it either publishes an unrelated PR's diff or dies on
+      # a number GitHub has never issued, never mentioning the commit that was sitting
+      # right there -- and `gh`'s failure does not distinguish "no such PR" from a token
+      # or network problem, so no fallback can tell which happened. Refuse and name both
+      # readings instead. `#N` and `N^0` are the two ways to say which was meant; `^!` is
+      # not, since `rev-parse --verify` rejects it and the scope would land back here.
+      if git rev-parse --verify --quiet "$scope^{commit}" >/dev/null 2>&1; then
+        die "'$scope' is both a PR number and a commit in this checkout. Pass '#$scope' for the PR, or '$scope^0' for the commit."
+      fi
+      SHAPE="pr"; PR_NUMBER="$scope"; return 0 ;;
   esac
 
   case "$scope" in

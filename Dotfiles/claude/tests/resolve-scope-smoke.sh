@@ -262,6 +262,28 @@ rc=0; (cd "$WORK/range" && "$RESOLVE" resolve --scope 'https://github.com/torval
 check "a foreign PR URL against a real origin is a stop" "1" "$rc"
 git -C "$WORK/range" remote remove origin
 
+echo "== bare digits that also name a commit are refused, not guessed =="
+# An abbreviated SHA is all decimal digits about one time in twenty-seven at seven
+# characters, and the digits-first rule then sent it to `gh pr diff` -- reviewing an
+# unrelated PR, or dying on a number GitHub never issued without ever mentioning the local
+# commit. A digits-named ref reaches the identical branch and is deterministic, where
+# hunting for an all-decimal abbreviation would loop an unbounded number of commits.
+scratch_repo "$WORK/numeric"
+commit "$WORK/numeric" a.txt one base
+commit "$WORK/numeric" a.txt two second
+git -C "$WORK/numeric" tag 1382439
+err="$( (cd "$WORK/numeric" && "$RESOLVE" resolve --scope 1382439) 2>&1 >/dev/null || true )"
+rc=0; (cd "$WORK/numeric" && "$RESOLVE" resolve --scope 1382439 >/dev/null 2>&1) || rc=$?
+check "the ambiguity is a stop" "1" "$rc"
+# Asserted on the text, not just the status: every other refusal here also exits 1, so a
+# status-only check would pass if this fell through to "neither a ref nor a path".
+check "and it names both readings" "1" "$(printf '%s' "$err" | grep -c 'both a PR number and a commit' || true)"
+check "and it does not reach gh" "0" "$(printf '%s' "$err" | grep -c 'gh pr diff' || true)"
+# The advice the refusal gives has to work, or it sends the caller in a circle. `^!` does
+# not -- `rev-parse --verify` rejects it and the scope lands back on this same branch.
+out="$(cd "$WORK/numeric" && "$RESOLVE" resolve --scope '1382439^0' | tail -1)"
+check "the commit form it recommends resolves" "commit" "$(field "$out" .shape)"
+
 echo "== an empty scope is never written =="
 scratch_repo "$WORK/empty"
 commit "$WORK/empty" a.txt one base
