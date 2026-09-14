@@ -332,7 +332,7 @@ is_default_scope_phrase() {
 # before a path because that is git's own convention, a path last. Where digits name both a
 # PR and a local name, the scope is refused rather than ordered.
 scope_shape_of() {
-  local scope=$1 full is_ref url_slug here_slug
+  local scope=$1 full is_ref branch_ref url_slug here_slug
   [ -n "$scope" ] || { SHAPE=worktree; return 0; }
 
   # A leading dash reaches `git diff` in option position, where `--output=<path>` truncates
@@ -381,9 +381,17 @@ scope_shape_of() {
       # `refs/tags/<name>` here, where `^{commit}` fails and would hand a local ref to
       # `gh pr diff` as a PR number.
       full="$(git rev-parse --symbolic-full-name "$scope" 2>/dev/null || true)"
-      is_ref=false
-      case "$full" in refs/*) is_ref=true ;; esac
-      if [ "$is_ref" = true ] || git rev-parse --verify --quiet "$scope^{commit}" >/dev/null 2>&1; then
+      case "$full" in refs/*) ;; *) full="" ;; esac
+      # An *ambiguous* name -- a branch and a tag both carrying it -- resolves to neither
+      # above, and the branch spelling would then be the one reading never offered. Asked
+      # for by full path, because `--verify` matches that path exactly where a bare pattern
+      # matches from the tail.
+      branch_ref=""
+      if git show-ref --verify --quiet "refs/heads/$scope" 2>/dev/null; then
+        branch_ref="refs/heads/$scope"
+      fi
+      if [ -n "$full" ] || [ -n "$branch_ref" ] \
+        || git rev-parse --verify --quiet "$scope^{commit}" >/dev/null 2>&1; then
         case "$full" in
           # A branch means "against its merge base"; `^0` would answer its tip commit
           # alone, which is a narrower scope than the one that was asked for. The full ref
@@ -391,6 +399,9 @@ scope_shape_of() {
           refs/heads/*|refs/remotes/*)
             die "'$scope' is both a PR number and a branch in this checkout. Pass '#$scope' for the PR, or '$full' for the branch." ;;
         esac
+        if [ -n "$branch_ref" ]; then
+          die "'$scope' is a PR number and an ambiguous ref in this checkout -- a branch and a tag both carry it. Pass '#$scope' for the PR, '$branch_ref' for the branch, or '$scope^0' for the commit the bare name resolves to."
+        fi
         if git rev-parse --verify --quiet "$scope^{commit}" >/dev/null 2>&1; then
           die "'$scope' is both a PR number and a commit in this checkout. Pass '#$scope' for the PR, or '$scope^0' for the commit."
         fi

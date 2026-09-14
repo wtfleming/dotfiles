@@ -290,7 +290,8 @@ check "the commit form it recommends resolves" "commit" "$(field "$out" .shape)"
 git -C "$WORK/numeric" checkout -q -b 4521
 commit "$WORK/numeric" b.txt three third
 git -C "$WORK/numeric" checkout -q main
-branch_err="$( (cd "$WORK/numeric" && "$RESOLVE" resolve --scope 4521) 2>&1 >/dev/null || true )"
+rc=0; branch_err="$( (cd "$WORK/numeric" && "$RESOLVE" resolve --scope 4521) 2>&1 >/dev/null )" || rc=$?
+check "a digits-named branch is a stop" "1" "$rc"
 check "a digits-named branch is named as a branch" "1" "$(printf '%s' "$branch_err" | grep -c 'both a PR number and a branch' || true)"
 check "and the spelling it offers is the full ref" "1" "$(printf '%s' "$branch_err" | grep -c "refs/heads/4521" || true)"
 branch_out="$(cd "$WORK/numeric" && "$RESOLVE" resolve --scope 'refs/heads/4521' 2>/dev/null | tail -1)"
@@ -299,7 +300,8 @@ check "which resolves as a branch, not one commit" "branch" "$(field "$branch_ou
 # A ref that exists without being commit-ish -- a tag on a blob -- fails `^{commit}`, so
 # the `refs/*` name test is what keeps it from being handed to `gh pr diff` as a PR number.
 git -C "$WORK/numeric" tag 7654321 "$(git -C "$WORK/numeric" hash-object -w "$WORK/numeric/a.txt")"
-blob_err="$( (cd "$WORK/numeric" && "$RESOLVE" resolve --scope 7654321) 2>&1 >/dev/null || true )"
+rc=0; blob_err="$( (cd "$WORK/numeric" && "$RESOLVE" resolve --scope 7654321) 2>&1 >/dev/null )" || rc=$?
+check "a non-commit-ish ref is a stop" "1" "$rc"
 check "a non-commit-ish ref is refused too" "1" "$(printf '%s' "$blob_err" | grep -c 'does not name a commit' || true)"
 check "and it does not reach gh either" "0" "$(printf '%s' "$blob_err" | grep -c 'gh pr diff' || true)"
 
@@ -309,6 +311,16 @@ plain_err="$( (cd "$WORK/numeric" && "$RESOLVE" resolve --scope 999999) 2>&1 >/d
 check "digits naming nothing local are still a PR" "0" "$(printf '%s' "$plain_err" | grep -c 'both a PR number and' || true)"
 hashed_err="$( (cd "$WORK/numeric" && "$RESOLVE" resolve --scope '#1382439') 2>&1 >/dev/null || true )"
 check "and '#N' still bypasses the guard" "0" "$(printf '%s' "$hashed_err" | grep -c 'both a PR number and' || true)"
+# An ambiguous name resolves to neither ref, so the branch reading is the one that would
+# go unoffered -- `^0` resolves, but to the commit the bare name picks rather than to the
+# branch. The refusal has to carry all three spellings.
+git -C "$WORK/numeric" tag 4521 main
+rc=0; amb_err="$( (cd "$WORK/numeric" && "$RESOLVE" resolve --scope 4521) 2>&1 >/dev/null )" || rc=$?
+check "an ambiguous digits name is a stop" "1" "$rc"
+check "and the refusal names it ambiguous" "1" "$(printf '%s' "$amb_err" | grep -c 'ambiguous ref' || true)"
+check "and still offers the branch spelling" "1" "$(printf '%s' "$amb_err" | grep -c 'refs/heads/4521' || true)"
+check "and does not reach gh" "0" "$(printf '%s' "$amb_err" | grep -c 'gh pr diff' || true)"
+
 # The name test has to be exact. `show-ref -- 999999` matches `refs/heads/feature/999999`
 # from the tail, which would refuse a PR number in any repo that names branches after
 # tickets -- so this asserts the nested ref is not read as the scope naming a local ref.
