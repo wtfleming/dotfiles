@@ -98,6 +98,7 @@
     "skill-creator@claude-plugins-official": true
   },
   "agentPushNotifEnabled": true,
+  "remoteControlAtStartup": true,
   "tui": "default",
   "model": "opus[1m]"
 }
