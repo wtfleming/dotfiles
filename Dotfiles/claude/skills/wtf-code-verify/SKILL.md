@@ -206,7 +206,7 @@ category. It proposes cases and expected refusals; it does not run anything. Mer
 it returns into your list, dropping any case whose expected refusal you cannot state
 concretely.
 
-### Show the list, then predict
+### Show the list, then run
 
 Merge the adversary's cases first — a list still missing its negative cases is the half
 least likely to be right.
@@ -417,7 +417,7 @@ result. Then the lines that are worth more to a reviewer than another passing as
 under the same names the PR section uses, and one closing question. `references/evidence.md`
 has the terminal and PR forms, and why each of these lines earns its place:
 
-- **Coverage** — which parts of the change or subject a probe actually executed, and
+- **Covered** — which parts of the change or subject a probe actually executed, and
   which it did not. Measure it rather than recalling it: read §6's coverage result
   against the changed lines. A changed line
   with zero hits is the most useful thing this run can hand a reviewer, and until it is
@@ -515,7 +515,7 @@ file, and why; which to leave, and why — and ask in the report's closing quest
 nothing until they say yes.
 
 ```
-**Keep as tests:** #1, #2 → `tests/api/posts_test` — deterministic, 0.3 s each, and #2 pins the negative contract. Not #3: 3 min in a browser, needs a seeded DB, and #1 and #2 already pin the contract.
+**Keep as tests:** #1–#3 → `tests/api/posts_test` — deterministic, 0.3 s each, nothing guards them today; #2 and #3 become the regression tests once fixed. Not #4: both sides were served from the response cache, so it asserts nothing until the probe bypasses it, and #1's flag-off control already pins the contract.
 ```
 
 On a yes: rewrite each into the project's own idiom — read a neighbouring test and match

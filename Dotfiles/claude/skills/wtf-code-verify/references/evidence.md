@@ -150,7 +150,7 @@ failure, a non-deterministic probe — which is a fact about this code and belon
 | 1 | editor with `includeArchived: true` sees archived id 7 | flag off → id 7 absent | ✅ 200, id 7 present |
 | 2 | anonymous caller is refused | valid session → 200 | ✅ 401 `UNAUTHENTICATED`, no `data.posts` |
 | 3 | `includeArchived: "banana"` → 400, field-level error | valid value → 200 | ✅ 400 `BAD_USER_INPUT`, error names the field |
-| 4 | `posts` with no new argument is unchanged | baseline `2427dfb` | ✅ byte-identical response |
+| 4 | `posts` with no new argument is unchanged | baseline `2427dfb`, response cache bypassed | ✅ byte-identical response |
 
 <details><summary>Raw output</summary>
 
@@ -298,17 +298,17 @@ demoted — is told inside that shape, not as a narrative before it.
 **Falsified.** 2 of 4 expectations failed; 1 not verified.
 
 **To fix:**
-1. #3 — `"banana"` returns a 500, not a 400: `resolver.ts:74` passes the raw argument to `Boolean()` past the validator. Reproduce: `probes/p3.sh`.
-2. #2 — an anonymous caller gets 200 with an empty list rather than 401. Fails closed, so it can wait — but the PR body promises 401.
+- #3 — `"banana"` returns a 500, not a 400: `resolver.ts:74` passes the raw argument to `Boolean()` past the validator. Reproduce: `probes/p3.sh`.
+- #2 — an anonymous caller gets 200 with an empty list rather than 401: `resolver.ts:58` filters by viewer instead of refusing. Fails closed, so it can wait — but the PR body promises 401. Reproduce: `probes/p2.sh`.
 
-**Keep as tests:** #1, #3 → `tests/api/posts_test` — deterministic, 0.3 s each, nothing guards them today. Not #4: it needs a seeded second role, and #1 already pins the contract.
+**Keep as tests:** #1–#3 → `tests/api/posts_test` — deterministic, 0.3 s each, nothing guards them today; #2 and #3 become the regression tests once fixed. Not #4: both sides were served from the response cache, so it asserts nothing until the probe bypasses it, and #1's flag-off control already pins the contract.
 
 | # | Expectation | Result |
 | - | ----------- | ------ |
 | 1 | editor with `includeArchived: true` sees archived id 7 | ✅ 200, id 7 present; absent with the flag off |
-| 2 | anonymous caller is refused | ❌ 200, empty `data.posts` |
-| 3 | `includeArchived: "banana"` → 400 naming the field | ❌ 500, unhandled `TypeError` |
-| 4 | `posts` with no new argument is unchanged | ⚠️ not verified — byte-identical to baseline, but the fixture has no archived rows, so the probe cannot tell |
+| 2 | anonymous caller is refused | ❌ 200, empty `data.posts` — predicted ✅ |
+| 3 | `includeArchived: "banana"` → 400 naming the field | ❌ 500, unhandled `TypeError` — worse than predicted |
+| 4 | `posts` with no new argument is unchanged | ⚠️ not verified — byte-identical to baseline, but the refuter's re-run showed both sides served from the response cache, so the probe never reached the resolver |
 
 **Covered.** The resolver's authorisation branch and argument coercion.
 **Not covered.** `resolver.ts:91`, the admin override path — needs a second seeded role.
@@ -319,7 +319,7 @@ demoted — is told inside that shape, not as a narrative before it.
 
 Files in `<scratch>/code-verify/`; PR section in `VERIFICATION.md`.
 
-Fix 1 and 2, promote #1 and #3, post the section?
+Fix #3 and #2, promote #1–#3, post the section?
 ```
 
 What the shape enforces:
@@ -332,7 +332,7 @@ What the shape enforces:
   table does not show as ❌ is an opinion.
 - **Keep as tests is §9's triage**, printed here rather than as a separate list later,
   with every probe accounted for: promote with the reason, or leave with the reason.
-- **No Predicted column.** The plan carried the prediction, written before the run, and
+- **No Predict column.** The plan carried the prediction, written before the run, and
   that is where it does its work. A prediction the result contradicted is worth a few
   words in the Result cell — *worse than predicted* — but a column of ❌ beside a column
   of ❌ reads as twice the defects.
