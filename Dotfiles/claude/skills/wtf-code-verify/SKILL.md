@@ -184,14 +184,12 @@ concretely.
 
 ### Show the list, then predict
 
-Merge the adversary's cases first — the point of showing the list is to catch a wrong
-idea of correct, and a list still missing its negative cases is the half least likely to
-be right.
+Merge the adversary's cases first — a list still missing its negative cases is the half
+least likely to be right.
 
-**Show the list to the user before running anything.** Their knowledge of the domain is
-exactly what fills the gap you cannot see — "you forgot that the token can be expired
-rather than missing" — and one message is far cheaper than a wasted tier-2 run built on
-the wrong idea of correct.
+**Show the list, then run it without waiting for approval.** The list on the page is what
+the verdict is argued from, and the user can still interrupt with the case you missed —
+"you forgot that the token can be expired rather than missing".
 
 **Predict each result before executing it.** Write the expected string down. Afterwards
 everything looks like confirmation: a 500 reads as "rejected", an empty array reads as
