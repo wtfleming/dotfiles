@@ -150,7 +150,7 @@ failure, a non-deterministic probe — which is a fact about this code and belon
 | 1 | editor with `includeArchived: true` sees archived id 7 | flag off → id 7 absent | ✅ 200, id 7 present |
 | 2 | anonymous caller is refused | valid session → 200 | ✅ 401 `UNAUTHENTICATED`, no `data.posts` |
 | 3 | `includeArchived: "banana"` → 400, field-level error | valid value → 200 | ✅ 400 `BAD_USER_INPUT`, error names the field |
-| 4 | `posts` with no new argument is unchanged | baseline `2427dfb` | ✅ byte-identical response |
+| 4 | `posts` with no new argument is unchanged | baseline `2427dfb`, response cache bypassed | ✅ byte-identical response |
 
 <details><summary>Raw output</summary>
 
@@ -288,12 +288,71 @@ pass.
 
 ## The terminal report
 
-Lead with the verdict in one line, then the evidence, then the path to the files.
+The author is the audience, reading once at the end of a long run, and they came for two
+answers: do I have to fix anything, and which probes are worth keeping as tests. The
+report gives those two first, then the evidence for them, then the lines no probe
+produced. The run's history — the defect found and fixed, the green the refuter
+demoted — is told inside that shape, not as a narrative before it.
 
-> **Verified with gaps.** 4 of 4 met after the fix; probe 3 initially returned a 500 rather
-> than a 400 — a real defect, fixed in `a91c` and re-run green.
-> The admin override path went unexercised. Files in `<scratch>/code-verify/`, PR section
-> in `VERIFICATION.md`.
+```
+**Falsified.** 2 of 4 expectations failed; 1 not verified.
+
+**To fix:**
+- #3 — `"banana"` returns a 500, not a 400: `resolver.ts:74` passes the raw argument to `Boolean()` past the validator. Reproduce: `probes/p3.sh`.
+- #2 — an anonymous caller gets 200 with an empty list rather than 401: `resolver.ts:58` filters by viewer instead of refusing. Fails closed, so it can wait — but the PR body promises 401. Reproduce: `probes/p2.sh`.
+
+**Keep as tests:** #1–#3 → `tests/api/posts_test` — deterministic, 0.3 s each, nothing guards them today; #2 and #3 become the regression tests once fixed. Not #4: both sides were served from the response cache, so it asserts nothing until the probe bypasses it, and #1's flag-off control already pins the contract.
+
+| # | Expectation | Result |
+| - | ----------- | ------ |
+| 1 | editor with `includeArchived: true` sees archived id 7 | ✅ 200, id 7 present; absent with the flag off |
+| 2 | anonymous caller is refused | ❌ 200, empty `data.posts` — predicted ✅ |
+| 3 | `includeArchived: "banana"` → 400 naming the field | ❌ 500, unhandled `TypeError` — worse than predicted |
+| 4 | `posts` with no new argument is unchanged | ⚠️ not verified — byte-identical to baseline, but the refuter's re-run showed both sides served from the response cache, so the probe never reached the resolver |
+
+**Covered.** The resolver's authorisation branch and argument coercion.
+**Not covered.** `resolver.ts:91`, the admin override path — needs a second seeded role.
+**Guarded.** Nothing — the unscoped suite stays green with the flag check removed.
+**CI.** Unit suite and lint on every push; none of the rows above is in CI today.
+**Residue.** None — compose dependencies down, worktree removed.
+**PR description.** Title still holds; body says "invalid values are rejected", which #3 contradicts.
+
+Files in `<scratch>/code-verify/`; PR section in `VERIFICATION.md`.
+
+Fix #3 and #2, promote #1–#3, post the section?
+```
+
+What the shape enforces:
+
+- **To fix is the answer to "do I have to do anything", so it comes first and always
+  prints** — as `Nothing` on a clean run. Every ❌ row is in it, ordered by what happens if
+  it ships, each with the line and the reproduction; a row that fails safe says so and
+  says it can wait, in the list rather than by being left out. A ❌ absent from To fix leaves
+  the reader to guess whether it was forgotten or judged harmless, and an entry there the
+  table does not show as ❌ is an opinion.
+- **Keep as tests is §9's triage**, printed here rather than as a separate list later,
+  with every probe accounted for: promote with the reason, or leave with the reason.
+- **No Predict column.** The plan carried the prediction, written before the run, and
+  that is where it does its work. A prediction the result contradicted is worth a few
+  words in the Result cell — *worse than predicted* — but a column of ❌ beside a column
+  of ❌ reads as twice the defects.
+- **One table, every row, the plan's order and numbers.** Passed rows are not demoted to
+  prose while failed rows keep the table: the reader then cannot tell which row a bullet
+  was, and cannot see that every row was accounted for. A green row says in a few words
+  what its control did; that is the discriminator the reader was shown in the plan,
+  closed.
+- **A refuted green is ⚠️ in its row**, with the refuter's reason, and is counted in
+  neither the met nor the failed figure on the verdict line.
+- **The trailing lines carry the PR section's names**, plus **Guarded** from §9. Not
+  "Coverage", "Test gaps" or "Cleanup": the same fact under two names reads as two facts,
+  and the reader is about to meet these lines again in the section they post.
+- **One question closes it** — fix, promote, post, on one line, naming the items. Nothing
+  after it, since the author acts on it.
+
+A defect fixed and re-run during the run keeps both states in its row —
+`❌ 500 → fixed in a91c, re-run ✅` — and moves from To fix to a line under it saying what
+was fixed, since there is nothing left to decide. The verdict line says the count
+describes post-fix code. The PR section drops that history; this report keeps it.
 
 When it did not verify, the verdict line says so first and names which case it was: green
 on the base too, red for environmental reasons, or non-deterministic. A "not verified"
@@ -302,12 +361,13 @@ that arrives after three paragraphs of process gets read as a success.
 ## Nothing in the report is asserted from memory
 
 The evidence table is safe by construction — each row has a probe and a discriminator
-behind it. The four trailing lines are not, because no probe produces them, and they are
+behind it. The trailing lines are not, because no probe produces them, and they are
 the ones a reader most relies on. Each has a command that settles it:
 
 | Line | What establishes it |
 | ---- | ------------------- |
 | **Covered / Not covered** | a coverage run over the changed lines, read for the ones with zero hits — not the expectation list, which is what you intended to run, and not the probe list, which is what you ran rather than what it reached |
+| **Guarded** | the project's unscoped test command, run over a worktree of HEAD with the line the change turns on broken — `promotion.md` |
 | **CI** | reading `.github/workflows` or equivalent, this run, not from memory of the repo |
 | **Residue** | `git status --porcelain`, `docker compose ps`, `git worktree list`, and the scratch path — checked after teardown, not predicted before it |
 | **PR description** | the body re-read at the end, since your own commits may have outdated it since you looked |

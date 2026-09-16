@@ -158,14 +158,38 @@ ones CI does *not* run; one that duplicates a job firing on every push has spent
 to reproduce a green check. `references/environments.md` has the discovery commands and
 what to say about the overlap in the report.
 
+The list goes to the user once, as one block in this shape, and it is the last thing on
+the page before anything runs. A reader should be able to answer "what is about to happen
+to my machine, and what will it check" from the block alone:
+
 ```
-| # | Kind | Input | Expected observable |
-| - | ---- | ----- | ------------------- |
-| 1 | positive   | `posts(includeArchived: true)` as an editor | 200; `data.posts` contains archived id 7 |
-| 2 | negative   | same query, anonymous caller | 401 `UNAUTHENTICATED`; `data.posts` absent |
-| 3 | negative   | `includeArchived: "banana"` | 400 with a field-level type error — not a 500, not a silent default to false |
-| 4 | regression | `posts` with no new argument | unchanged: archived rows absent |
+**Verifying.** `feat/archived-posts` vs merge-base `2427dfb` — 4 files
+**Runs.** Tier 2 — the service from a throwaway worktree of HEAD, compose `db` and `redis`; nothing reaches the network. ~5 min.
+**Asks first.** Booting `db` and `redis` is tier 2 spend — say go.
+**Left out.** The admin override path — needs a second seeded role.
+
+| # | Kind | Input | Expect | Control | Predict |
+| - | ---- | ----- | ------ | ------- | ------- |
+| 1 | positive   | `posts(includeArchived: true)` as an editor | 200; archived id 7 present | flag off → id 7 absent | ✅ |
+| 2 | negative   | same query, anonymous caller | 401 `UNAUTHENTICATED`; no `data.posts` | valid session → 200 | ✅ |
+| 3 | negative   | `includeArchived: "banana"` | 400 naming the field — not 500, not a silent false | valid value → 200 | ❌ coerces to false |
+| 4 | regression | `posts` with no new argument | archived rows absent, as before | baseline `2427dfb` | ✅ |
 ```
+
+One line per cell. The mechanism that produces an input and the full observable go in
+`plan.md`; the table carries what a reader scans. **Control** is §4's discriminating
+partner and **Runs** is §5's tier and isolation — both are settled before anything runs,
+so the block waits for them rather than printing the controls as a second list keyed by
+row number. **Asks first** names every pause the run will make — a tier-2 boot, a file
+broken in place, a tree someone else authored — or says `Nothing`; where it names one,
+the block ends waiting on it.
+
+**Rows keep their number from here to the end of the run.** The progress lines, the
+refuter dispatch, the result table and the promotion list all say `#3` — never `P3`,
+`probe 3` or `row 3` in turn, since a reader who meets a fresh label has to guess whether
+it is the same thing. A progress line names the step and the rows —
+`refuting greens: #1 #3 #4 stand, waiting on #2 #5 #6` — and goes out when that changes,
+not on every wake; four identical "still waiting" lines say less than one.
 
 ### The adversary pass
 
@@ -182,7 +206,7 @@ category. It proposes cases and expected refusals; it does not run anything. Mer
 it returns into your list, dropping any case whose expected refusal you cannot state
 concretely.
 
-### Show the list, then predict
+### Show the list, then run
 
 Merge the adversary's cases first — a list still missing its negative cases is the half
 least likely to be right.
@@ -194,7 +218,10 @@ the verdict is argued from, and the user can still interrupt with the case you m
 **Predict each result before executing it.** Write the expected string down. Afterwards
 everything looks like confirmation: a 500 reads as "rejected", an empty array reads as
 "filtered correctly", a timeout reads as "slow but working". A prediction on the page is
-the only thing that makes those wrong later.
+the only thing that makes those wrong later. **Predict** is that column: whether you
+expect the code to meet the row, and for a ❌ why, in a few words. A run where the
+predicted failures are the ones that fail is a different result from one that surprised
+you, and the column is what lets the report tell them apart.
 
 ## 4. Give every probe a discriminating partner
 
@@ -383,17 +410,23 @@ the reviewer is already reading. `references/evidence.md` has both forms.
 
 ## 8. Report
 
-Lead with the verdict in one line. Then the evidence, then the lines that are worth more
-to a reviewer than another passing assertion — `references/evidence.md` has the terminal
-and PR forms, and why each of these earns its place:
+Lead with the verdict in one line. Then the two answers the author is waiting for:
+**To fix** — every ❌ row, ordered by what happens if it ships, or `Nothing` — and **Keep
+as tests**, §9's triage. Then the plan's table again, every row in the same order with its
+result. Then the lines that are worth more to a reviewer than another passing assertion,
+under the same names the PR section uses, and one closing question. `references/evidence.md`
+has the terminal and PR forms, and why each of these lines earns its place:
 
-- **Coverage** — which parts of the change or subject a probe actually executed, and
+- **Covered** — which parts of the change or subject a probe actually executed, and
   which it did not. Measure it rather than recalling it: read §6's coverage result
   against the changed lines. A changed line
   with zero hits is the most useful thing this run can hand a reviewer, and until it is
   measured this is the one line of the report that is a judgement.
   `references/evidence.md` has what to report, `references/environments.md` the invocation.
-- **CI overlap** — what already runs on every push, so this run's contribution is legible.
+- **Guarded** — whether the project's own suite goes red when the line the change turns
+  on is broken. §9's check, run before this section is composed, and the strongest
+  argument the promotion triage can make.
+- **CI** — what already runs on every push, so this run's contribution is legible.
 - **Residue** — rows, files, containers, worktrees, ports left behind, or explicitly
   nothing. A setting you turned up on something you did not start counts: a database's
   statement logging, a service's log level. Tear the worktrees down:
@@ -405,12 +438,13 @@ and PR forms, and why each of these earns its place:
 
 **Every line in the report is either something you observed or is marked as inference.**
 The verdict has a probe behind it by construction, and the raw capture is on disk — but
-those four lines have no probe, and they are where an unbacked claim gets in. Each of them
-is a fact about the world with a command that establishes it: read `.github/workflows`
+those trailing lines have no probe, and they are where an unbacked claim gets in. Each of
+them is a fact about the world with a command that establishes it: read `.github/workflows`
 before writing what CI covers, run `git status` and `docker ps` and
 `baseline-worktree.sh path` before writing *Residue: none*, re-read the PR body before
-saying it still describes the change, and take **Covered** from a coverage run over the
-changed lines rather than from the probes you meant to write. Where you could not check,
+saying it still describes the change, take **Covered** from a coverage run over the
+changed lines rather than from the probes you meant to write, and take **Guarded** from
+§9's unscoped run rather than from what the suite looks like it tests. Where you could not check,
 write what you assumed and say it is an assumption.
 
 That is the same standard the rest of this skill applies to the code under test, turned on
@@ -466,8 +500,8 @@ triage, the way §8's Covered line takes `N/A — no executable lines changed`.
 **Run this check before §8 composes its Residue line, not after.** It builds a worktree
 pair, so in section order it creates the residue that the line has already declared
 absent — in a section that may by then have been posted to the PR — and leaves the next
-`create` refusing without `--force`. Take its answer, report it on its own line, tear the
-pair down, and compose Residue over a tree that is actually clean.
+`create` refusing without `--force`. Take its answer, report it as §8's **Guarded** line,
+tear the pair down, and compose Residue over a tree that is actually clean.
 
 A probe worth writing is often worth keeping, but not always — and offering to promote
 all of them is how a suite gets slow, flaky and eventually ignored. Triage, then ask.
@@ -476,16 +510,12 @@ Promote a probe when it is deterministic, cheap, fits the project's existing har
 would catch this regression again; leave it throwaway otherwise.
 `references/promotion.md` has the triage table and the cases each way.
 
-Present it as a numbered list with a recommendation and a reason per probe, then ask.
-Write nothing until they say yes.
+Present it as the report's **Keep as tests:** line — which rows to promote, into which
+file, and why; which to leave, and why — and ask in the report's closing question. Write
+nothing until they say yes.
 
 ```
-Probes run:
-  1. includeArchived=true returns the archived row     → promote: deterministic, 0.3s, fits tests/api/posts_test
-  2. includeArchived="banana" returns a 400            → promote: same file, covers the negative contract
-  3. Browser check of the archive toggle               → keep throwaway: 3 min, needs a seeded DB, and 1+2 already pin the contract
-
-Promote 1 and 2?
+**Keep as tests:** #1–#3 → `tests/api/posts_test` — deterministic, 0.3 s each, nothing guards them today; #2 and #3 become the regression tests once fixed. Not #4: both sides were served from the response cache, so it asserts nothing until the probe bypasses it, and #1's flag-off control already pins the contract.
 ```
 
 On a yes: rewrite each into the project's own idiom — read a neighbouring test and match

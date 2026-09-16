@@ -56,7 +56,8 @@ two values, change a constant — each asks whether any assertion in the suite c
 break is enough. This is a question about the change, not a mutation run over the
 codebase, and a second break costs another full suite run to answer the same thing.
 
-Where it comes back green, report it on its own line and carry it into the triage below.
+Where it comes back green, report it as the report's **Guarded** line and carry it into the
+triage below.
 "Nothing in the project would have caught this" is the strongest argument for promoting a
 probe that any of the rows in the table can make.
 
@@ -75,9 +76,10 @@ The best promotion candidate is usually a tier-0 or tier-1 probe covering a **ne
 case, because those are the ones nobody writes by hand and the ones a future refactor
 silently breaks. A positive-path test often already exists in some form.
 
-Present the triage as a numbered list with a recommendation and a reason per probe, then
-ask. Do not write anything until the user says yes — and if they promote something you
-advised against, promote it as asked and say once what it will cost.
+Present the triage as the report's **Keep as tests:** line — which rows to promote and why,
+which to leave and why — and ask in the report's closing question. Do not write anything
+until the user says yes — and if they promote something you advised against, promote it as
+asked and say once what it will cost.
 
 ## Where the test goes
 
