@@ -632,8 +632,9 @@ git diff --no-index -- /dev/null <path> >> <scratch>/fix.diff             # crea
 
 `/dev/null` belongs to the third line alone. Reaching for it on a file that
 already existed emits that whole file as added, so the reviewer reads lines the
-change under review wrote as lines the fixes wrote — inside a section titled a
-review of the fixes, which is worse than leaving the file out.
+change under review wrote as lines the fixes wrote — inside a section reporting
+them as new problems the fixes introduced, which is worse than leaving the file
+out.
 
 Read `--no-index`'s exit status per line rather than as one rule. On the third it
 is always 1, since a created file always differs from `/dev/null`, and there that
@@ -671,8 +672,13 @@ An empty fix diff means the edits changed nothing on disk — which is what it
 means only when every part above came back empty, the untracked ones included.
 Say so and dispatch nothing.
 
-What comes back is a review of the fixes, so print it in its own section under
-that name. Do not act on it in the same turn. A fix round that produced its own
+What comes back is a review of the fixes. Print it in its own section, and
+**title that section by what the review found, not by what it read** — `## New
+problems introduced by the fixes` where it has findings, `## Cold review of the
+fixes — nothing found` where it has none. A heading naming the input reads as a
+receipt for a step already closed, and the findings under it as recap; they are
+new defects, in code written minutes ago, that nothing else in the run raises
+again. Do not act on it in the same turn. A fix round that produced its own
 findings is exactly the sequence a human should see before another edit lands on
 top of it; the user asks for a further round, or does not.
 
