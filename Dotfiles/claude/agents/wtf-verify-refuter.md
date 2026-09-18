@@ -22,6 +22,10 @@ you plus the tree:
   off, a cached response, a stale build serving the old code, a request answered by a
   proxy or a service worker before it arrived. Check that something in the capture could
   only have come from the changed path.
+- **The generator never reached the case.** For a property over generated input: a filter
+  or `assume` that discarded most cases, a range that excludes the changed branch, a count
+  in the capture far below the one claimed. A thousand passing cases that all missed the
+  change are no cases.
 - **The assertion is satisfied by anything.** A grep for a field name that also appears in
   the error body. A `200` that any route returns. An empty array read as "filtered
   correctly" when the query returned nothing at all. Exit code 0 from a runner that
