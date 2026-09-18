@@ -312,7 +312,7 @@ The lenses and their rubrics:
 |---|---|
 | `correctness` | logic errors, off-by-one, wrong operator, null/empty/zero/max edges, races, unhandled promises, missing await, two locks taken in different orders on two paths, a lock or guard held across an await or a blocking call, a lock not released on the path that throws, two processes each waiting synchronously on the other |
 | `security` | unvalidated input at boundaries, hardcoded secrets, injection, sensitive data in logs and errors, authz gaps |
-| `tests` | new branches with no test, uncovered edge cases, tests that cannot fail, flakiness, fixtures that hide the bug, an invariant a handful of examples cannot pin where the repo's tests already use a property-based harness |
+| `tests` | new branches with no test, uncovered edge cases, tests that cannot fail, flakiness, fixtures that hide the bug, an invariant a handful of examples cannot pin where the repo's tests already use a property-based harness, a property test that cannot fail |
 | `maintainability` | unclear names, functions doing several things, unactionable error messages, comments explaining *what*, changes bundling unrelated concerns |
 | `resilience` | outbound calls with no timeout, retries with no backoff or no cap, a failure swallowed into a default that reads as success, multi-step work that leaves inconsistent state when it fails halfway, a retried write that is not idempotent, a call the code assumes cannot fail, work that can reach a state nothing moves it out of — a retry counter that never resets, a queued item no sweep reclaims, a wait nothing wakes, a restart that repeats without making progress |
 | `reuse` | logic the repo already implements elsewhere, a second copy of something within the diff itself, a hand-rolled version of what a dependency already in the manifest provides, a new abstraction where an existing one would have served, code shared between two things that only look alike — and code the change orphaned but did not remove: a function whose last caller went away, a config key nothing reads, a flag now permanently on with its dead branch intact |
@@ -329,10 +329,14 @@ trivial code without one is not.
 
 That row's property-based clause is gated twice, and both gates carry weight. The
 code has to state an invariant a handful of examples cannot pin — a round trip, an
-idempotent operation, a comparator, an invariant a mutation must preserve, a
-hand-rolled parser or normaliser over a large input domain — and the repo's own
-tests have to already use a property-based harness: a generator-driven test that
-exists, not a dependency in a manifest. Without the first, "this could have
+idempotent operation, a comparator, an invariant a mutation must preserve, an output
+confined to a domain (never negative, always sorted, always matching a format), a
+hand-rolled parser or normaliser over a large input domain. *State* is literal: a
+docstring, a type, the docs, an existing test or a matched pair of names such as
+`encode`/`decode` says so. An invariant the lens infers from the body is a guess about
+intent, and a Suggestion built on a wrong guess costs more than it saves. And the
+repo's own tests have to already use a property-based harness: a generator-driven test
+that exists, not a dependency in a manifest. Without the first, "this could have
 properties" is true of nearly every function and the lens writes a Suggestion on
 every diff. Without the second the finding is a proposal to adopt a dependency and
 a testing style, which is `dependencies`' business and far larger than anything a
@@ -340,6 +344,14 @@ review Suggestion should carry. Where both hold it is a Suggestion, anchored at 
 test file, and it is never promoted — the promotion rule below moves "a new branch
 with no test" up to Warning, and an untested invariant reads as exactly that. It is
 not: the branch has a test, and this is a second way to exercise it.
+
+A property test the diff itself adds or edits needs neither gate — the harness is
+there by construction — and it fails to fail in ways an example test cannot: a
+generator whose range never reaches the changed branch, a filter or `assume` that
+discards nearly every case, an expected value computed by the code under test, or a
+seed that differs per run with no failing case pinned as an explicit example, so CI
+goes red once and never reproduces. These are ordinary findings about a test that
+cannot fail, tiered like any other.
 
 `reuse` is the one lens whose target sits outside the diff: both the duplicate it
 looks for and the code the change orphaned live in files the change did not touch.
