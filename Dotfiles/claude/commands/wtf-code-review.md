@@ -348,10 +348,12 @@ not: the branch has a test, and this is a second way to exercise it.
 A property test the diff itself adds or edits needs neither gate — the harness is
 there by construction — and it fails to fail in ways an example test cannot: a
 generator whose range never reaches the changed branch, a filter or `assume` that
-discards nearly every case, an expected value computed by the code under test, or a
-seed that differs per run with no failing case pinned as an explicit example, so CI
-goes red once and never reproduces. These are ordinary findings about a test that
-cannot fail, tiered like any other.
+discards nearly every case, or an expected value computed by the code under test.
+These are ordinary findings about a test that cannot fail, tiered like any other.
+Randomness is not one of them: a per-run seed is the libraries' default, and they print
+the failing input when it goes red. It is a finding only where the repo's existing
+property tests pin a seed or a derandomized CI profile and this one does not, or where
+the change fixes a counterexample and does not keep it as an explicit example.
 
 `reuse` is the one lens whose target sits outside the diff: both the duplicate it
 looks for and the code the change orphaned live in files the change did not touch.
