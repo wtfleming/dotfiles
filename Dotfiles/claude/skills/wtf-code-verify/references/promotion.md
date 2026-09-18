@@ -115,6 +115,14 @@ Two specifics worth getting right:
 exercises; `test_posts_query_2` does not, and tells the next reader nothing when it goes
 red at 6pm.
 
+**A property probe is promoted twice over.** Generated input is random by default, which
+is the triage table's first row against it, so pin it the way the project's own property
+tests do — a fixed seed, a derandomized CI profile — or leave it throwaway. And where it
+found a counterexample, promote that too, as an explicit example alongside the property
+(`@example`, fast-check's `examples`, or a plain example test): a generator is not
+guaranteed to reach the same input twice, and the regression it caught should fail every
+run rather than when the dice land.
+
 **One comment earns its place here**: what the test is defending against, and where to
 read more — the issue, the PR, one line. A regression test's *why* is invisible from its
 assertions, and a future reader deciding whether it is safe to delete has nothing else to

@@ -12,6 +12,7 @@ correct will run cleanly, pass, and tell you nothing.
 - How it fails, not just that it does
 - Producing the condition
 - The state afterwards is an observable
+- An invariant is an expectation over every input
 - Verifying prose against code
 - Verifying a PR's title and description
 - Verifying a subject with no diff
@@ -234,6 +235,44 @@ witness. So write the expected state change into the plan beside the response yo
 **empty** on a refusal, exactly one row on a create, unchanged on a read. Deciding afterwards whether
 what you see looks reasonable is the after-the-fact expectation this file opens by warning
 about, arriving through the one observable nobody wrote down.
+
+## An invariant is an expectation over every input
+
+Some claims are not about one input. A round trip (`decode(encode(x)) == x`), an
+idempotent operation (`f(f(x)) == f(x)`), an output confined to a domain (never negative,
+always sorted, always matching a format), a comparator that must be total and transitive,
+a mutation that must preserve a count or an ordering — each says something about *every*
+input, and a handful of examples picked by the person who wrote the code tests the handful
+they already thought of. Write the row as the property and generate the inputs.
+
+**Only an invariant that is stated.** The sources at the top of this file apply here
+unchanged: a docstring, a type, the docs, an existing test, a matched pair such as
+`serialize`/`parse`. A property inferred from the body is the tautology trap at scale — it
+runs thousands of times and agrees with itself every time. And the expected side must
+never be computed by the code under test; an oracle is the base tree (`differential.md`)
+or a simpler implementation, not the function asserting on itself.
+
+**Use the project's generator, or a loop.** A property library the project already uses
+(`hypothesis`, `fast-check`, `proptest`, `StreamData`, `QuickCheck`) gives generation and
+shrinking for free; write the probe in its idiom, in the scratch directory. Where there is
+none, do not add one for a throwaway probe — a seeded loop over generated inputs is a
+harness you can write in a minute, and what it lacks is shrinking, so report the smallest
+failing input it hit rather than the first.
+
+**Record the seed and the count.** `Input` in the plan reads `2,000 generated strings,
+seed 41`, and a failure is quoted as the counterexample, re-run from that seed to confirm
+it reproduces — the same twice-per-side rule SKILL.md §4 applies to any probe. A property
+that failed once and not again is *Not verified*, non-deterministic, until the
+counterexample fails on its own.
+
+**A pass is only as wide as what the generator produced.** A property with a filter or
+`assume` that discards most cases ran far fewer than the count says, and a generator whose
+range never reaches the changed branch passes without testing it. Read the library's own
+statistics where it has them (`--hypothesis-show-statistics`, `fc.statistics`) and the
+coverage from SKILL.md §6 against the changed lines. The discriminating partner is the
+deliberate break from SKILL.md §4: invert the condition the change turns on and the
+property must go red with a counterexample — one that stays green under the break was
+never looking.
 
 ## Verifying prose against code
 

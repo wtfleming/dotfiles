@@ -153,6 +153,12 @@ thing, and pick the cheapest tier that can see each claim (§5) so breadth stays
 affordable. `references/expectations.md` has why, and what to say when the list runs past
 what the budget allows.
 
+**Where the change states an invariant, the row is the property.** A round trip, an
+idempotent operation, an output confined to a domain: a few hand-picked examples test
+the cases the author already thought of, and generated input reaches the ones they did
+not. `references/expectations.md` has which invariants count and how to generate without
+adding a dependency.
+
 **Check what CI already runs before designing probes.** The probes worth building are the
 ones CI does *not* run; one that duplicates a job firing on every push has spent minutes
 to reproduce a green check. `references/environments.md` has the discovery commands and
