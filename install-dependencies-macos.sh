@@ -56,6 +56,10 @@ brew install jq
 # Used by bin/wtf-llm-summarize and bin/wtf-llm-mindmap
 brew install ollama
 
+# Hugging Face Hub CLI, for pulling models and datasets. The binary is `hf`;
+# `huggingface-cli` is the old name and is not installed.
+brew install hf
+
 # Tools the global claude CLAUDE.md advertises as available
 brew install imagemagick
 
