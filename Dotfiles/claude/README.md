@@ -139,6 +139,7 @@ accident.
 | `wtf-change-reviewer` | scope, tests, lint, the full review |
 | `wtf-lens` | one dimension only; dispatched up to nine times per review |
 | `wtf-design-reviewer` | shape of the change, Suggestion-only; dispatched by `/wtf-design-review` |
+| `wtf-prod-impact` | whether the change degrades production, read from the live system; dispatched by `/wtf-prod-impact` |
 
 All three are read-only — no `Edit`, no `Write`, and no ability to spawn an agent
 that has them. Edits only ever happen in the main session, one approval at a time.
@@ -361,6 +362,59 @@ Deliberately expensive and deliberately rare: at the upper tiers it boots servic
 bootstraps a second worktree, so it announces the tiers it expects to need and asks
 before spending tier 2 or 3. Meant to run once on a finished branch just before the PR
 opens — not per commit, and not as a substitute for running the tests.
+
+## Production impact
+
+`/wtf-prod-impact` asks one question — would this change degrade production once merged
+and deployed — and answers it from the live system rather than from the diff. It
+dispatches a single `wtf-prod-impact` agent, cold, with the scope and nothing else.
+
+It is the third side of one decision. `/wtf-code-review` reads the code,
+`wtf-code-verify` runs it in a disposable environment, and neither knows anything about
+the system the change is about to land on — a lens cannot tell a hot path from dead code,
+so it tiers findings by consequence with no data about consequence. Telemetry is that
+missing input, and it cuts both ways: an N+1 on an endpoint serving three requests a day
+is refuted with receipts, and an index built without `CONCURRENTLY` on a table taking
+forty writes a second is confirmed with them.
+
+That is also why refutation is worth doing here after being dropped elsewhere. The
+per-finding `wtf-refuter` went because re-reading the code that produced a finding rarely
+retracts it; a metric read is independent evidence, so the same mechanism discriminates
+here and did not there.
+
+**Provider-agnostic by construction.** `reference/telemetry-providers.md` is organised
+around four questions — what is deployed, how much the changed path is used, what is
+already failing, whether the change is gated — and says who answers each one whatever the
+repo is plumbed into: Datadog and ArgoCD in one repo, Sentry and Grafana in another,
+CloudWatch and nothing else in a third. Only the intersection of what the repo reports to
+and what the connection can actually query counts as evidence, because querying a vendor
+the service does not report to returns real numbers about somebody else's code.
+
+Findings are **failure trajectories** — a trigger, through the changed code, to an
+observable degradation — and every link carries a citation: a `file:line`, or a query with
+its window and the value it returned. A number on its own is not reproducible tomorrow;
+the query that produced it is.
+
+Each trajectory ends **confirmed**, **plausible**, **refuted** or **unsettled**, and the
+last two must never merge — one is evidence the chain will not fire, the other is no
+evidence either way. Any confirmed trajectory is a **no-go**. Where nothing could be
+answered at all the verdict is **not assessed**, which is deliberately not a pass: an
+agent that could not reach production and reports one has told the reader the opposite of
+what it knows.
+
+Uncertainty being reportable reverses the rule every lens follows. Nine lenses hedging in
+parallel produce an unreadable report; one agent making a call about production has the
+opposite problem, and a chain it could not settle is among the most useful things it can
+say.
+
+It reads production and writes nothing, and that cannot be enforced by a tool allowlist —
+provider-agnostic means calling tools nobody enumerated in advance, and telemetry
+catalogues ship dashboard upserts and flag toggles next to the reads. So the rule is prose
+with a verb test, and the compensating control is disclosure: the report names every tool
+the pass called, so a write is visible afterwards even though nothing prevented it.
+
+The gate is cheap and exits early — prose, tests, CI config and code nothing deployed
+imports are answered from the file list before a single provider call.
 
 ## Opening the PR
 
