@@ -57,27 +57,35 @@ Two searches, because the signals come in two kinds. Vendor names appear in file
 own name — a `fly.toml` holds `app` and `primary_region`, never the string `fly.toml`.
 
 ```bash
-# Contents. `git grep` searches tracked files only, so .git, node_modules, vendor/ and
-# anything gitignored are all skipped -- which is both far faster on a large repo and
-# more accurate, since a vendored transitive dependency or an old commit object names a
-# vendor this service does not report to.
+# Contents. `git grep` searches tracked files, so .git and anything gitignored is skipped
+# -- far faster on a large repo, and it keeps old commit objects from naming a vendor the
+# service no longer reports to.
+#
+# Tracked is not the same as first-party, though: a repo that commits node_modules or
+# vendor/ has those in the index, and a dependency that merely *talks to* a vendor would
+# then read as this service reporting to it. Filter both searches by path, before the cap,
+# so the cap applies to first-party hits.
 #
 # printf in a loop, not `sed "s|...|"`: every pattern below contains `|`, which would
 # collide with the delimiter and error on every iteration -- printing nothing, which reads
 # as "this repo reports to no vendor" and is the exact false green this method exists to
 # avoid. `awk -v` has its own quoting layer and would print split.io for split\.io.
+deps='(^|/)(node_modules|vendor|third_party|bundled?|\.venv|site-packages|dist|build)/'
+
 for v in 'datadoghq|DD_(SERVICE|ENV)' 'newrelic|NEW_RELIC' 'sentry|SENTRY_DSN' \
          'honeycomb|OTEL_EXPORTER|opentelemetry' 'prometheus|grafana' 'splunk|loki' \
          'argocd|argoproj' 'launchdarkly|LD_SDK' 'statsig|unleash|flagsmith|split\.io'; do
-  git grep -lE "$v" | head -3 | while IFS= read -r f; do printf '%s -> %s\n' "$v" "$f"; done
+  git grep -lE "$v" | grep -vE "$deps" | head -3 \
+    | while IFS= read -r f; do printf '%s -> %s\n' "$v" "$f"; done
 done
 
 # File names. `git ls-files` rather than `find`, for the same reason as above: `find
 # -maxdepth 3` still descends node_modules, and ./node_modules/pkg/vercel.json matches at
-# exactly depth 3.
+# exactly depth 3. Same dependency filter, for the same reason -- a vendored package's own
+# fly.toml is not this service's deploy target.
 manifests='fly\.toml|vercel\.json|wrangler\.toml|serverless\.ya?ml'
 manifests="$manifests|[Kk]ustomization\.ya?ml"
-git ls-files | grep -E "(^|/)($manifests)\$"
+git ls-files | grep -vE "$deps" | grep -E "(^|/)($manifests)\$"
 ```
 
 **Cap the output per vendor, never across all of them.** One `head` over a combined

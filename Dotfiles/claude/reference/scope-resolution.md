@@ -18,6 +18,17 @@ here rather than restating it, so a fix lands once.
 ~/.claude/scripts/resolve-scope.sh resolve [--scope <ref|range|path|PR#|PR-url>] [--base <ref>]
 ```
 
+**That is usage notation, not a line to copy literally — quote whatever you substitute
+into it.** A subject is prose and routinely holds spaces, and a path can hold spaces or
+shell metacharacters, so an unquoted substitution either splits into several arguments the
+script never receives as one scope, or runs as shell syntax. Write `--scope "$scope"`.
+
+The same applies coming back out. Paths in `manifest.files` are repo paths and can carry a
+space, and a path with a newline in it is legal in git, so quote every one you hand to
+another command: `git show "$scope_head:$path"`, not the bare form. An unquoted path is
+the kind of defect that works on every repo anyone tests it against and then fails on one
+file in somebody else's.
+
 It prints the scope line and then the artifact directory, which holds two files:
 
 - **`scope.diff`** — one diff covering the whole scope, untracked files included.

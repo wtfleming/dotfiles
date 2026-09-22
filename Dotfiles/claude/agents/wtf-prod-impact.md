@@ -79,8 +79,13 @@ on, and the gate below reads that file list instead of a diff.
 
 Two fields govern what you read next. `manifest.correspondence` says whether the working
 tree holds the reviewed code; on anything but `workspace` or `same`, read a file with
-`git show <scope_head>:<path>` rather than from disk, or the `file:line` citations step 4
+`git show "<scope_head>:<path>"` rather than from disk, or the `file:line` citations step 4
 demands come from the wrong tree. `branch_base_sha` is where the branch begins.
+
+Two cases defeat that `git show`, and the manifest flags neither. A file the change
+**deleted** does not exist at `scope_head`; and on `unknown` the head may not be in this
+clone's object database at all, so nothing resolves. Read both out of `scope.diff`, which
+always holds them.
 
 Resolving by hand is how a change full of migrations comes to read as prose. `git diff`
 never lists untracked files, and a brand-new `db/migrations/*.sql` beside a README edit is
