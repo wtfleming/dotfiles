@@ -205,8 +205,9 @@ Before anything is spawned, resolve the scope once:
 ~/.claude/scripts/resolve-scope.sh resolve [--scope <the user's scope>]
 ```
 
-It prints the scope line and an artifact directory holding `scope.diff` and
-`manifest.json`. **Exit 2 means the scope is a subject** — prose naming an area of
+It implements `~/.claude/reference/scope-resolution.md`, which is where the procedure and
+the rules for quoting a substituted scope live. It prints the scope line and an artifact
+directory holding `scope.diff` and `manifest.json`. **Exit 2 means the scope is a subject** — prose naming an area of
 behaviour, which has no diff — and sends you to the second branch below. Any other
 non-zero exit is a real failure: report it and stop rather than reviewing something
 else.
