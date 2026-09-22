@@ -1,5 +1,5 @@
 ---
-description: Assess whether a change would degrade production once deployed, by reading the live system — deployed revision, real traffic on the changed path, what is already failing, and whether the change is gated. Provider-agnostic and read-only; returns go / no-go / not assessed.
+description: Assess whether a change would degrade production once deployed, by reading the live system — deployed revision, real traffic on the changed path, what is already failing, and whether the change is gated. Provider-agnostic and read-only; returns no surface / go / no-go / not assessed.
 argument-hint: "[ref, branch or path — defaults to uncommitted, else the branch, else HEAD]"
 allowed-tools: Agent
 ---
@@ -39,13 +39,39 @@ reassurance on the way to the user. It is not a pass, it is not "no issues found
 and it does not become either by being restated. If you cannot tell which verdict
 came back, say so rather than picking the comfortable one.
 
-The report carries four sections below the verdict — **Trajectories**,
-**Unanswered**, **Calls made**, and the **As of** / **Mapping** / **Providers**
-header lines. If any is missing, say which rather than filling it in: the mapping
-and the unanswered questions are how a reader checks the assessment, and an
-assessment nobody can check should not read as one. They are named here because
-this command has only the `Agent` tool and cannot read the agent's own copy of the
-list.
+**Four verdicts, and three shapes that report short.** Two of them are the simple
+ones: `no surface` and a `not assessed` that reached no provider carry a **Scope**
+line, one line saying what was looked at or looked for, and **Calls made** — and
+nothing else, by design. `no surface` is the most common outcome of all, since a
+docs-only or test-only change never reaches a provider. Do not report sections
+missing from either of them. The third shape is below.
+
+A mapping-failure `not assessed` is a third shape, between the two: it reached a
+provider but stopped before building any trajectory. It carries **Scope**,
+**Mapping** — saying what would not resolve — **Providers** and **Calls made**, and
+nothing else. There is no **As of**, because the deployed revision is not resolvable
+without the mapping, and no **Trajectories** or **Unanswered**. That is complete
+too; do not report any of the three as missing.
+
+On a `go` or `no-go`, and on a `not assessed` that got far enough to build
+trajectories, the report carries three sections below the verdict —
+**Trajectories**, **Unanswered** and **Calls made** — plus the **Scope** / **As of**
+/ **Mapping** / **Providers** header lines. There, if any is missing, say which
+rather than filling it in: the mapping and the unanswered questions are how a reader
+checks the assessment, and an assessment nobody can check should not read as one.
+They are named here because this command has only the `Agent` tool and cannot read
+the agent's own copy of the list.
+
+**Calls made appears on every shape**, all three short ones included. It is the only
+record of what the pass touched, so its absence is always worth saying.
+
+**The report stays in the session.** It is a dossier of live internal detail — service
+and database names, the deployed revision, request volumes, which endpoints are
+failing, flag names and their served values. Do not paste it into a PR description,
+an issue or a review comment. The neighbouring convention in this stack quotes an
+agent's verdict into a PR body, and this is the one report that must not go: the repo
+may be public, and `CLAUDE.md` forbids internal hostnames and machine-specific output
+there. Quote a verdict word if you must; never the body.
 
 Then stop. A **no-go** names what would make the change safe; doing that is the
 author's call, in the main conversation where the constraints live, not here.

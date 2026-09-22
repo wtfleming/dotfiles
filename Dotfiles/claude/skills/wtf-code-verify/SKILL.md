@@ -118,7 +118,7 @@ The deploy row is about surviving the two-version window and rolling back, and t
 settles both by *running* something. What the live system is currently doing — how much
 traffic the changed path actually takes, what is already failing on it — it cannot see at
 all. `/wtf-prod-impact` reads exactly that and runs nothing, so the two answer one
-question from opposite sides; where a trajectory it could not settle would be settled by
+question from opposite sides; where a chain it could not settle would be settled by
 executing something, it names the probe and this skill is where that happens.
 
 ## 3. Write the expectations down, then show them

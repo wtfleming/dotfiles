@@ -61,6 +61,12 @@ rather than resolving a merge base, so the deployed tree gets the same bootstrap
 other — dependencies fetched, `.env` linked, sources compiled — instead of a hand-rolled
 `git worktree add` and a comment where the hard part goes.
 
+Which revision is deployed has its own method in
+`~/.claude/reference/telemetry-providers.md` (Q1), which reads it from the deploy system
+instead of guessing. The line below is the fallback, and where it guesses wrong — a release
+train, a frozen branch, a failed deploy nobody retried — `--base-exact` builds the wrong
+baseline and the whole two-version verdict is confidently wrong.
+
 ```bash
 BW=~/.claude/skills/wtf-code-verify/scripts/baseline-worktree.sh
 DEPLOYED=$(git describe --tags --abbrev=0)   # or origin/main, whatever is actually live

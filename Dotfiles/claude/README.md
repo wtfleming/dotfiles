@@ -140,9 +140,22 @@ accident.
 | `wtf-lens` | one dimension only; dispatched up to nine times per review |
 | `wtf-design-reviewer` | shape of the change, Suggestion-only; dispatched by `/wtf-design-review` |
 | `wtf-prod-impact` | whether the change degrades production, read from the live system; dispatched by `/wtf-prod-impact` |
+| `wtf-verify-adversary` | the cases a verification pass would not think to include; dispatched by `wtf-code-verify` |
+| `wtf-verify-refuter` | argues a single passing probe would have been green anyway; dispatched by `wtf-code-verify` |
 
-All three are read-only — no `Edit`, no `Write`, and no ability to spawn an agent
-that has them. Edits only ever happen in the main session, one approval at a time.
+The last two belong to `wtf-code-verify` rather than to a review, and are described under
+*Verifying that it works* below; they are listed here so this table is the whole roster.
+
+Every one of them except `wtf-prod-impact` is read-only by tool list — no `Edit`, no
+`Write`, and no ability to spawn an agent that has them. Edits only ever happen in the
+main session, one approval at a time.
+
+`wtf-prod-impact` is the exception, and deliberately so: it declares no `tools:` at all,
+because the telemetry tools it needs belong to whichever vendors a session is wired to and
+cannot be enumerated in advance. It therefore inherits the session's tools, `Edit` and
+`Write` among them, and is held read-only by instruction rather than by allowlist — with
+the tool-call disclosure in its report as the compensating control. It is the one agent
+here whose read-only guarantee is prose, so it is the one to supervise.
 
 ### Tuning it
 
@@ -397,10 +410,13 @@ the query that produced it is.
 
 Each trajectory ends **confirmed**, **plausible**, **refuted** or **unsettled**, and the
 last two must never merge — one is evidence the chain will not fire, the other is no
-evidence either way. Any confirmed trajectory is a **no-go**. Where nothing could be
-answered at all the verdict is **not assessed**, which is deliberately not a pass: an
+evidence either way. Any confirmed trajectory is a **no-go**. The verdict is
+**not assessed** where nothing could be answered *or* where no trajectory reached any
+state other than unsettled — which is also the answer when a pass stopped before building
+one, having failed to map the change to a resource. That is deliberately not a pass: an
 agent that could not reach production and reports one has told the reader the opposite of
-what it knows.
+what it knows. It is tested first, ahead of the rungs that produce **go**, because placed
+last it is the rung that gets swallowed.
 
 Uncertainty being reportable reverses the rule every lens follows. Nine lenses hedging in
 parallel produce an unreadable report; one agent making a call about production has the

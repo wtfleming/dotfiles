@@ -2,7 +2,7 @@
 # Resolve "what code is under review" once, in code, and write it down.
 #
 # Several tools here -- /wtf-code-review and its lenses, wtf-change-reviewer,
-# wtf-design-reviewer, wtf-code-verify -- work the scope out from
+# wtf-design-reviewer, wtf-code-verify, wtf-prod-impact -- work the scope out from
 # prose instructions. On the full pass that is nine lens agents beside the reviewer,
 # each running its own git commands, and "the same scope" holds only for as long as every
 # one of them derives it identically. This produces the diff once, writes it to a file,

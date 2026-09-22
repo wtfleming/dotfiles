@@ -52,15 +52,46 @@ Two steps, in this order, and do not skip the first.
 actually uses, which is a smaller and more accurate set than whatever your connection
 happens to expose. Grep the tree for the config that names one:
 
+Two searches, because the signals come in two kinds. Vendor names appear in file
+*contents*; platform manifests announce themselves by *file name* and do not contain their
+own name — a `fly.toml` holds `app` and `primary_region`, never the string `fly.toml`.
+
 ```bash
-grep -rlE 'datadoghq|DD_(SERVICE|ENV|API_KEY)|newrelic|NEW_RELIC|sentry|SENTRY_DSN' . \
-  | head -20
-grep -rlE 'honeycomb|OTEL_EXPORTER|opentelemetry|prometheus|grafana|splunk|loki' . \
-  | head -20
-grep -rlE 'argocd|argoproj|kustomization|fly\.toml|vercel\.json|wrangler\.toml|serverless\.yml' . \
-  | head -20
-grep -rlE 'launchdarkly|LD_SDK|statsig|unleash|flagsmith|split\.io' . | head -20
+# Contents. `git grep` searches tracked files only, so .git, node_modules, vendor/ and
+# anything gitignored are all skipped -- which is both far faster on a large repo and
+# more accurate, since a vendored transitive dependency or an old commit object names a
+# vendor this service does not report to.
+#
+# printf in a loop, not `sed "s|...|"`: every pattern below contains `|`, which would
+# collide with the delimiter and error on every iteration -- printing nothing, which reads
+# as "this repo reports to no vendor" and is the exact false green this method exists to
+# avoid. `awk -v` has its own quoting layer and would print split.io for split\.io.
+for v in 'datadoghq|DD_(SERVICE|ENV)' 'newrelic|NEW_RELIC' 'sentry|SENTRY_DSN' \
+         'honeycomb|OTEL_EXPORTER|opentelemetry' 'prometheus|grafana' 'splunk|loki' \
+         'argocd|argoproj' 'launchdarkly|LD_SDK' 'statsig|unleash|flagsmith|split\.io'; do
+  git grep -lE "$v" | head -3 | while IFS= read -r f; do printf '%s -> %s\n' "$v" "$f"; done
+done
+
+# File names. `git ls-files` rather than `find`, for the same reason as above: `find
+# -maxdepth 3` still descends node_modules, and ./node_modules/pkg/vercel.json matches at
+# exactly depth 3.
+manifests='fly\.toml|vercel\.json|wrangler\.toml|serverless\.ya?ml'
+manifests="$manifests|[Kk]ustomization\.ya?ml"
+git ls-files | grep -E "(^|/)($manifests)\$"
 ```
+
+**Cap the output per vendor, never across all of them.** One `head` over a combined
+pattern truncates by traversal order, so in a monorepo where twenty files mention one
+vendor a second vendor's only config is dropped and you conclude the repo does not report
+to it — which sends a question unanswered for no reason. The loop above caps each pattern
+separately for exactly that reason, which is also why it is a loop rather than one
+combined pattern.
+
+**Match on a key's name; never read its value.** `SENTRY_DSN` and `DD_API_KEY` are
+credentials, and `git grep -l` prints file names only, which is the point. What you need
+from these files is the vendor and the service name — never the secret, which has no
+bearing on any of the four questions and should not be pulled into a transcript. A Sentry
+DSN is itself an event-submission credential.
 
 Also worth opening: `.github/workflows/` for what deploys and how, a `Dockerfile` or chart
 for the service name it runs under, and any `terraform/` for the resources it owns.
@@ -97,7 +128,10 @@ forked three weeks ago has a merge base that predates two releases.
 | Deploy events in a metrics vendor | change-tracking or deployment events, newest first |
 
 **Cheapest fallback when none of them answer:** `git log` the default branch and take its
-tip, and then *say in the report that you assumed it*. The assumption is usually right and
+tip, and then *say in the report that you assumed it*. **It is an assumption, and it never
+counts as an answered question for the verdict rule** — it reads the repo, not production,
+so a session that reached no provider is `not assessed` even though this came back with
+something. The assumption is usually right and
 occasionally very wrong — a release train, a frozen branch, a failed deploy nobody
 retried — and the reader can check it in seconds where you cannot.
 
@@ -118,10 +152,9 @@ window nobody notices.
 | Load balancer or CDN metrics | request volume when the app itself is not instrumented |
 
 **Ask for a window wide enough to show shape, not just level.** An hour tells you the
-current number; thirty days at daily rollup tells you whether it is climbing. The post
-this method comes from used a forecasting model for that; a long window and a look at the
-trend gets most of it, and anomaly functions in the vendor's own query language get the
-rest. Do not reach for a model.
+current number; thirty days at daily rollup tells you whether it is climbing. A long
+window and a look at the trend gets most of the way, and anomaly functions in the vendor's
+own query language get the rest. Do not reach for a forecasting model.
 
 **Prefer the narrowest series that still answers the question.** Service-wide request rate
 does not tell you about the one endpoint the diff touched, and a trajectory built on it
