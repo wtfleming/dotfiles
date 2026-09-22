@@ -150,10 +150,13 @@ Every one of them except `wtf-prod-impact` is read-only by tool list — no `Edi
 `Write`, and no ability to spawn an agent that has them. Edits only ever happen in the
 main session, one approval at a time.
 
-`wtf-prod-impact` is the exception, and deliberately so: it declares no `tools:` at all,
+`wtf-prod-impact` is the exception, and deliberately so: it declares no `tools:` allowlist,
 because the telemetry tools it needs belong to whichever vendors a session is wired to and
-cannot be enumerated in advance. It therefore inherits the session's tools, `Edit` and
-`Write` among them, and is held read-only by instruction rather than by allowlist — with
+cannot be enumerated in advance. It uses `disallowedTools` instead, which denies `Edit`,
+`Write` and `NotebookEdit` by name while leaving every MCP tool inherited — so the
+file-editing half fails closed without costing any reach. `Bash` stays, because the agent
+needs it for git reads, and vendor writes cannot be denied by name without naming the
+vendors. Those two are held read-only by instruction rather than by allowlist — with
 the tool-call disclosure in its report as the compensating control. It is the one agent
 here whose read-only guarantee is prose, so it is the one to supervise.
 
