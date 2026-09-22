@@ -66,11 +66,16 @@ Also worth opening: `.github/workflows/` for what deploys and how, a `Dockerfile
 for the service name it runs under, and any `terraform/` for the resources it owns.
 
 **Then confirm against the tool surface.** The repo naming a vendor does not mean you can
-query it — credentials may not be wired into this session. Search the catalogue for the
-vendor the repo named and see whether read tools come back. Where the connection federates
-a catalogue, search it by vendor name rather than guessing tool names; where a vendor's
-tools are not federated at all, they are unreachable from here no matter what the repo
-says, and that is a Q-unanswered outcome rather than an error.
+query it here — the tools may not be connected in this session, or the credentials may
+not be. Look for read tools belonging to the vendor the repo named, however this session
+exposes tools: sometimes as a vendor's own server, sometimes through something that fronts
+several of them and has to be searched by vendor name first. Discover rather than guess —
+a remembered tool name is not evidence a tool exists, and names differ between one
+environment and the next even when the vendor is the same.
+
+A vendor the repo uses and this session cannot reach is simply unreachable, no matter what
+the repo says. That is a question left unanswered, not an error, and the last section says
+what follows from it.
 
 A repo may name a vendor the tools cannot reach, and a connection may expose a vendor the
 repo does not use. **Only the intersection is evidence.** Querying a vendor this service
