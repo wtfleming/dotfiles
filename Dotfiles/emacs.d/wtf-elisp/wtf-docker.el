@@ -837,8 +837,6 @@ finishes, if its buffer still exists."
    ("k" "Kill wtf-docker buffers" wtf-docker-kill-list-buffers)
    ("q" "Quit"                    transient-quit-one)])
 
-;; Lives here rather than in init.el, which is tangled from init.org and
-;; would lose the binding on the next tangle.
 (keymap-global-set "C-c d" #'wtf-docker-dispatch)
 
 

@@ -74,7 +74,7 @@ directly is clobbered on the next sync.
 
 ## Emacs server
 
-`Dotfiles/emacs.d/init.org` starts the Emacs server at startup, so `emacsclient`
+`Dotfiles/emacs.d/init.el` starts the Emacs server at startup, so `emacsclient`
 can reach a running Emacs:
 
 ```elisp
