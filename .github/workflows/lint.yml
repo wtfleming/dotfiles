@@ -33,7 +33,7 @@ jobs:
 
       # shellcheck and jq are preinstalled on ubuntu-latest runners
       - name: shellcheck
-        run: shellcheck sync-dotfiles.sh install-dependencies-macos.sh bin/* Dotfiles/claude/hooks/*.sh Dotfiles/claude/scripts/*.sh Dotfiles/claude/skills/*/scripts/*.sh Dotfiles/claude/tests/*.sh
+        run: shellcheck sync-dotfiles.sh install-dependencies-macos.sh bin/* Dotfiles/claude/scripts/*.sh Dotfiles/claude/skills/*/scripts/*.sh Dotfiles/claude/tests/*.sh
 
       - name: validate claude settings.json
         run: jq empty Dotfiles/claude/settings.json

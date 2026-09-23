@@ -31,9 +31,9 @@ as a single line each, so the output is a trace of commands rather than a
 per-file listing. Pass `-q` / `--quiet` to silence it and print only errors.
 
 If you add a new config file under `Dotfiles/`, it usually needs a copy step in
-`sync-dotfiles.sh` or it will never be deployed — but not always. The six directories
-under `Dotfiles/claude/` (`agents/`, `commands/`, `skills/`, `hooks/`, `scripts/`,
-`reference/`) are swept recursively, so new files and whole new subdirectories deploy
+`sync-dotfiles.sh` or it will never be deployed — but not always. The five directories
+under `Dotfiles/claude/` (`agents/`, `commands/`, `skills/`, `scripts/`, `reference/`)
+are swept recursively, so new files and whole new subdirectories deploy
 with no edit at all. `CLAUDE.md` has the three copy patterns and which one applies
 where.
 

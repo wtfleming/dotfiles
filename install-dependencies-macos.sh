@@ -47,7 +47,7 @@ brew install rust-analyzer
 # Runtime version manager; Dotfiles/zshrc activates it when it is present
 brew install mise
 
-# Used by the Claude Code hooks (Dotfiles/claude/hooks/*.sh)
+# Used by the Emacs notifications setup (Dotfiles/emacs.d/init.el)
 brew install terminal-notifier
 
 # Used by the Claude Code status line (Dotfiles/claude/scripts/status-line.sh)
