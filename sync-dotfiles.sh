@@ -116,9 +116,6 @@ run cp ~/src/dotfiles/Dotfiles/codex/config.toml ~/.codex/config.toml
 if [ ! -d ~/.claude ]; then
     run mkdir ~/.claude
 fi
-if [ ! -d ~/.claude/hooks ]; then
-    run mkdir ~/.claude/hooks
-fi
 if [ ! -d ~/.claude/skills ]; then
     run mkdir ~/.claude/skills
 fi
@@ -136,7 +133,6 @@ if [ ! -d ~/.claude/commands ]; then
 fi
 
 run cp ~/src/dotfiles/Dotfiles/claude/settings.json ~/.claude/settings.json
-run cp -r ~/src/dotfiles/Dotfiles/claude/hooks/. ~/.claude/hooks/
 run cp -r ~/src/dotfiles/Dotfiles/claude/skills/. ~/.claude/skills/
 run cp -r ~/src/dotfiles/Dotfiles/claude/scripts/. ~/.claude/scripts/
 run cp ~/src/dotfiles/Dotfiles/claude/CLAUDE.global.md ~/.claude/CLAUDE.md

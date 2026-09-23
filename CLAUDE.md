@@ -30,8 +30,8 @@ home directory. Key consequences to keep in mind:
     without a word instead. The abort itself is not silent — `cp` prints its own error
     and an `EXIT` trap names the step it stopped at — but neither tells you which of the
     later steps still need running.
-  - **Swept whole** — `hooks/`, `skills/`, `scripts/`, `reference/`, `agents/` and
-    `commands/` under `Dotfiles/claude/`, each copied as `cp -r .../X/. ~/.claude/X/`.
+  - **Swept whole** — `skills/`, `scripts/`, `reference/`, `agents/` and `commands/`
+    under `Dotfiles/claude/`, each copied as `cp -r .../X/. ~/.claude/X/`.
     New files *and* whole new subdirectories deploy with no change to the sync, so
     adding a skill, agent or command needs nothing here.
 - **Deleting or renaming a file here does not remove the deployed copy** — `cp` only
@@ -42,13 +42,6 @@ home directory. Key consequences to keep in mind:
   registered.
 - `Dotfiles/emacs.d/my-customized.el` is intended to hold machine-local emacs changes;
   sync only `touch`es it so it stays empty in git.
-- `Dotfiles/emacs.d/init.org` is the org source that generates `init.el`. It is
-  edited and tangled in the repo and is intentionally **not** synced to `$HOME`.
-  **Nothing verifies the two agree** — CI used to re-tangle and diff, but it did
-  so with whatever `emacs-nox` Ubuntu ships (29.3, against 30.2 locally), so a
-  green check only meant a different Org version agreed. Re-tangle by hand
-  (`M-x org-babel-tangle`) and commit `init.el` in the same change; a forgotten
-  tangle ships a config the source no longer describes, silently.
 - `Dotfiles/claude/CLAUDE.global.md` is deployed to `~/.claude/CLAUDE.md` — it is the
   global memory file, not documentation for this repo.
   - Its "command line tools available" list and the `brew install` lines in
@@ -87,7 +80,7 @@ home directory. Key consequences to keep in mind:
 
 - Shell scripts target bash/zsh on macOS. Keep them `shellcheck`-clean — CI runs
   the same set on every push:
-  `shellcheck sync-dotfiles.sh install-dependencies-macos.sh bin/* Dotfiles/claude/hooks/*.sh Dotfiles/claude/scripts/*.sh Dotfiles/claude/skills/*/scripts/*.sh Dotfiles/claude/tests/*.sh`
+  `shellcheck sync-dotfiles.sh install-dependencies-macos.sh bin/* Dotfiles/claude/scripts/*.sh Dotfiles/claude/skills/*/scripts/*.sh Dotfiles/claude/tests/*.sh`
 - CI also parses the YAML frontmatter of every `SKILL.md`, agent and command. A header
   that does not parse registers wrong or not at all, and nothing else notices —
   `shellcheck` skips markdown and `jq` only sees `settings.json`.
@@ -112,8 +105,8 @@ home directory. Key consequences to keep in mind:
   - agent — the `name:` frontmatter, which is what `subagent_type` must match
   - command — the file name; there is no `name:` field
   - skill — both the directory name and `name:`
-- `reference/`, `hooks/` and `scripts/` are reached by explicit path from
-  `CLAUDE.md` and `settings.json`, so they share no namespace and are not prefixed.
+- `reference/` and `scripts/` are reached by explicit path from `CLAUDE.md` and
+  `settings.json`, so they share no namespace and are not prefixed.
 - Don't hardcode secrets or work-specific identity. Personal identity lives in
   `Dotfiles/gitconfig`, which ends with an `includeIf "gitdir:~/src/work/"` pointing
   at `~/.gitconfig-work`. That file is **not** in this repo and must never be added

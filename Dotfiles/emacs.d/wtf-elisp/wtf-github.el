@@ -481,9 +481,8 @@ ARGS are extra gh filter switches, normally supplied by
    ("k" "Kill listing buffers" wtf-kill-list-buffers)
    ("q" "Quit"                 transient-quit-one)])
 
-;; Lives here rather than in init.el, which is tangled from init.org and
-;; would lose the binding on the next tangle.  C-c g is taken by
-;; `wtf-transient-gptel-prefix', so GitHub gets the shifted key.
+;; C-c g is taken by `wtf-transient-gptel-prefix', so GitHub gets the
+;; shifted key.
 (keymap-global-set "C-c G" #'wtf-github-dispatch)
 
 

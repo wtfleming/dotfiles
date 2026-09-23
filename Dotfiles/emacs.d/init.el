@@ -50,10 +50,6 @@
 ;; :hook (after-init-hook . projectile-mode)
 ;; (setopt use-package-hook-name-suffix nil)
 
-;; Do not manually edit this file, if you need to make changes it is generated
-;; from a org-bablel literate configuration available here:
-;; https://github.com/wtfleming/dotfiles/blob/master/Dotfiles/emacs.d/init.org
-
 ;; Write any customized variables to a specific file instead of this file
 (setopt custom-file "~/.emacs.d/my-customized.el")
 (load custom-file :no-error)
@@ -356,10 +352,6 @@ org-roam-db-sync in throwaway processes emacsclient can never reach."
   ;; which highlight.js would then refuse to touch. markdown-mode expands "~"
   ;; for markdown-css-paths, but header content is spliced in as raw HTML, so
   ;; the <script> src has to be expanded here.
-  ;;
-  ;; Keep every line of the strings below indented at least as far as this
-  ;; block: a line at column 0 makes org-babel-tangle stop de-indenting the
-  ;; whole block, which reformats all of init.el.
   :init (setq markdown-command "pandoc --syntax-highlighting=none"
               markdown-css-paths '("~/.emacs.d/github-markdown.css"
                                    "~/.emacs.d/highlight-github.css")
@@ -988,6 +980,8 @@ org-roam-db-sync in throwaway processes emacsclient can never reach."
     1 'org-checkbox-done-text prepend))
  'append)
 
+;; Each graph has its own database: sharing ~/.emacs.d/org-roam.db would let
+;; whichever synced last overwrite the other's index. C-c n s switches.
 (defvar wtf-org-roam-graphs
   '((wiki  . ("~/src/wtf-wiki/wiki"       . "~/.emacs.d/org-roam-wtf-wiki.db"))
     (notes . ("~/org-mode/org-roam-notes" . "~/.emacs.d/org-roam.db")))
