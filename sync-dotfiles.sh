@@ -146,6 +146,8 @@ run cp -r ~/src/dotfiles/Dotfiles/claude/commands/. ~/.claude/commands/
 # a failed copy leaves the old skill in place rather than neither. Remove the line once
 # every machine has run it.
 run rm -rf ~/.claude/skills/wtf-verify-fix
+# Tombstone: wtf-deslop was deleted unused. Remove the line once every machine has run it.
+run rm -rf ~/.claude/skills/wtf-deslop
 
 
 if [ "$quiet" -eq 0 ]; then

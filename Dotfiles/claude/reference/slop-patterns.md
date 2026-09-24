@@ -1,9 +1,9 @@
 # AI Slop Patterns
 
 What machine-written code does that human-written code in this repo does not.
-Two consumers read this: `wtf-change-reviewer` flags these as Suggestions, and
-the `wtf-deslop` skill removes them. The catalogue describes the patterns;
-what to do about them belongs to whoever is reading.
+`wtf-change-reviewer` reads this and flags matches as Suggestions. The
+catalogue describes the patterns; what to do about them belongs to whoever is
+reading.
 
 The universal test: **does this line match how the rest of the file is
 written?** The file's own idiom wins over anything below. Examples span

@@ -164,8 +164,7 @@ Also check that the code under review matches the code around it — naming, err
 comment density, logging level. `~/.claude/reference/slop-patterns.md` is the
 catalogue of what machine-written code tends to do (over-comment, over-validate,
 silence the compiler instead of satisfying it) — read it, and flag matches as
-Suggestions. You report these; removing them is the `wtf-deslop` skill's job,
-not yours.
+Suggestions.
 
 Before writing a finding, try to refute it — not confirm it. Open the file,
 trace the caller, check whether validation already happens upstream, look for
