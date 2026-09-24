@@ -90,11 +90,18 @@ eventually print.
 **On both paths, the triage is where the Suggestions are printed.** Leave the
 **Suggestion** section out of the report and let the triage carry them, so each
 one appears once, in the list that says what to do about it — or, if it is
-judged not worth doing, in the count of the ones dropped. That is the only
-rearrangement allowed, and the promotion above is the only re-tiering: every
-other finding goes out as written, in the tier it arrived in. The reviewer's
+judged not worth doing, under **Judged not worth acting on**. The reviewer's
 template does emit a `## Suggestion` section, so a path that skips this rule
 prints every Suggestion twice.
+
+That is one of two rearrangements allowed, the other being the gate in **Gate
+the findings on likelihood**, which moves a harmless Warning — and a Suggestion
+the triage would not act on — into that same section further down. Both relocate
+a finding without touching what it says; the promotion above remains the only
+re-tiering. Every finding still goes out in the tier it arrived in, in the words
+it arrived in — "verbatim" binds the text of a finding, not the heading it
+prints under, and a gated finding that came back reworded or demoted has broken
+the rule the relocation was careful not to.
 
 Then, under `--lite`, add the **Suggestion triage** described under **Triage the
 Suggestions** below the report — the one place this command adds an opinion of
@@ -125,19 +132,21 @@ once, already classified:
 
 **Worth doing**
 - `src/api.ts:40` — <the finding as the reviewer wrote it> — <one line: what the suggestion buys>
-
-_3 Suggestions judged not worth doing and dropped._
 ```
 
 Every Suggestion is judged against all three of those, and the third is not
-printed: a nit nobody should act on costs a reader the same attention as one
-they should, and removing that cost is what the sorting is for. It leaves as a
-count, not silently — a dropped finding is reported, not hidden — and one line
-saying how many is the whole of it. Match that line to the number —
-`_1 Suggestion judged not worth doing and dropped._` — and omit it altogether
-when nothing was dropped, since a line reporting zero dropped findings reports
-nothing. Each Suggestion that *is* printed lands in exactly one list, carrying
-its `file:line`, the finding as written, any qualifier it arrived with, and the
+printed here: a nit nobody should act on costs a reader the same attention as
+one they should, and removing that cost is what the sorting is for. It does not
+leave the report, though — it prints under **Judged not worth acting on**, with
+the reason it was not worth the churn. This used to be a count, on the grounds
+that a dropped finding should be reported rather than hidden; a count reports
+only that something was dropped, and a reader who wants to know whether the
+sorting is any good cannot tell a good call from a bad one by a number. The
+reason is the part worth having, so the finding carries it and there is no
+count.
+
+Each Suggestion that *is* printed lands in exactly one list, carrying its
+`file:line`, the finding as written, any qualifier it arrived with, and the
 one-line reason. That is the only place it appears, so a finding shortened here
 is shortened everywhere.
 
@@ -173,6 +182,94 @@ finding moves only when it states a concrete failure that the Warning
 definition covers. "Could be cleaner" does not move. When unsure, do not
 promote — a wrongly promoted nit costs a tier, and the tier a reader trusts is
 worth more than the one that flatters the review.
+
+## Gate the findings on likelihood
+
+**Both paths.**
+
+A Warning states a concrete failure, and that is what earns it the tier. But a
+concrete failure with no realistic way to occur still costs a reader the same
+attention as one that is about to happen, and spends it on nothing. On a run
+over a real analytics change this command put eight Warnings on a pull request;
+four had a trigger that occurs in normal operation. The others were migration
+hygiene, a test that cannot fail — which cannot itself cause a bug, only fail to
+prevent one — a volume increase the author had already costed in the PR body,
+and a robustness gap with no live defect behind it. Every one of them was true.
+None of them was going to break anything.
+
+So each **Warning**, including one promoted from a Suggestion, is judged against
+two questions before the report prints:
+
+- **Does the trigger occur in normal operation?** Not one that needs a
+  deliberate future code change, a cast to construct, or a condition the code
+  makes unreachable.
+- **Does the consequence matter?** Wrong data, a broken user path, a silent
+  failure. "Blocks a future cleanup" and "nothing tests this" do not qualify on
+  their own.
+
+**A Warning moves only when the answer to both is no**, and the conjunction is
+the whole of the safety here. A rare trigger with a serious consequence stays,
+because that is the shape of most defects worth catching before a merge — the
+one-in-a-thousand request that corrupts a row is exactly what review is for. A
+common trigger with a trivial consequence stays too. Only the finding that is
+both unlikely and harmless moves, which is a much smaller set than the one a
+reader means when they call a finding noise, and deliberately so: this gate is
+meant to catch what nothing could justify acting on, not to settle what is worth
+acting on first.
+
+Criticals never move, whatever the judgement says. Withholding a Critical is the
+one error here with no recovery, and a Critical that genuinely has no realistic
+trigger is a tiering mistake to fix upstream rather than to hide downstream.
+Pre-existing findings are not judged here either: they are tickets rather than
+work for this change, and they keep their section.
+
+**Suggestions are judged too, but not by the two questions above.** A Suggestion
+is an improvement rather than a failure, so "does the trigger occur" is a
+question most of them fail by construction — run the Warning test over a
+Suggestion list and nearly all of it moves, which would empty the triage rather
+than sort it. Anything in a Suggestion that genuinely would bite has already
+left: the promotion rule above turns it into a Warning first, and it is judged
+here as one.
+
+What they are judged on is the triage's own question — whether the churn is
+worth the gain — and the change is only where that verdict is *recorded*. A
+Suggestion the triage judges not worth doing prints here, with its reasoning,
+instead of vanishing into a count of the ones dropped. That count is the one
+place a finding currently leaves the report with nothing a reader can check, and
+a bare number is not something anyone can tell a good call from a bad one by.
+So the section carries both tiers, each entry leading with its own, and the
+dropped-Suggestions line goes away because the findings it counted are now
+printed.
+
+The ones that move print under their own heading, which **Report** places last:
+
+```markdown
+## Judged not worth acting on
+
+- **Warning** · `src/api.ts:12` · [reuse] — <the finding as it was written> — _unlikely: <why the trigger does not occur> · low impact: <why it would not matter>_
+- **Suggestion** · `src/api.ts:40` · [maintainability] — <the finding as it was written> — _not worth the churn: <what it would cost against what it buys>_
+```
+
+The heading covers both judgements because both end in the same place — nothing
+to do — while the trailing clauses keep them distinguishable, and they are not
+interchangeable: a Warning moves for being harmless, a Suggestion for not being
+worth the churn. Writing a Warning off as churn, or a Suggestion off as
+unlikely, is the tell that the wrong test was applied.
+
+Every entry keeps its tier, its lens tag and its wording, because the purpose of
+the section is that the judgement can be checked — and a finding stripped of its
+tier cannot be argued back up. The trailing clause is that judgement stated so it
+can be disagreed with; a finding that moves without one has been dropped rather
+than classified, and the section stops being auditable the moment it starts
+holding bare assertions.
+
+**The judgement is the part most likely to be wrong**, so it is written where it
+can be caught. Likelihood here is reasoning about triggers, not a measurement of
+them: nothing in this command samples production error rates, cost dashboards or
+adoption. Say so when the basis is thin rather than stating a confident
+likelihood the run did not earn, and when genuinely torn, leave the finding
+where it is — a Warning a reader waves off costs a second of attention, and one
+filed here wrongly costs the whole finding.
 
 ## The per-dimension pass
 
@@ -496,14 +593,20 @@ picks by feel — which is exactly the judgement it is worst placed to make, sin
 the reports it is choosing between were written by its own agents.
 
 Then run **Triage the Suggestions** before printing anything, since a promotion
-changes the tier a finding prints under.
+changes the tier a finding prints under — and then **Gate the findings on
+likelihood**, in that order and after the merge above. Promotion can hand the
+gate a Warning that did not exist when the lenses reported, and the merge can
+turn two thin findings into one whose trigger is plainly real; a gate run before
+either judges a set the report will not print.
 
 ### Report
 
 Print the merged report, in the reviewer's Critical / Warning / Pre-existing
 format, keeping its **Scope**, **Tests** and **Lint** header lines — the test
 result is the most load-bearing line in the report, and on the full pass this is
-its only airing. The Suggestions print once, in the triage below.
+its only airing. The Suggestions print once, in the triage below. A Warning the
+likelihood gate moved prints once too, in its own section — not under **Warning**
+as well.
 
 **Two facts join those header lines**, because each says the pass reached less
 far than the findings below it suggest:
@@ -528,6 +631,14 @@ them, and every finding below was read out of one tree or the other. Where
 `base_stale` is set, say that too — the scope may be wider than the branch.
 
 Then the **Suggestion triage**, carrying the Suggestions.
+
+Then **Judged not worth acting on**, where that section has anything in it —
+omit the heading entirely rather than printing it empty, since a heading over
+nothing reports nothing. It follows the triage rather than preceding it because
+it now holds both kinds of set-aside finding, and the Suggestions in it are the
+ones the triage just decided against: a reader meets the kept lists and the
+discarded ones together, which is the comparison that shows whether the sorting
+is any good.
 
 **Then, last, lens coverage, on one line.** It goes below the triage rather than
 between it and the report: everything above it is work the reader might do, and
@@ -586,12 +697,16 @@ the repairs.
 Make only the edits the named findings describe — a review is not a mandate to
 refactor — and leave committing to the user. "Fix everything" means the three
 tiers; a **Pre-existing** finding is fixed only if the user names it, because
-it belongs to a ticket, not to this branch.
+it belongs to a ticket, not to this branch. A finding under **Judged not worth
+acting on** is fixed only if the user names it too, whichever tier it carries —
+that section is the set already judged not to be worth the work, and sweeping it
+up under "everything" would spend exactly the churn the judgement existed to
+avoid.
 
 "Fix the suggestions" means both printed lists — **Definitely worth doing** and
-**Worth doing** — not just the top one. The ones counted as not worth doing
-stay unfixed: the triage judged the churn to outweigh the gain, and asking for
-the suggestions is not asking to reverse that.
+**Worth doing** — not just the top one. The ones set aside under **Judged not
+worth acting on** stay unfixed: the triage judged the churn to outweigh the
+gain, and asking for the suggestions is not asking to reverse that.
 
 Then have the fixes checked, because of who wrote them. Everything above is
 built on the author being the worst-placed judge of their own work, and the
@@ -762,7 +877,40 @@ arrived as would be re-ranking just as much as posting it higher, which the next
 line forbids.
 
 Do not re-rank on the way out. The tier that gets posted is the tier the review
-gave it, including any you would have scored differently.
+gave it, including any you would have scored differently. That rule governs
+*what* a posted finding says; the gate below governs *whether* it is posted at
+all, and the two never trade against each other — nothing is softened on the way
+out, and nothing posted carries a tier the review did not give it.
+
+**What does not go up.** Findings under **Judged not worth acting on** are not
+posted — both tiers in it, the harmless Warnings and the discarded
+Suggestions. A pull request
+is a worse venue for a marginal finding than the terminal is: the report is one
+reader deciding what to act on, while a PR comment is a notification, a thread
+someone has to resolve, and a permanent record of how many problems the change
+was said to have. Say the count in the review body — `Also raised, not posted as
+individually actionable: 4 findings — in the terminal report` — so the author can
+see there was more and ask, rather than the withheld half being invisible to the
+one person who might disagree with the judgement.
+
+**A finding whose premise the PR body already answers is a question, not a
+finding.** Read the body before posting — on a PR scope it is already in hand
+from **Review**. An author who documented the cost of a change, marked something
+out of scope, or recorded the trade-off has answered the reviewer in advance, and
+posting the finding unchanged tells them they were not read. Either drop it, or
+post it as a reply that engages with what they wrote and says why the answer does
+not settle it.
+
+**One failure mode is one comment.** Two findings that share a trigger and a fix
+go up as a single comment, however they were tiered or tagged in the report.
+Different remedies still mean different defects — that is the test wherever two
+findings are weighed against each other — but it is a test written for the
+*report*, where a reader is scanning a list and a second entry costs a line. A
+PR turns each survivor into its own thread on its own line, so the same pair
+costs more there. Two findings reading "the query errors and the value pins to a
+sentinel" and "nothing logs that it happened" are one broken path described
+twice, and splitting them across two threads on one line makes a single problem
+look like two.
 
 The guards that apply to anything published to GitHub live in
 `~/.claude/reference/github-publishing.md`, shared with `wtf-code-verify` and
