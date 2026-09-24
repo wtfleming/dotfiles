@@ -223,13 +223,21 @@ trigger is a tiering mistake to fix upstream rather than to hide downstream.
 Pre-existing findings are not judged here either: they are tickets rather than
 work for this change, and they keep their section.
 
-**Suggestions are judged too, but not by the two questions above.** A Suggestion
-is an improvement rather than a failure, so "does the trigger occur" is a
-question most of them fail by construction — run the Warning test over a
-Suggestion list and nearly all of it moves, which would empty the triage rather
-than sort it. Anything in a Suggestion that genuinely would bite has already
-left: the promotion rule above turns it into a Warning first, and it is judged
-here as one.
+**Suggestions are judged too, but not by the two questions above.** The reason
+is not that the Warning test would leave nothing behind — run over the fifteen
+Suggestions from the analytics review it kept six, which is a plausible-looking
+number. It is that the six were the wrong six. It discarded a comment stating
+something the code contradicts and another whose stated rationale is checkably
+false — both one-line fixes, both in the top triage list — and kept a branch
+whose trigger cannot occur in a browser at all, on the strength of what would
+happen if it did.
+
+That is the failure to avoid: "would this bite?" and "is this worth doing?" are
+close to orthogonal for an improvement. A cheap fix with no failure mode behind
+it scores identically to a pointless one, so the test does not prune a Suggestion
+list, it shuffles it. Anything in a Suggestion that genuinely would bite has
+already left by this point — the promotion rule above turns it into a Warning
+first, and it is judged here as one.
 
 What they are judged on is the triage's own question — whether the churn is
 worth the gain — and the change is only where that verdict is *recorded*. A
@@ -925,6 +933,18 @@ review rather than one API call per comment (a `POST .../pulls/{number}/reviews`
 with a `comments` array, or the `gh` equivalent), so they land together as one
 review instead of trickling in as separate notifications.
 
+**Suggestions are the exception, and they split by triage list.** Only
+**Definitely worth doing** goes inline; **Worth doing** collapses into a single
+grouped block in the review body, one line each, under a `Worth doing` heading.
+An inline comment is the most expensive shape a finding has — a thread, a
+notification, something to resolve — and Suggestions are the most numerous tier,
+so a review that anchors all of them buys the cheapest findings the costliest
+presentation. That is how a change with four Warnings worth acting on arrives
+looking like seventeen problems. The split costs nothing: the top list is short
+by construction and still lands where the reader is looking, and a deferrable
+improvement reads perfectly well as a line in a list. Nothing is discarded, and
+the body block carries the same `file:line` and wording the triage printed.
+
 Inline anchoring only works within the PR's diff hunks — GitHub rejects a
 comment on a line the diff does not touch. Check each finding's `file:line`
 against the hunks *before* posting, rather than discovering the rejection from a
@@ -940,16 +960,21 @@ findings were actually read from, so a comment cannot land against a commit
 nobody reviewed. A finding's `file:line` always names code that still exists in the
 tree being reviewed, never a deleted line, so `side` is always `RIGHT`.
 
-- A finding whose line falls inside a hunk goes up as its own inline comment,
-  tier-led as above.
+- A finding bound for inline — everything except the **Worth doing**
+  Suggestions, which are already headed for the body — goes up as its own
+  comment where its line falls inside a hunk, tier-led as above.
 - A finding whose line does not — unchanged context the diff doesn't cover, a
   file touched only indirectly, a `file:line` that drifted — cannot anchor.
   Collect all such findings into the review's body instead, grouped under
   Critical / Warning / Suggestion / Pre-existing headings, the same way a
-  fully-grouped review would be written — the Suggestions taken from the
-  triage, which is where they were printed.
-- Say, when posting, how many went inline and how many fell back to the body,
-  so the split is visible rather than silently mixed.
+  fully-grouped review would be written. A **Definitely worth doing** Suggestion
+  that cannot anchor lands under the Suggestion heading there; it does not join
+  the `Worth doing` block, which is a list of things the triage deferred rather
+  than a place for whatever failed to anchor.
+- Say, when posting, how many went inline, how many fell back to the body for
+  want of an anchor, and how many are in the `Worth doing` block — three
+  different facts, and folding the last into the second would report a
+  deliberate choice as an anchoring failure.
 
 If the user asks for a different shape instead — a single review comment for
 everything, or inline for everything with no fallback — do that instead; this
