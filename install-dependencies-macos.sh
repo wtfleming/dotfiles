@@ -78,3 +78,8 @@ fi
 # formulae from a third-party tap until it is trusted. Run `sbx login` afterwards.
 brew trust docker/tap
 brew install docker/tap/sbx
+
+# Stop macOS popping its input-source bubble beside the cursor. With a second
+# input source enabled it fires whenever the cursor jumps, which a redrawing TUI
+# like Claude Code does constantly. Takes effect after logging out and back in.
+defaults write kCFPreferencesAnyApplication TSMLanguageIndicatorEnabled 0
