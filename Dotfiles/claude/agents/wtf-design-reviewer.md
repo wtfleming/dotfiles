@@ -101,6 +101,12 @@ Things worth looking for:
 - a decision that is hard to reverse later (a file format, a name in a shared
   namespace, a config schema) taken casually where a reversible one exists
 - a dependency taken on for something a few lines could do
+- the change rests on an assumption the code contradicts or cannot confirm —
+  an input that never arrives, a second caller that does not exist. Name the
+  assumption; what it buys is what drops out if it is false
+
+Before suggesting how to simplify a piece, check whether it can go entirely.
+Where both apply, report only the deletion.
 
 One caveat on convergence: before calling a redundancy a finding, `git log`
 both pieces. Work in progress may be mid-migration — one piece replacing the
