@@ -46,11 +46,11 @@ if (!existsSync(filmPath)) {
   console.error(`no such page: ${filmPath}`);
   process.exit(2);
 }
-if (!(fps > 0 && width > 0 && height > 0 && workers >= 1)) {
+if (!(Number.isFinite(fps) && fps > 0 && width > 0 && height > 0 && Number.isInteger(workers) && workers >= 1)) {
   console.error('--fps and --workers must be positive, and --size WIDTHxHEIGHT');
   process.exit(2);
 }
-if (!stillsDir && spawnSync('ffmpeg', ['-version']).error) {
+if (!stillsDir && !checkLoop && spawnSync('ffmpeg', ['-version']).error) {
   console.error('ffmpeg not found. Install it with:  brew install ffmpeg');
   process.exit(2);
 }
@@ -71,11 +71,14 @@ try {
     await page.goto(pathToFileURL(filmPath).href, { waitUntil: 'load' });
     // Fonts and images that land mid-render swap in on a random frame.
     // window.READY is the film's own promise for anything else it must load first.
-    await page.evaluate(async () => {
+    // An <img> with no src rejects decode() too, so only a failed src counts.
+    const broken = await page.evaluate(async () => {
       await window.READY;
       await document.fonts.ready;
-      await Promise.all([...document.images].map((img) => img.decode().catch(() => {})));
+      const failed = await Promise.all([...document.images].map((img) => img.decode().then(() => null, () => img.getAttribute('src') && img.src)));
+      return failed.filter(Boolean);
     });
+    if (broken.length) page.errors.push(`image failed to decode (${broken[0]})`);
     if (page.errors.length) throw new Error(`page error while loading ${filmPath}: ${page.errors[0]}`);
     return page;
   };

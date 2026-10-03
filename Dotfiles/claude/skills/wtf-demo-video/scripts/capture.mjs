@@ -38,6 +38,13 @@ if (!list || list.startsWith('--')) {
   process.exit(2);
 }
 const { base = '', shots } = JSON.parse(readFileSync(list, 'utf8'));
+// Each name is an output file, so a missing or repeated one would overwrite another shot.
+const names = shots.map((s) => s.name);
+const bad = names.findIndex((n, i) => !n || names.indexOf(n) !== i);
+if (bad >= 0) {
+  console.error(names[bad] ? `shot name "${names[bad]}" is used twice` : 'every shot needs a "name"');
+  process.exit(2);
+}
 const outDir = flag('out', 'assets');
 const [width, height] = flag('size', '1440x900').split('x').map(Number);
 const dpr = Number(flag('dpr', 2));

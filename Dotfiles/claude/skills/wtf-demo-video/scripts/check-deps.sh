@@ -4,6 +4,7 @@
 #   check-deps.sh [video-dir]   # video-dir defaults to the cwd
 
 dir=${1:-.}
+qdir=$(printf %q "$dir")   # pasteable even with spaces in the path
 missing=0
 
 need() { # binary, install hint
@@ -19,10 +20,10 @@ need ffprobe "brew install ffmpeg"
 
 if command -v node >/dev/null 2>&1; then
     if ! (cd "$dir" 2>/dev/null && node -e "require.resolve('playwright')" >/dev/null 2>&1); then
-        echo "missing: playwright in $dir — install with: (cd $dir && npm i -D playwright && npx playwright install chromium)"
+        echo "missing: playwright in $dir — install with: (cd $qdir && npm i -D playwright && npx playwright install chromium)"
         missing=1
     elif ! (cd "$dir" && node -e "process.exit(require('fs').existsSync(require('playwright').chromium.executablePath()) ? 0 : 1)") >/dev/null 2>&1; then
-        echo "missing: playwright's chromium — install with: (cd $dir && npx playwright install chromium)"
+        echo "missing: playwright's chromium — install with: (cd $qdir && npx playwright install chromium)"
         missing=1
     fi
 fi
