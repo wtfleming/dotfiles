@@ -4,7 +4,7 @@
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
 const lerp = (a, b, k) => a + (b - a) * k;
 /* 0 before start, 1 after end, linear between. */
-const span = (t, start, end) => clamp((t - start) / (end - start));
+const span = (t, start, end) => (end > start ? clamp((t - start) / (end - start)) : +(t >= end));
 
 /* Closed-form damped spring from 0 to 1, started at t=0. period is the
    undamped oscillation in seconds; zeta < 1 overshoots, zeta = 1 does not.

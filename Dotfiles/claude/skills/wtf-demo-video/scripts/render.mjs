@@ -81,7 +81,7 @@ try {
   };
   const pages = [await openPage()];
   const duration = await pages[0].evaluate(() => window.DURATION);
-  if (typeof duration !== 'number' || duration <= 0) throw new Error('window.DURATION is not a positive number');
+  if (!(Number.isFinite(duration) && duration > 0)) throw new Error('window.DURATION is not a positive number');
   if (!(await pages[0].evaluate(() => typeof window.seek === 'function'))) throw new Error('window.seek is not defined');
 
   const shoot = async (page, t) => {
@@ -142,7 +142,8 @@ try {
     ff = spawn('ffmpeg', [
       '-y', '-loglevel', 'error',
       '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'png', '-i', '-',
-      ...(audio ? ['-i', audio, '-c:a', 'aac', '-b:a', '192k', '-shortest'] : []),
+      // apad pads a short track with silence, so -shortest always cuts to the video's length.
+      ...(audio ? ['-i', audio, '-af', 'apad', '-c:a', 'aac', '-b:a', '192k', '-shortest'] : []),
       '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '16', '-preset', 'slow',
       '-movflags', '+faststart', partial,
     ], { stdio: ['pipe', 'inherit', 'inherit'] });

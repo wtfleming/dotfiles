@@ -21,7 +21,7 @@ const bpm = Number(flag('bpm', 120));
 const key = flag('key', 'A');
 const out = flag('out', 'track.wav');
 const NOTES = { C: 0, 'C#': 1, D: 2, 'D#': 3, E: 4, F: 5, 'F#': 6, G: 7, 'G#': 8, A: 9, 'A#': 10, B: 11 };
-if (!(duration > 0 && bpm > 0) || !(key in NOTES)) {
+if (!(Number.isFinite(duration) && duration > 0 && Number.isFinite(bpm) && bpm > 0) || !Object.hasOwn(NOTES, key)) {
   console.error('usage: node beat-track.mjs --duration SECONDS [--bpm 120] [--key A|C#|...] [--out track.wav]');
   process.exit(2);
 }

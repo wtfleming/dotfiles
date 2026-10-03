@@ -21,8 +21,14 @@ export function loadChromium() {
   }
 }
 
-/* --name value from argv, or dflt when absent. */
+/* --name value from argv, or dflt when absent. Exits 2 if --name is given with no value. */
 export function flag(args, name, dflt) {
   const i = args.indexOf('--' + name);
-  return i >= 0 && args[i + 1] ? args[i + 1] : dflt;
+  if (i < 0) return dflt;
+  const v = args[i + 1];
+  if (v == null || v.startsWith('--')) {
+    console.error(`--${name} needs a value`);
+    process.exit(2);
+  }
+  return v;
 }
