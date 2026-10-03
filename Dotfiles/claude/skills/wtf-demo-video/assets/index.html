@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>demo video</title>
+<style>
+  /* No CSS transitions or animations anywhere: they run on the wall clock, and
+     the renderer does not. Every moving value is set by seek(t). */
+  :root { --bg: #0d0f14; --fg: #f2f0ea; --accent: #ff6b3d; --muted: #8a8f9c; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); }
+  body { font-family: system-ui, -apple-system, sans-serif; color: var(--fg); }
+  #stage { position: absolute; inset: 0; }
+  /* No will-change: a cached layer repaints text differently depending on the frame before. */
+  .layer { position: absolute; left: 0; top: 0; transform-origin: 50% 50%; }
+  #morph { background: var(--accent); }
+  #title { font-weight: 700; letter-spacing: -0.03em; white-space: nowrap; }
+  #shot { border-radius: 14px; box-shadow: 0 30px 80px rgba(0,0,0,.5); }
+  /* terminal(): put class="kit-term layer" on a <pre> */
+  .kit-term { margin: 0; padding: 1.2em 1.4em; border-radius: 12px; background: #16181f;
+              font: 500 28px/1.5 ui-monospace, Menlo, monospace; white-space: pre; }
+  .kit-prompt { color: var(--accent); }
+  .kit-out { color: var(--muted); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="morph" class="layer"></div>
+  <div id="title" class="layer">Product</div>
+  <!-- <img id="shot" class="layer" src="assets/screen.png"> -->
+</div>
+<script src="kit.js"></script>
+<script>
+/* ---------- the film ---------- */
+
+window.DURATION = 6;
+const $ = (id) => document.getElementById(id);
+
+window.seek = function seek(t) {
+  const L = layout(), u = L.u;
+
+  // One shape morphs between states; it is never cut. The last keys return it
+  // to frame 0, so the film loops.
+  const click = 3.6;
+  const size = track(t, [[0, 0], [0.2, 220], [2.0, 120], [click, 150], [5.0, 0]]);
+  const wide = track(t, [[0, 0], [2.0, 1], [4.9, 0]], SPRING.camera);
+  place($('morph'), {
+    x: L.cx, y: L.cy - lerp(0, 160, wide) * u,
+    w: lerp(size, size * 3.2, wide) * u, h: size * u,
+    radius: lerp(size / 2, 24, wide) * u,
+    scale: 1 - 0.06 * Math.sin(Math.PI * span(t, click, click + 0.2)),
+  });
+
+  cursor(t, {
+    moves: [[0, L.W * 0.8, L.H * 0.9], [2.9, L.cx + 120 * u, L.cy - 140 * u], [4.2, L.W * 0.8, L.H * 0.9]],
+    clicks: [click],
+    visible: span(t, 2.6, 2.9) * (1 - span(t, 4.4, 4.7)),
+  });
+
+  const title = $('title');
+  title.style.fontSize = 96 * u + 'px';
+  const k = spring(t - 2.3, SPRING.type);
+  place(title, { x: L.cx, y: L.cy + lerp(140, 110, k) * u, opacity: k * (1 - span(t, 4.6, 5.0)) });
+};
+
+/* Opened by hand rather than by the renderer: loop in real time, or hold one
+   frame with ?t=3.5. navigator.webdriver is true under Playwright. */
+if (!navigator.webdriver) {
+  const hold = new URLSearchParams(location.search).get('t');
+  if (hold != null) seek(Number(hold));
+  else {
+    const t0 = performance.now();
+    (function loop() { seek(((performance.now() - t0) / 1000) % DURATION); requestAnimationFrame(loop); })();
+  }
+}
+</script>
+</body>
+</html>

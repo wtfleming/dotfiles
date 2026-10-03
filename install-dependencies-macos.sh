@@ -65,8 +65,12 @@ brew install imagemagick
 
 # Not advertised to Claude, but depended on anyway, so do not prune these along
 # with that list: Dotfiles/claude/settings.json allowlists `node --check` and
-# `gh pr merge`, and Dotfiles/emacs.d/wtf-elisp/wtf-github.el shells out to gh.
+# `gh pr merge`, Dotfiles/emacs.d/wtf-elisp/wtf-github.el shells out to gh, and
+# the wtf-demo-video skill renders with node.
 brew install node gh
+
+# Encodes rendered frames to video for the wtf-demo-video skill
+brew install ffmpeg
 
 # Docker Desktop (provides the docker CLI). Guarded so re-running the script
 # doesn't fail on a machine where Docker.app was installed manually.
