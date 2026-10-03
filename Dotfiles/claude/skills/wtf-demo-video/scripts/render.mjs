@@ -18,34 +18,23 @@
  *   npm i -D playwright && npx playwright install chromium
  * Exits 1 on any page error, so a broken frame never ships silently.
  */
-import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { spawn, spawnSync } from 'node:child_process';
-import { mkdirSync, existsSync, writeFileSync } from 'node:fs';
+import { mkdirSync, existsSync, writeFileSync, rmSync, renameSync } from 'node:fs';
 import { availableParallelism } from 'node:os';
 import path from 'node:path';
+import { loadChromium, flag as argFlag } from './lib.mjs';
 
-/* ESM resolves a bare import relative to this file, which lives in the skill
-   directory with no node_modules — so resolve playwright from the cwd instead. */
-let chromium;
-try {
-  chromium = createRequire(pathToFileURL(process.cwd() + '/'))('playwright').chromium;
-} catch {
-  console.error('playwright not found. From the video directory, run:');
-  console.error('  npm i -D playwright && npx playwright install chromium');
-  process.exit(2);
-}
-
+const chromium = loadChromium();
 const args = process.argv.slice(2);
 const VALUED = ['out', 'fps', 'size', 'workers', 'audio', 'stills'];
-const flag = (name, dflt) => {
-  const i = args.indexOf('--' + name);
-  return i >= 0 && args[i + 1] ? args[i + 1] : dflt;
-};
+const flag = (name, dflt) => argFlag(args, name, dflt);
 const positional = args.filter((a, i) => !a.startsWith('--') && !VALUED.includes((args[i - 1] || '').slice(2)));
 
-const page_ = path.resolve(positional[0] || 'index.html');
+const filmPath = path.resolve(positional[0] || 'index.html');
 const out = flag('out', 'final.mp4');
+// ffmpeg writes here and the result replaces `out` only on success, so a failed render never costs the last good one.
+const partial = path.join(path.dirname(out), path.basename(out, path.extname(out)) + '.partial' + path.extname(out));
 const fps = Number(flag('fps', 60));
 const [width, height] = flag('size', '1920x1080').split('x').map(Number);
 const workers = Number(flag('workers', Math.min(4, availableParallelism())));
@@ -53,8 +42,8 @@ const audio = flag('audio', null);
 const stillsDir = flag('stills', null);
 const checkLoop = args.includes('--check-loop');
 
-if (!existsSync(page_)) {
-  console.error(`no such page: ${page_}`);
+if (!existsSync(filmPath)) {
+  console.error(`no such page: ${filmPath}`);
   process.exit(2);
 }
 if (!(fps > 0 && width > 0 && height > 0 && workers >= 1)) {
@@ -67,13 +56,19 @@ if (!stillsDir && spawnSync('ffmpeg', ['-version']).error) {
 }
 
 const browser = await chromium.launch();
-const errors = [];
+let ff = null, done = null;
 try {
+  // Each page keeps its own errors, so a failure is pinned to the frame that page was painting.
   const openPage = async () => {
     const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 1 });
-    page.on('pageerror', (e) => errors.push(e.message));
-    page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
-    await page.goto(pathToFileURL(page_).href, { waitUntil: 'load' });
+    page.errors = [];
+    page.on('pageerror', (e) => page.errors.push(e.message));
+    page.on('console', (m) => {
+      if (m.type() !== 'error') return;
+      const { url } = m.location();
+      page.errors.push(url ? `${m.text()} (${url})` : m.text());
+    });
+    await page.goto(pathToFileURL(filmPath).href, { waitUntil: 'load' });
     // Fonts and images that land mid-render swap in on a random frame.
     // window.READY is the film's own promise for anything else it must load first.
     await page.evaluate(async () => {
@@ -81,6 +76,7 @@ try {
       await document.fonts.ready;
       await Promise.all([...document.images].map((img) => img.decode().catch(() => {})));
     });
+    if (page.errors.length) throw new Error(`page error while loading ${filmPath}: ${page.errors[0]}`);
     return page;
   };
   const pages = [await openPage()];
@@ -89,8 +85,13 @@ try {
   if (!(await pages[0].evaluate(() => typeof window.seek === 'function'))) throw new Error('window.seek is not defined');
 
   const shoot = async (page, t) => {
-    await page.evaluate((t) => window.seek(t), t);
-    if (errors.length) throw new Error(`page error at t=${t.toFixed(3)}s: ${errors[0]}`);
+    const at = `t=${t.toFixed(3)}s`;
+    try {
+      await page.evaluate((t) => window.seek(t), t);
+    } catch (e) {
+      throw new Error(`seek threw at ${at}: ${e.message.split('\n')[0]}`);
+    }
+    if (page.errors.length) throw new Error(`page error at ${at}: ${page.errors[0]}`);
     return page.screenshot({ type: 'png' });
   };
 
@@ -138,34 +139,46 @@ try {
   } else {
     while (pages.length < workers) pages.push(await openPage());
     const frames = Math.round(duration * fps);
-    const ff = spawn('ffmpeg', [
+    ff = spawn('ffmpeg', [
       '-y', '-loglevel', 'error',
       '-f', 'image2pipe', '-framerate', String(fps), '-c:v', 'png', '-i', '-',
       ...(audio ? ['-i', audio, '-c:a', 'aac', '-b:a', '192k', '-shortest'] : []),
       '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '16', '-preset', 'slow',
-      '-movflags', '+faststart', out,
+      '-movflags', '+faststart', partial,
     ], { stdio: ['pipe', 'inherit', 'inherit'] });
-    const done = new Promise((res, rej) => {
+    done = new Promise((res, rej) => {
       ff.on('error', rej);
       ff.on('close', (code) => (code === 0 ? res() : rej(new Error(`ffmpeg exited ${code}`))));
     });
+    // ffmpeg can exit mid-render (a bad --audio path); report that, not an unhandled rejection or EPIPE.
+    done.catch(() => {});
+    ff.stdin.on('error', () => {});
     const started = Date.now();
     // One batch is one frame per page; writing each batch in order keeps the stream ordered.
     for (let i = 0; i < frames; i += pages.length) {
+      if (ff.exitCode !== null) await done;
       const batch = await Promise.all(pages.map((p, j) => (i + j < frames ? shoot(p, (i + j) / fps) : null)));
       for (const buf of batch) {
-        if (buf && !ff.stdin.write(buf)) await new Promise((r) => ff.stdin.once('drain', r));
+        if (buf && !ff.stdin.write(buf)) await Promise.race([new Promise((r) => ff.stdin.once('drain', r)), done]);
       }
       if (Math.floor(i / fps) !== Math.floor((i + pages.length) / fps)) process.stdout.write(`\r${Math.min(i + pages.length, frames)}/${frames} frames`);
     }
     ff.stdin.end();
     await done;
+    ff = null;
+    renameSync(partial, out);
     const secs = ((Date.now() - started) / 1000).toFixed(1);
     console.log(`\rwrote ${out}: ${frames} frames, ${duration}s at ${fps}fps, ${width}x${height}, ${pages.length} workers, ${secs}s`);
   }
 } catch (e) {
   console.error(e.message);
   process.exitCode = 1;
+  // A live ffmpeg would wait on stdin forever and keep the process from exiting.
+  if (ff) {
+    ff.stdin.destroy();
+    ff.kill('SIGKILL');
+    rmSync(partial, { force: true });
+  }
 } finally {
   await browser.close();
 }

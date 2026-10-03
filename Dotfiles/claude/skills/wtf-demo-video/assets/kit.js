@@ -115,8 +115,8 @@ function terminal(el, t, { at = 0, lines, cps = 28, gap = 0.08, prompt = '$ ' })
       if (shown >= 0) {
         html += `<span class="kit-prompt">${esc(prompt)}</span>${esc(line.cmd.slice(0, shown))}`;
         typing = shown < line.cmd.length;
-        if (typing) break;
-        html += '\n';
+        // No break: every line still advances the clock, so the return value is the same for any t.
+        if (!typing) html += '\n';
       }
       clock += line.cmd.length / cps + 0.35; // a beat before the command "runs"
     } else if (line.out != null) {

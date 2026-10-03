@@ -59,6 +59,7 @@ The skill's files, all under `~/.claude/skills/wtf-demo-video/`:
 | `scripts/capture.mjs` | Screenshots states of the running app from a shot list. |
 | `scripts/render.mjs` | Renders stills, the video, or a loop check. |
 | `scripts/beat-track.mjs` | Synthesizes a backing track and its beat grid. |
+| `scripts/lib.mjs` | Shared setup for the scripts: loading playwright, reading flags. |
 
 ## 1. Check dependencies, then set up the video directory
 
