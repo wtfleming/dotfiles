@@ -204,6 +204,14 @@
                            (when (> duration 1.0)
                                (message "%.06f seconds" duration))))))
 
+;; ---- Redisplay ----
+;;
+;; Skip fontification while input is pending, so fast scrolling stays responsive.
+;; see https://www.jamescherti.com/emacs-user-interface-better-responsiveness-and-latency/
+(setopt redisplay-skip-fontification-on-input t)
+(setopt fast-but-imprecise-scrolling t)
+(setopt inhibit-compacting-font-caches t)
+
 
 ;; Note that for all-the-icons to work you must manually install them by calling
 ;; M-x all-the-icons-install-fonts
