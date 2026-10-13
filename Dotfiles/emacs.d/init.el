@@ -1,3 +1,4 @@
+;;; -*- lexical-binding: t -*-
 ;;; ---- package management ----
 ;; Store downloaded packages in a directory corresponding to the emacs version we are running
 ;; Make upgrading emacs to a new major version easier/safer
@@ -1300,12 +1301,12 @@ both; the caller can retitle or edit the existing page."
 
 
 ;; Switching to ibuffer puts the cursor on the most recent buffer
-(defadvice ibuffer (around ibuffer-point-to-most-recent) ()
-           "Open ibuffer with cursor pointed to most recent buffer name"
-           (let ((recent-buffer-name (buffer-name)))
-             ad-do-it
-             (ibuffer-jump-to-buffer recent-buffer-name)))
-(ad-activate 'ibuffer)
+(defun wtf-ibuffer-point-to-most-recent (orig-fun &rest args)
+  "Open ibuffer with cursor pointed to most recent buffer name"
+  (let ((recent-buffer-name (buffer-name)))
+    (apply orig-fun args)
+    (ibuffer-jump-to-buffer recent-buffer-name)))
+(advice-add 'ibuffer :around #'wtf-ibuffer-point-to-most-recent)
 
 ;; Hide the summary at the bottom of the buffer
 (setopt ibuffer-display-summary nil)
@@ -1578,7 +1579,7 @@ both; the caller can retitle or edit the existing page."
 (setopt doom-modeline-indent-info nil)
 
 ;; If non-nil, only display one number for checker information if applicable.
-(setopt doom-modeline-checker-simple-format t)
+(setopt doom-modeline-check-simple-format t)
 
 ;; The maximum displayed length of the branch name of version control.
 (setopt doom-modeline-vcs-max-length 12)
@@ -2178,7 +2179,7 @@ Can be used with the `gptel-post-response-functions' hook."
   (let ((my-gptel-system-msg "You are a large language model and a helpful assistant. Respond concisely."))
     (setopt gptel-directives (assoc-delete-all 'default gptel-directives))
     (add-to-list 'gptel-directives `(default . ,my-gptel-system-msg) )
-    (setopt gptel--system-message my-gptel-system-msg)))
+    (setopt gptel-system-prompt my-gptel-system-msg)))
 
   ;; Sonnet 4.5 isn't supported by gptel yet, but we can add it like this
   ;; For some reason this needs to be outside of the use-package call

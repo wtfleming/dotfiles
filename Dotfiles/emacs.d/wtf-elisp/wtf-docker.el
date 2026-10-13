@@ -358,7 +358,7 @@ The key help window, when open, belongs to this buffer and is closed
 along with it.  Killing the buffer also kills any process attached to
 it."
   (interactive)
-  (when-let ((win (get-buffer-window "*wtf-docker-help*")))
+  (when-let* ((win (get-buffer-window "*wtf-docker-help*")))
     (quit-window t win))
   (quit-window t))
 
@@ -530,7 +530,7 @@ can close it without disturbing unrelated help."
          (sort-by (with-current-buffer buf
                     (save-excursion
                       (goto-char (point-min))
-                      (when-let ((table (vtable-current-table)))
+                      (when-let* ((table (vtable-current-table)))
                         (vtable-sort-by table))))))
     (with-current-buffer buf
       (special-mode)
@@ -642,7 +642,7 @@ An existing process for NAME is killed first.  q kills the buffer,
 which also kills the process."
   (let ((buf (get-buffer-create (format "*wtf-docker-logs: %s*" name))))
     (with-current-buffer buf
-      (when-let ((proc (get-buffer-process buf)))
+      (when-let* ((proc (get-buffer-process buf)))
         (delete-process proc))
       (let ((inhibit-read-only t))
         (erase-buffer))
@@ -724,7 +724,7 @@ while the command runs; the compose listing is refetched when it
 finishes, if its buffer still exists."
   (let ((buf (get-buffer-create (format "*wtf-docker-compose: %s*" label))))
     (with-current-buffer buf
-      (when-let ((proc (get-buffer-process buf)))
+      (when-let* ((proc (get-buffer-process buf)))
         (delete-process proc))
       (let ((inhibit-read-only t))
         (erase-buffer))
