@@ -129,19 +129,6 @@
                            (buffer-substring (region-beginning) (region-end))
                          (read-string "Google: "))))))
 
-(defun wtf-googlemaps-lat-lon ()
-  "Open in google maps the selected region if any, otherwise display a query prompt. Expects lat/lon pair to be whitespace separated"
-  (interactive)
-  (let* ((lat-lon-string (url-hexify-string (if mark-active
-                                                (buffer-substring (region-beginning) (region-end))
-                                              (read-string "Googlemaps lat/lon: "))))
-         (lat-lon-list (split-string lat-lon-string))
-         (lat (nth 0 lat-lon-list))
-         (lon (nth 1 lat-lon-list))
-         (url-params (concat lat "%2C" lon)))
-    (browse-url
-     (concat "http://maps.google.com/?q=" lat))))
-
 
 (defun sort-words (reverse beg end)
   "Sort words in region alphabetically, in REVERSE if negative.
@@ -945,10 +932,12 @@ org-roam-db-sync in throwaway processes emacsclient can never reach."
 ;; :CATEGORY: Home
 ;; :END:
 ;; or (org-set-property) and then choose CATEGORY
-(setq org-agenda-category-icon-alist `(("todo" ,(list (all-the-icons-faicon "home" :v-adjust 0.005)) nil nil :ascent center)
-                                       ("Home" ,(list (all-the-icons-faicon "home" :v-adjust 0.005)) nil nil :ascent center)
-                                       ("Garden" ,(list (all-the-icons-faicon "home" :v-adjust 0.005)) nil nil :ascent center)
-                                       ("recurring" ,(list (all-the-icons-faicon "home" :v-adjust 0.005)) nil nil :ascent center)))
+;; all-the-icons is only loaded in a graphical frame
+(when (display-graphic-p)
+  (setq org-agenda-category-icon-alist `(("todo" ,(list (all-the-icons-faicon "home" :v-adjust 0.005)) nil nil :ascent center)
+                                         ("Home" ,(list (all-the-icons-faicon "home" :v-adjust 0.005)) nil nil :ascent center)
+                                         ("Garden" ,(list (all-the-icons-faicon "home" :v-adjust 0.005)) nil nil :ascent center)
+                                         ("recurring" ,(list (all-the-icons-faicon "home" :v-adjust 0.005)) nil nil :ascent center))))
 
 ;; automatically resize window margins to keep the text comfortably in the middle of the window.
 ;;(use-package olivetti
@@ -1198,7 +1187,7 @@ both; the caller can retitle or edit the existing page."
 ;;; macOS
 ;; Open emacs in front of the terminal window on OS X instead of behind
 ;; http://stackoverflow.com/questions/10171280/how-to-launch-gui-emacs-from-command-line-in-osx
-(if (system-type-is-darwin)
+(if (and (system-type-is-darwin) (display-graphic-p))
     (x-focus-frame nil))
 
 ;; Use command as meta on OS X
@@ -1744,40 +1733,10 @@ both; the caller can retitle or edit the existing page."
          ("\\.[hl]?eex\\'" . heex-ts-mode)
          ;; More modes defined here...
          )
-  :preface
-  (defun os/setup-install-grammars ()
-    "Install Tree-sitter grammars if they are absent."
-    (interactive)
-    (dolist (grammar
-             '((css . ("https://github.com/tree-sitter/tree-sitter-css" "v0.20.0"))
-               (bash "https://github.com/tree-sitter/tree-sitter-bash")
-               (html . ("https://github.com/tree-sitter/tree-sitter-html" "v0.20.1"))
-               (javascript . ("https://github.com/tree-sitter/tree-sitter-javascript" "v0.21.2" "src"))
-               (json . ("https://github.com/tree-sitter/tree-sitter-json" "v0.24.8"))
-               (python . ("https://github.com/tree-sitter/tree-sitter-python" "v0.20.4"))
-               (go "https://github.com/tree-sitter/tree-sitter-go" "v0.20.0")
-               (markdown "https://github.com/ikatyang/tree-sitter-markdown")
-               (make "https://github.com/alemuller/tree-sitter-make")
-               (elisp "https://github.com/Wilfred/tree-sitter-elisp")
-               (cmake "https://github.com/uyha/tree-sitter-cmake")
-               (c "https://github.com/tree-sitter/tree-sitter-c")
-               (cpp "https://github.com/tree-sitter/tree-sitter-cpp")
-               (toml "https://github.com/tree-sitter/tree-sitter-toml")
-               (tsx . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.23.2" "tsx/src"))
-               (typescript . ("https://github.com/tree-sitter/tree-sitter-typescript" "v0.23.2" "typescript/src"))
-               (yaml . ("https://github.com/ikatyang/tree-sitter-yaml" "v0.5.0"))
-               (prisma "https://github.com/victorhqc/tree-sitter-prisma")
-               ;; `elixir-ts-mode' parses embedded ~H sigils with the heex
-               ;; grammar, so it needs both of these, not just `elixir'.
-               (elixir "https://github.com/elixir-lang/tree-sitter-elixir")
-               (heex "https://github.com/phoenixframework/tree-sitter-heex")))
-      (add-to-list 'treesit-language-source-alist grammar)
-      ;; Only install `grammar' if we don't already have it
-      ;; installed. However, if you want to *update* a grammar then
-      ;; this obviously prevents that from happening.
-      (unless (treesit-language-available-p (car grammar))
-        (treesit-install-language-grammar (car grammar)))))
-
+  :custom
+  ;; Emacs 31 modes ship pinned grammar recipes and install them on first use
+  (treesit-auto-install-grammar 'always)
+  :init
   ;; Optional, but recommended. Tree-sitter enabled major modes are
   ;; distinct from their ordinary counterparts.
   ;;
@@ -1800,9 +1759,7 @@ both; the caller can retitle or edit the existing page."
              ;;(sh-mode . bash-ts-mode)
              ;;(sh-base-mode . bash-ts-mode)
              ))
-    (add-to-list 'major-mode-remap-alist mapping))
-  :config
-  (os/setup-install-grammars))
+    (add-to-list 'major-mode-remap-alist mapping)))
 
 ;; ----- Misc -----
 (use-package rainbow-delimiters
