@@ -168,19 +168,26 @@ rm -rf ~/bin/emacs-31.1.bak
 
 A leftover =emacs-31.1.bak= stops the chain before the copy, so a second attempt
 cannot nest a copy of an already-distcleaned tree inside it. What to do with it
-depends only on the marker:
+depends on whether @0.25 is still installed (=brew list tree-sitter@0.25=), and
+then on the marker:
 
-- =emacs-31.1.bak/.backup-complete= exists :: =distclean= may have run, and the
-  backup is the only good copy. Never delete it -- swap it back with the block
-  below, then start the chain again.
-- no marker :: the copy never finished, so =distclean= never ran and the working
-  tree is untouched. Delete the partial =emacs-31.1.bak= and start again.
+- @0.25 uninstalled :: the chain ran to the end, so the rebuild links mainline
+  and the backup links a library that is gone -- it cannot start. Keep the
+  rebuilt tree and fix whatever step 3 found; once step 3 passes, delete the
+  backup as above.
+- @0.25 installed, =emacs-31.1.bak/.backup-complete= exists :: =distclean= may
+  have run, and the backup is the only good copy. Never delete it -- swap it
+  back with the block below, then start the chain again.
+- @0.25 installed, no marker :: the copy never finished, so =distclean= never ran
+  and the working tree is untouched. Delete the partial =emacs-31.1.bak= and
+  start again.
 
-The swap; @0.25 is still installed until the chain's last step, so the backup
-runs as it did before. The check refuses a missing or partial backup, and nothing
-is deleted until the swap has worked:
+To swap it back (the block refuses once @0.25 is uninstalled, or for a missing
+or partial backup, and deletes nothing until the swap has worked):
 #+begin_src sh
 cd ~/bin \
+  && { brew list tree-sitter@0.25 >/dev/null 2>&1 \
+       || { echo "tree-sitter@0.25 is uninstalled: the backup cannot start, fix the rebuild" >&2; false; }; } \
   && [ -e emacs-31.1.bak/.backup-complete ] \
   && mv emacs-31.1 emacs-31.1.failed \
   && mv emacs-31.1.bak emacs-31.1 \
@@ -189,8 +196,6 @@ cd ~/bin \
 #+end_src
 If the chain stopped before the copy began (at =brew install= or =pkg-config=),
 there is no =emacs-31.1.bak= at all and nothing to undo.
-Once @0.25 is uninstalled the backup cannot start any more (it links that
-library), so from then on the way forward is fixing the rebuild, not restoring.
 
 *** Why tree-sitter 0.25 is the real minimum
 configure only requires =tree-sitter >= 0.20.2=, but ABI 15 support is decided at
