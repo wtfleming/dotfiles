@@ -126,11 +126,21 @@ Checked against the 0.27.1 bottle's api.h, not by building: it defines
 TREE_SITTER_LANGUAGE_VERSION 15, and every ts_* function emacs 31's treesit.c
 loads on that path is declared. (=ts_language_version= is gone, but treesit.c
 only uses it when built against headers older than 0.25.)
+Uninstalling tree-sitter@0.25 does *not* remove the =opt/tree-sitter= shim: brew
+resolves it one hop, to =opt/tree-sitter@0.25= rather than the Cellar, so it is not
+recognised as belonging to the keg. Remove it by hand, and only while it still
+points at the @0.25 keg -- otherwise =brew install tree-sitter= fails.
+
+Uninstall @0.25 last: the 31.1 binary links its library, so emacs will not start
+between the uninstall and the rebuild.
 #+begin_src sh
-brew uninstall tree-sitter@0.25    # also removes the opt/tree-sitter shim
+[ "$(readlink /opt/homebrew/opt/tree-sitter)" = /opt/homebrew/opt/tree-sitter@0.25 ] \
+  && rm /opt/homebrew/opt/tree-sitter
 brew install tree-sitter
 unset PKG_CONFIG_PATH              # mainline is not keg-only
 gmake distclean                    # then re-run step 2 and step 3
+otool -L src/emacs | grep tree-sitter   # must name opt/tree-sitter, not @0.25
+brew uninstall tree-sitter@0.25
 #+end_src
 
 ** Verified build recipe (emacs 30.2, Apple Silicon)
