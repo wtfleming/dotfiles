@@ -138,10 +138,20 @@ between the uninstall and the rebuild.
   && rm /opt/homebrew/opt/tree-sitter
 brew install tree-sitter
 unset PKG_CONFIG_PATH              # mainline is not keg-only
-gmake distclean                    # then re-run step 2 and step 3
-otool -L src/emacs | grep tree-sitter   # must name opt/tree-sitter, not @0.25
-brew uninstall tree-sitter@0.25
+cd ~/bin/emacs-31.1 \
+  && gmake distclean \
+  && ./configure \
+       --with-native-compilation \
+       --with-tree-sitter \
+       --without-compress-install \
+       --disable-gc-mark-trace \
+       --with-xwidgets \
+  && gmake -j"$(sysctl -n hw.ncpu)" \
+  && otool -L src/emacs | grep -q 'opt/tree-sitter/lib' \
+  && brew uninstall tree-sitter@0.25
 #+end_src
+The uninstall only runs once the rebuilt binary links the mainline library. Then
+re-run the step 3 checks.
 
 ** Verified build recipe (emacs 30.2, Apple Silicon)
 This is the recipe that actually produced the emacs 30.2 in use. Confirmed against
