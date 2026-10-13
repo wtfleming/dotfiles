@@ -60,6 +60,79 @@ sbx login
 #+end_src
 
 * emacs
+** Verified build recipe (emacs 31.1, Apple Silicon)
+Verified <2026-10-13> on macOS 26 (Darwin 25.6), Apple clang 21. Same shape as
+the 30.2 recipe below; only the differences are spelled out here.
+
+*** 1. Prerequisites
+Same brew list as 30.2 (gcc libgccjit make gnutls texinfo autoconf pkg-config,
+plus the runtime helpers). Versions in the verified build: gcc/libgccjit 16.2.0,
+make 4.4.1, texinfo 7.3, autoconf 2.73.
+
+tree-sitter: built against =tree-sitter@0.25= (keg-only), *because 30.2 was
+still installed*. Any tree-sitter >= 0.25 gives emacs 31 ABI 15 support -- the
+configure floor (still 0.20.2) is not the version that matters.
+
+Do not =brew install tree-sitter= while emacs 30.2 is still in use: 30.2 links
+=opt/tree-sitter/lib/libtree-sitter.0.25.dylib= through the shim described in
+gotcha #1 of the 30.2 recipe, and mainline (0.27.1 as of this writing) would
+replace it.
+
+#+begin_src sh
+export PKG_CONFIG_PATH="$(brew --prefix tree-sitter@0.25)/lib/pkgconfig"
+pkg-config --modversion tree-sitter    # 0.25.10
+#+end_src
+
+*** 2. Configure and build
+Unchanged flag set from 30.2. etc/NEWS has no macOS-relevant installation
+changes for 31.1; --with-xwidgets and --disable-gc-mark-trace both still exist.
+#+begin_src sh
+cd ~/bin/emacs-31.1
+./autogen.sh
+./configure \
+    --with-native-compilation \
+    --with-tree-sitter \
+    --without-compress-install \
+    --disable-gc-mark-trace \
+    --with-xwidgets
+gmake -j"$(sysctl -n hw.ncpu)"
+#+end_src
+Configure summary reported yes for -ltree-sitter, Xwidgets and native lisp
+compiler.
+
+*** 3. Verify
+#+begin_src sh
+src/emacs -Q --batch --eval '(progn
+  (princ (format "treesit:     %s\n" (treesit-available-p)))
+  (princ (format "abi:         %s / min %s\n" (treesit-library-abi-version) (treesit-library-abi-version t)))
+  (princ (format "native-comp: %s\n" (native-comp-available-p)))
+  (princ (format "xwidgets:    %s\n" (fboundp (quote make-xwidget)))))'
+otool -L src/emacs | grep -E 'tree-sitter|gccjit'
+#+end_src
+Result of the verified build:
+#+begin_src
+treesit:     t
+abi:         15 / min 13
+native-comp: t
+xwidgets:    t
+/opt/homebrew/opt/libgccjit/lib/gcc/current/libgccjit.0.dylib
+/opt/homebrew/opt/tree-sitter@0.25/lib/libtree-sitter.0.25.dylib
+#+end_src
+Feature list is identical to the 30.2 build. Note tree-sitter now links via the
+versioned opt path, not the =opt/tree-sitter= shim.
+
+*** 4. After retiring 30.2: move to mainline tree-sitter (not yet verified)
+Checked against the 0.27.1 bottle's api.h, not by building: it defines
+TREE_SITTER_LANGUAGE_VERSION 15, and every ts_* function emacs 31's treesit.c
+loads on that path is declared. (=ts_language_version= is gone, but treesit.c
+only uses it when built against headers older than 0.25.)
+#+begin_src sh
+brew uninstall tree-sitter@0.25    # also removes the opt/tree-sitter shim
+brew install tree-sitter
+unset PKG_CONFIG_PATH              # mainline is not keg-only
+gmake distclean                    # then re-run step 2 and step 3
+#+end_src
+
 ** Verified build recipe (emacs 30.2, Apple Silicon)
 This is the recipe that actually produced the emacs 30.2 in use. Confirmed against
 ~/bin/emacs-30.2/config.log, which shows the working build used a plain configure
