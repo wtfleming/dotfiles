@@ -406,7 +406,7 @@ that g refetches with the same filters."
          (sort-by (with-current-buffer buf
                     (save-excursion
                       (goto-char (point-min))
-                      (when-let ((table (vtable-current-table)))
+                      (when-let* ((table (vtable-current-table)))
                         (vtable-sort-by table))))))
     (with-current-buffer buf
       (special-mode)
