@@ -223,7 +223,7 @@ Checked against etc/NEWS in the 31.1 release:
 - =treesit-language-source-alist= :: accepts keywords, e.g.
   =(json "https://github.com/tree-sitter/tree-sitter-json" :commit "4d770d3")=
 - =treesit-enabled-modes= :: set to t, or to a list, to enable tree-sitter modes
-  through =major-mode-remap-alist=.
+  through =major-mode-remap-alist=. My init.el sets a list.
 - treesit-x.el :: =define-treesit-generic-mode=, plus simple generic modes such
   as =gitattributes-generic-ts-mode=.
 - Query predicates =:equal=, =:match= and =:pred= are deprecated in favour of

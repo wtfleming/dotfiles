@@ -4,11 +4,6 @@
 ;; Make upgrading emacs to a new major version easier/safer
 (setopt package-user-dir (format "~/.emacs.d/elpa-%d" emacs-major-version))
 
-;; Fix problem where emacs can not connect to melpa
-;; https://emacs.stackexchange.com/questions/51721/failed-to-download-gnu-archive
-;; TODO 2/15/25 - is this still a problem?
-(setopt gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
-
 
 (require 'package)
 ;; If you want to see how long packages take to load
@@ -264,12 +259,12 @@
 (semantic-mode 1)
 
 ;; Set default major mode to text-mode
-(setopt default-major-mode 'text-mode)
+(setq-default major-mode 'text-mode)
 
 
 
 ;; Use y or n for emacs yes or no questions
-(defalias 'yes-or-no-p 'y-or-n-p)
+(setopt use-short-answers t)
 
 ;; Open .gz, etc files for editing
 (auto-compression-mode 1)
@@ -289,6 +284,23 @@
 
 ;; Ask before exiting emacs
 (setopt confirm-kill-emacs #'y-or-n-p)
+
+;; C-w with no active region kills the previous word
+(setopt kill-region-dwim 'emacs-word)
+
+;; Leave the mark where delete-pair's closing delimiter was, so C-x C-x
+;; selects what it enclosed
+(setopt delete-pair-push-mark t)
+
+;; Emacs 31 turns this on in capable terminals, which takes mouse selection
+;; away from the terminal's own copy and paste under emacs -nw
+(setopt xterm-mouse-mode nil)
+
+;; Keep C-h l updating as keys are pressed
+(setopt view-lossage-auto-refresh t)
+
+;; Don't start native compilation in the background while on battery
+(setopt native-comp-async-on-battery-power nil)
 
 ;; Re-read buffers whose file changed on disk. Tools outside emacs edit files
 ;; underneath open buffers -- ~/src/wtf-wiki/bin/sync-emacs updates org-roam's
@@ -638,6 +650,9 @@ org-roam-db-sync in throwaway processes emacsclient can never reach."
 (use-package midnight
   :defer 10
   :config
+  ;; Emacs 31 no longer turns the mode on just by loading midnight, and the
+  ;; timer only starts if the mode is already on when the delay is set
+  (midnight-mode 1)
   (midnight-delay-set 'midnight-delay "4:30am")
   :custom
   (clean-buffer-list-delay-general 4))
@@ -739,6 +754,8 @@ org-roam-db-sync in throwaway processes emacsclient can never reach."
 
 ;; ------- Save Place -------
 (setopt save-place-file "~/.emacs.d/saveplace") ;; keep my ~/ clean
+;; The server keeps emacs running for days, so don't wait for exit to save
+(setopt save-place-autosave-interval 300)
 (save-place-mode 1)
 
 ;; ------- recentf -------
@@ -750,7 +767,8 @@ org-roam-db-sync in throwaway processes emacsclient can never reach."
   (recentf-max-saved-items 500)
   (recentf-max-menu-items 25)
   ;; disable recentf-cleanup on Emacs start, because it can cause problems with remote files
-  (recentf-auto-cleanup 'never))
+  (recentf-auto-cleanup 'never)
+  (recentf-autosave-interval 300))
 
 (keymap-global-set  "C-x C-r" 'recentf-open-files)
 
@@ -1268,21 +1286,16 @@ both; the caller can retitle or edit the existing page."
 
 
 ;; ---------- display --------------------------------
-;; Display human readable buffer sizes
-(define-ibuffer-column size-h
-  (:name "Size")
-  (cond
-   ((> (buffer-size) 1000000) (format "%7.1fM" (/ (buffer-size) 1000000.0)))
-   ((> (buffer-size) 100000) (format "%7.0fk" (/ (buffer-size) 1000.0)))
-   ((> (buffer-size) 1000) (format "%7.1fk" (/ (buffer-size) 1000.0)))
-   (t (format "%8d" (buffer-size)))))
+(setopt ibuffer-human-readable-size t)
 
 ;; Modify the default ibuffer-formats
 (setopt ibuffer-formats
         '((mark modified read-only " "
                 (name 34 34 :left :elide)
                 " "
-                (size-h 9 -1 :right)
+                (size 9 -1 :right)
+                " "
+                (recency 12 12 :right)
                 " "
                 filename-and-process)))
 
@@ -1713,53 +1726,20 @@ both; the caller can retitle or edit the existing page."
 ;; TODO look at https://www.masteringemacs.org/article/how-to-get-started-tree-sitter
 
 (use-package treesit
-  :mode (("\\.tsx\\'" . tsx-ts-mode)
-         ("\\.js\\'"  . typescript-ts-mode)
-         ;;("\\.mjs\\'" . typescript-ts-mode)
-         ;;("\\.mts\\'" . typescript-ts-mode)
-         ;;("\\.cjs\\'" . typescript-ts-mode)
-         ("\\.ts\\'"  . typescript-ts-mode)
-         ("\\.jsx\\'" . tsx-ts-mode)
-         ;;("\\.json\\'" .  json-ts-mode)
-         ;;("\\.Dockerfile\\'" . dockerfile-ts-mode)
-         ;;("\\.prisma\\'" . prisma-ts-mode)
-         ;; These modes ship with Emacs 30 and register themselves, but from
-         ;; the file body rather than an autoload -- so nothing ever loads
-         ;; them to begin with. heex-ts-mode claims all of .eex/.leex/.heex
-         ;; once loaded, so web-mode's .eex and .leex entries are dropped
-         ;; below rather than losing to it partway through a session.
-         ("\\.exs?\\'" . elixir-ts-mode)
-         ("mix\\.lock\\'" . elixir-ts-mode)
-         ("\\.[hl]?eex\\'" . heex-ts-mode)
-         ;; More modes defined here...
-         )
+  ;; Emacs 31 maps .ts, .tsx, the elixir files and .[hl]eex itself, but sends
+  ;; javascript to js-ts-mode rather than typescript-ts-mode
+  :mode (("\\.js\\'"  . typescript-ts-mode)
+         ("\\.jsx\\'" . tsx-ts-mode))
   :custom
   ;; Emacs 31 modes ship pinned grammar recipes and install them on first use
   (treesit-auto-install-grammar 'always)
-  :init
-  ;; Optional, but recommended. Tree-sitter enabled major modes are
-  ;; distinct from their ordinary counterparts.
-  ;;
-  ;; You can remap major modes with `major-mode-remap-alist'. Note
-  ;; that this does *not* extend to hooks! Make sure you migrate them
-  ;; also
-  (dolist (mapping
-           '(;;(python-mode . python-ts-mode)
-             ;;(css-mode . css-ts-mode)
-             (typescript-mode . typescript-ts-mode)
-             (js-mode . typescript-ts-mode)
-             ;;(js2-mode . typescript-ts-mode)
-             ;;(c-mode . c-ts-mode)
-             ;;(c++-mode . c++-ts-mode)
-             ;;(c-or-c++-mode . c-or-c++-ts-mode)
-             ;;(bash-mode . bash-ts-mode)
-             ;;(css-mode . css-ts-mode)
-             (json-mode . json-ts-mode)
-             (js-json-mode . json-ts-mode)
-             ;;(sh-mode . bash-ts-mode)
-             ;;(sh-base-mode . bash-ts-mode)
-             ))
-    (add-to-list 'major-mode-remap-alist mapping)))
+  ;; Remaps each mode's non-tree-sitter counterpart via major-mode-remap-alist.
+  ;; That does *not* extend to hooks, so hooks need migrating too.
+  (treesit-enabled-modes '(typescript-ts-mode
+                           tsx-ts-mode
+                           json-ts-mode
+                           elixir-ts-mode
+                           heex-ts-mode)))
 
 ;; ----- Misc -----
 (use-package rainbow-delimiters
@@ -2181,8 +2161,8 @@ readable as a bare symbol, such as \"glm-5.2 [1m]\".")
 
 (use-package gptel-quick
   :ensure t
-  :vc (modus-themes :url "https://github.com/karthink/gptel-quick"
-                    :branch "master"))
+  :vc (gptel-quick :url "https://github.com/karthink/gptel-quick"
+                   :branch "master"))
 ;; TODO if I use a :custom, gptel-quick-timeout doesn't seem to get set?
 (setopt gptel-quick-timeout 60)
 
