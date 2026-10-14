@@ -61,27 +61,28 @@ sbx login
 
 * emacs
 ** Verified build recipe (emacs 31.1, Apple Silicon)
-Verified <2026-10-13> on macOS 26 (Darwin 25.6), Apple clang 21. Same shape as
-the 30.2 recipe below; only the differences are spelled out here.
+Verified <2026-10-13> on macOS 26 (Darwin 25.6), Apple clang 21, first against
+tree-sitter@0.25 and then, <2026-10-14>, rebuilt against mainline 0.27.1 by
+step 4 below. Same shape as the 30.2 recipe below; only the differences are
+spelled out here.
 
 *** 1. Prerequisites
 Same brew list as 30.2 (gcc libgccjit make gnutls texinfo autoconf pkg-config,
-plus the runtime helpers). Versions in the verified build: gcc/libgccjit 16.2.0,
-make 4.4.1, texinfo 7.3, autoconf 2.73.
+plus the runtime helpers), with mainline =tree-sitter= instead of
+=tree-sitter@0.25= -- install-dependencies-macos.sh does this. Versions in the
+verified build: gcc/libgccjit 16.2.0, make 4.4.1, texinfo 7.3, autoconf 2.73,
+tree-sitter 0.27.1.
 
-tree-sitter: built against =tree-sitter@0.25= (keg-only), *because 30.2 was
-still installed*. Any tree-sitter >= 0.25 gives emacs 31 ABI 15 support -- the
-configure floor (still 0.20.2) is not the version that matters.
-
-Do not =brew install tree-sitter= while emacs 30.2 is still in use: 30.2 links
-=opt/tree-sitter/lib/libtree-sitter.0.25.dylib= through the shim described in
-gotcha #1 of the 30.2 recipe, and mainline (0.27.1 as of this writing) would
-replace it.
-
+Any tree-sitter >= 0.25 gives emacs 31 ABI 15 support -- the configure floor
+(still 0.20.2) is not the version that matters. Mainline is not keg-only, so
+pkg-config finds it with no PKG_CONFIG_PATH:
 #+begin_src sh
-export PKG_CONFIG_PATH="$(brew --prefix tree-sitter@0.25)/lib/pkgconfig"
-pkg-config --modversion tree-sitter    # 0.25.10
+pkg-config --modversion tree-sitter    # 0.27.1
 #+end_src
+
+The binary links =libtree-sitter.<major>.<minor>.dylib=, so a =brew upgrade=
+that moves tree-sitter to a new minor version leaves emacs unable to start until
+it is rebuilt (steps 2-3, after =gmake distclean=).
 
 *** 2. Configure and build
 Unchanged flag set from 30.2. etc/NEWS has no macOS-relevant installation
@@ -116,16 +117,17 @@ abi:         15 / min 13
 native-comp: t
 xwidgets:    t
 /opt/homebrew/opt/libgccjit/lib/gcc/current/libgccjit.0.dylib
-/opt/homebrew/opt/tree-sitter@0.25/lib/libtree-sitter.0.25.dylib
+/opt/homebrew/opt/tree-sitter/lib/libtree-sitter.0.27.dylib
 #+end_src
-Feature list is identical to the 30.2 build. Note tree-sitter now links via the
-versioned opt path, not the =opt/tree-sitter= shim.
+Feature list is identical to the 30.2 build. Grammars already built into
+~/.emacs.d/tree-sitter kept loading across the 0.25 -> 0.27 rebuild: the ABI (15)
+did not change, so they did not need reinstalling.
 
-*** 4. After retiring 30.2: move to mainline tree-sitter (not yet verified)
-Checked against the 0.27.1 bottle's api.h, not by building: it defines
-TREE_SITTER_LANGUAGE_VERSION 15, and every ts_* function emacs 31's treesit.c
-loads on that path is declared. (=ts_language_version= is gone, but treesit.c
-only uses it when built against headers older than 0.25.)
+*** 4. After retiring 30.2: move to mainline tree-sitter (done <2026-10-14>)
+Ran exactly as below, with 30.2 retired and no emacs running: the chain exited 0
+in about three minutes, step 3 passed against 0.27.1, and the backup was then
+deleted. Kept for the next machine that starts from tree-sitter@0.25. The
+restore paths further down were exercised in a sandbox, not on this run.
 Uninstalling tree-sitter@0.25 does *not* remove the =opt/tree-sitter= shim: brew
 resolves it one hop, to =opt/tree-sitter@0.25= rather than the Cellar, so it is not
 recognised as belonging to the keg. Remove it by hand, and only while it still
