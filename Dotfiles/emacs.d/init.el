@@ -1727,9 +1727,13 @@ both; the caller can retitle or edit the existing page."
 
 (use-package treesit
   ;; Emacs 31 maps .ts, .tsx, the elixir files and .[hl]eex itself, but sends
-  ;; javascript to js-ts-mode rather than typescript-ts-mode
+  ;; javascript to js-mode rather than typescript-ts-mode
   :mode (("\\.js\\'"  . typescript-ts-mode)
          ("\\.jsx\\'" . tsx-ts-mode))
+  :init
+  ;; Covers what reaches js-mode without a .js name: node shebang scripts, org
+  ;; src blocks
+  (add-to-list 'major-mode-remap-alist '(js-mode . typescript-ts-mode))
   :custom
   ;; Emacs 31 modes ship pinned grammar recipes and install them on first use
   (treesit-auto-install-grammar 'always)
