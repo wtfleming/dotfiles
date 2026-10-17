@@ -484,10 +484,10 @@ The marker spelling is not a local choice: `verify:start` / `verify:end` is name
 regenerates this same section. A near-miss spelling leaves the old section in place and
 appends the new one below it.
 
-**Quote the section whole** — its unmet list and its folded `<details>` tables included. The
-rule against repeating it binds only your own prose outside the markers: do not restate its
-verdict, tally, rows or dispositions there; one sentence pointing at the section is enough. A
-summary above the quote is a second copy that will not be replaced when the section is.
+**Quote the section whole** — its unmet list and its folded `<details>` tables included. In
+your own prose outside the markers, do not restate its verdict, tally, rows or dispositions;
+one sentence pointing at the section is enough. A summary above the quote is a second copy
+that will not be replaced when the section is.
 
 The attribution is doing real work. Dropped into the body under a bare **Verified**
 heading, the verdict reads as the author's own word, and the author is then answerable for
@@ -501,8 +501,10 @@ that reports on it, where it is read as evidence rather than as a claim. Writing
 nothing and adopting a stale one are the same error at different distances: both put a
 verdict in front of a reviewer that no run behind it supports.
 
-**Present a benchmark as a comparison.** Where the evidence in hand includes measurements,
-put the base and HEAD side by side rather than leaving the reviewer to reconstruct the
+**Present a benchmark as a comparison.** A verification section's performance table already
+is one, and it is quoted with the section, never re-tabled outside it — that would be the
+second copy the rule above forbids. For measurements that come from anywhere else, put the
+base and HEAD side by side rather than leaving the reviewer to reconstruct the
 difference from numbers in separate places:
 
 ```markdown
@@ -513,8 +515,8 @@ difference from numbers in separate places:
 
 Publish only numbers the evidence actually contains, with where they came from. With no
 comparable baseline, say so, and do not imply an improvement from a HEAD-only figure. This
-command does not run benchmarks; producing them is `wtf-code-verify`'s, whose evidence
-reference has why a range beats a single pair.
+command does not run benchmarks, and `wtf-code-verify`'s evidence reference has why a range
+beats a single pair.
 
 **Show the shape when the change has one.** Some changes are shapes, and prose is the
 wrong medium for a shape: a restructure that moves files, a control-flow change, a new
