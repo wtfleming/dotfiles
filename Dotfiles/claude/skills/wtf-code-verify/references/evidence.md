@@ -145,12 +145,16 @@ failure, a non-deterministic probe — which is a fact about this code and belon
 **Verified at.** `5544ef1` — the commit the probes actually ran against
 **Environment.** Tier 2 — service from the worktree, compose dependencies (`db`, `redis`)
 
+<details><summary>All 4 expectations, with evidence</summary>
+
 | # | Expectation | Discriminator | Result |
 | - | ----------- | ------------- | ------ |
 | 1 | editor with `includeArchived: true` sees archived id 7 | flag off → id 7 absent | ✅ 200, id 7 present |
 | 2 | anonymous caller is refused | valid session → 200 | ✅ 401 `UNAUTHENTICATED`, no `data.posts` |
 | 3 | `includeArchived: "banana"` → 400, field-level error | valid value → 200 | ✅ 400 `BAD_USER_INPUT`, error names the field |
 | 4 | `posts` with no new argument is unchanged | baseline `2427dfb`, response cache bypassed | ✅ byte-identical response |
+
+</details>
 
 <details><summary>Raw output</summary>
 
@@ -167,6 +171,23 @@ role. The subscription resolver shares the same guard and this PR does not touch
 **CI.** Unit suite and lint run on every push; none of the four above is in CI today.
 **Residue.** None — compose dependencies down, worktree removed.
 ````
+
+**Only what did not pass is spelled out above the fold.** A PR body quotes this section
+word for word, so a twenty-row table lands in the description whole and buries the verdict.
+Between the header lines and the folded table go two optional lines, each left out when it
+has nothing to say:
+
+```markdown
+**Unmet.**
+- #3 `includeArchived: "banana"` → 400, field-level error — ❌ 200, coerced to `false`
+
+**Inconclusive.** 2 rows could not be settled, 1 of them demoted by the refuter; each is in the table below.
+```
+
+Unmet rows are listed in full, number, expectation and result, because each is something a
+reviewer has to act on. Inconclusive rows are counted, not listed — a run with many of them
+would otherwise rebuild the table it folded. The table keeps every row, ✅ included, one
+click away for anyone checking a pass.
 
 The **Discriminator** column is the part that cannot be omitted. It is what separates a
 result from a result that means something: it says how you know each ✅ would have been a
