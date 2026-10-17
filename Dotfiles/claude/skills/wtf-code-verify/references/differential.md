@@ -157,6 +157,15 @@ The second row is the one that matters, and the temptation there is to loosen th
 until the baseline finally fails. That converts an honest inconclusive into a fabricated
 pass, and it is the single worst outcome this method can produce.
 
+**The baseline column records the HEAD expectation run on the base, not whether the whole
+claim holds.** For a bugfix it is usually a failure while the row itself is met — that is
+the top row, not a contradiction. And check the target exists on the base before reading
+its pass. A probe that cannot execute there — a function only HEAD adds, a bootstrap that
+fails, a timeout — is the third row. One that executes and passes vacuously because the
+code path is absent is a different thing again: say the base was *not applicable*, not
+that the behaviour was already there. Neither is a reproduction, and neither is a
+pre-existing pass.
+
 ## Variants
 
 **Refactors** claim *no* observable difference. So the probe is an equivalence check: run

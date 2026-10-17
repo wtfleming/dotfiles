@@ -8,6 +8,8 @@ correct will run cleanly, pass, and tell you nothing.
 
 - Where expectations come from
 - The tautology trap
+- One clause per row
+- When the claim is that a command runs
 - The negative-case catalogue
 - How it fails, not just that it does
 - Producing the condition
@@ -46,6 +48,41 @@ reasoning about what an endpoint of this kind must do to be correct. Where no ex
 source exists and the expectation is genuinely your own inference, say so in the report
 and treat it as weaker evidence — an inference confirmed is worth less than a contract
 upheld, and the reader cannot tell them apart unless you separate them.
+
+## One clause per row
+
+Split a compound claim before numbering the list. Underline every clause that could be
+checked on its own — including the ones joined by "and", "with" or a list — and ask what
+observation would disprove each without disproving the others. Each becomes its own row,
+with its own observable and its own result.
+
+"The function and its test cases are deleted" is two rows. A differential showing the
+function exported on the base and absent on HEAD proves the first and says nothing about
+the second: the test cases may still be in the tree. Give that row its own observable —
+the named cases absent from the tracked test sources, with the search and its exit
+captured — and if you could not check it, it is unsettled, not carried by the function's
+evidence.
+
+**Coverage and discrimination are separate questions.** A partner that discriminated
+proves the clause it observed, not the clause next to it that nothing observed. And one
+command producing several observables does not make them one expectation: rows that
+share a command still get a row each, and are only the same row when they share the
+input, the observable and the captured result.
+
+## When the claim is that a command runs
+
+Some rows assert nothing about behaviour — "compiles with warnings as errors", "the
+selected tests run with zero failures". What settles them is a fresh capture of that
+command meeting its declared result, not a discriminating partner: breaking the code to
+make a compiler fail proves nothing the claim was about. SKILL.md §4's partner rule is for
+behavioural rows; a command row is met on the capture, unmet when the command fails,
+and unsettled when it could not be run.
+
+Read the whole capture all the same. `0 tests` with exit zero is not a met row when tests
+were asked for, and a broader command's output is not the narrower one that was
+requested. A grep or a test invocation used to *show a behaviour* is still a behavioural
+row and still needs its partner — classify by what the claim asks for, not by the tool
+that checks it.
 
 ## The negative-case catalogue
 

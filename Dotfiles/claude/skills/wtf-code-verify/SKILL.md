@@ -160,6 +160,12 @@ thing, and pick the cheapest tier that can see each claim (§5) so breadth stays
 affordable. `references/expectations.md` has why, and what to say when the list runs past
 what the budget allows.
 
+**Split compound claims before numbering.** "The function and its tests are deleted" is
+two rows: a differential proving the function is gone says nothing about its tests.
+Each independently checkable clause gets its own observable and its own result, and rows
+that merely share a command are not one row. `references/expectations.md` has the
+procedure.
+
 **Where the change states an invariant, the row is the property.** A round trip, an
 idempotent operation, an output confined to a domain: a few hand-picked examples test
 the cases the author already thought of, and generated input reaches the ones they did
@@ -215,9 +221,15 @@ one positioned to name those.
 Worth the dispatch when the change has a surface that takes input from outside: an API,
 a CLI, a form, a parser, a queue consumer, anything with an auth boundary. Skip it for a
 refactor or a prose change, where "inputs that should fail" is not the interesting
-category. It proposes cases and expected refusals; it does not run anything. Merge what
-it returns into your list, dropping any case whose expected refusal you cannot state
-concretely.
+category. It proposes cases and expected refusals; it does not run anything. Hand it the
+diff you already resolved rather than having it derive one; for a path or a subject, name
+the files or area, so an empty diff is not read as no surface.
+
+Merge what it returns into your list, dropping any case whose expected refusal you cannot
+state concretely. Each case carries the caller path that reaches its input from an
+external entry point. A case marked **unreachable** is not probed and cannot fail the run
+— list it under **Left out** with that reason, since a refusal nobody outside the code can
+trigger is not a requirement, and dropping it silently would hide that it was considered.
 
 ### Show the list, then run
 
@@ -236,10 +248,14 @@ expect the code to meet the row, and for a ❌ why, in a few words. A run where 
 predicted failures are the ones that fail is a different result from one that surprised
 you, and the column is what lets the report tell them apart.
 
-## 4. Give every probe a discriminating partner
+## 4. Give every behavioural probe a discriminating partner
 
-A probe you have only ever seen green is not evidence. Three ways to earn discrimination,
-cheapest first — pick one per claim:
+A probe you have only ever seen green is not evidence. A row whose claim is only that a
+command runs — "compiles with warnings as errors" — is the exception: it is settled by a
+fresh capture of that command meeting its declared result, and a contrived break would
+prove nothing it asked. Read the counts all the same: `0 tests` is not a pass when tests
+were asked for. `references/expectations.md` has where the line falls. For everything
+else, three ways to earn discrimination, cheapest first — pick one per claim:
 
 1. **The negative case is its own control.** If the invalid input produces the same
    result as the valid one, the code is not reading it. Free: you already wrote both.
@@ -283,6 +299,10 @@ exist — "the base rejects an argument it has never heard of" is true and tells
 nothing about whether HEAD does the right thing. Prose claims get neither: what
 discriminates there is checking the claim against the implementation rather than against
 your memory of it.
+
+**When the probe only runs a test this change adds, (1) is not available.** That test was
+written alongside the code it checks, so varying its input checks the test rather than
+the code. Break the code (2) or run it against the base (3).
 
 The trap that produces the most confident wrong answers is **a probe that cannot run on
 both sides** — it fails the baseline with `Cannot find module`, and that reads as the bug
@@ -369,7 +389,7 @@ entity or a reset between; `references/environments.md` has the tier-2 detail.
 
 | Verdict | When |
 | ------- | ---- |
-| **Verified** | every expectation met, each with a discriminating partner that behaved as predicted |
+| **Verified** | every expectation met — each behavioural row with a discriminating partner that behaved as predicted, each command row on a fresh capture |
 | **Verified with gaps** | what you ran passed, but part of the change or subject went unexercised — name the part |
 | **Not verified** | the probe could not discriminate: green on the base too, red for environmental reasons, or non-deterministic. Say which of the three, and what would tell them apart |
 | **Falsified** | an expectation failed for a real reason. A defect, found before the merge |
@@ -403,7 +423,10 @@ at §3.
 It answers `stands` or `refuted`, and a refuted green is neither a pass nor a defect —
 it is a **Not verified** whose reason you now have in writing, so demote the row and
 carry the reason rather than dropping it. Skip the pass for a row that came out red: a
-probe that failed for the reason it predicted has already discriminated.
+probe that failed for the reason it predicted has already discriminated. Skip the whole
+pass unless the verdict would otherwise be **Verified** or **Verified with gaps**: on a run
+already Falsified or Not verified, a demoted green cannot change what the report says. A
+command row (§4) has no discriminator to refute either.
 
 `Not verified` is not a pass and not a defect, and the pull towards recording it as one
 or the other is strong. Say which of the three it was, and never loosen a probe until it
