@@ -54,6 +54,7 @@ WARNINGS=()
 FELL_THROUGH=()
 FETCH_WARNING=""
 FILE_LIST_SOURCE=git-apply-numstat
+CHANGED_LINES=""
 SHAPE=""
 PR_NUMBER=""
 CORRESPONDENCE=""
@@ -79,6 +80,12 @@ MAX_UNTRACKED_TOTAL_BYTES=10485760
 # Past this many untracked files the per-file `git diff` calls dominate the run, so say so
 # rather than appearing to hang.
 UNTRACKED_NOISY_COUNT=500
+# Context wide enough that a lens can judge most hunks without opening the file. On replayed
+# reviews it cut lens cost by two thirds with the same findings fixed. A PR keeps
+# `gh pr diff`'s three lines: its hunks are what a posted comment has to anchor in.
+DIFF_CONTEXT=-U25
+# Directories whose files are tests or fixtures, left out of `changed_lines`.
+TEST_DIRS='["test","tests","spec","__tests__","fixtures"]'
 
 warn() {
   WARNINGS+=("$*")
@@ -533,9 +540,9 @@ append_untracked() {
 diff_one_commit() {
   local ref=$1
   if git rev-parse --verify --quiet "$ref^" >/dev/null 2>&1; then
-    git diff "$ref^!" --
+    git diff "$DIFF_CONTEXT" "$ref^!" --
   else
-    git diff-tree -p --root "$ref" --
+    git diff-tree -p "$DIFF_CONTEXT" --root "$ref" --
   fi
 }
 
@@ -549,11 +556,24 @@ diff_one_commit() {
 # as a record separator at all -- it silently processes only the first record, which would
 # report a one-file scope for a diff of twenty. jq is already required here for the
 # manifest, so this costs no new dependency.
+#
+# The same numstat gives CHANGED_LINES, the lines added plus removed outside test and
+# fixture directories. A rename is a record with an empty path followed by both paths, so
+# its new path is two records on; a binary file counts `-`, which is no lines. The fallback
+# leaves it empty, since a header scrape cannot count.
 files_from_diff() {
   local diff=$1 dest=$2
   if git apply --numstat -z "$diff" > "$dest.raw" 2>/dev/null; then
     jq -Rs 'split("\u0000") | map(select(length > 0) | sub("^[^\t]*\t[^\t]*\t"; ""))' \
       "$dest.raw" > "$dest"
+    CHANGED_LINES="$(jq -Rs --argjson test_dirs "$TEST_DIRS" '
+      split("\u0000") as $r
+      | [ range(0; $r | length) as $i
+          | $r[$i] | capture("^(?<a>[-0-9]+)\t(?<d>[-0-9]+)\t(?<p>.*)$")?
+          | (if .p == "" then $r[$i + 2] else .p end | ascii_downcase | split("/") | .[:-1]) as $dirs
+          | select(($dirs - $test_dirs) == $dirs)
+          | [.a, .d | tonumber? // 0] | add ]
+      | add // 0' "$dest.raw")"
   else
     FILE_LIST_SOURCE=fallback-headers
     warn "git apply could not parse the diff; the file list was recovered from its headers and may be incomplete"
@@ -683,7 +703,7 @@ resolve_diff_for_shape() {
       RESOLVED_BY="gh pr diff $PR_NUMBER"
       ;;
     range)
-      git diff "$scope" -- > "$diff"
+      git diff "$DIFF_CONTEXT" "$scope" -- > "$diff"
       # Split on the range operator, not on the last dot: `${scope##*.}` turns v1.0..v2.0
       # into `0`, which resolves to nothing, and the manifest then reports the scope's head
       # as absent while the checkout sits exactly on it.
@@ -709,13 +729,13 @@ resolve_diff_for_shape() {
       mb="$(git merge-base "$BASE" "$scope")" \
         || die "no merge base between $scope and $BASE"
       BASE_SHA="$mb"
-      git diff "$mb...$scope" -- > "$diff"
+      git diff "$DIFF_CONTEXT" "$mb...$scope" -- > "$diff"
       SCOPE_HEAD="$(git rev-parse "$scope^{commit}")"
       HEAD_LABEL="$scope"
       RESOLVED_BY="git diff \$(git merge-base $BASE $scope)...$scope"
       ;;
     path)
-      git diff HEAD -- "$scope" > "$diff"
+      git diff "$DIFF_CONTEXT" HEAD -- "$scope" > "$diff"
       append_untracked "$diff" "$scope"
       SCOPE_HEAD="$(git rev-parse HEAD)"
       HEAD_LABEL="working tree"
@@ -726,7 +746,7 @@ resolve_diff_for_shape() {
       # against its merge base, else the commit at HEAD. An empty result at any step means
       # *fall through*, never "no changes" -- so each step that produces nothing records
       # why, and the reasons are carried into the manifest even when a later step succeeds.
-      git diff HEAD > "$diff"
+      git diff "$DIFF_CONTEXT" HEAD > "$diff"
       append_untracked "$diff" ""
       SCOPE_HEAD="$(git rev-parse HEAD)"
       HEAD_LABEL="working tree"
@@ -739,7 +759,7 @@ resolve_diff_for_shape() {
           local mb2
           if mb2="$(git merge-base "$BASE" HEAD 2>/dev/null)"; then
             BASE_SHA="$mb2"
-            git diff "$mb2...HEAD" > "$diff"
+            git diff "$DIFF_CONTEXT" "$mb2...HEAD" > "$diff"
             SHAPE=branch
             HEAD_LABEL=HEAD
             RESOLVED_BY="git diff \$(git merge-base $BASE HEAD)...HEAD"
@@ -1021,6 +1041,7 @@ cmd_resolve() {
     --argjson diff_bytes "$diff_bytes" \
     --argjson file_count "$file_count" \
     --arg file_list_source "$FILE_LIST_SOURCE" \
+    --arg changed_lines "$CHANGED_LINES" \
     --slurpfile files "$tmp/files.json" \
     --argjson fell_through "$(json_array_from_lines ${FELL_THROUGH[@]+"${FELL_THROUGH[@]}"})" \
     --argjson warnings "$(json_array_from_lines ${WARNINGS[@]+"${WARNINGS[@]}"})" \
@@ -1050,6 +1071,7 @@ cmd_resolve() {
       diff_sha256: $diff_sha256,
       file_count: $file_count,
       file_list_source: $file_list_source,
+      changed_lines: (if $changed_lines == "" then null else ($changed_lines | tonumber) end),
       files: $files[0],
       warnings: $warnings
     }' > "$tmp/manifest.json"
