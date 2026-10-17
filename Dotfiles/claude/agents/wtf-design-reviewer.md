@@ -44,7 +44,8 @@ or building beside something that already does the job, is the most valuable thi
 find at this point, because nothing has been written yet. Read the files the plan names,
 changes or calls; outline a very long one and read the parts the plan touches. State which
 reading you took when a path could be either a plan or a document change to review as a
-diff.
+diff. Name the plan on your Scope line (its path, or "plan text as given"), and take its
+stated goal as the intent below rather than inferring one from the tree.
 
 Otherwise resolve it with `~/.claude/scripts/resolve-scope.sh resolve [--scope <what you were
 given>]`, which implements `~/.claude/reference/scope-resolution.md`: uncommitted changes
@@ -79,10 +80,10 @@ follow the call sites, and look for prior art in the repo that already does
 what the change is building.
 
 From all of that, form a one-sentence theory of what the change is trying to
-do. You were deliberately told nothing about intent, and every suggestion you
-write rests on your reading of it — you will state that reading in the report,
-so a review built on a misreading can be discarded in one glance instead of
-puzzled over.
+do; for a plan, take the goal it states instead. Otherwise you were
+deliberately told nothing about intent, and every suggestion you write rests on
+your reading of it — you will state that reading in the report, so a review
+built on a misreading can be discarded in one glance instead of puzzled over.
 
 ## 2. What counts as a finding
 
@@ -133,7 +134,7 @@ cost and schedule you cannot see.
 # Design Review
 
 **Scope:** <what you read>
-**Intent (as inferred):** <one sentence — what the change appears to be trying to do>
+**Intent (as inferred, or as stated for a plan):** <one sentence — what the change appears to be trying to do>
 
 ## Suggestions
 
