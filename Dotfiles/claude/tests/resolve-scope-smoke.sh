@@ -328,6 +328,35 @@ git -C "$WORK/numeric" branch feature/999999
 nested_err="$( (cd "$WORK/numeric" && "$RESOLVE" resolve --scope 999999) 2>&1 >/dev/null || true )"
 check "a ref that merely ends in the digits does not capture them" "0" "$(printf '%s' "$nested_err" | grep -c 'both a PR number and' || true)"
 
+# `^{commit}` accepts a unique prefix from four characters, so without a length gate an
+# ordinary PR number was refused whenever some SHA happened to begin with it. Pinned from
+# both sides on one untagged commit whose SHA begins with seven digits: only the gate
+# refuses its 7-digit prefix, and its 4- and 6-digit prefixes stay PR numbers. Found by
+# committing until one appears, about one SHA in twenty-seven; the cap bounds a bad run.
+digits_sha=""
+tree=$(git -C "$WORK/numeric" write-tree)
+for i in $(seq 1 1000); do
+  sha=$(printf 'probe %s\n' "$i" | git -C "$WORK/numeric" commit-tree "$tree")
+  case "${sha:0:7}" in
+    *[!0-9]*|4521*) continue ;;
+  esac
+  if git -C "$WORK/numeric" rev-parse --verify --quiet "${sha:0:4}^{commit}" >/dev/null; then
+    digits_sha=$sha
+    break
+  fi
+done
+if [ -z "$digits_sha" ]; then
+  echo "  FAIL  no commit SHA began with seven digits" >&2
+  failures=$((failures + 1))
+else
+  seven_err="$( (cd "$WORK/numeric" && "$RESOLVE" resolve --scope "${digits_sha:0:7}") 2>&1 >/dev/null || true )"
+  check "seven digits naming an untagged commit are refused" "1" "$(printf '%s' "$seven_err" | grep -c 'both a PR number and a commit' || true)"
+  for n in 4 6; do
+    short_err="$( (cd "$WORK/numeric" && "$RESOLVE" resolve --scope "${digits_sha:0:$n}") 2>&1 >/dev/null || true )"
+    check "a $n-digit prefix of that commit is still a PR" "0" "$(printf '%s' "$short_err" | grep -c 'both a PR number and' || true)"
+  done
+fi
+
 echo "== an empty scope is never written =="
 scratch_repo "$WORK/empty"
 commit "$WORK/empty" a.txt one base
@@ -549,6 +578,20 @@ case "$noterr" in
   *) echo "  ok    and it is not reported as a default-scope phrase" ;;
 esac
 (cd "$WORK/deictic" && git update-ref -d refs/tags/uncommitted)
+
+# Collision 4: a ref that merely *ends* in the phrase does not take it. `show-ref` matches
+# a trailing path component, so `refs/heads/wip/uncommitted` made `uncommitted` look taken,
+# the translation was skipped, and the run died as neither a ref nor a path.
+scratch_repo "$WORK/deictic-nested"
+commit "$WORK/deictic-nested" a.txt one base
+git -C "$WORK/deictic-nested" branch wip/uncommitted
+printf 'dirty\n' >> "$WORK/deictic-nested/a.txt"
+rc=0; nested_out=$( (cd "$WORK/deictic-nested" && "$RESOLVE" resolve --scope uncommitted 2>&1 >/dev/null) ) || rc=$?
+check "a nested ref ending in the phrase still resolves" 0 "$rc"
+case "$nested_out" in
+  *"names the default scope"*) echo "  ok    and it is translated to the default" ;;
+  *) echo "  FAIL  and it is translated to the default: got '$nested_out'" >&2; failures=$((failures + 1)) ;;
+esac
 
 # Collision 2: a real path wins. Committed and then modified, so the path scope has a diff
 # to resolve and the run reaches a manifest rather than the empty-diff guard.

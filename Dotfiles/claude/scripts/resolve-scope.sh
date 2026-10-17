@@ -365,7 +365,11 @@ scope_shape_of() {
     *)
       # Bare digits almost never name a ref, but an abbreviated SHA is all decimal digits
       # about one time in twenty-seven at seven characters, and both readings of one then
-      # exist at once. Taken as a PR it either publishes an unrelated PR's diff or dies on
+      # exist at once. Only from seven does a commit prefix count: `^{commit}` accepts a
+      # unique prefix from four, and would refuse an ordinary PR number whenever some SHA
+      # happened to begin with it. A named ref counts at any length.
+      #
+      # Taken as a PR it either publishes an unrelated PR's diff or dies on
       # a number GitHub has never issued, never mentioning the commit that was sitting
       # right there -- and `gh`'s failure does not distinguish "no such PR" from a token
       # or network problem, so no fallback can tell which happened. Refuse and name both
@@ -391,7 +395,8 @@ scope_shape_of() {
         branch_ref="refs/heads/$scope"
       fi
       if [ -n "$full" ] || [ -n "$branch_ref" ] \
-        || git rev-parse --verify --quiet "$scope^{commit}" >/dev/null 2>&1; then
+        || { [ "${#scope}" -ge 7 ] \
+             && git rev-parse --verify --quiet "$scope^{commit}" >/dev/null 2>&1; }; then
         case "$full" in
           # A branch means "against its merge base"; `^0` would answer its tip commit
           # alone, which is a narrower scope than the one that was asked for. The full ref
@@ -863,14 +868,18 @@ cmd_resolve() {
   # that survives to here lands on the same artifact directory a bare invocation would --
   # it is the same scope, so it must not be a second cache entry. Announced rather than
   # silent: the manifest will say nothing was named, and that is only true after this.
-  # `show-ref` rather than `rev-parse`, because the question here is only whether the name
-  # is taken. A ref that exists without being commit-ish -- a tag pointing at a blob -- and
-  # an *ambiguous* name, where both a branch and a tag carry it, both fail `rev-parse
-  # --symbolic-full-name` and `^{commit}`; they would then fall through to the phrase list
-  # and a named ref would be answered with the default instead of an error. Answering a
-  # different scope silently is the worst outcome this script has.
+  # The question here is only whether the name is taken. A ref that exists without being
+  # commit-ish -- a tag pointing at a blob -- and an *ambiguous* name, where both a branch
+  # and a tag carry it, both fail `rev-parse --symbolic-full-name` and `^{commit}`; they
+  # would then fall through to the phrase list and a named ref would be answered with the
+  # default instead of an error. Answering a different scope silently is the worst outcome
+  # this script has.
+  #
+  # `rev-parse --verify` and not `show-ref`, which matches a trailing path component rather
+  # than the whole refname: with only `refs/heads/wip/uncommitted` present it called
+  # `uncommitted` taken, so the translation was skipped and the run died.
   if [ -n "$scope" ] \
-    && ! git show-ref --quiet -- "$scope" 2>/dev/null \
+    && ! git rev-parse --verify --quiet "$scope" >/dev/null 2>&1 \
     && ! git rev-parse --verify --quiet "$scope^{commit}" >/dev/null 2>&1 \
     && [ ! -e "$scope" ] \
     && is_default_scope_phrase "$scope"; then
