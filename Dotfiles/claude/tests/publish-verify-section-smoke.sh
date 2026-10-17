@@ -214,6 +214,50 @@ check "unterminated start refused" 1 "$(merge_status "$WORK/unterminated.body" "
 check "empty section refused" 1 "$(merge_status "$WORK/plain.body" "$WORK/empty.md" "$WORK/empty.out")"
 check "missing body refused" 1 "$(merge_status "$WORK/nope.body" "$WORK/section.md" "$WORK/nope.out")"
 
+echo "case: a marker mentioned in prose is not a delimiter"
+cat > "$WORK/prose.body" <<'EOF'
+## Summary
+
+The tool writes <!-- verify:start --> above its section.
+
+keep this line
+
+and <!-- verify:end --> below it.
+EOF
+check "merge lands" 0 "$(merge_status "$WORK/prose.body" "$WORK/section.md" "$WORK/prose.out")"
+check "prose between the mentions survives" 1 "$(grep -c 'keep this line' "$WORK/prose.out")"
+check "new section appended" 1 "$(grep -c 'New verdict: verified.' "$WORK/prose.out")"
+
+echo "case: a CRLF body from the web UI is merged, not refused"
+printf '## Summary\r\n\r\n```\r\ncode\r\n```\r\n\r\n<!-- verify:start -->\r\nOld verdict.\r\n<!-- verify:end -->\r\n\r\ntail\r\n' > "$WORK/crlf.body"
+check "merge lands" 0 "$(merge_status "$WORK/crlf.body" "$WORK/section.md" "$WORK/crlf.out")"
+check "old verdict gone" 0 "$(grep -c 'Old verdict.' "$WORK/crlf.out" || true)"
+check "tail survives" 1 "$(grep -c 'tail' "$WORK/crlf.out")"
+
+echo "case: a section carrying a marker would nest a second pair"
+printf 'Quoting <!-- verify:end --> here.\n' > "$WORK/nested.md"
+check "nested section refused" 1 "$(merge_status "$WORK/plain.body" "$WORK/nested.md" "$WORK/nested.out")"
+
+echo "case: an unreadable section file is refused"
+cp "$WORK/section.md" "$WORK/unreadable.md"
+chmod 000 "$WORK/unreadable.md"
+if [ -r "$WORK/unreadable.md" ]; then
+  echo "  skip  running as a user who can read mode 000"
+else
+  check "unreadable section refused" 1 "$(merge_status "$WORK/plain.body" "$WORK/unreadable.md" "$WORK/unreadable.out")"
+fi
+
+echo "case: a body with no final newline keeps it that way"
+printf '## Summary\n\n<!-- verify:start -->\nOld verdict.\n<!-- verify:end -->\nlast line' > "$WORK/nonl.body"
+check "merge lands" 0 "$(merge_status "$WORK/nonl.body" "$WORK/section.md" "$WORK/nonl.out")"
+check "still no final newline" 0 "$(tail -c1 "$WORK/nonl.out" | wc -l | tr -d ' ')"
+
+echo "case: wrong argument counts are refused"
+rc=0; "$PUBLISH" merge "$WORK/plain.body" "$WORK/section.md" >/dev/null 2>&1 || rc=$?
+check "merge with two arguments refused" nonzero "$([ "$rc" -ne 0 ] && echo nonzero || echo zero)"
+rc=0; "$PUBLISH" strip >/dev/null 2>&1 || rc=$?
+check "strip with no argument refused" nonzero "$([ "$rc" -ne 0 ] && echo nonzero || echo zero)"
+
 echo "case: an empty body is not a licence to publish only the section"
 : > "$WORK/blank.body"
 check "merge lands" 0 "$(merge_status "$WORK/blank.body" "$WORK/section.md" "$WORK/blank.out")"
