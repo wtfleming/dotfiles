@@ -191,7 +191,9 @@ click away for anyone checking a pass.
 
 The **Discriminator** column is the part that cannot be omitted. It is what separates a
 result from a result that means something: it says how you know each ✅ would have been a
-❌ if the code were wrong. A table without it is a list of things that happened.
+❌ if the code were wrong. A table without it is a list of things that happened. A command
+row (SKILL.md §4) has no partner to name, so its cell says what stands in for one:
+`command row — fresh capture, exit 0, N tests`.
 
 The **Not covered** line is the most useful sentence in the section. Every probe is
 narrow; naming the gap tells a reviewer where to look, and its absence invites them to
@@ -326,10 +328,10 @@ demoted — is told inside that shape, not as a narrative before it.
 
 | # | Expectation | Result |
 | - | ----------- | ------ |
-| 1 | editor with `includeArchived: true` sees archived id 7 | ✅ 200, id 7 present; absent with the flag off |
+| 1 | editor with `includeArchived: true` sees archived id 7 | ✅ *unrefuted* 200, id 7 present; absent with the flag off |
 | 2 | anonymous caller is refused | ❌ 200, empty `data.posts` — predicted ✅ |
 | 3 | `includeArchived: "banana"` → 400 naming the field | ❌ 500, unhandled `TypeError` — worse than predicted |
-| 4 | `posts` with no new argument is unchanged | ⚠️ not verified — byte-identical to baseline, but the refuter's re-run showed both sides served from the response cache, so the probe never reached the resolver |
+| 4 | `posts` with no new argument is unchanged | ⚠️ not verified — byte-identical to baseline, but both sides were served from the response cache, so the probe never reached the resolver |
 
 **Covered.** The resolver's authorisation branch and argument coercion.
 **Not covered.** `resolver.ts:91`, the admin override path — needs a second seeded role.

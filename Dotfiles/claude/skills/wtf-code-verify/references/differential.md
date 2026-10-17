@@ -160,11 +160,15 @@ pass, and it is the single worst outcome this method can produce.
 **The baseline column records the HEAD expectation run on the base, not whether the whole
 claim holds.** For a bugfix it is usually a failure while the row itself is met — that is
 the top row, not a contradiction. And check the target exists on the base before reading
-its pass. A probe that cannot execute there — a function only HEAD adds, a bootstrap that
-fails, a timeout — is the third row. One that executes and passes vacuously because the
-code path is absent is a different thing again: say the base was *not applicable*, not
-that the behaviour was already there. Neither is a reproduction, and neither is a
-pre-existing pass.
+its pass. A probe that cannot execute there — a bootstrap that fails, a timeout — is the
+third row. One that executes and passes vacuously because the code path is absent is a
+different thing again: say the base was *not applicable*, not that the behaviour was
+already there. Neither is a reproduction, and neither is a pre-existing pass. Where the
+target is absent — new capability, not a fix — the differential is unavailable for that
+row, so it is **Not verified** unless one of §4's other two discriminators settles it: the
+negative case as its own control, or a deliberate break. A bootstrap that fails or a
+timeout is not that case; it stays the third row — fix it and rerun — and a bugfix claim
+still needs the differential, which nothing weaker can carry.
 
 ## Variants
 

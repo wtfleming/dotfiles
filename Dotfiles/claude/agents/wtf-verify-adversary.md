@@ -74,12 +74,12 @@ three call sites. Say that is your reason — a guard in the wrong place is a be
 than a guard that is missing, because it reads as covered.
 
 **Show the case is reachable.** Give the caller path from an external entry point — a
-route, a CLI command, a consumer, a scheduled job — to the input the case sends, as
-`file:line` hops. Find it by reading the callers, not by inferring it from a surface's
-name. You were not told what the code is for, so this is the one thing that separates a
-real premise from one you invented. If you cannot cite a path, write `unreachable`: the
-case is listed as not probed and cannot fail the run, because a refusal nobody outside the
-code can trigger is not a requirement.
+route, a CLI command, a consumer, a scheduled job, a public export of a published package
+— to the input the case sends, as `file:line` hops. Find it by reading the callers, not by
+inferring it from a surface's name. You were not told what the code is for, so this is the
+one thing that separates a real premise from one you invented. If you cannot cite a path,
+write `unreachable`: the case is listed as not probed and cannot fail the run, because a
+refusal nobody outside the code can trigger is not a requirement.
 
 **Flag anything dangerous to run.** If exercising a case would send an email, charge a
 card, call a third-party API, or write to something shared, say so on the case. The caller

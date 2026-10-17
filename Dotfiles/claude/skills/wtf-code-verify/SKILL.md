@@ -425,8 +425,10 @@ it is a **Not verified** whose reason you now have in writing, so demote the row
 carry the reason rather than dropping it. Skip the pass for a row that came out red: a
 probe that failed for the reason it predicted has already discriminated. Skip the whole
 pass unless the verdict would otherwise be **Verified** or **Verified with gaps**: on a run
-already Falsified or Not verified, a demoted green cannot change what the report says. A
-command row (§4) has no discriminator to refute either.
+already Falsified or Not verified, no demotion can change the verdict. The greens are still
+printed, and published if the section reaches a PR, so on such a run write each behavioural one as
+✅ *unrefuted* in the Result column — a reader must not take an unchecked green for a
+checked one. A command row (§4) has no discriminator to refute either.
 
 `Not verified` is not a pass and not a defect, and the pull towards recording it as one
 or the other is strong. Say which of the three it was, and never loosen a probe until it
