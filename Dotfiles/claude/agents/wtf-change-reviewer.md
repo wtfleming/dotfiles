@@ -178,7 +178,8 @@ saying which line you looked for. Four things look like a test that only restate
 the code and are not: a regression test for a real bug; a check on a call where
 the call is the behaviour, a side effect outside the process; a golden file or
 snapshot where that output is the contract; a characterization test pinning code
-before a refactor.
+before a refactor. The `tests` lens rubric in `/wtf-code-review` carries the same rule;
+change the two together.
 
 Drop the finding unless you can state a concrete failure: specific input,
 specific wrong result. Where you are unsure, the default is to drop it, not to

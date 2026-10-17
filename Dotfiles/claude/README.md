@@ -15,7 +15,7 @@ that code as it stands, picks the files itself, and says which ones it picked.
 ```
 /wtf-code-review                     # uncommitted, else the branch, else HEAD
 /wtf-code-review HEAD~3              # any ref, branch or path
-/wtf-code-review main --lite         # the reviewer alone, no per-dimension pass
+/wtf-code-review main --lite         # the reviewer, plus dependencies if a manifest changed
 /wtf-code-review "db connection"     # a subject, reviewed as it stands
 ```
 
@@ -179,7 +179,7 @@ here whose read-only guarantee is prose, so it is the one to supervise.
 
 A default run spawns one reviewer and up to eight lenses, and asking for fixes
 afterwards adds a cold review of the fix diff. It announces each fan-out before
-spawning it, so the spend can be refused, and `--lite` cuts it to the reviewer alone. For very large
+spawning it, so the spend can be refused, and `--lite` cuts it to the reviewer, plus a `dependencies` lens when a manifest changed. For very large
 diffs, the built-in
 `/code-review ultra` is the maintained alternative.
 

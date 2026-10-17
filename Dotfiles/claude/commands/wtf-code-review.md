@@ -1,5 +1,5 @@
 ---
-description: Independent code review in a fresh context — recent changes, or a named subject. Diff, tests, lint, structured report. Runs a parallel pass per dimension; pass --lite for the single-reviewer version.
+description: Independent code review in a fresh context — recent changes, or a named subject. Diff, tests, lint, structured report. Runs a parallel pass per dimension; pass --lite for the reviewer alone, plus a dependencies lens when a manifest changed.
 argument-hint: "[ref, branch, path or subject — defaults to uncommitted, else the branch, else HEAD] [--lite]"
 allowed-tools: Agent, Read, Grep, Glob, Bash(git:*), Bash(~/.claude/scripts/resolve-scope.sh:*), Bash(gh pr view:*)
 ---
@@ -10,7 +10,7 @@ Split those into a scope and the optional flag `--lite`. Everything that is not
 the flag is the scope, and the scope may be empty.
 
 The full pass is the default: the reviewer and a dedicated agent per dimension.
-`--lite` is the reviewer alone.
+`--lite` is the reviewer alone, plus a `dependencies` lens when a manifest changed.
 
 Neither path spawns an agent to re-check a finding before it prints. Whoever
 fixes one meets its premise while implementing it, and a refuter per finding
@@ -494,7 +494,8 @@ implementation is a refactor that had to edit its assertions. Four things look
 like that and are not: a regression test for a real bug; a check on a call where
 the call is the behaviour, a side effect outside the process; a golden file or
 snapshot where that output is the contract; a characterization test pinning code
-before a refactor.
+before a refactor. `agents/wtf-change-reviewer.md` carries the same rule for
+`--lite`; change the two together.
 
 A check the change switches off is a Warning, counted only on lines the change
 adds: a suite that goes green by skipping its failing test has not been fixed.
@@ -614,8 +615,9 @@ weakened with a narrow blast radius. If the damage cannot be stated, the tier is
 lower than it feels.
 
 On a version bump, `dependencies` reads the release notes or changelog between
-the old and new versions — `gh release view` for a GitHub-hosted package, the
-registry's page otherwise — for breaks the diff does not show. A finding cites
+the old and new versions — `gh release view` for a GitHub-hosted package, otherwise
+the changelog in the package's own source where the tree has it — for breaks the diff
+does not show. Lenses have no web tools, so say when neither was available. A finding cites
 the note it rests on.
 
 `ui` reads the interface from its code and does not render it. Its last clause
