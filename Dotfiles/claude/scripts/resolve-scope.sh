@@ -55,6 +55,7 @@ FELL_THROUGH=()
 FETCH_WARNING=""
 FILE_LIST_SOURCE=git-apply-numstat
 CHANGED_LINES=""
+STUBBED_UNTRACKED=false
 SHAPE=""
 PR_NUMBER=""
 CORRESPONDENCE=""
@@ -517,6 +518,7 @@ append_untracked() {
         printf 'index 0000000..0000000\n'
         printf 'Binary files /dev/null and b/%s differ\n' "$f"
       } >> "$out"
+      STUBBED_UNTRACKED=true
       [ "$over_budget" = true ] \
         || warn "untracked file over ${MAX_INLINE_BYTES} bytes, stubbed rather than inlined: $f ($size bytes)"
       continue
@@ -558,28 +560,29 @@ diff_one_commit() {
 # manifest, so this costs no new dependency.
 #
 # The same numstat gives CHANGED_LINES, the lines added plus removed outside test and
-# fixture directories. A rename is a record with an empty path followed by both paths, so
-# its new path is two records on; a binary file counts `-`, which is no lines. The fallback
-# leaves it empty, since a header scrape cannot count.
+# fixture directories. `git apply` names a rename by its new path only, and a binary file
+# counts `-`, which is no lines. It is left empty, so the manifest says null, wherever it
+# would undercount: under the fallback, since a header scrape cannot count, and when an
+# untracked file was stubbed, since a stub stands in for text nobody counted.
 files_from_diff() {
   local diff=$1 dest=$2
   if git apply --numstat -z "$diff" > "$dest.raw" 2>/dev/null; then
     jq -Rs 'split("\u0000") | map(select(length > 0) | sub("^[^\t]*\t[^\t]*\t"; ""))' \
       "$dest.raw" > "$dest"
     CHANGED_LINES="$(jq -Rs --argjson test_dirs "$TEST_DIRS" '
-      split("\u0000") as $r
-      | [ range(0; $r | length) as $i
-          | $r[$i] | capture("^(?<a>[-0-9]+)\t(?<d>[-0-9]+)\t(?<p>.*)$")?
-          | (if .p == "" then $r[$i + 2] else .p end | ascii_downcase | split("/") | .[:-1]) as $dirs
+      split("\u0000")
+      | [ .[] | capture("^(?<a>[-0-9]+)\t(?<d>[-0-9]+)\t(?<p>.*)$")?
+          | (.p | ascii_downcase | split("/") | .[:-1]) as $dirs
           | select(($dirs - $test_dirs) == $dirs)
           | [.a, .d | tonumber? // 0] | add ]
       | add // 0' "$dest.raw")"
+    [ "$STUBBED_UNTRACKED" = false ] || CHANGED_LINES=""
   else
     FILE_LIST_SOURCE=fallback-headers
     warn "git apply could not parse the diff; the file list was recovered from its headers and may be incomplete"
     # Both sides, because a deleted file's `+++` line is /dev/null. Scraping only `+++`
     # reports a change that deletes a source file and edits a README as prose-only, and
-    # prose-only is what skips five lenses.
+    # prose-only is what skips six lenses.
     # `|| :` because grep exits 1 when it selects nothing, which pipefail turns into a
     # silent abort -- on a rename-only or mode-only diff, which is exactly the shape that
     # reaches this fallback, and which the empty-file-list `die` below exists to report.

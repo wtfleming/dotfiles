@@ -73,7 +73,7 @@ procedure returns a confident review of a scope nobody asked for.
 | `base_stale`, `base_stale_reason` | the fetch failed; the merge base may be behind. `base_stale` is always a boolean, including on the shapes that consult no base — only `base_stale_reason` is null. To ask whether a base was consulted for **this scope**, read `base_ref == null` or `default_branch_resolved` — neither says anything about `branch_base_sha`, which resolves its own; `base_stale == false` means "no failed fetch", not "fetched and fresh" |
 | `fell_through` | which auto steps produced nothing, and why |
 | `file_list_source` | `git-apply-numstat` normally. `fallback-headers` means the list was scraped from the diff's headers and may be incomplete — **say so** rather than presenting `files` as settled |
-| `changed_lines` | lines added plus removed, outside `test`, `tests`, `spec`, `__tests__` and `fixtures` directories. **null** under `fallback-headers`, where nothing counted them |
+| `changed_lines` | lines added plus removed, outside `test`, `tests`, `spec`, `__tests__` and `fixtures` directories. **null** under `fallback-headers`, and when an untracked file was stubbed, where nothing counted them |
 | `warnings` | anything the resolver could not do cleanly; disclose these the way you disclose `base_stale` |
 
 `scope_line` exists so that a reviewer, eight lenses and a merged report describe one scope
