@@ -586,8 +586,9 @@ git push -u "$remote" "$branch" || { echo "push failed — nothing opened" >&2; 
 remote_head=$(git ls-remote --heads "$remote" "refs/heads/$branch") ||
   { echo "could not read $remote — refusing to open" >&2; exit 1; }
 remote_head=$(printf '%s\n' "$remote_head" | cut -f1)
-[ "$(git rev-parse HEAD)" = "$remote_head" ] || {
-  echo "remote head is not this branch's HEAD — refusing to open a PR for code nobody pushed" >&2
+head=$(git rev-parse HEAD)
+[ "$head" = "$remote_head" ] || {
+  echo "remote head ${remote_head:-<absent>} is not this branch's HEAD $head — refusing to open a PR for code nobody pushed" >&2
   exit 1; }
 ```
 
