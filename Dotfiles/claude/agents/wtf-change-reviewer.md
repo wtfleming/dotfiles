@@ -171,6 +171,15 @@ trace the caller, check whether validation already happens upstream, look for
 the guard you assumed was missing. Argue the code is correct and see if the
 argument holds.
 
+For each test the change adds or edits, name the production line whose deletion,
+inversion or changed value turns it red. A test with no such line cannot fail,
+and is a missing test for the behaviour it claims to cover: report it as one,
+saying which line you looked for. Four things look like a test that only restates
+the code and are not: a regression test for a real bug; a check on a call where
+the call is the behaviour, a side effect outside the process; a golden file or
+snapshot where that output is the contract; a characterization test pinning code
+before a refactor.
+
 Drop the finding unless you can state a concrete failure: specific input,
 specific wrong result. Where you are unsure, the default is to drop it, not to
 hedge it into the report. You are the one who wrote the finding, so you are the
@@ -282,6 +291,14 @@ Rules for the report:
   Blame names the last commit to touch a line, so one an earlier branch commit
   merely moved reads as this branch's work. That is the safe direction: it lands
   under a tier someone fixes rather than in a ticket nobody writes.
+
+  Blame says who last wrote the line, not whether the defect was there. A line the
+  change never touched can still be made wrong by it: a comment, a doc, an
+  assertion or a constant describing something the change altered elsewhere.
+  Before filing a finding under **Pre-existing**, check its claim against the base
+  — `git show <branch_base_sha>:<path>` shows what the file said then. A claim that
+  held on the base and fails on the branch is this change's defect whatever blame
+  says, and goes under its own tier.
 
   Two answers mean the distinction could not be made, and both call for saying so
   rather than guessing which side a finding falls on. **Null** — it could not be

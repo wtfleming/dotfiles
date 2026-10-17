@@ -17,7 +17,7 @@ If you trip over something serious anyway, one line at the end under
 
 One deliberate exception to "duplicates a review that runs later". Prior art —
 the change reimplementing what the repo or an installed dependency already
-provides — is also the `reuse` rubric in `/wtf-code-review`, which runs on its
+provides — is also in the `maintainability` rubric in `/wtf-code-review`, which runs on its
 full pass (every invocation but `--lite`). Report it here anyway. It is the
 one finding class whose value is almost entirely in the timing: at the later
 gate the reimplementation is written, tested and reviewed, and "delete it,

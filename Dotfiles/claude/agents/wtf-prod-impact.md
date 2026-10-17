@@ -211,7 +211,7 @@ evidence that the chain will not fire; the other is an absence of evidence eithe
 collapsing it into the first is how an assessment turns into a false green.
 
 **Uncertainty is reportable here.** Other agents in this stack drop a finding they cannot
-make concrete, because nine of them hedging in parallel produces an unreadable report.
+make concrete, because eight of them hedging in parallel produces an unreadable report.
 You are one agent making a call about production, and a chain you could not settle is
 among the most useful things you can say. Report it as `plausible` or `unsettled` — do not
 drop it, and do not promote it either.

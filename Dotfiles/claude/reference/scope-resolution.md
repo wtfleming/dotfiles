@@ -76,7 +76,7 @@ procedure returns a confident review of a scope nobody asked for.
 | `changed_lines` | lines added plus removed, outside `test`, `tests`, `spec`, `__tests__` and `fixtures` directories. **null** under `fallback-headers`, where nothing counted them |
 | `warnings` | anything the resolver could not do cleanly; disclose these the way you disclose `base_stale` |
 
-`scope_line` exists so that a reviewer, nine lenses and a merged report describe one scope
+`scope_line` exists so that a reviewer, eight lenses and a merged report describe one scope
 in one form rather than ten. Use it rather than composing your own.
 
 ## A phrase that names the default counts as naming nothing

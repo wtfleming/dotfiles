@@ -3,7 +3,7 @@
 #
 # Several tools here -- /wtf-code-review and its lenses, wtf-change-reviewer,
 # wtf-design-reviewer, wtf-code-verify, wtf-prod-impact -- work the scope out from
-# prose instructions. On the full pass that is nine lens agents beside the reviewer,
+# prose instructions. On the full pass that is eight lens agents beside the reviewer,
 # each running its own git commands, and "the same scope" holds only for as long as every
 # one of them derives it identically. This produces the diff once, writes it to a file,
 # and hands every agent the path.
@@ -68,13 +68,13 @@ RESOLVED_BY=""
 RESOLUTION_STEP=explicit
 
 # Untracked files above this go into the diff as a stub rather than inline. A single
-# untracked 200MB CSV would otherwise become a 200MB scope.diff that nine agents are
+# untracked 200MB CSV would otherwise become a 200MB scope.diff that eight agents are
 # each told to read in full.
 MAX_INLINE_BYTES=1048576
 # And a budget across all of them, because the per-file cap alone does not bound the total:
 # four hundred files of just under the per-file limit clear every check individually and
 # still build a diff nobody can read. Ten times the per-file cap -- high enough that
-# ordinary untracked work never trips it, low enough to bite well before nine agents'
+# ordinary untracked work never trips it, low enough to bite well before eight agents'
 # context does.
 MAX_UNTRACKED_TOTAL_BYTES=10485760
 # Past this many untracked files the per-file `git diff` calls dominate the run, so say so
@@ -1005,7 +1005,7 @@ cmd_resolve() {
   [ "$file_count" -gt 0 ] \
     || die "the diff resolved but no files could be read from it; refusing to write a manifest that would claim an empty scope"
 
-  # Composed once, here, so that nine lenses and a merged report describe one scope in one
+  # Composed once, here, so that eight lenses and a merged report describe one scope in one
   # form rather than ten.
   local scope_line
   scope_line="$RESOLVED_BY — $file_count files"
