@@ -327,15 +327,17 @@ install_for() {
 }
 
 # The main checkout's deps are reused rather than fetched: with the same mix.lock, its deps
-# are this tree's too, and a fetch would only redo that work or fail offline for reasons
-# unrelated to the change. With a different mix.lock they are only
+# and their compiled _build are this tree's too, and a fetch would only redo that work or
+# fail offline for reasons unrelated to the change. With a different mix.lock they are only
 # a fallback for a failed fetch.
 install_mix_deps() {
-  local main=$1 wt=$2
+  local main=$1 wt=$2 relative
   if [ -d "$main/deps" ] && [ ! -e "$wt/deps" ] && cmp -s "$main/mix.lock" "$wt/mix.lock"; then
-    # Never _build: it holds the project compiled from the head's sources, and a fresh
-    # copy's mtimes are newer than the baseline's sources, so mix would not recompile them.
-    copy_if_ignored "$main" deps "$wt/deps"
+    for relative in deps _build; do
+      if [ -e "$main/$relative" ] && [ ! -e "$wt/$relative" ]; then
+        copy_if_ignored "$main" "$relative" "$wt/$relative"
+      fi
+    done
     # A copy git-ignore checks could skip leaves no deps, so that falls through to a fetch.
     if [ -d "$wt/deps" ]; then
       echo "    (mix.lock matches the main checkout; reused its deps instead of fetching)"
