@@ -585,7 +585,9 @@ git push -u "$remote" "$branch" || { echo "push failed — nothing opened" >&2; 
 # hash; the status is checked apart, or an unreachable remote reads as an empty hash.
 remote_head=$(git ls-remote --heads "$remote" "refs/heads/$branch") ||
   { echo "could not read $remote — refusing to open" >&2; exit 1; }
-remote_head=$(printf '%s\n' "$remote_head" | cut -f1)
+# Exact refname: a pattern also matches a ref that merely ends in it, such as
+# refs/heads/team/refs/heads/<branch>.
+remote_head=$(printf '%s\n' "$remote_head" | awk -v ref="refs/heads/$branch" '$2 == ref { print $1 }')
 head=$(git rev-parse HEAD)
 [ "$head" = "$remote_head" ] || {
   echo "remote head ${remote_head:-<absent>} is not this branch's HEAD $head — refusing to open a PR for code nobody pushed" >&2
