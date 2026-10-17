@@ -580,17 +580,25 @@ treatment rather than less.
 # another. `origin` is the fallback only when there is no upstream yet.
 remote=${upstream%%/*}; : "${remote:=origin}"
 git push -u "$remote" "$branch" || { echo "push failed — nothing opened" >&2; exit 1; }
-[ "$(git rev-parse HEAD)" = "$(git rev-parse '@{u}')" ] || {
+# Ask the remote, not `@{u}`: the push just wrote that ref from this HEAD, so comparing the
+# two cannot fail. `--heads` and the full refname, or a tag of the same name yields a second
+# hash; the status is checked apart, or an unreachable remote reads as an empty hash.
+remote_head=$(git ls-remote --heads "$remote" "refs/heads/$branch") ||
+  { echo "could not read $remote — refusing to open" >&2; exit 1; }
+remote_head=$(printf '%s\n' "$remote_head" | cut -f1)
+[ "$(git rev-parse HEAD)" = "$remote_head" ] || {
   echo "remote head is not this branch's HEAD — refusing to open a PR for code nobody pushed" >&2
   exit 1; }
 ```
 
 The second check is not the first restated. Pre-flight's fetch was minutes ago, and
 composition is slow — templates, `git log`, the drift pass, `gh api` calls. A bot amend or a
-push from another machine inside that window makes the push a non-fast-forward reject, and
-`gh pr create` would then happily open a PR against the *remote's* head: a public PR whose
-diff is someone else's commits, under a body describing commits that were never pushed. That
-is the exact defect pre-flight's fetch exists to catch, arriving after the check for it.
+push from another machine inside that window makes the push a non-fast-forward reject, which
+the first check stops. What it cannot stop is the same thing landing just *after* the push: a
+force-push that overtakes it before `gh pr create` runs, which would then open a PR against
+the remote's head — a public PR whose diff is someone else's commits, under a body
+describing commits that are no longer there. Only the remote can say that happened, which is
+why the check reads it with `ls-remote` rather than trusting the local tracking ref.
 
 **On the update path this section still applies.** An existing open PR routes to
 `gh pr edit` rather than `gh pr create`, and the no-ask contract covers it: a regenerated
