@@ -25,12 +25,12 @@ import { availableParallelism } from 'node:os';
 import path from 'node:path';
 import { loadChromium, flag as argFlag, rejectUnknown } from './lib.mjs';
 
-const chromium = loadChromium();
 const args = process.argv.slice(2);
 const VALUED = ['out', 'fps', 'size', 'workers', 'audio', 'stills'];
 const flag = (name, dflt) => argFlag(args, name, dflt);
 const positional = args.filter((a, i) => !a.startsWith('--') && !VALUED.includes((args[i - 1] || '').slice(2)));
 rejectUnknown(args, [...VALUED, 'check-loop']);
+const chromium = loadChromium();
 
 const filmPath = path.resolve(positional[0] || 'index.html');
 const out = flag('out', 'final.mp4');

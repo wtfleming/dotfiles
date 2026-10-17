@@ -29,10 +29,10 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { loadChromium, flag as argFlag, rejectUnknown } from './lib.mjs';
 
-const chromium = loadChromium();
 const args = process.argv.slice(2);
 const flag = (name, dflt) => argFlag(args, name, dflt);
 rejectUnknown(args, ['out', 'size', 'dpr', 'dark']);
+const chromium = loadChromium();
 const list = args[0];
 if (!list || list.startsWith('--')) {
   console.error('usage: node capture.mjs shots.json [--out assets] [--size 1440x900] [--dpr 2] [--dark]');
