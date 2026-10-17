@@ -115,7 +115,14 @@ change. Then ask the first question.
 - **Multiple choice suits recall topics** like drivers, frequencies or
   procedures. Use AskUserQuestion with plausible wrong options. Don't put
   anything in an option's description that gives the answer away, and never
-  mark an option as recommended.
+  mark an option as recommended. Write every option with the same length and
+  detail, so the right one doesn't stand out by being the most careful.
+- **Pick the figure** suits structure: a flow, a call tree, a sequence, a
+  module layout. Ask "which of these matches what actually exists?" with two to
+  four AskUserQuestion options, each carrying one ASCII figure in its `preview`.
+  Make the wrong ones plausible — an arrow reversed, a stage missing, a
+  component in the wrong place — not strawmen, and draw them all at the same
+  level of detail.
 - **Don't give away later answers.** A question shouldn't contain its own
   answer, and a correction shouldn't answer the next question.
 - **Grade honestly.** Accept paraphrases and different reasoning that is still
