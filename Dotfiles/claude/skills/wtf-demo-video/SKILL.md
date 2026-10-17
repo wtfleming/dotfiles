@@ -95,7 +95,8 @@ The difference between a demo and a stock template is the actual product.
   what the project does and who it is for. That sentence is the logline.
   Take the palette and fonts from the project's own stylesheet, so the film
   looks like the product.
-- **Screens.** Capture the real UI with `capture.mjs`. It takes a shot list of
+- **Screens.** Capture the real UI with `capture.mjs`. Ask the person for the
+  URL of a running instance rather than starting one. It takes a shot list of
   pages, the steps to reach each state (click, fill, type, press, hover,
   waitFor, wait) and an optional crop. `"fullPage": true` captures the whole
   scroll height, for a camera pan. The script's header documents the format.
