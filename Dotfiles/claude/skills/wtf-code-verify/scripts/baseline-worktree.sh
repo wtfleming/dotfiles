@@ -352,7 +352,7 @@ install_mix_deps() {
     echo "warn: mix deps.get failed; copying the main checkout's deps, which follow a different mix.lock" >&2
     rm -rf "$wt/deps"
     copy_if_ignored "$main" deps "$wt/deps"
-    return 0
+    [ -d "$wt/deps" ] && return 0
   fi
   return 1
 }
