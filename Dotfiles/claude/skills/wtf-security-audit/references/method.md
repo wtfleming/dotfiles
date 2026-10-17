@@ -28,7 +28,7 @@ settled either way.
 
 ## Variants
 
-When you propose a high or critical candidate whose root cause could
+When a candidate's impact would be high or critical and its root cause could
 recur, search your scope for its variants: lexical (the same call or idiom
 elsewhere), structural (the same shape under other names) and logical (another
 path to the same effect that skips the same control). A variant with the same
@@ -62,16 +62,17 @@ These are not findings:
 
 - **confirmed** — the trace is complete, nothing on it stops the attack, and
   the result is established: by a bounded local check where one can be run, or
-  by source that leaves no other reading. Carries a severity, a confidence and
-  the smallest fix.
+  by source that leaves no other reading. Carries a severity and the smallest
+  fix.
 - **needs_validation** — the trace is real but one specific fact decides it
   and cannot be observed from source or a local check. Names that fact as the
   blocker and the exact check that would settle it. Never carries a severity:
   it is a lead, not a low-confidence finding, and never a parking place for a
   speculative idea.
 - **rejected** — a candidate disproved by source, by a visible control, by an
-  impossible prerequisite, or by having no meaningful impact. Kept, so the
-  same unsupported claim is not raised again unless the evidence changes.
+  impossible prerequisite, or by having no meaningful impact. Kept under
+  **Ruled out**, so the same unsupported claim is not raised again unless the
+  evidence changes.
 
 ## Severity
 
@@ -99,10 +100,11 @@ Every candidate carries a fingerprint: a short, stable identifier derived from
 the root cause in source — the file or module, the function, and the missing
 control — such as `lib/app/tickets.ex:save:approval-not-bound`. Lowercase
 letters, digits and `._:/-` only, and no line number, severity or verdict. The
-same root cause keeps the same fingerprint in every verdict and every run, so
-reuse a prior record's fingerprint when you find the same root cause again. One
-root cause reachable from several entry points is one candidate with the
-strongest trace; independent missing controls are separate candidates.
+same root cause keeps the same fingerprint in every verdict, and derives the
+same one on a later run over the same code; when a prior audit report is
+supplied, reuse its fingerprint for a root cause it already named. One root
+cause reachable from several entry points is one candidate with the strongest
+trace; independent missing controls are separate candidates.
 
 ## Execution
 
