@@ -444,8 +444,9 @@ Grep, case-insensitive, over scope.diff:
 
 It matches any added or removed line naming a shell, eval, deserialiser, file,
 query, HTML or URL sink, a tool grant, or a secret. Removed lines count, so
-deleting a guard still dispatches. It also matches the `+++`/`---` file headers,
-which only ever errs towards dispatching.
+deleting a guard still dispatches. A `+++`/`---` file header matches too when its
+path carries one of the words — `token_store.ex` — which only ever errs towards
+dispatching.
 
 **No interface.** Skip `ui` when no path in the listing is user interface: an
 extension of `.html`, `.htm`, `.css`, `.scss`, `.sass`, `.less`, `.js`, `.mjs`,
