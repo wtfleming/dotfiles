@@ -868,19 +868,17 @@ cmd_resolve() {
   # that survives to here lands on the same artifact directory a bare invocation would --
   # it is the same scope, so it must not be a second cache entry. Announced rather than
   # silent: the manifest will say nothing was named, and that is only true after this.
-  # The question here is only whether the name is taken. A ref that exists without being
-  # commit-ish -- a tag pointing at a blob -- and an *ambiguous* name, where both a branch
-  # and a tag carry it, both fail `rev-parse --symbolic-full-name` and `^{commit}`; they
-  # would then fall through to the phrase list and a named ref would be answered with the
-  # default instead of an error. Answering a different scope silently is the worst outcome
-  # this script has.
+  # The question here is only whether the name is taken, by any ref at all: a tag pointing
+  # at a blob or a name both a branch and a tag carry must not fall through to the phrase
+  # list, where a named ref would be answered with the default instead of an error.
+  # Answering a different scope silently is the worst outcome this script has. Plain
+  # `rev-parse --verify` succeeds on both, and on everything `^{commit}` would.
   #
   # `rev-parse --verify` and not `show-ref`, which matches a trailing path component rather
   # than the whole refname: with only `refs/heads/wip/uncommitted` present it called
   # `uncommitted` taken, so the translation was skipped and the run died.
   if [ -n "$scope" ] \
     && ! git rev-parse --verify --quiet "$scope" >/dev/null 2>&1 \
-    && ! git rev-parse --verify --quiet "$scope^{commit}" >/dev/null 2>&1 \
     && [ ! -e "$scope" ] \
     && is_default_scope_phrase "$scope"; then
     warn "'$scope' names the default scope, not a revision; resolving as if nothing were named"

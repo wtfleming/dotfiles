@@ -333,6 +333,8 @@ check "a ref that merely ends in the digits does not capture them" "0" "$(printf
 # both sides on one untagged commit whose SHA begins with seven digits: only the gate
 # refuses its 7-digit prefix, and its 4- and 6-digit prefixes stay PR numbers. Found by
 # committing until one appears, about one SHA in twenty-seven; the cap bounds a bad run.
+# The 4-digit prefix must name this commit alone, and must not start 4521, which the
+# branch and tag above already claim -- add any numeric ref this fixture gains to the case.
 digits_sha=""
 tree=$(git -C "$WORK/numeric" write-tree)
 for i in $(seq 1 1000); do
