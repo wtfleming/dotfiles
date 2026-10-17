@@ -1,6 +1,6 @@
 ---
 description: Early design review of work in progress, in a fresh context — is this the right shape? Suggestion-only; every finding names a concrete, smaller alternative. Run it mid-work, before polishing; /wtf-code-review is the pre-PR gate.
-argument-hint: "[ref, branch or path — defaults to uncommitted, else the branch, else HEAD]"
+argument-hint: "[ref, branch, path or a plan — defaults to uncommitted, else the branch, else HEAD]"
 allowed-tools: Agent
 ---
 
@@ -28,6 +28,12 @@ If you wrote the code under review, that is exactly the bias this exists to
 avoid: a design reviewer who has read your rationale reviews the rationale, not
 the shape. Hand over the scope and nothing else. If the scope is empty, say so
 and let the agent work out its own.
+
+The one exception is a **plan the user names as the scope** — a path to a plan or
+design document, or its text in the arguments. There the plan is what is under
+review rather than a rationale for code, so pass it through as given, and the
+reviewer judges its shape against the tree before anything is written. A plan
+the user did not name stays out, as above.
 
 Print the report verbatim when it returns. Do not re-rank it, soften it, or
 defend the code — you are relaying an independent review, not negotiating with

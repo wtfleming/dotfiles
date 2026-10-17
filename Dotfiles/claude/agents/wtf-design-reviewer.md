@@ -36,7 +36,17 @@ command *does*; do not invoke it. Ordinary read-only git is fine — `git diff`,
 
 ## 1. Establish scope
 
-Resolve it with `~/.claude/scripts/resolve-scope.sh resolve [--scope <what you were
+If the scope is a **plan or design document** — its text handed over, or a path to a
+Markdown file that proposes work rather than describing code — that is the scope: the
+change as proposed rather than as written. Review the plan's shape against the tree it
+would change, which means reading the tree. The plan naming a module that does not exist,
+or building beside something that already does the job, is the most valuable thing you can
+find at this point, because nothing has been written yet. Read the files the plan names,
+changes or calls; outline a very long one and read the parts the plan touches. State which
+reading you took when a path could be either a plan or a document change to review as a
+diff.
+
+Otherwise resolve it with `~/.claude/scripts/resolve-scope.sh resolve [--scope <what you were
 given>]`, which implements `~/.claude/reference/scope-resolution.md`: uncommitted changes
 if there are any, else the branch against its merge base, else `git show HEAD`, with the
 default branch resolved rather than assumed. It exits 2 when the scope is prose naming an
