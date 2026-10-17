@@ -316,9 +316,7 @@ install_for() {
       # Populates the shared ~/.cargo registry cache; the per-tree target/ is built below.
       run_in "$wt" cargo fetch
       ;;
-    elixir)
-      run_in "$wt" mix deps.get
-      ;;
+    elixir) install_mix_deps "$main" "$wt" ;;
     erlang) ;;  # rebar3 fetches as part of compile
     elisp)
       if [ -f "$main/Eldev" ]; then run_in "$wt" eldev prepare
@@ -326,6 +324,37 @@ install_for() {
       fi
       ;;
   esac
+}
+
+# The main checkout's deps are reused rather than fetched: with the same mix.lock, its deps
+# and their compiled _build are this tree's too, and a fetch would only redo that work or
+# fail offline for reasons unrelated to the change. With a different mix.lock they are only
+# a fallback for a failed fetch.
+install_mix_deps() {
+  local main=$1 wt=$2 relative
+  if [ -d "$main/deps" ] && [ ! -e "$wt/deps" ] && cmp -s "$main/mix.lock" "$wt/mix.lock"; then
+    for relative in deps _build; do
+      if [ -e "$main/$relative" ] && [ ! -e "$wt/$relative" ]; then
+        copy_if_ignored "$main" "$relative" "$wt/$relative"
+      fi
+    done
+    # A copy git-ignore checks could skip leaves no deps, so that falls through to a fetch.
+    if [ -d "$wt/deps" ]; then
+      echo "    (mix.lock matches the main checkout; reused its deps instead of fetching)"
+      return 0
+    fi
+  fi
+  local fetched_into_empty=0
+  [ -e "$wt/deps" ] || fetched_into_empty=1
+  run_in "$wt" mix deps.get && return 0
+  # A failed fetch still leaves the deps/<name> directories it created.
+  if [ -d "$main/deps" ] && [ "$fetched_into_empty" = 1 ]; then
+    echo "warn: mix deps.get failed; copying the main checkout's deps, which follow a different mix.lock" >&2
+    rm -rf "$wt/deps"
+    copy_if_ignored "$main" deps "$wt/deps"
+    return 0
+  fi
+  return 1
 }
 
 build_for() {
