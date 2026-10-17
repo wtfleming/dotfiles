@@ -158,14 +158,13 @@ cmd_merge() {
 	# surfaced two guards later as a complaint about the *body's* markers -- sending
 	# someone hand-fixing a public PR to the one thing that is not wrong.
 	[ -r "$section" ] || { echo "cannot read the section file: $section" >&2; exit 1; }
-	# A section carrying either marker literal nests a second pair inside the first.
-	# The written body then holds two starts and two ends, which this script's own
-	# reader refuses on every later run -- so the PR is stuck displaying a verdict no
-	# rerun can replace, which is the exact failure the delimiters exist to prevent.
-	# The gate cannot catch it, because it strips the section from both sides. The
-	# cost is that a verdict quoting this mechanism cannot be published; that is the
-	# lesser loss, and it fails loudly rather than on the next run.
-	if grep -qF -e "$START" -e "$END" -- "$section"; then
+	# A section line that is a marker by is_marker's rule nests a second pair inside
+	# the first. The written body then holds two starts and two ends, which this
+	# script's own reader refuses on every later run -- so the PR is stuck displaying a
+	# verdict no rerun can replace, which is the exact failure the delimiters exist to
+	# prevent. The gate cannot catch it, because it strips the section from both sides.
+	# A marker mentioned mid-line is prose to the reader, so it is allowed through.
+	if grep -qxE -e "[[:space:]]*($START|$END)[[:space:]]*" -- "$section"; then
 		echo "the section contains a verify marker; it would nest a second pair — refusing" >&2
 		exit 1
 	fi

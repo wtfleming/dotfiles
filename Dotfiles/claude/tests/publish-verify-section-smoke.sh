@@ -236,8 +236,16 @@ check "old verdict gone" 0 "$(grep -c 'Old verdict.' "$WORK/crlf.out" || true)"
 check "tail survives" 1 "$(grep -c 'tail' "$WORK/crlf.out")"
 
 echo "case: a section carrying a marker would nest a second pair"
-printf 'Quoting <!-- verify:end --> here.\n' > "$WORK/nested.md"
-check "nested section refused" 1 "$(merge_status "$WORK/plain.body" "$WORK/nested.md" "$WORK/nested.out")"
+printf 'Verdict.\n<!-- verify:end -->\n' > "$WORK/nested-end.md"
+check "section with an end marker line refused" 1 "$(merge_status "$WORK/plain.body" "$WORK/nested-end.md" "$WORK/nested.out")"
+printf '  <!-- verify:start -->\r\nVerdict.\n' > "$WORK/nested-start.md"
+check "section with an indented CRLF start marker line refused" 1 "$(merge_status "$WORK/plain.body" "$WORK/nested-start.md" "$WORK/nested.out")"
+
+echo "case: a section mentioning a marker mid-line is published and can be replaced"
+printf 'Quoting <!-- verify:end --> here.\n' > "$WORK/mention.md"
+check "merge lands" 0 "$(merge_status "$WORK/plain.body" "$WORK/mention.md" "$WORK/mention.out")"
+check "a later merge replaces it" 0 "$(merge_status "$WORK/mention.out" "$WORK/section.md" "$WORK/mention2.out")"
+check "the mention is gone" 0 "$(grep -c 'Quoting' "$WORK/mention2.out" || true)"
 
 echo "case: an unreadable section file is refused"
 cp "$WORK/section.md" "$WORK/unreadable.md"
@@ -254,10 +262,11 @@ check "merge lands" 0 "$(merge_status "$WORK/nonl.body" "$WORK/section.md" "$WOR
 check "still no final newline" 0 "$(tail -c1 "$WORK/nonl.out" | wc -l | tr -d ' ')"
 
 echo "case: wrong argument counts are refused"
-rc=0; "$PUBLISH" merge "$WORK/plain.body" "$WORK/section.md" >/dev/null 2>&1 || rc=$?
-check "merge with two arguments refused" nonzero "$([ "$rc" -ne 0 ] && echo nonzero || echo zero)"
-rc=0; "$PUBLISH" strip >/dev/null 2>&1 || rc=$?
-check "strip with no argument refused" nonzero "$([ "$rc" -ne 0 ] && echo nonzero || echo zero)"
+# Extra arguments, because too few already died on ${N:?} before the count check existed.
+rc=0; "$PUBLISH" merge "$WORK/plain.body" "$WORK/section.md" "$WORK/extra.out" extra >/dev/null 2>&1 || rc=$?
+check "merge with four arguments refused" 64 "$rc"
+rc=0; "$PUBLISH" strip "$WORK/plain.body" extra >/dev/null 2>&1 || rc=$?
+check "strip with two arguments refused" 64 "$rc"
 
 echo "case: an empty body is not a licence to publish only the section"
 : > "$WORK/blank.body"
