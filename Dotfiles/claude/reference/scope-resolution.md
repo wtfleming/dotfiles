@@ -31,7 +31,9 @@ file in somebody else's.
 
 It prints the scope line and then the artifact directory, which holds two files:
 
-- **`scope.diff`** — one diff covering the whole scope, untracked files included.
+- **`scope.diff`** — one diff covering the whole scope, untracked files included, with 25
+  lines of context so a reader can judge most hunks without opening the file. A PR is the
+  exception: its diff is `gh pr diff` as GitHub serves it, three lines of context.
 - **`manifest.json`** — what the diff is of, and how far it can be trusted.
 
 The directory it prints is **pinned to this run**, and it is the path to hand to an agent.
@@ -71,9 +73,10 @@ procedure returns a confident review of a scope nobody asked for.
 | `base_stale`, `base_stale_reason` | the fetch failed; the merge base may be behind. `base_stale` is always a boolean, including on the shapes that consult no base — only `base_stale_reason` is null. To ask whether a base was consulted for **this scope**, read `base_ref == null` or `default_branch_resolved` — neither says anything about `branch_base_sha`, which resolves its own; `base_stale == false` means "no failed fetch", not "fetched and fresh" |
 | `fell_through` | which auto steps produced nothing, and why |
 | `file_list_source` | `git-apply-numstat` normally. `fallback-headers` means the list was scraped from the diff's headers and may be incomplete — **say so** rather than presenting `files` as settled |
+| `changed_lines` | lines added plus removed, outside `test`, `tests`, `spec`, `__tests__` and `fixtures` directories. **null** under `fallback-headers`, and when an untracked file was stubbed, where nothing counted them |
 | `warnings` | anything the resolver could not do cleanly; disclose these the way you disclose `base_stale` |
 
-`scope_line` exists so that a reviewer, nine lenses and a merged report describe one scope
+`scope_line` exists so that a reviewer, eight lenses and a merged report describe one scope
 in one form rather than ten. Use it rather than composing your own.
 
 ## A phrase that names the default counts as naming nothing

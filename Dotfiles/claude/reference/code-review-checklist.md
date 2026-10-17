@@ -10,6 +10,9 @@ Review in this order. Stop at critical issues.
 - [ ] Logic errors, off-by-one, wrong operator
 - [ ] Edge cases: null, empty, zero, negative, max values
 - [ ] Async: race conditions, unhandled promises, missing await
+- [ ] Locks: two taken in different orders on two paths, one held across an await or
+      a blocking call, one not released on the path that throws, two processes each
+      waiting synchronously on the other
 - [ ] Data flow: correct inputs → correct outputs
 
 ### 2. Security (Critical)
@@ -20,6 +23,8 @@ security issue that fits neither list still gets reported.
 - [ ] No hardcoded secrets or credentials
 - [ ] SQL/command injection possible?
 - [ ] Sensitive data exposure in logs/errors
+- [ ] Model output or tool arguments reaching a shell, file, query or URL sink
+      unchecked; an approval that does not bind the action it approved
 
 ### 3. Maintainability (Important)
 - [ ] Code is readable without comments explaining it
@@ -37,11 +42,15 @@ security issue that fits neither list still gets reported.
 - [ ] New code has tests (if repo has tests)
 - [ ] Edge cases covered
 - [ ] Tests are deterministic, not flaky
+- [ ] No check switched off to get green: a skipped test, a disabled or suppressed
+      lint rule, `|| true` on a check, a check's own config loosened
 
 ### 6. Dependencies & Deployment (Important)
 - [ ] New dependency justified: necessary, maintained, reasonable transitive weight
 - [ ] Breaking changes to public interfaces, config formats, CLI flags
 - [ ] Migrations/rollouts reversible, or the irreversibility called out
+- [ ] A new required environment variable, secret or binding is provisioned where a
+      deploy will look, not only documented in an `.env.example`
 
 ## Author's Finish Line
 

@@ -15,7 +15,7 @@ that code as it stands, picks the files itself, and says which ones it picked.
 ```
 /wtf-code-review                     # uncommitted, else the branch, else HEAD
 /wtf-code-review HEAD~3              # any ref, branch or path
-/wtf-code-review main --lite         # the reviewer alone, no per-dimension pass
+/wtf-code-review main --lite         # the reviewer, plus dependencies if a manifest changed
 /wtf-code-review "db connection"     # a subject, reviewed as it stands
 ```
 
@@ -24,13 +24,18 @@ reviews the diff against the checklist, and prints findings as Critical, Warning
 or Suggestion — then stops. The
 reviewer has no `Edit` or `Write`, so a review cannot change anything.
 
-By default it does more: up to nine `wtf-lens` agents in parallel, one per
-lens — correctness, security, tests, maintainability, performance, dependencies,
-reuse, resilience, observability. A change that touches only prose skips the five
-lenses with no surface there (tests, resilience, performance, dependencies,
-observability), decided from the file list alone and disclosed in the report. That list comes from the scope artifact rather than
-from a second set of git commands, so it cannot disagree with the diff the lenses
-read. Their reports are merged and deduplicated with the reviewer's, then printed.
+By default it does more: up to eight `wtf-lens` agents in parallel, one per
+lens — security, tests, maintainability, resilience, performance, dependencies,
+observability, ui. There is no correctness lens, because that is the reviewer's
+first priority and a lens repeating it almost never found anything alone. Lenses
+with no surface are skipped before the spawn and disclosed in the report: most of
+them on a prose-only change or one of ten lines or fewer, `dependencies` without a
+manifest, `security` without an input boundary or a sink in the diff, `ui` without
+an interface file. Every check runs on the scope artifact's file list, its
+changed-line count or one pattern over its diff, never a reading of the change, so
+none can disagree with what the lenses read. Under `--lite` the `dependencies` lens
+still runs beside the reviewer when a manifest changed, to read the upgrade's
+release notes. Their reports are merged and deduplicated with the reviewer's, then printed.
 
 Neither path spawns an agent to re-check the findings. A `wtf-refuter` per finding
 once did, and it was the largest fan-out in a run while almost never retracting
@@ -46,15 +51,15 @@ separate them, and the model then picks by
 feel between reports its own agents wrote. There is
 deliberately no linter lens — the reviewer already runs the real one.
 
-`reuse`, `resilience` and `observability` are the three lenses with no counterpart
-in the checklist, so `--lite` covers none of them.
+`resilience`, `observability` and `ui` have no counterpart in the checklist, nor
+does the reuse half of `maintainability`, so `--lite` covers none of them.
 
-`reuse` is also the only one whose target sits outside the diff — both the
-duplicate it hunts for and the code the change orphaned live in files the change
-did not touch — which is why it owns both halves rather than splitting the orphan
-case into `maintainability`. One lens, one evidence bar: search before asserting an
-absence, cite what you found by `file:line`, and judge duplication by whether the
-two copies have to change together rather than by how alike they look.
+Reuse was a lens of its own until it measured as rarely the only source of a
+fixed finding, and it went into `maintainability` with its evidence bar intact. It
+is the one target outside the diff — both the duplicate and the code the change
+orphaned live in files the change did not touch — so the bar is to search before
+asserting an absence, cite what was found by `file:line`, and judge duplication by
+whether the two copies have to change together rather than by how alike they look.
 
 `resilience` asks what happens when something the code *calls* fails, hangs or
 half-succeeds: missing timeouts, retries without backoff, failures swallowed into
@@ -62,14 +67,14 @@ a default that reads as success, half-completed work that leaves inconsistent
 state, and work that reaches a state nothing moves it out of. That last one is
 the liveness half of Alpern-Schneider, which both of the lens's trial runs found
 by luck before it was named — a queued row no sweep reclaims, a retry counter
-that never resets. Its safety half is mostly `correctness`, which is why deadlock
-sits there beside `races` rather than here beside the hangs.
+that never resets. Its safety half is correctness, which is the reviewer's, so
+the lock clauses sit in the checklist beside races rather than here beside the
+hangs.
 
-Both of its neighbours get an explicit boundary in the command, since a lens that
-bleeds into the one beside it produces the same finding twice in different words.
-`correctness` keeps whether the code computes the right answer from the inputs it
-was given. `performance` and `resilience` divide by path — the cost of the happy
-path against the behaviour of the failure path.
+`performance` and `resilience` get an explicit boundary in the command, since a
+lens that bleeds into the one beside it produces the same finding twice in
+different words: they divide by path — the cost of the happy path against the
+behaviour of the failure path.
 
 `observability` is the newest, and it divides from `resilience` by question rather
 than by path: whether the code survives the failure, against whether anyone can
@@ -79,7 +84,7 @@ finding arrives twice. The rule that keeps them apart is that a remedy of "add a
 log line or a metric" is this lens's even where another noticed it — it is the
 pass that has read what the repo already emits, and a telemetry fix proposed
 without that reading recommends an alarm to a service that has none. Its findings
-are nearly all absences, so it carries `reuse`'s evidence bar, plus one of its
+are nearly all absences, so it carries the reuse evidence bar, plus one of its
 own: a gap older than the change is reportable only where the change is what makes
 it matter.
 
@@ -117,7 +122,7 @@ outside the diff, so that width is what the author weighs them by, and the
 section is printed even when the verdict is that the shape is sound.
 
 **It does overlap `/wtf-code-review`, on purpose, in one place.** Prior art is
-also the `reuse` rubric, which runs on the full pass, so a branch put through
+in the `maintainability` rubric, which runs on the full pass, so a branch put through
 both may hear it twice. That is intended rather than wasteful, and the reason —
 timing is almost all of that finding's worth — is argued in the agent's own
 rules, where it has to be, since that is what stops the reviewer deferring the
@@ -137,7 +142,7 @@ accident.
 | Agent | Role |
 |---|---|
 | `wtf-change-reviewer` | scope, tests, lint, the full review |
-| `wtf-lens` | one dimension only; dispatched up to nine times per review |
+| `wtf-lens` | one dimension only; dispatched up to eight times per review |
 | `wtf-design-reviewer` | shape of the change, Suggestion-only; dispatched by `/wtf-design-review` |
 | `wtf-prod-impact` | whether the change degrades production, read from the live system; dispatched by `/wtf-prod-impact` |
 | `wtf-verify-adversary` | the cases a verification pass would not think to include; dispatched by `wtf-code-verify` |
@@ -167,14 +172,14 @@ here whose read-only guarantee is prose, so it is the one to supervise.
   without touching an agent definition.
 - A project's own `REVIEW.md`, `AGENTS.md` or `CLAUDE.md` wins where it conflicts.
   `REVIEW.md` is the name Anthropic's own code review reads.
-- The nine lens rubrics live in the command, not in `wtf-lens`, so they can be
+- The eight lens rubrics live in the command, not in `wtf-lens`, so they can be
   retuned without editing an agent.
 
 ### Cost
 
-A default run spawns one reviewer and up to nine lenses, and asking for fixes
+A default run spawns one reviewer and up to eight lenses, and asking for fixes
 afterwards adds a cold review of the fix diff. It announces each fan-out before
-spawning it, so the spend can be refused, and `--lite` cuts it to the reviewer alone. For very large
+spawning it, so the spend can be refused, and `--lite` cuts it to the reviewer, plus a `dependencies` lens when a manifest changed. For very large
 diffs, the built-in
 `/code-review ultra` is the maintained alternative.
 
@@ -184,7 +189,7 @@ diffs, the built-in
 here has to settle before it reads a line: **what code is under review**, and **does the
 working tree actually hold it**.
 
-The first matters because a full run dispatches nine lenses beside the reviewer,
+The first matters because a full run dispatches eight lenses beside the reviewer,
 each of which used to run its own git commands. "The same scope" then held only for as
 long as every agent derived it identically — an instruction, not a fact. Now the diff is
 produced once, written to `scope.diff`, and handed over by path, with `manifest.json`
@@ -421,7 +426,7 @@ agent that could not reach production and reports one has told the reader the op
 what it knows. It is tested first, ahead of the rungs that produce **go**, because placed
 last it is the rung that gets swallowed.
 
-Uncertainty being reportable reverses the rule every lens follows. Nine lenses hedging in
+Uncertainty being reportable reverses the rule every lens follows. Eight lenses hedging in
 parallel produce an unreadable report; one agent making a call about production has the
 opposite problem, and a chain it could not settle is among the most useful things it can
 say.

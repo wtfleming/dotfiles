@@ -1,5 +1,5 @@
 ---
-description: Independent code review in a fresh context — recent changes, or a named subject. Diff, tests, lint, structured report. Runs a parallel pass per dimension; pass --lite for the single-reviewer version.
+description: Independent code review in a fresh context — recent changes, or a named subject. Diff, tests, lint, structured report. Runs a parallel pass per dimension; pass --lite for the reviewer alone, plus a dependencies lens when a manifest changed.
 argument-hint: "[ref, branch, path or subject — defaults to uncommitted, else the branch, else HEAD] [--lite]"
 allowed-tools: Agent, Read, Grep, Glob, Bash(git:*), Bash(~/.claude/scripts/resolve-scope.sh:*), Bash(gh pr view:*)
 ---
@@ -10,7 +10,7 @@ Split those into a scope and the optional flag `--lite`. Everything that is not
 the flag is the scope, and the scope may be empty.
 
 The full pass is the default: the reviewer and a dedicated agent per dimension.
-`--lite` is the reviewer alone.
+`--lite` is the reviewer alone, plus a `dependencies` lens when a manifest changed.
 
 Neither path spawns an agent to re-check a finding before it prints. Whoever
 fixes one meets its premise while implementing it, and a refuter per finding
@@ -51,8 +51,8 @@ Agent tool, `subagent_type: "wtf-change-reviewer"`, and wait for it to
 complete — except where you resolved the scope before dispatch, which is every
 shape but a subject: a named revision and a bare invocation alike, since the
 lenses launch in that same batch and cannot wait for the reviewer. Hold the
-dispatch for the batch there. Under `--lite` there is no batch to hold it for,
-so always wait.
+dispatch for the batch there. Under `--lite` the only batch is the one the
+`dependencies` lens below may join; when it does not run, just wait.
 
 The whole point is that the reviewer starts cold. So the prompt you send it
 contains **only** the scope. Do not include:
@@ -68,9 +68,17 @@ An empty scope is resolved here before dispatch, exactly as a named one is — a
 invocation is the common case, not a special one, and the lenses launch in the same
 batch and cannot wait for the reviewer to settle it. Hand the reviewer the artifact
 directory, which is data about where the code lives and no more a cold-start violation
-than the scope string is. **Only under `--lite`** may you say the scope is empty and
-let the agent work out its own: it runs the same resolver you would, and with no batch
-behind it there is nothing to gain by resolving first.
+than the scope string is. `--lite` resolves first too, because whether its one lens runs
+is read from the listing.
+
+**Under `--lite`, one lens can still run.** When `manifest.files` holds a manifest or
+lockfile — the list under **Pick the lenses** — dispatch a `dependencies` lens in the
+same batch as the reviewer, exactly as the full pass would. It is the lens that reads an
+upgrade's release notes, which the reviewer's checklist never asks for, and a version
+bump is where an unread changelog costs most. Its findings join the reviewer's report
+under the tier they arrived in, tagged `[dependencies]`, before the triage and the gate
+run; one that restates a reviewer finding at the same anchor is dropped in the
+reviewer's favour.
 
 Under `--lite`, run **Triage the Suggestions** the moment the report returns,
 before printing anything, and then **Gate the findings on likelihood**. The
@@ -245,7 +253,7 @@ both paths, and the heading is omitted when nothing moved:
 ```markdown
 ## Judged not worth acting on
 
-- **Warning** · `src/api.ts:12` · [reuse] — <the finding as it was written> — _unlikely: <why the trigger does not occur> · low impact: <why it would not matter>_
+- **Warning** · `src/api.ts:12` · [resilience] — <the finding as it was written> — _unlikely: <why the trigger does not occur> · low impact: <why it would not matter>_
 - **Suggestion** · `src/api.ts:40` · [maintainability] — <the finding as it was written> — _not worth the churn: <what it would cost against what it buys>_
 ```
 
@@ -255,8 +263,8 @@ interchangeable: a Warning moves for being harmless, a Suggestion for not being
 worth the churn. Writing a Warning off as churn, or a Suggestion off as
 unlikely, is the tell that the wrong test was applied.
 
-Every entry keeps its tier, its lens tag — `[reviewer]` under `--lite`, where no
-lens ran — and its wording, because the purpose of
+Every entry keeps its tier, its lens tag — `[reviewer]` under `--lite`, or
+`[dependencies]` for the one lens that may run there — and its wording, because the purpose of
 the section is that the judgement can be checked — and a finding stripped of its
 tier cannot be argued back up. The trailing clause is that judgement stated so it
 can be disagreed with; a finding that moves without one has been dropped rather
@@ -278,11 +286,14 @@ filed here wrongly costs the whole finding.
 
 One reviewer covering six dimensions gives some of them a shallower pass than
 the others. This adds a dedicated pass per dimension, over the same scope the
-reviewer reads — plus `reuse`, `resilience` and `observability`, which the
-reviewer's checklist does not cover at all.
+reviewer reads — plus `resilience`, `observability` and `ui`, which the
+reviewer's checklist does not cover at all. Correctness is the exception: it is
+the reviewer's first priority, and a lens repeating it was the sole source of a
+Critical once in 118 measured reviews, so there is no `correctness` lens.
 
 **`--lite` skips this section and the rest of the per-dimension pass**, stopping
-where **Review** says to. It skips the *pass*, not the file: **If the user asks
+where **Review** says to — the `dependencies` lens **Review** describes is the
+whole of what it borrows from here. It skips the *pass*, not the file: **If the user asks
 for fixes** is where **Review** sends a `--lite` run when the user asks, and
 **If the findings go to GitHub** governs findings from either path. Both sit
 below this section and both apply. It exists for the runs where the reviewer
@@ -336,8 +347,8 @@ breaks no cold-start rule. Where it comes from depends on what the user gave:
   What must never ride along is anything the reviewer concluded.
 
 A subject belongs in the second branch for the reason the paragraph above
-opens with: prose is not something a lens can pin files with, so nine lenses
-each resolving it on their own is precisely the nine-guesses failure, and the
+opens with: prose is not something a lens can pin files with, so eight lenses
+each resolving it on their own is precisely the eight-guesses failure, and the
 merged Scope line would then name a file set that several findings did not come
 from. It costs the batched launch — say so when you announce the agents, since
 a subject is now the **only** shape where the pass runs in two rounds rather
@@ -353,8 +364,9 @@ you cannot fill.
 ### Pick the lenses
 
 A lens with no surface still costs a dispatch: it reads the whole scope before
-it can say **not applicable**. One absence is visible from the file list alone —
-a change that touches no code — and it can be skipped before the spawn.
+it can say **not applicable**. Some absences are visible before the spawn — a
+change that touches no code, no manifest, no interface, or barely anything — and
+those lenses are skipped there.
 
 **The file list is `manifest.files`**, already resolved. Do not run a second set
 of git commands to build one: the manifest's list is projected from `scope.diff`
@@ -366,40 +378,88 @@ pass as prose.
 Check `manifest.file_list_source` first. `fallback-headers` means the list was
 scraped from the diff's headers rather than parsed, so it may be missing files —
 and a listing missing a code file is exactly what makes a change read as
-prose-only and skip five lenses. Dispatch all nine there, and say why.
+prose-only and skip six lenses. Dispatch all eight there, and say why.
 
-A subject has no diff to list, so skip the check and dispatch all nine, and say
+A subject has no diff to list, so skip the checks and dispatch all eight, and say
 so.
 
 The manifest cannot describe an empty scope — the script falls through or exits
 rather than writing one, and records why in `fell_through`. So an empty listing
 here means something went wrong rather than that every file is prose: dispatch
-all nine and say so.
+all eight and say so.
 
-Skip `tests`, `resilience`, `performance`, `dependencies` and `observability`
-when every path in the listing is prose, and say so. Prose is an allowlist, not
-a judgement:
-`.md`, `.markdown`, `.rst`, `.adoc`, `.txt`, and the extensionless `README`,
+Otherwise run each check below. A lens any of them excludes is skipped, and the
+announcement and the roster name the check that excluded it.
+
+**Prose only.** Skip `tests`, `resilience`, `performance`, `dependencies`,
+`observability` and `ui` when every path in the listing is prose. Prose is an
+allowlist, not a judgement:
+`.md`, `.markdown`, `.rst`, `.adoc`, and the extensionless `README`,
 `LICENSE`, `CHANGELOG` and `NOTICE`. Anything else — config, a script, an
-extension not listed, a file with none — is code. So is a Markdown file that is
+extension not listed, a file with none — is code. `.txt` is not prose:
+`requirements.txt` is a manifest. So is a Markdown file that is
 an agent's instructions: `CLAUDE.md`, `AGENTS.md`, `SKILL.md`, or anything
 under a `claude/`, `.claude/`, `agents/`, `commands/` or `skills/` directory.
 Those are executed, and a change to one is a change to what an agent does.
 
-`correctness`, `security`, `maintainability` and `reuse` still run on prose: a
-doc can state something false, leak a secret, or duplicate a passage that now
-has to change in step with the original.
+`security` and `maintainability` can still run on prose, by the checks below: a
+doc can leak a secret, or duplicate a passage that now has to change in step with
+the original.
 
-No other lens has a mechanical skip. `dependencies` is the tempting one — no
-manifest changed, so nothing to govern — but half its rubric is breaking
-changes to exported signatures, config keys and CLI flags, and a purely
-additive diff can make a flag required with no manifest, import or deletion in
-sight. Nothing in a file listing clears that, so on a code diff it runs, and
-takes its own **not applicable** exit if there is nothing there.
+**A small change.** Skip `maintainability`, `resilience`, `performance` and `ui`
+when `manifest.changed_lines` is 10 or fewer — lines added plus removed outside
+test and fixture directories. Across the 118 reviews this was measured over, no
+Critical or Warning only a lens raised on a change that small was ever fixed.
+`tests` and `observability` still run, and so do `security` and `dependencies`
+wherever their own checks send them, since a one-line manifest bump is that
+lens's whole surface. A null `changed_lines` means nothing counted it: skip
+nothing for size.
 
-This is a check on the listing, not a reading of the change. Do not open the
-diff to decide, and never skip a lens because the change *looks* like it has
-nothing for it — if you wrote the code, that is the author waving off a
+**No manifest.** Skip `dependencies` when no path in the listing is a manifest, a
+lockfile or a migration: by basename `package.json`, `package-lock.json`,
+`yarn.lock`, `pnpm-lock.yaml`, `bun.lock`, `bun.lockb`, `npm-shrinkwrap.json`,
+`Cargo.toml`, `Cargo.lock`, `go.mod`, `go.sum`, `pyproject.toml`, `poetry.lock`,
+`uv.lock`, `pdm.lock`, `Pipfile`, `Pipfile.lock`, `setup.py`, `setup.cfg`, any
+`requirements*.txt` or `.in`, `Gemfile`, `Gemfile.lock`, a `.gemspec`,
+`composer.json`, `composer.lock`, `pom.xml`, `build.gradle`, `build.gradle.kts`,
+`mix.exs`, `mix.lock`, `Brewfile`; or any file under a `migrations` or `migrate`
+directory. The rest of its rubric — a breaking change to an exported signature,
+a config key or a CLI flag, an environment variable nothing provisions — can
+arrive with no manifest in sight, which is why the reviewer's checklist carries
+those items too: where this lens is skipped, they are the reviewer's.
+
+**No security surface.** Skip `security` when no path is an input boundary *and*
+no changed line in `scope.diff` reaches a sink. A path is a boundary when any
+segment of it, split on non-alphanumerics, is one of `router`, `route`,
+`controller`, `endpoint`, `handler`, `middleware`, `plug`, `socket`, `channel`,
+`auth`, `session`, `token`, `password`, `secret`, `credential`, `webhook`,
+`upload`, `api`, `config`, `sandbox`, `network`, `fetch`, `tool`, `permission`
+or `workflows` (a trailing `s` ignored), or ends in `_web`; and an agent's
+instructions, as defined above, always are. The sink check is one search:
+
+```
+Grep, case-insensitive, over scope.diff:
+^[+-].*(exec|spawn|system\(|popen|subprocess|child_process|shell=|eval\(|Function\(|unserialize|deserializ|pickle\.|yaml\.load|Marshal\.load|binary_to_term|readFile|writeFile|open\(|sendFile|path\.join|query\(|execute\(|raw\(|fragment\(|innerHTML|outerHTML|insertAdjacentHTML|dangerouslySetInnerHTML|document\.write|v-html|redirect|urlopen|requests\.|fetch\(|allowed-?tools|permissions|secret|passw|api_?key|private_?key|token|credential)
+```
+
+It matches any added or removed line naming a shell, eval, deserialiser, file,
+query, HTML or URL sink, a tool grant, or a secret. Removed lines count, so
+deleting a guard still dispatches. A `+++`/`---` file header matches too when its
+path carries one of the words — `token_store.ex` — which only ever errs towards
+dispatching.
+
+**No interface.** Skip `ui` when no path in the listing is user interface: an
+extension of `.html`, `.htm`, `.css`, `.scss`, `.sass`, `.less`, `.js`, `.mjs`,
+`.cjs`, `.jsx`, `.ts`, `.tsx`, `.vue`, `.svelte`, `.astro`, `.heex`, `.leex`,
+`.eex`, `.erb`, `.hbs`, `.njk`, `.jinja`, `.twig` or `.liquid`, or any directory
+on the path named `live`, `components`, `templates`, `layouts`, `views`, `pages`,
+`assets` or `static`, or ending in `_web`. Templates often live inside code files,
+so this errs towards UI: a false positive costs a **not applicable**, a false
+negative drops the lens without a word.
+
+These are checks on the listing, the count and one pattern, not a reading of the
+change. Do not open the diff to decide, and never skip a lens because the change
+*looks* like it has nothing for it — if you wrote the code, that is the author waving off a
 reviewer, and the pass exists to stop exactly that. When the listing leaves it
 unclear, dispatch: a lens that read a thin surface costs a line where one that
 was never sent costs the finding.
@@ -408,22 +468,40 @@ The lenses and their rubrics:
 
 | Lens | Looks for |
 |---|---|
-| `correctness` | logic errors, off-by-one, wrong operator, null/empty/zero/max edges, races, unhandled promises, missing await, two locks taken in different orders on two paths, a lock or guard held across an await or a blocking call, a lock not released on the path that throws, two processes each waiting synchronously on the other |
-| `security` | unvalidated input at boundaries, hardcoded secrets, injection, sensitive data in logs and errors, authz gaps |
-| `tests` | new branches with no test, uncovered edge cases, tests that cannot fail, flakiness, fixtures that hide the bug, an invariant a handful of examples cannot pin where the repo's tests already use a property-based harness, a property test that cannot fail |
-| `maintainability` | unclear names, functions doing several things, unactionable error messages, comments explaining *what*, changes bundling unrelated concerns — and code the change adds that could be deleted outright: handling for a case that cannot occur, a wrapper that only forwards, a fallback for a failure the platform already rules out |
+| `security` | unvalidated input at boundaries, hardcoded secrets, injection, sensitive data in logs and errors, authz gaps, model output or tool arguments reaching a shell, file, query or URL sink unchecked, an approval that does not bind the action it approved |
+| `tests` | new branches with no test, uncovered edge cases, tests that cannot fail, flakiness, fixtures that hide the bug, an invariant a handful of examples cannot pin where the repo's tests already use a property-based harness, a property test that cannot fail, a check the change switches off — a skipped or disabled test, a lint rule disabled or suppressed, `\|\| true` or `continue-on-error` on a check, an edit loosening a check's own config — and tests that cost more than they catch: assertions that restate the implementation or reach past the public API, assertions on a stub or on the test's own setup, tests of trivial code or static values, exact or whole-value assertions on output the test is not about, the same behaviour asserted again at another level |
+| `maintainability` | a name that says something the code does not do, functions doing several things, unactionable error messages, changes bundling unrelated concerns — and code the change adds that could be deleted outright: handling for a case that cannot occur, an option no caller passes a second value to, a wrapper that only forwards, a fallback for a failure the platform already rules out — and reuse: logic the repo already implements elsewhere, a second copy of something within the diff itself, a hand-rolled version of what a dependency already in the manifest provides, new UI markup that re-implements a component the project's shared component library already provides, a new abstraction where an existing one would have served, code shared between two things that only look alike — and code the change orphaned but did not remove: a function whose last caller went away, a config key nothing reads, a flag now permanently on with its dead branch intact |
 | `resilience` | outbound calls with no timeout, retries with no backoff or no cap, a failure swallowed into a default that reads as success, multi-step work that leaves inconsistent state when it fails halfway, a retried write that is not idempotent, a call the code assumes cannot fail, work that can reach a state nothing moves it out of — a retry counter that never resets, a queued item no sweep reclaims, a wait nothing wakes, a restart that repeats without making progress |
-| `reuse` | logic the repo already implements elsewhere, a second copy of something within the diff itself, a hand-rolled version of what a dependency already in the manifest provides, a new abstraction where an existing one would have served, code shared between two things that only look alike — and code the change orphaned but did not remove: a function whose last caller went away, a config key nothing reads, a flag now permanently on with its dead branch intact |
 | `performance` | N+1 queries, work inside loops that belongs outside, resource leaks, blocking calls in async paths, unbounded growth |
-| `dependencies` | new dependencies (necessity, maintenance, transitive weight), breaking changes to public interfaces, config formats or CLI flags, irreversible migrations, a new required environment variable, secret or binding the code reads with no default that nothing in the diff provisions at runtime — the deploy manifest, CI config or secret store, since an `.env.example` entry documents a variable without supplying it anywhere a deploy will look |
+| `dependencies` | new dependencies (necessity, maintenance, transitive weight), a version bump whose release notes between the two versions name a break the diff does not handle, breaking changes to public interfaces, config formats or CLI flags, irreversible migrations, a new required environment variable, secret or binding the code reads with no default that nothing in the diff provisions at runtime — the deploy manifest, CI config or secret store, since an `.env.example` entry documents a variable without supplying it anywhere a deploy will look |
 | `observability` | a new failure path nothing logs, a new endpoint, worker or scheduled job with no counter or timing for its errors, latency or backlog, an async handoff that drops the request or correlation context, an error caught and logged without its cause, a log line carrying no identifier that would let someone find the affected record, a path the surrounding module instruments that this one does not, a signal that can drift from what it reports — and telemetry that costs more than it earns: a line raised in severity or emitted unconditionally where the code it replaced returned early |
+| `ui` | user-facing interface quality, read from the code rather than rendered: a layout that breaks at phone width (a fixed width, content that cannot wrap, a row or table that overflows sideways), a list or async view with no loading, empty or error state, a button with no disabled or pending state while its action runs, form validation not shown beside its field, a control the keyboard cannot reach or operate, focus that is not visible, a tap target too small for touch, one-off styling where the project's own components, tokens or classes already cover it |
 
 There is deliberately no linter lens. The reviewer already ran the project's real
 linter and reported it; a model imitating static analysis is strictly worse than
 the tool that does it exactly.
 
 The `tests` lens judges coverage by ROI: a new branch with no test is a finding;
-trivial code without one is not.
+trivial code without one is not. An uncovered edge case is a finding only where
+the code can reach it.
+
+For each test the change adds or edits, the lens names the production line whose
+deletion, inversion or changed value turns it red. A test with no such line cannot
+fail, and is a missing test for the behaviour it claims to cover, tiered as one,
+naming the line it looked for. A test that costs more than it catches is a
+different finding — a Suggestion to delete or narrow it, never promoted, since a
+test that exists is not a missing one. The sign of one that restates the
+implementation is a refactor that had to edit its assertions. Four things look
+like that and are not: a regression test for a real bug; a check on a call where
+the call is the behaviour, a side effect outside the process; a golden file or
+snapshot where that output is the contract; a characterization test pinning code
+before a refactor. `agents/wtf-change-reviewer.md` carries the same rule for
+`--lite`; change the two together.
+
+A check the change switches off is a Warning, counted only on lines the change
+adds: a suite that goes green by skipping its failing test has not been fixed.
+Where the change gives a reason, quote it in the finding rather than dropping the
+finding for it.
 
 That row's property-based clause is gated twice, and both gates carry weight. The
 code has to state an invariant a handful of examples cannot pin — a round trip, an
@@ -453,14 +531,16 @@ the failing input when it goes red. It is a finding only where the repo's existi
 property tests pin a seed or a derandomized CI profile and this one does not, or where
 the change fixes a counterexample and does not keep it as an explicit example.
 
-`reuse` is the one lens whose target sits outside the diff: both the duplicate it
-looks for and the code the change orphaned live in files the change did not touch.
-Every finding it writes is therefore an assertion about code nobody in this run
-has been asked to read, which sets its evidence bar. Search before asserting an
-absence, and count re-exports, string-keyed lookups and dynamic dispatch as
-callers. "Something like this probably already exists" and "nothing uses this any
-more" are the two shapes this lens fails in, and neither is reportable without the
-search behind it. The orphan half is the more dangerous, because a wrong claim
+The reuse half of `maintainability` is the one target that sits outside the diff:
+both the duplicate it looks for and the code the change orphaned live in files the
+change did not touch. Every such finding is therefore an assertion about code
+nobody in this run has been asked to read, which sets its evidence bar. It was a
+lens of its own until 118 measured reviews turned up four fixed findings only it
+had raised; folding it in kept the rubric and the bar and dropped a dispatch.
+Search before asserting an absence, and count re-exports, string-keyed lookups and
+dynamic dispatch as callers. "Something like this probably already exists" and
+"nothing uses this any more" are the two shapes this half fails in, and neither is
+reportable without the search behind it. The orphan half is the more dangerous, because a wrong claim
 there invites a deletion.
 
 The two halves anchor differently. A duplication finding anchors at the changed
@@ -473,25 +553,12 @@ is the line that gets deleted.
 Duplication is also the finding most often worth leaving alone, so it judges by
 whether the two copies have to change together, not by how alike they look.
 
-`correctness` and `resilience` are next to each other and must not merge.
-`correctness` asks whether the code computes the right answer from the inputs it
-was handed; `resilience` asks what happens when something the code *calls* fails,
-hangs or half-succeeds. A missing `await` stays with `correctness` — it is wrong
-regardless of whether the callee misbehaves.
-
-A deadlock stays with `correctness` by that same test, even though `resilience`
-owns hangs: an inverted lock order, or a guard held across a suspension point, is
-wrong whatever the things it calls do, where the hang `resilience` owns arrives
-from outside. The two lenses divide one hang by where it originates, and the
-clause sits beside `races` because it is the same kind of defect — a fact about
-how this code interleaves with itself.
-
-Two processes each waiting on the other is the case that test reads least clearly,
-since the other party *is* something this code calls, and it stays with
-`correctness` too: the cycle is a fact about how the two were written to interleave,
-not about either one misbehaving. `resilience`'s "a wait nothing wakes" is a wait
-this code never arranges to end — a queued item no sweep reclaims — not one held
-shut by a peer that is itself waiting.
+`resilience` asks what happens when something the code *calls* fails, hangs or
+half-succeeds. Whether the code computes the right answer from the inputs it was
+handed — a missing `await`, a race, a deadlock this code causes by how it
+interleaves with itself — is the reviewer's, which is why the checklist's
+correctness section carries the lock clauses. "A wait nothing wakes" is a wait
+this code never arranges to end, such as a queued item no sweep reclaims.
 
 `performance` and `resilience` divide by path, not by subject. `performance` owns
 the happy path — what this costs when it works and the input is large.
@@ -520,9 +587,9 @@ reads the diff, not this lens's output, so nothing downstream catches a remedy t
 trades a missing log line for a leaked one.
 
 Almost everything `observability` writes is an assertion that something is *not*
-there — nothing logs this, no metric covers that — which gives it `reuse`'s
-evidence bar for the same reason. Search before asserting the absence, and count
-the emitters that are not in the file: a middleware that already logs every
+there — nothing logs this, no metric covers that — which gives it the reuse
+half's evidence bar for the same reason. Search before asserting the absence, and
+count the emitters that are not in the file: a middleware that already logs every
 request, a line the platform emits for free, a wrapper the call passes through on
 its way out. "This should probably have a metric" is not reportable.
 
@@ -531,6 +598,32 @@ usually been there a while and the lens would otherwise inventory the repo's
 telemetry rather than review the change. Report one only where *this change* is
 what makes it matter: a silent path this diff puts in front of users, a signal
 this diff has just made load-bearing.
+
+`security`'s evidence bar is a crossed trust boundary with a concrete result: a
+finding names the lower-trust principal and what it controls, the control that
+should stop it, and the principal or resource on the other side and what happens
+to it. One that cannot name all three is not a finding. Nor is a missing best
+practice with no reachable violation, a defence-in-depth gap another layer
+already closes (name the layer), a guess about deployment the repo does not show,
+or a principal using authority it already has. Text an attacker wrote reaching a
+model is not by itself a finding either — a prompt is not a boundary — but the
+missing control after it is: model output reaching a sink unchecked, an approval
+that does not bind what it approved, untrusted content stored where a more
+privileged agent later reads it as instructions. Tier by demonstrated impact:
+Critical when an outside actor gains code execution, credentials or another
+principal's data, or a control is fully defeated; Warning when a real boundary is
+weakened with a narrow blast radius. If the damage cannot be stated, the tier is
+lower than it feels.
+
+On a version bump, `dependencies` reads the release notes or changelog between
+the old and new versions — `gh release view` for a GitHub-hosted package, otherwise
+the changelog in the package's own source where the tree has it — for breaks the diff
+does not show. Lenses have no web tools, so say when neither was available. A finding cites
+the note it rests on.
+
+`ui` reads the interface from its code and does not render it. Its last clause
+is the reuse half's in another form, and takes the same bar: name the existing
+component or token by `file:line`.
 
 ### Synthesise
 
@@ -557,7 +650,7 @@ telemetry gap is what silently leaves the report.
 **Tag each merged finding with where it came from** — the lens name, or `reviewer`:
 
 ```
-- **Critical** · `src/auth.ts:42` · [correctness] — what breaks, and the fix.
+- **Critical** · `src/auth.ts:42` · [security] — what breaks, and the fix.
 ```
 
 You already hold each report separately, so no agent has to be asked for this. It
@@ -646,7 +739,7 @@ about how the pass ran. It carries **every lens that was
 dispatched or skipped**, each with what it returned:
 
 ```
-Lenses: correctness — 2 findings · security, maintainability — clean · reuse — not applicable · tests, resilience, observability, performance, dependencies — not dispatched (prose-only listing)
+Lenses: security — 2 findings · tests — clean · observability — not applicable · maintainability, resilience, performance, ui — not dispatched (small change) · dependencies — not dispatched (no manifest)
 ```
 
 Findings, **clean**, **not applicable** and **not dispatched** are four
@@ -655,10 +748,10 @@ found it clean, one with no surface to review, and one **Pick the lenses**
 excluded — so each lens carries its own label and none is folded into another.
 What they do not need is a list and a paragraph each. `not dispatched` keeps the
 check that excluded it as a parenthetical, and that parenthetical names a check
-**Pick the lenses** actually authorises — the prose-only listing is the only one,
-and it skips its five lenses together. Write **not applicable** in full, the way
+**Pick the lenses** actually authorises — prose only, small change, no manifest,
+no security surface or no interface. Write **not applicable** in full, the way
 the lens itself reports it. A lens in one of the two states hoisted into the
-header is named here too, as `see above` — the line is a roster of all nine, so
+header is named here too, as `see above` — the line is a roster of all eight, so
 a reader counting it can tell a lens that is missing from one that is reported
 further up.
 
@@ -819,6 +912,12 @@ the rewrite as often as it finds a defect in it — on prose especially, where t
 disagreement is taste and each one costs a round that ends in another review.
 A Warning is different: every one this step has raised so far was a defect the
 fix itself had introduced.
+
+**A Critical in lines the last fix wrote, in a file that already had one, argues
+against another round of patching.** Say so when it appears. Each round tends to
+find the next edge case of one open-ended guard — blocking `../`, then `..\`, then
+an encoded form — so suggest rethinking the approach rather than offering the
+next patch.
 
 Close with the two gaps that change what the reader does next, and nothing
 further — a longer standing disclaimer printed identically every round is one a

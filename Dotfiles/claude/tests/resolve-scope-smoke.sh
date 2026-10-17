@@ -217,6 +217,33 @@ out=$(cd "$WORK/pathscope" && "$RESOLVE" resolve --scope lib 2>/dev/null | tail 
 check "path scope shape" "path" "$(field "$out" .shape)"
 check "path scope takes only what is under it" "lib/new.txt" "$(field "$out" '.files | join(",")')"
 
+echo "== changed_lines counts code, not tests, and the diff carries wide context =="
+# /wtf-code-review skips most lenses at ten lines or fewer, so a count that took test lines
+# in, or judged a rename out of test/ by its old path, would send a small change the full
+# pass or a large one almost none.
+scratch_repo "$WORK/count"
+mkdir -p "$WORK/count/test"
+seq 1 40 > "$WORK/count/lib.txt"
+printf 'one\n' > "$WORK/count/test/t.txt"
+seq 100 110 > "$WORK/count/test/old.txt"
+git -C "$WORK/count" add . && git -C "$WORK/count" commit -q -m base
+sed -i.bak 's/^20$/twenty/' "$WORK/count/lib.txt" && rm "$WORK/count/lib.txt.bak"
+printf 'two\nthree\n' >> "$WORK/count/test/t.txt"
+git -C "$WORK/count" mv test/old.txt new.txt
+printf 'more\n' >> "$WORK/count/new.txt"
+git -C "$WORK/count" add . && git -C "$WORK/count" commit -q -m change
+out=$(cd "$WORK/count" && "$RESOLVE" resolve --scope HEAD 2>/dev/null | tail -1)
+check "two lines in lib, one in the renamed file, none from test/" "3" "$(field "$out" .changed_lines)"
+check "a line 19 lines from the change is in the diff" "1" "$(grep -c '^ 1$' "$out/scope.diff" || true)"
+sed -i.bak 's/^30$/thirty/' "$WORK/count/lib.txt" && rm "$WORK/count/lib.txt.bak"
+out=$(cd "$WORK/count" && "$RESOLVE" resolve 2>/dev/null | tail -1)
+check "the working-tree diff carries wide context too" "1" "$(grep -c '^ 11$' "$out/scope.diff" || true)"
+check "an uncommitted edit is counted" "2" "$(field "$out" .changed_lines)"
+# A stub stands in for text nobody counted, so the count says null rather than too few.
+head -c 1100000 /dev/zero | tr '\0' a > "$WORK/count/big.txt"
+out=$(cd "$WORK/count" && "$RESOLVE" resolve 2>/dev/null | tail -1)
+check "a stubbed untracked file voids the count" "null" "$(field "$out" .changed_lines)"
+
 echo "== a root commit has no parent to diff against =="
 scratch_repo "$WORK/root"
 commit "$WORK/root" a.txt one base
