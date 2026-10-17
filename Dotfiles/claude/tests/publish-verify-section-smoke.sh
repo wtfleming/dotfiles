@@ -229,6 +229,7 @@ check "prose between the mentions survives" 1 "$(grep -c 'keep this line' "$WORK
 check "new section appended" 1 "$(grep -c 'New verdict: verified.' "$WORK/prose.out")"
 
 echo "case: a CRLF body from the web UI is merged, not refused"
+# shellcheck disable=SC2016  # the backticks are a literal markdown fence
 printf '## Summary\r\n\r\n```\r\ncode\r\n```\r\n\r\n<!-- verify:start -->\r\nOld verdict.\r\n<!-- verify:end -->\r\n\r\ntail\r\n' > "$WORK/crlf.body"
 check "merge lands" 0 "$(merge_status "$WORK/crlf.body" "$WORK/section.md" "$WORK/crlf.out")"
 check "old verdict gone" 0 "$(grep -c 'Old verdict.' "$WORK/crlf.out" || true)"
