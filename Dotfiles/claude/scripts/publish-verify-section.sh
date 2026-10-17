@@ -157,7 +157,10 @@ cmd_merge() {
 	# `-s` is a size test and passes on a directory or a file this process cannot open, which then
 	# surfaced two guards later as a complaint about the *body's* markers -- sending
 	# someone hand-fixing a public PR to the one thing that is not wrong.
-	[ -f "$section" ] && [ -r "$section" ] || { echo "cannot read the section file: $section" >&2; exit 1; }
+	if [ ! -f "$section" ] || [ ! -r "$section" ]; then
+		echo "cannot read the section file: $section" >&2
+		exit 1
+	fi
 	# A section line that is a marker by is_marker's rule nests a second pair inside
 	# the first. The written body then holds two starts and two ends, which this
 	# script's own reader refuses on every later run -- so the PR is stuck displaying a
