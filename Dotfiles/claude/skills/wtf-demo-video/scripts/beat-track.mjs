@@ -12,10 +12,11 @@
  */
 import { writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { flag as argFlag } from './lib.mjs';
+import { flag as argFlag, rejectUnknown } from './lib.mjs';
 
 const args = process.argv.slice(2);
 const flag = (name, dflt) => argFlag(args, name, dflt);
+rejectUnknown(args, ['duration', 'bpm', 'key', 'out']);
 const duration = Number(flag('duration', NaN));
 const bpm = Number(flag('bpm', 120));
 const key = flag('key', 'A');

@@ -32,3 +32,12 @@ export function flag(args, name, dflt) {
   }
   return v;
 }
+
+/* Exits 2 on a --flag not in known: an ignored --fps=30 would run at the default. */
+export function rejectUnknown(args, known) {
+  const unknown = args.find((a) => a.startsWith('--') && !known.includes(a.slice(2)));
+  if (unknown) {
+    console.error(`unknown flag ${unknown} (pass a value as --name value)`);
+    process.exit(2);
+  }
+}

@@ -34,18 +34,41 @@ EOF
 run_awk() {
 	local body=$1 sectionfile=$2
 	awk -v startm="$START" -v endm="$END" -v sectionfile="$sectionfile" '
-		function emit() {
+		function emit(   r, n) {
 			if (sectionfile == "") return
 			print startm
-			while ((getline line < sectionfile) > 0) print line
+			n = 0
+			while ((r = (getline line < sectionfile)) > 0) { print line; n++ }
 			close(sectionfile)
+			# getline returns -1 on a read error, which is not EOF. `test -s` in the
+			# caller passes on a file this process cannot open, so without this an
+			# unreadable section published as two adjacent markers at exit 0 --
+			# destroying the section it replaced, which is the empty verdict that
+			# check exists to prevent.
+			if (r < 0 || n == 0) { bad = 1; exit 1 }
 			print endm
+		}
+
+		# The tool writes a marker alone on its line, so that is what counts as one.
+		# `index()` matched a substring, which made a marker the author mentioned in
+		# ordinary prose read as a live delimiter and deleted everything between two
+		# such mentions -- at exit 0, because the gate parses the body the same way
+		# and so agreed with the damage.
+		function is_marker(line, marker,   s) {
+			s = line
+			gsub(/^[ \t]+|[ \t\r]+$/, "", s)
+			return s == marker
 		}
 		# The run of ` or ~ opening a line, or "" if the line opens no fence. Written
 		# without interval expressions, which mawk -- Debian'"'"'s default awk, and so CI'"'"'s --
 		# does not reliably support.
 		function fence_run(line,   s, ch, n) {
 			s = line
+			# GitHub returns CRLF for any body typed in the web UI, and a closing
+			# fence of ```\r never equalled the ``` that opened it -- so the fence
+			# never closed, every marker below it was invisible, and the merge was
+			# refused on the ordinary shape of a real PR body.
+			sub(/\r$/, "", s)
 			sub(/^[ \t]+/, "", s)
 			ch = substr(s, 1, 1)
 			if (ch != "`" && ch != "~") return ""
@@ -58,7 +81,7 @@ run_awk() {
 		# string (```markdown), which is why only the close is held to this.
 		function fence_only(line,   s) {
 			s = line
-			gsub(/[ \t]/, "", s)
+			gsub(/[ \t\r]/, "", s)
 			return s == fence_run(line)
 		}
 		{
@@ -85,13 +108,13 @@ run_awk() {
 				next
 			}
 		}
-		!fence && index($0, startm) {
+		!fence && is_marker($0, startm) {
 			if (skip || seen) { bad = 1; exit 1 }
 			skip = 1; seen = 1
 			emit()
 			next
 		}
-		!fence && index($0, endm) {
+		!fence && is_marker($0, endm) {
 			if (!skip) { bad = 1; exit 1 }
 			skip = 0
 			next
@@ -131,14 +154,33 @@ cmd_merge() {
 	[ -f "$body" ] || { echo "no such body file: $body" >&2; exit 1; }
 	# An empty section between two markers publishes as a verdict with no content.
 	[ -s "$section" ] || { echo "no section to publish" >&2; exit 1; }
+	# `-s` is a size test and passes on a directory or a file this process cannot open, which then
+	# surfaced two guards later as a complaint about the *body's* markers -- sending
+	# someone hand-fixing a public PR to the one thing that is not wrong.
+	if [ ! -f "$section" ] || [ ! -r "$section" ]; then
+		echo "cannot read the section file: $section" >&2
+		exit 1
+	fi
+	# A section line that is a marker by is_marker's rule nests a second pair inside
+	# the first. The written body then holds two starts and two ends, which this
+	# script's own reader refuses on every later run -- so the PR is stuck displaying a
+	# verdict no rerun can replace, which is the exact failure the delimiters exist to
+	# prevent. The gate cannot catch it, because it strips the section from both sides.
+	# A marker mentioned mid-line is prose to the reader, so it is allowed through.
+	if grep -qxE -e "[[:space:]]*($START|$END)[[:space:]]*" -- "$section"; then
+		echo "the section contains a verify marker; it would nest a second pair — refusing" >&2
+		exit 1
+	fi
 
-	local tmp
+	local tmp before after
 	tmp=$(mktemp) || { echo "could not create a temp file" >&2; exit 1; }
-	# shellcheck disable=SC2064  # expand $tmp now, so the trap fires on the real path
-	trap "rm -f '$tmp'" EXIT
+	before=$(mktemp) || { echo "could not create a temp file" >&2; exit 1; }
+	after=$(mktemp) || { echo "could not create a temp file" >&2; exit 1; }
+	# shellcheck disable=SC2064  # expand the paths now, so the trap fires on the real ones
+	trap "rm -f '$tmp' '$tmp.nonl' '$before' '$after'" EXIT
 
 	if ! run_awk "$body" "$section" > "$tmp"; then
-		echo "verify markers missing, doubled or out of order — fix it by hand" >&2
+		echo "verify markers in $body are doubled, out of order or unterminated — fix it by hand" >&2
 		exit 1
 	fi
 
@@ -147,9 +189,32 @@ cmd_merge() {
 	# not ours to delete) and a section that would move rather than be replaced.
 	# Trailing blank lines are normalised away on both sides, because appending a
 	# section to a body that had none must add its own separator.
-	if ! diff -q <(gate_view "$body") <(gate_view "$tmp") >/dev/null; then
+	#
+	# Materialised to files with checked statuses, never compared as process
+	# substitutions: `<(...)` discards the exit status, so a gate_view that aborted
+	# part-way fed `diff` truncated output that happened to match, and the gate
+	# passed on an input it exists to refuse.
+	gate_view "$body" > "$before" \
+		|| { echo "could not parse $body — nothing written" >&2; exit 1; }
+	gate_view "$tmp" > "$after" \
+		|| { echo "could not parse the merged body — nothing written" >&2; exit 1; }
+
+	# awk's `print` terminates every line it emits, so a body whose final line
+	# carried no newline gains one -- a byte changed outside the markers, on the
+	# author's own last line. `gate_view` reprints both sides, so the gate agrees
+	# with it. Match the source's final-newline state before comparing.
+	if [ -s "$body" ] && [ "$(tail -c1 "$body" | wc -l)" -eq 0 ] \
+		&& [ -s "$tmp" ] && [ "$(tail -c1 "$tmp" | wc -l)" -ne 0 ]; then
+		# Exactly one byte, never `$(cat)`, which would eat every trailing blank
+		# line and change the text outside the markers a second way.
+		head -c "$(( $(wc -c < "$tmp") - 1 ))" "$tmp" > "$tmp.nonl" \
+			|| { echo "could not normalise the final newline" >&2; exit 1; }
+		mv "$tmp.nonl" "$tmp"
+	fi
+
+	if ! diff -q "$before" "$after" >/dev/null; then
 		echo "refusing to write: the merge changed content outside the section" >&2
-		diff <(gate_view "$body") <(gate_view "$tmp") >&2 || true
+		diff "$before" "$after" >&2 || true
 		exit 1
 	fi
 
@@ -157,7 +222,7 @@ cmd_merge() {
 }
 
 case ${1:-} in
-	merge) shift; cmd_merge "$@" ;;
-	strip) shift; cmd_strip "$@" ;;
+	merge) shift; [ $# -eq 3 ] || usage; cmd_merge "$@" ;;
+	strip) shift; [ $# -eq 1 ] || usage; cmd_strip "$@" ;;
 	*) usage ;;
 esac

@@ -23,13 +23,14 @@ import { spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, existsSync, writeFileSync, rmSync, renameSync } from 'node:fs';
 import { availableParallelism } from 'node:os';
 import path from 'node:path';
-import { loadChromium, flag as argFlag } from './lib.mjs';
+import { loadChromium, flag as argFlag, rejectUnknown } from './lib.mjs';
 
-const chromium = loadChromium();
 const args = process.argv.slice(2);
 const VALUED = ['out', 'fps', 'size', 'workers', 'audio', 'stills'];
 const flag = (name, dflt) => argFlag(args, name, dflt);
 const positional = args.filter((a, i) => !a.startsWith('--') && !VALUED.includes((args[i - 1] || '').slice(2)));
+rejectUnknown(args, [...VALUED, 'check-loop']);
+const chromium = loadChromium();
 
 const filmPath = path.resolve(positional[0] || 'index.html');
 const out = flag('out', 'final.mp4');
@@ -55,6 +56,15 @@ if (!stillsDir && !checkLoop && spawnSync('ffmpeg', ['-version']).error) {
   process.exit(2);
 }
 
+const READY_MS = 30_000, SEEK_MS = 10_000;
+// Raced in Node, not in the page: a film that blocks its main thread never runs its own timer.
+// The abandoned evaluate rejects once the browser closes, so it gets a no-op handler.
+const within = (ms, what, pending) => {
+  let timer;
+  pending.catch(() => {});
+  const late = new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(`${what} did not settle in ${ms / 1000}s`)), ms); });
+  return Promise.race([pending, late]).finally(() => clearTimeout(timer));
+};
 const browser = await chromium.launch();
 let ff = null, done = null;
 try {
@@ -72,12 +82,12 @@ try {
     // Fonts and images that land mid-render swap in on a random frame.
     // window.READY is the film's own promise for anything else it must load first.
     // An <img> with no src rejects decode() too, so only a failed src counts.
-    const broken = await page.evaluate(async () => {
+    const broken = await within(READY_MS, 'window.READY, fonts and images', page.evaluate(async () => {
       await window.READY;
       await document.fonts.ready;
       const failed = await Promise.all([...document.images].map((img) => img.decode().then(() => null, () => img.getAttribute('src') && img.src)));
       return failed.filter(Boolean);
-    });
+    }));
     if (broken.length) page.errors.push(`image failed to decode (${broken[0]})`);
     if (page.errors.length) throw new Error(`page error while loading ${filmPath}: ${page.errors[0]}`);
     return page;
@@ -90,7 +100,7 @@ try {
   const shoot = async (page, t) => {
     const at = `t=${t.toFixed(3)}s`;
     try {
-      await page.evaluate((t) => window.seek(t), t);
+      await within(SEEK_MS, 'seek', page.evaluate((t) => window.seek(t), t));
     } catch (e) {
       throw new Error(`seek threw at ${at}: ${e.message.split('\n')[0]}`);
     }

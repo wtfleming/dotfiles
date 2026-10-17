@@ -214,6 +214,65 @@ check "unterminated start refused" 1 "$(merge_status "$WORK/unterminated.body" "
 check "empty section refused" 1 "$(merge_status "$WORK/plain.body" "$WORK/empty.md" "$WORK/empty.out")"
 check "missing body refused" 1 "$(merge_status "$WORK/nope.body" "$WORK/section.md" "$WORK/nope.out")"
 
+echo "case: a marker mentioned in prose is not a delimiter"
+cat > "$WORK/prose.body" <<'EOF'
+## Summary
+
+The tool writes <!-- verify:start --> above its section.
+
+keep this line
+
+and <!-- verify:end --> below it.
+EOF
+check "merge lands" 0 "$(merge_status "$WORK/prose.body" "$WORK/section.md" "$WORK/prose.out")"
+check "prose between the mentions survives" 1 "$(grep -c 'keep this line' "$WORK/prose.out")"
+check "new section appended" 1 "$(grep -c 'New verdict: verified.' "$WORK/prose.out")"
+
+echo "case: a CRLF body from the web UI is merged, not refused"
+# shellcheck disable=SC2016  # the backticks are a literal markdown fence
+printf '## Summary\r\n\r\n```\r\ncode\r\n```\r\n\r\n<!-- verify:start -->\r\nOld verdict.\r\n<!-- verify:end -->\r\n\r\ntail\r\n' > "$WORK/crlf.body"
+check "merge lands" 0 "$(merge_status "$WORK/crlf.body" "$WORK/section.md" "$WORK/crlf.out")"
+check "old verdict gone" 0 "$(grep -c 'Old verdict.' "$WORK/crlf.out" || true)"
+check "tail survives" 1 "$(grep -c 'tail' "$WORK/crlf.out")"
+
+echo "case: a section carrying a marker would nest a second pair"
+printf 'Verdict.\n<!-- verify:end -->\n' > "$WORK/nested-end.md"
+check "section with an end marker line refused" 1 "$(merge_status "$WORK/plain.body" "$WORK/nested-end.md" "$WORK/nested.out")"
+printf '  <!-- verify:start -->\r\nVerdict.\n' > "$WORK/nested-start.md"
+check "section with an indented CRLF start marker line refused" 1 "$(merge_status "$WORK/plain.body" "$WORK/nested-start.md" "$WORK/nested.out")"
+
+echo "case: a section mentioning a marker mid-line is published and can be replaced"
+printf 'Quoting <!-- verify:end --> here.\n' > "$WORK/mention.md"
+check "merge lands" 0 "$(merge_status "$WORK/plain.body" "$WORK/mention.md" "$WORK/mention.out")"
+check "a later merge replaces it" 0 "$(merge_status "$WORK/mention.out" "$WORK/section.md" "$WORK/mention2.out")"
+check "the mention is gone" 0 "$(grep -c 'Quoting' "$WORK/mention2.out" || true)"
+
+echo "case: an unreadable section file is refused"
+cp "$WORK/section.md" "$WORK/unreadable.md"
+chmod 000 "$WORK/unreadable.md"
+if [ -r "$WORK/unreadable.md" ]; then
+  echo "  skip  running as a user who can read mode 000"
+else
+  check "unreadable section refused" 1 "$(merge_status "$WORK/plain.body" "$WORK/unreadable.md" "$WORK/unreadable.out")"
+fi
+
+echo "case: a directory given as the section is blamed on the section"
+mkdir -p "$WORK/secdir"
+err=$("$PUBLISH" merge "$WORK/plain.body" "$WORK/secdir" "$WORK/secdir.out" 2>&1 >/dev/null || true)
+check "the message names the section file" 1 "$(printf '%s\n' "$err" | grep -c 'cannot read the section file')"
+
+echo "case: a body with no final newline keeps it that way"
+printf '## Summary\n\n<!-- verify:start -->\nOld verdict.\n<!-- verify:end -->\nlast line' > "$WORK/nonl.body"
+check "merge lands" 0 "$(merge_status "$WORK/nonl.body" "$WORK/section.md" "$WORK/nonl.out")"
+check "still no final newline" 0 "$(tail -c1 "$WORK/nonl.out" | wc -l | tr -d ' ')"
+
+echo "case: wrong argument counts are refused"
+# Extra arguments, because too few already died on ${N:?} before the count check existed.
+rc=0; "$PUBLISH" merge "$WORK/plain.body" "$WORK/section.md" "$WORK/extra.out" extra >/dev/null 2>&1 || rc=$?
+check "merge with four arguments refused" 64 "$rc"
+rc=0; "$PUBLISH" strip "$WORK/plain.body" extra >/dev/null 2>&1 || rc=$?
+check "strip with two arguments refused" 64 "$rc"
+
 echo "case: an empty body is not a licence to publish only the section"
 : > "$WORK/blank.body"
 check "merge lands" 0 "$(merge_status "$WORK/blank.body" "$WORK/section.md" "$WORK/blank.out")"
