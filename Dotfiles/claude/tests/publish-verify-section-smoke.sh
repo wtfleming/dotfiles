@@ -256,6 +256,11 @@ else
   check "unreadable section refused" 1 "$(merge_status "$WORK/plain.body" "$WORK/unreadable.md" "$WORK/unreadable.out")"
 fi
 
+echo "case: a directory given as the section is blamed on the section"
+mkdir -p "$WORK/secdir"
+err=$("$PUBLISH" merge "$WORK/plain.body" "$WORK/secdir" "$WORK/secdir.out" 2>&1 >/dev/null || true)
+check "the message names the section file" 1 "$(printf '%s\n' "$err" | grep -c 'cannot read the section file')"
+
 echo "case: a body with no final newline keeps it that way"
 printf '## Summary\n\n<!-- verify:start -->\nOld verdict.\n<!-- verify:end -->\nlast line' > "$WORK/nonl.body"
 check "merge lands" 0 "$(merge_status "$WORK/nonl.body" "$WORK/section.md" "$WORK/nonl.out")"

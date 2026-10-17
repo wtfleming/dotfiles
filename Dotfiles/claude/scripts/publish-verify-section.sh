@@ -154,10 +154,10 @@ cmd_merge() {
 	[ -f "$body" ] || { echo "no such body file: $body" >&2; exit 1; }
 	# An empty section between two markers publishes as a verdict with no content.
 	[ -s "$section" ] || { echo "no section to publish" >&2; exit 1; }
-	# `-s` is a size test and passes on a file this process cannot open, which then
+	# `-s` is a size test and passes on a directory or a file this process cannot open, which then
 	# surfaced two guards later as a complaint about the *body's* markers -- sending
 	# someone hand-fixing a public PR to the one thing that is not wrong.
-	[ -r "$section" ] || { echo "cannot read the section file: $section" >&2; exit 1; }
+	[ -f "$section" ] && [ -r "$section" ] || { echo "cannot read the section file: $section" >&2; exit 1; }
 	# A section line that is a marker by is_marker's rule nests a second pair inside
 	# the first. The written body then holds two starts and two ends, which this
 	# script's own reader refuses on every later run -- so the PR is stuck displaying a
