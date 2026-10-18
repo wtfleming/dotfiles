@@ -809,6 +809,10 @@ org-roam-db-sync in throwaway processes emacsclient can never reach."
      (python . t)
      (shell . t))))
 
+;; ob-python runs each block through a python-mode buffer, which otherwise
+;; reports that it could not guess the indent offset.
+(setopt python-indent-guess-indent-offset-verbose nil)
+
 (setopt org-structure-template-alist
         '(("s" . "src")
           ("e" . "src emacs-lisp")
