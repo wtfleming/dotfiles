@@ -842,16 +842,11 @@ org-roam-db-sync in throwaway processes emacsclient can never reach."
   "l" #'org-store-link
   "s" #'org-babel-execute-src-block)
 
-(defvar-keymap wtf-org-mode-prefix-map
-  :doc "My prefix key map."
-  "o" wtf-prefix-org-mode-global-map)
-
-;; Bind the prefix key map to a key.
-(keymap-set global-map "C-c" wtf-org-mode-prefix-map)
+(keymap-set global-map "C-c o" wtf-prefix-org-mode-global-map)
 
 ;; Define how the nested keymaps are labelled in `which-key-mode'.
-(which-key-add-keymap-based-replacements wtf-org-mode-prefix-map
-  "o" `("org-mode" . ,wtf-prefix-org-mode-global-map))
+(which-key-add-keymap-based-replacements global-map
+  "C-c o" "org-mode")
 
 ;; Prefixes we only want when we are in org-mode
 (defvar-keymap wtf-prefix-org-mode-local-map
@@ -859,12 +854,8 @@ org-roam-db-sync in throwaway processes emacsclient can never reach."
   "," #'org-insert-structure-template
   "i" #'org-insert-link)
 
-(defvar-keymap wtf-org-mode-local-prefix-map
-  :doc "My prefix key map."
-  "o" wtf-prefix-org-mode-local-map)
-
 (with-eval-after-load 'org
-  (keymap-set org-mode-map "C-c" wtf-org-mode-local-prefix-map))
+  (keymap-set org-mode-map "C-c o" wtf-prefix-org-mode-local-map))
 
 
 ;; ------- tags -------
@@ -1674,16 +1665,11 @@ both; the caller can retitle or edit the existing page."
   "r" #'lsp-find-references
   "t" #'lsp-find-type-definition)
 
-(defvar-keymap wtf-lsp-mode-prefix-map
-  :doc "My prefix key map."
-  "l" wtf-prefix-lsp-mode-map)
-
 (with-eval-after-load 'lsp-mode
-  (keymap-set lsp-mode-map "C-c" wtf-lsp-mode-prefix-map))
-
-;; Define how the nested keymaps are labelled in `which-key-mode'.
-(which-key-add-keymap-based-replacements wtf-lsp-mode-prefix-map
-  "l" `("lsp-mode" . ,wtf-prefix-lsp-mode-map))
+  (keymap-set lsp-mode-map "C-c l" wtf-prefix-lsp-mode-map)
+  ;; Define how the nested keymaps are labelled in `which-key-mode'.
+  (which-key-add-keymap-based-replacements lsp-mode-map
+    "C-c l" "lsp-mode"))
 
 (with-eval-after-load 'lsp-mode
   (add-hook 'lsp-mode-hook #'lsp-enable-which-key-integration))
