@@ -181,9 +181,11 @@ me" wants a drawing; sometimes it wants an answer.
 
 A visual UI, a layout, a side-by-side state comparison, a concept too dense for
 Mermaid — write one focused HTML file: a diagram, an infographic, or a short
-slide deck, whichever fits the point. Match the product's colours, type and
-spacing, use real labels and real data, and make it work on a phone as well as
-a desktop.
+slide deck, whichever fits the point. Read
+[`references/html-design.md`](references/html-design.md) first: the budget,
+palette, type and connector rules a page needs to look designed. Match the
+product's colours, type and spacing where it has them, use real labels and real
+data, and make it work on a phone as well as a desktop.
 
 **Write it to this session's scratch directory, not the working tree.** A
 `show-me-*.html` dropped in the repo turns up in `git status`, reads as
@@ -205,3 +207,5 @@ Adapted from the `show-me` skill in
 The form catalogue and its examples are upstream's. Local: the destination
 table, the "never draw what you have not read" rule, the scratch-directory
 placement for the HTML branch, and the `/wtf-create-pr` handoff.
+`references/html-design.md` is condensed from a second MIT source, credited
+there.
