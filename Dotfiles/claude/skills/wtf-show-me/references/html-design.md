@@ -137,8 +137,8 @@ must match:
   2>/dev/null | grep -o '<title>[^<]*'
 ```
 
-A phone is narrower still, so keep fixed widths outside a scroll wrapper under
-360px.
+A phone is narrower still, so any fixed width not inside a scroll wrapper must
+stay under 360px. Inside one, a width can be anything — the wrapper scrolls.
 
 ---
 
