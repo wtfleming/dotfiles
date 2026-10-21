@@ -280,7 +280,9 @@ there is no section.
 
 Adapted from the `show-me` skill in [humanlayer/skills](https://github.com/humanlayer/skills)
 (MIT). The form catalogue and its examples are upstream's; the skill's own footer records
-what diverges, and is the one place that list is kept.
+what diverges, and is the one place that list is kept. The design reference its HTML branch
+reads is condensed from [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design)
+(MIT).
 
 ## Verifying that it works
 
