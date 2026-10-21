@@ -134,7 +134,7 @@ must match:
 } > <scratch>/show-me/{topic}-probe.html
 "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new \
   --window-size=500,900 --dump-dom file://<scratch>/show-me/{topic}-probe.html \
-  | grep -o '<title>[^<]*'
+  2>/dev/null | grep -o '<title>[^<]*'
 ```
 
 A phone is narrower still, so keep fixed widths outside a scroll wrapper under
