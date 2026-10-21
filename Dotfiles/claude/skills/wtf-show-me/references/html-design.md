@@ -106,8 +106,9 @@ small `rx=2` rectangle, not a pill.
 - Each `<svg>` gets `role="img"` and `aria-labelledby` naming a `<title>` (its
   first child) and a one-sentence `<desc>` of the content, not the geometry.
   Prefix their ids with the diagram's slug.
-- A wide SVG goes in an `overflow-x: auto` wrapper with `min-width` equal to its
-  viewBox width, so a phone scrolls the diagram rather than the page.
+- A wide SVG goes in an `overflow-x: auto` wrapper, and the SVG itself takes
+  `min-width` equal to its viewBox width, so a phone scrolls the diagram rather
+  than the page. On the wrapper, that `min-width` widens the page instead.
 
 ## Look before handing it over
 
@@ -120,9 +121,24 @@ label gap, attach point and crossing:
   --screenshot=<scratch>/show-me/{topic}.png file://<scratch>/show-me/{topic}.html
 ```
 
-Read the PNG, fix what it shows, then `open` the HTML. Headless Chrome will not
-size a window below 500px, so a phone-width screenshot crops; check phone fit by
-comparing `document.documentElement.scrollWidth` with `innerWidth` instead.
+Read the PNG, fix what it shows, then `open` the HTML.
+
+Check phone fit by measurement, not on the screenshot: a crop at the right edge
+looks like the page ending there. Render a probed copy at 500px, the narrowest
+window headless Chrome allows; it prints `innerWidth scrollWidth`, and the two
+must match:
+
+```sh
+{ cat <scratch>/show-me/{topic}.html
+  echo '<script>addEventListener("load",()=>document.title=innerWidth+" "+document.documentElement.scrollWidth)</script>'
+} > <scratch>/show-me/{topic}-probe.html
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new \
+  --window-size=500,900 --dump-dom file://<scratch>/show-me/{topic}-probe.html \
+  | grep -o '<title>[^<]*'
+```
+
+A phone is narrower still, so keep fixed widths outside a scroll wrapper under
+360px.
 
 ---
 
