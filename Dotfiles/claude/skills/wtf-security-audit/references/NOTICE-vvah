@@ -1,0 +1,14 @@
+vvaharness
+
+Copyright 2026 Visa, Inc.
+
+This product is licensed under the Apache License, Version 2.0 (the
+"License"); you may not use this product except in compliance with the
+License. You may obtain a copy of the License at:
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+This product depends on third-party software components. A summary of those
+dependencies and their licenses is provided in THIRD_PARTY_LICENSES.md. Those
+dependencies are obtained from their respective distributors at install time
+and are not redistributed as part of this repository.

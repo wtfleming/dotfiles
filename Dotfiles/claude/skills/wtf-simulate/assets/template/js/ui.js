@@ -105,6 +105,7 @@
   }
 
   function isMobile() { return window.matchMedia('(max-width: 900px)').matches; }
+  function reducedMotion() { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
 
   /* A phone cannot fit "About & accuracy" and "Hide panel" side by side, but
      both actions still have to be reachable — in landscape, dismissing the
@@ -247,6 +248,10 @@
     if (s.station === 'edge' && s.hitThisTrip) return '↩ cache hit: the van turns for home without going inland';
     if (s.fastForward) return '⏩ warm request: the handshake stations cost nothing this time';
     if (s.tourDone) return '⏩ every district explained, running the rest at speed (drag Speed down to slow it)';
+    /* same key-versus-button split as the dwell hint */
+    if (s.paused && reducedMotion()) return isMobile()
+      ? '⏸ reduced motion: tap ⇥ to move one station, ▶ to play'
+      : '⏸ reduced motion: press S to move one station, Space to play';
     return '';
   }
 
@@ -305,6 +310,7 @@
     paint: paint,
     run: function () { Sim.run(); paint(true); },
     resetAll: function () { Sim.replayTour(); Sim.run(); paint(true); },
+    reducedMotion: reducedMotion,
     showDistrict: showDistrict,
     unpin: function () {
       pinnedDistrict = null;

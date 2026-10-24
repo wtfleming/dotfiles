@@ -15,7 +15,8 @@ description: >-
   Also use when editing an existing project built from this skill — look for a
   stations table in world.js and a sim.js pacing state machine. SKIP for: a
   single chart, graph, plot or dashboard (use dataviz); a quick sketch of a
-  shape — a call tree, a file tree, a diff of either (use wtf-show-me); a
+  shape — a call tree, a file tree, a diff of either, or a diagram stepped
+  through with nothing computed (use wtf-show-me); a
   static diagram or flowchart (use artifact-diagramming); a slide deck; a game
   with win conditions and scoring; a 3D scene needing WebGL or real
   perspective; a UI mockup.
@@ -75,9 +76,9 @@ Two forms, one decision: **what travels?**
   the stations while the system visibly keeps running. See
   `references/flat-format.md`.
 
-If nothing moves at all, stop — the user wants a diagram, not this skill.
-That is `wtf-show-me` for a quick sketch of a shape, `artifact-diagramming`
-for a finished static diagram.
+If nothing is computed, stop — the user wants a diagram, not this skill.
+That is `wtf-show-me` for a quick sketch of a shape or a diagram stepped
+through a part at a time, `artifact-diagramming` for a finished static diagram.
 
 ## Start with the knowledge, not the code
 

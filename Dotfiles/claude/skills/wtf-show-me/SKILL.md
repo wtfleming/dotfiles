@@ -7,8 +7,8 @@ description: >-
   when explicitly asked to show something rather than describe it: "show me how
   X works", "sketch this", "diagram this", "draw the flow", "what shape is this
   change", "/wtf-show-me". Also read by /wtf-create-pr when a PR body needs the
-  shape of a change. NOT for: something the reader drives, where a slider moves
-  real numbers or a state machine steps (that is wtf-simulate); a chart, plot
+  shape of a change. NOT for: something a real model drives, where a slider
+  moves real numbers or a tour runs itself (that is wtf-simulate); a chart, plot
   or dashboard of data (dataviz); or an ordinary prose answer nobody asked to
   see drawn.
 ---
@@ -21,10 +21,11 @@ diagram — it is a correct one that nobody needed, drawn because drawing was
 asked for. A picture that restates the paragraph above it costs the reader
 twice: once to read the paragraph, once to discover the picture added nothing.
 
-Everything here is static. **If the reader needs to drive it** — a slider that
-moves real numbers, a state machine they step through, a tour that pauses —
-stop and use `wtf-simulate`, which builds a running simulation. If nothing
-moves, it belongs here.
+Everything here is drawn in advance. A page may step through its diagram a
+part at a time, but each step is already drawn. **If a real model has to
+compute what the reader sees** — a slider that moves real numbers, a tour that
+runs and pauses — stop and use `wtf-simulate`, which builds a running
+simulation. If nothing is computed, it belongs here.
 
 ## Pick by destination first
 
@@ -172,6 +173,11 @@ state and boundary is a claim the reader has to check, and it competes with the
 one that mattered. A tree that shows the whole module to establish where two
 functions sit has hidden them.
 
+**Say what you cut.** When keeping the view small means merging or dropping
+something — two steps drawn as one box, a branch left out — say so in a line
+beside it. A merged node reads as the real structure, so an unstated merge is
+a wrong map too, just one drawn on purpose.
+
 **One form, or two. Never all of them.** The menu above is a menu.
 
 **If prose says it in one line, say the line.** Not everything asked as "show
@@ -185,7 +191,9 @@ slide deck, whichever fits the point. Read
 [`references/html-design.md`](references/html-design.md) first: the budget,
 palette, type and connector rules a page needs to look designed. Match the
 product's colours, type and spacing where it has them, use real labels and real
-data, and make it work on a phone as well as a desktop.
+data, and make it work on a phone as well as a desktop. When the point is an
+order that seeing everything at once would hide, let the reader step through
+it: [`references/html-steps.md`](references/html-steps.md).
 
 **Write it to this session's scratch directory, not the working tree.** A
 `show-me-*.html` dropped in the repo turns up in `git status`, reads as
@@ -207,5 +215,6 @@ Adapted from the `show-me` skill in
 The form catalogue and its examples are upstream's. Local: the destination
 table, the "never draw what you have not read" rule, the scratch-directory
 placement for the HTML branch, and the `/wtf-create-pr` handoff.
-`references/html-design.md` is condensed from a second MIT source, credited
-there.
+`references/html-design.md` and `references/html-steps.md` are condensed from a
+second MIT source, credited in each; the "say what you cut" rule comes from the
+same source's fidelity ledger for imported diagrams.
