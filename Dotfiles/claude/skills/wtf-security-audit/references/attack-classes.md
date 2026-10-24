@@ -3,6 +3,9 @@
 Choose the classes that apply to what the code actually does. Each is a place
 to look, not a checklist to report against: every candidate still passes the
 gate in `method.md`. Adapted from Cloudflare's security-audit skill (MIT).
+The cache and sentinel cases under business logic are reworded from Visa's
+vulnerability agentic harness (Apache-2.0, see `LICENSE-vvah` and
+`NOTICE-vvah`).
 
 **Injection.** Trace untrusted input to a dangerous sink: SQL or query
 construction, HTML or template output, shell commands and their arguments,
@@ -47,7 +50,10 @@ partial failure that leaves step one applied; check-then-act races with
 business impact; negative, zero or overflowing quantities; trust in data
 "validated on the way in" that another path also writes; expiry and clock
 edges; the security posture when config is missing, a flag is off, or a
-dependency is down.
+dependency is down. A cache key missing the tenant or user, so one caller's
+result is served to another; a cached authorization decision that outlives a
+revocation; a not-found sentinel (`-1`, `null`, `NaN`) used as an index or
+read as success.
 
 **Feature abuse.** Export or backup that includes more than the caller may
 read; import that bypasses validation or overwrites; search, filter or error

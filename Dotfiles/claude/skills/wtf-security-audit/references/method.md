@@ -3,7 +3,9 @@
 Find vulnerabilities that cross a real trust boundary, and give the owner the
 source trace, the bounded evidence, a priority and the smallest fix. This is
 defensive, source-first work. Adapted from Cloudflare's security-audit skill
-(MIT, see `LICENSE`).
+(MIT, see `LICENSE`). The absence, variant and rejection rules and gate item 7
+are condensed and reworded from Visa's vulnerability agentic harness
+(Apache-2.0, see `LICENSE-vvah` and `NOTICE-vvah`).
 
 ## Work from a concrete invariant
 
@@ -26,15 +28,32 @@ units: case, encoding, normalization, trailing separators, time zones, bytes
 against characters. Stop a line of investigation as soon as the invariant is
 settled either way.
 
+## Claiming a control is missing
+
+An absence is a claim about every place the control belongs, so establish it by
+listing them: search for each site that should carry it — every handler, write
+path or entry point of that kind — and say how many there are and how you
+searched. Each site that lacks it is its own candidate. A control applied
+centrally (middleware, a base class, a framework default) that covers the site
+refutes the claim. A record nothing acts on is not the control: a table of
+failed attempts that no code reads limits nothing. An absence claim that does
+not say what was searched is a guess.
+
 ## Variants
 
-When a candidate's impact would be high or critical and its root cause could
-recur, search your scope for its variants: lexical (the same call or idiom
-elsewhere), structural (the same shape under other names) and logical (another
-path to the same effect that skips the same control). A variant with the same
-root cause shares its fingerprint, but establish each one's conditions and
-impact separately. Report a variant outside your scope as not covered, never
-as a candidate.
+When a candidate is confirmed and its root cause could recur, search your scope
+for its variants: lexical (the same call or idiom elsewhere), structural (the
+same shape under other names) and logical (another path to the same effect that
+skips the same control). Phrase the search two or three ways, and record each
+search with its hit count, so a clean result can be told from a skipped one. A
+variant with the same root cause shares its fingerprint, but establish each
+one's conditions and impact separately. Report a variant outside your scope as
+not covered, never as a candidate.
+
+Then check the same location for the classes that travel with it: a cookie
+missing `HttpOnly` usually lacks `Secure` and `SameSite` too; a route with no
+CSRF token often has no authorization check either, which is a separate
+candidate; a login with no rate limit often also says which accounts exist.
 
 ## The gate
 
@@ -57,6 +76,11 @@ These are not findings:
 5. A crash, parser quirk or slow path written up as more than it does.
 6. A candidate the source refutes. That is `rejected`, never
    `needs_validation`.
+7. A class the code cannot have: a server-side bug in code that only runs in
+   the browser, memory corruption in a managed language with no native or
+   `unsafe` code, `../` in object-store keys where there are no directories to
+   escape, SSRF where the caller sets only the path on a host the server
+   already meant to call — trace that as input to that service instead.
 
 ## Three verdicts
 
@@ -73,6 +97,17 @@ These are not findings:
   impossible prerequisite, or by having no meaningful impact. Kept under
   **Ruled out**, so the same unsupported claim is not raised again unless the
   evidence changes.
+
+Because a rejection sticks, it names what refutes it: the guard's `path:line`,
+the caller that never passes the value, or the misreading in the claim. A
+refutation assumed rather than found — "probably validated upstream" — is none:
+read the guard, or the candidate stands on the rest of its trace. A comment, a
+suppression marker (`NOSONAR`, `# nosec`, `// safe`) or a PR saying it was
+fixed is a claim, not a control, and refutes nothing. When the claimed
+mechanism fails but the same code still exposes something to the same
+principal, reject the claim and raise what the evidence supports as its own
+candidate: log forging that fails can still show a credential written to the
+log.
 
 ## Severity
 
