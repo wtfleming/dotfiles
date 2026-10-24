@@ -26,7 +26,7 @@ step shows has to be worked out from the reader's input, that is
 ## Markup
 
 ```html
-<figure class="stepper" data-steps="3">
+<figure class="stepper">
   <svg role="img" aria-labelledby="flow-title flow-desc" viewBox="0 0 640 200">
     <title id="flow-title">…</title><desc id="flow-desc">…</desc>
     <g data-step="1">…</g>
@@ -48,28 +48,38 @@ step shows has to be worked out from the reader's input, that is
 .steps-ready [data-step].shown { opacity: 1; }
 .steps-ready .captions li { display: none; }
 .steps-ready .captions li.now { display: list-item; }
+/* :not([hidden]), or display: flex overrides hidden and shows dead controls */
+.controls:not([hidden]) { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.controls button { min-height: 44px; min-width: 44px; padding: 0 12px; }
 @media (prefers-reduced-motion: reduce) { .steps-ready [data-step] { transition: none; } }
 @media print {
   .steps-ready [data-step] { opacity: 1; }
   .steps-ready .captions li { display: list-item; }
-  .controls { display: none; }
+  .controls, .controls:not([hidden]) { display: none; }
 }
 ```
 
 ```js
 document.querySelectorAll('.stepper').forEach(function (fig) {
-  var n = Number(fig.dataset.steps), at = 1;
   var parts = fig.querySelectorAll('[data-step]');
   var caps = fig.querySelectorAll('.captions li');
   var controls = fig.querySelector('.controls');
   var back = controls.querySelector('[data-go="-1"]');
   var next = controls.querySelector('[data-go="1"]');
+  var again = controls.querySelector('[data-go="0"]');
+  var n = 0, at = 1;
+  parts.forEach(function (p) { n = Math.max(n, Number(p.dataset.step)); });
   function show(k) {
+    var focused = document.activeElement;
     at = Math.max(1, Math.min(n, k));
     parts.forEach(function (p) { p.classList.toggle('shown', Number(p.dataset.step) <= at); });
     caps.forEach(function (c, i) { c.classList.toggle('now', i === at - 1); });
     back.disabled = at === 1;
     next.disabled = at === n;
+    // A disabled button drops its focus to <body>; hand it to one still enabled.
+    if (focused === back || focused === next) {
+      if (focused.disabled) (next.disabled ? again : next).focus();
+    }
     controls.querySelector('.status').textContent = 'Step ' + at + ' of ' + n;
   }
   controls.addEventListener('click', function (e) {
@@ -82,8 +92,8 @@ document.querySelectorAll('.stepper').forEach(function (fig) {
 });
 ```
 
-`data-steps` and the number of captions must both equal the highest
-`data-step`. The page still opens from `file://`; the script is inline.
+The step count is the highest `data-step`, and there must be one caption for
+each step. The page still opens from `file://`; the script is inline.
 
 ---
 

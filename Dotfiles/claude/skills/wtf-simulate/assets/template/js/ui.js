@@ -245,10 +245,13 @@
     if (s.finished) return '';
     if (s.reading) return '⏸ holding here so you can read the panel';
     if (!s.running) return 'Press Run to send a request across the town.';
-    if (s.paused && reducedMotion()) return '⏸ reduced motion: press S to move one station, Space to play';
     if (s.station === 'edge' && s.hitThisTrip) return '↩ cache hit: the van turns for home without going inland';
     if (s.fastForward) return '⏩ warm request: the handshake stations cost nothing this time';
     if (s.tourDone) return '⏩ every district explained, running the rest at speed (drag Speed down to slow it)';
+    /* same key-versus-button split as the dwell hint */
+    if (s.paused && reducedMotion()) return isMobile()
+      ? '⏸ reduced motion: tap ⇥ to move one station, ▶ to play'
+      : '⏸ reduced motion: press S to move one station, Space to play';
     return '';
   }
 

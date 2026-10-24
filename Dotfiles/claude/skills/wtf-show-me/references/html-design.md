@@ -163,6 +163,7 @@ stay under 360px. Inside one, a width can be anything — the wrapper scrolls.
 ---
 
 The budget, palette, type roles, label widths, connector rules, the
-before/after layout and most anti-patterns are condensed from [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design)
+before/after layout and most anti-patterns are condensed from
+[cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design)
 (MIT — see `LICENSE-diagram-design`), with its web fonts replaced by system
 stacks to keep the page offline.

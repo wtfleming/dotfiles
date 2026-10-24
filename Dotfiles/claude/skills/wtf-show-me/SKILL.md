@@ -216,5 +216,5 @@ The form catalogue and its examples are upstream's. Local: the destination
 table, the "never draw what you have not read" rule, the scratch-directory
 placement for the HTML branch, and the `/wtf-create-pr` handoff.
 `references/html-design.md` and `references/html-steps.md` are condensed from a
-second MIT source, credited in each; the "say what you cut" rule comes from the same source's fidelity ledger
-for imported diagrams.
+second MIT source, credited in each; the "say what you cut" rule comes from the
+same source's fidelity ledger for imported diagrams.

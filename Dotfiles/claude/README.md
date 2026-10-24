@@ -244,9 +244,10 @@ question.
 Adapted from [learnscape](https://github.com/LaurentiuGabriel/learnscape)
 (MIT). The PacketPost template under `assets/template/` is vendored from
 upstream **with local fixes** where review found defects — `main.js`
-(browser-shortcut and pinch guards, fly-to that arrives), `sim.js` (tour
-completion aware of the cache-hit branch), `ui.js` (pinned card and live
-plan), `index.html` (ledger wording) — so refreshing those files from
+(browser-shortcut and pinch guards, fly-to that arrives, opening paused under
+reduced motion), `sim.js` (tour completion aware of the cache-hit branch),
+`ui.js` (pinned card and live plan, the reduced-motion HUD note), `index.html`
+(ledger wording) — so refreshing those files from
 upstream silently reverts the fixes; the skill directory's git history is
 the divergence record. The skill's build order still has projects copy the
 engine files rather than rewrite them. Local additions: a generalized
