@@ -33,11 +33,13 @@ settled either way.
 An absence is a claim about every place the control belongs, so establish it by
 listing them: search for each site that should carry it — every handler, write
 path or entry point of that kind — and say how many there are and how you
-searched. Each site that lacks it is its own candidate. A control applied
-centrally (middleware, a base class, a framework default) that covers the site
-refutes the claim. A record nothing acts on is not the control: a table of
-failed attempts that no code reads limits nothing. An absence claim that does
-not say what was searched is a guess.
+searched. Each site that lacks it on its own is its own candidate; sites that
+lack it for one shared reason, such as a base class they all inherit, are one
+candidate with the strongest trace, as **Fingerprints** has it. A control
+applied centrally (middleware, a base class, a framework default) that covers
+the site refutes the claim. A record nothing acts on is not the control: a
+table of failed attempts that no code reads limits nothing. An absence claim
+that does not say what was searched is a guess.
 
 ## Variants
 

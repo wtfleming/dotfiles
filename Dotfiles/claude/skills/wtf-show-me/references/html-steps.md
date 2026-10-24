@@ -27,8 +27,8 @@ step shows has to be worked out from the reader's input, that is
 
 ```html
 <figure class="stepper">
-  <svg role="img" aria-labelledby="flow-title flow-desc" viewBox="0 0 640 200">
-    <title id="flow-title">…</title><desc id="flow-desc">…</desc>
+  <svg role="img" aria-labelledby="{slug}-title {slug}-desc" viewBox="0 0 640 200">
+    <title id="{slug}-title">…</title><desc id="{slug}-desc">…</desc>
     <g data-step="1">…</g>
     <g data-step="2">…</g>
     <g data-step="3">…</g>
@@ -49,13 +49,13 @@ step shows has to be worked out from the reader's input, that is
 .steps-ready .captions li { display: none; }
 .steps-ready .captions li.now { display: list-item; }
 /* :not([hidden]), or display: flex overrides hidden and shows dead controls */
-.controls:not([hidden]) { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.controls button { min-height: 44px; min-width: 44px; padding: 0 12px; }
+.stepper .controls:not([hidden]) { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.stepper .controls button { min-height: 44px; min-width: 44px; padding: 0 12px; }
 @media (prefers-reduced-motion: reduce) { .steps-ready [data-step] { transition: none; } }
 @media print {
   .steps-ready [data-step] { opacity: 1; }
   .steps-ready .captions li { display: list-item; }
-  .controls, .controls:not([hidden]) { display: none; }
+  .stepper .controls, .stepper .controls:not([hidden]) { display: none; }
 }
 ```
 
@@ -93,7 +93,8 @@ document.querySelectorAll('.stepper').forEach(function (fig) {
 ```
 
 The step count is the highest `data-step`, and there must be one caption for
-each step. The page still opens from `file://`; the script is inline.
+each step. Replace `{slug}` with the diagram's slug so two steppers on one page
+never share an id. The page still opens from `file://`; the script is inline.
 
 ---
 
