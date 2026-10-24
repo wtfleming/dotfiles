@@ -172,6 +172,11 @@ state and boundary is a claim the reader has to check, and it competes with the
 one that mattered. A tree that shows the whole module to establish where two
 functions sit has hidden them.
 
+**Say what you cut.** When keeping the view small means merging or dropping
+something — two steps drawn as one box, a branch left out — say so in a line
+beside it. A merged node reads as the real structure, so an unstated merge is
+a wrong map too, just one drawn on purpose.
+
 **One form, or two. Never all of them.** The menu above is a menu.
 
 **If prose says it in one line, say the line.** Not everything asked as "show
@@ -208,4 +213,5 @@ The form catalogue and its examples are upstream's. Local: the destination
 table, the "never draw what you have not read" rule, the scratch-directory
 placement for the HTML branch, and the `/wtf-create-pr` handoff.
 `references/html-design.md` is condensed from a second MIT source, credited
-there.
+there; the "say what you cut" rule comes from the same source's fidelity ledger
+for imported diagrams.
