@@ -92,6 +92,8 @@ at the end of `references/flat-format.md`.
 - [ ] Works at 360 px wide: panel becomes a bottom sheet, sliders behind the gear.
 - [ ] **Landscape phone** checked — the worst case, and the easiest to forget.
 - [ ] Keyboard: Space, S, R, F, L, Escape.
+- [ ] Under `prefers-reduced-motion: reduce` it opens paused and the HUD says
+      how to step; nothing travels until the reader asks.
 - [ ] `Escape` closes the About modal; clicking the backdrop closes it.
 - [ ] Buttons have `title` and `aria-label`; toggles are real labelled checkboxes.
 - [ ] The frame loop schedules the next frame **first**, so one thrown error does

@@ -348,6 +348,7 @@
   resize();
   measureLayout();
   UI.run();                    /* puts a van on the road, so it can be framed */
+  if (UI.reducedMotion()) Sim.pause();   /* the reader drives it, a station at a time */
   cam.scale = defaultScale();
   centreOnVan();
   syncOffsets();

@@ -105,6 +105,7 @@
   }
 
   function isMobile() { return window.matchMedia('(max-width: 900px)').matches; }
+  function reducedMotion() { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
 
   /* A phone cannot fit "About & accuracy" and "Hide panel" side by side, but
      both actions still have to be reachable — in landscape, dismissing the
@@ -244,6 +245,7 @@
     if (s.finished) return '';
     if (s.reading) return '⏸ holding here so you can read the panel';
     if (!s.running) return 'Press Run to send a request across the town.';
+    if (s.paused && reducedMotion()) return '⏸ reduced motion: press S to move one station, Space to play';
     if (s.station === 'edge' && s.hitThisTrip) return '↩ cache hit: the van turns for home without going inland';
     if (s.fastForward) return '⏩ warm request: the handshake stations cost nothing this time';
     if (s.tourDone) return '⏩ every district explained, running the rest at speed (drag Speed down to slow it)';
@@ -305,6 +307,7 @@
     paint: paint,
     run: function () { Sim.run(); paint(true); },
     resetAll: function () { Sim.replayTour(); Sim.run(); paint(true); },
+    reducedMotion: reducedMotion,
     showDistrict: showDistrict,
     unpin: function () {
       pinnedDistrict = null;
