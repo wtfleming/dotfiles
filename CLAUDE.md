@@ -22,10 +22,10 @@ home directory. Key consequences to keep in mind:
     `emacs.d/`. Add a line, and write it as `run cp ...`, not bare `cp`: `run` echoes the
     command so the sync's output accounts for every file. A bare `cp` still copies, it
     just goes unreported.
-  - **Copied by glob** — `bin/*` and `emacs.d/wtf-elisp/*.el`. A new *file* there needs
+  - **Copied by glob** — `bin/*` and `emacs.d/user-lisp/*.el`. A new *file* there needs
     no edit. A new *directory* is where the two diverge. `bin/*` matches one, and `cp`
     without `-r` exits 1 on a directory operand, so `set -e` stops the sync there and
-    nothing below it is copied — `~/.claude` included. `wtf-elisp/*.el` matches only a
+    nothing below it is copied — `~/.claude` included. `user-lisp/*.el` matches only a
     directory whose own name ends `.el`, so an ordinary subdirectory there is skipped
     without a word instead. The abort itself is not silent — `cp` prints its own error
     and an `EXIT` trap names the step it stopped at — but neither tells you which of the

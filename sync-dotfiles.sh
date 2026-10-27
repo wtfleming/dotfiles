@@ -81,8 +81,8 @@ if [ ! -d ~/.emacs.d ]; then
     run mkdir ~/.emacs.d
 fi
 
-if [ ! -d ~/.emacs.d/wtf-elisp ]; then
-    run mkdir ~/.emacs.d/wtf-elisp
+if [ ! -d ~/.emacs.d/user-lisp ]; then
+    run mkdir ~/.emacs.d/user-lisp
 fi
 
 run cp ~/src/dotfiles/Dotfiles/emacs.d/early-init.el ~/.emacs.d/.
@@ -95,8 +95,28 @@ run cp ~/src/dotfiles/Dotfiles/emacs.d/highlight-github.css ~/.emacs.d/.
 run cp ~/src/dotfiles/Dotfiles/emacs.d/highlight.min.js ~/.emacs.d/.
 run cp ~/src/dotfiles/Dotfiles/emacs.d/lisp.min.js ~/.emacs.d/.
 
-# init.el adds this dir to load-path
-run cp ~/src/dotfiles/Dotfiles/emacs.d/wtf-elisp/*.el ~/.emacs.d/wtf-elisp/.
+# Emacs 31+ compiles user-lisp and adds it to load-path at startup
+run cp ~/src/dotfiles/Dotfiles/emacs.d/user-lisp/*.el ~/.emacs.d/user-lisp/.
+
+# A running daemon compiles user-lisp only at startup, and `require` won't reload
+# a feature it already has, so recompile and reload whatever it has loaded.
+# load-prefer-newer is bound here because a daemon older than early-init.el's
+# setting would otherwise reload a stale .elc over source that failed to compile.
+# A wedged daemon fails the probe's timeout, and gtimeout bounds a refresh that
+# hangs once the daemon has answered, which emacsclient's --timeout does not.
+# ALTERNATE_EDITOR is unset so a missing daemon fails the probe instead of
+# starting one.
+unset ALTERNATE_EDITOR
+refresh_user_lisp='(let ((load-prefer-newer t))
+  (prepare-user-lisp)
+  (dolist (file (directory-files user-lisp-directory))
+    (when (and (string-suffix-p ".el" file)
+               (featurep (intern (file-name-sans-extension file))))
+      (load (file-name-sans-extension file) nil t))))'
+if emacsclient --timeout=5 -e t >/dev/null 2>&1; then
+    run gtimeout 60 emacsclient --suppress-output -e "$refresh_user_lisp" ||
+        echo "sync-dotfiles: couldn't refresh user-lisp in the running Emacs" >&2
+fi
 
 # This file will always be empty in git, but might have local changes that
 # we do not want to overwrite

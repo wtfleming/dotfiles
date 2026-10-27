@@ -64,7 +64,7 @@ brew install imagemagick
 
 # Not advertised to Claude, but depended on anyway, so do not prune these along
 # with that list: Dotfiles/claude/settings.json allowlists `node --check` and
-# `gh pr merge`, Dotfiles/emacs.d/wtf-elisp/wtf-github.el shells out to gh, and
+# `gh pr merge`, Dotfiles/emacs.d/user-lisp/wtf-github.el shells out to gh, and
 # the wtf-demo-video skill renders with node.
 brew install node gh
 
