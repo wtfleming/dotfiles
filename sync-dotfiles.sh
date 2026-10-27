@@ -99,16 +99,22 @@ run cp ~/src/dotfiles/Dotfiles/emacs.d/lisp.min.js ~/.emacs.d/.
 run cp ~/src/dotfiles/Dotfiles/emacs.d/user-lisp/*.el ~/.emacs.d/user-lisp/.
 
 # A running daemon compiles user-lisp only at startup, and `require` won't reload
-# a feature it already has, so recompile and reload whatever it has loaded. The
-# probe's timeout treats a wedged daemon as absent rather than hanging the sync.
-refresh_user_lisp='(progn
+# a feature it already has, so recompile and reload whatever it has loaded.
+# load-prefer-newer is bound here because a daemon older than early-init.el's
+# setting would otherwise reload a stale .elc over source that failed to compile.
+# A wedged daemon fails the probe's timeout, and gtimeout bounds a refresh that
+# hangs once the daemon has answered, which emacsclient's --timeout does not.
+# ALTERNATE_EDITOR is unset so a missing daemon fails the probe instead of
+# starting one.
+unset ALTERNATE_EDITOR
+refresh_user_lisp='(let ((load-prefer-newer t))
   (prepare-user-lisp)
   (dolist (file (directory-files user-lisp-directory))
     (when (and (string-suffix-p ".el" file)
                (featurep (intern (file-name-sans-extension file))))
       (load (file-name-sans-extension file) nil t))))'
 if emacsclient --timeout=5 -e t >/dev/null 2>&1; then
-    run emacsclient --suppress-output -e "$refresh_user_lisp" ||
+    run gtimeout 60 emacsclient --suppress-output -e "$refresh_user_lisp" ||
         echo "sync-dotfiles: couldn't refresh user-lisp in the running Emacs" >&2
 fi
 
