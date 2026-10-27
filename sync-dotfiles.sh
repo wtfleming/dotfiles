@@ -99,15 +99,16 @@ run cp ~/src/dotfiles/Dotfiles/emacs.d/lisp.min.js ~/.emacs.d/.
 run cp ~/src/dotfiles/Dotfiles/emacs.d/user-lisp/*.el ~/.emacs.d/user-lisp/.
 
 # A running daemon compiles user-lisp only at startup, and `require` won't reload
-# a feature it already has, so recompile and reload whatever it has loaded.
+# a feature it already has, so recompile and reload whatever it has loaded. The
+# probe's timeout treats a wedged daemon as absent rather than hanging the sync.
 refresh_user_lisp='(progn
   (prepare-user-lisp)
   (dolist (file (directory-files user-lisp-directory))
     (when (and (string-suffix-p ".el" file)
                (featurep (intern (file-name-sans-extension file))))
       (load (file-name-sans-extension file) nil t))))'
-if emacsclient -e t >/dev/null 2>&1; then
-    run emacsclient -e "$refresh_user_lisp" >/dev/null ||
+if emacsclient --timeout=5 -e t >/dev/null 2>&1; then
+    run emacsclient --suppress-output -e "$refresh_user_lisp" ||
         echo "sync-dotfiles: couldn't refresh user-lisp in the running Emacs" >&2
 fi
 

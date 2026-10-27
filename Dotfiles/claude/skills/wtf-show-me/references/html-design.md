@@ -65,7 +65,7 @@ System stacks only — the page opens from `file://` with no network.
 Sizes in px are viewBox units inside an SVG; in page CSS they are CSS px.
 
 Mono is for technical content, not a blanket "dev" look: a node called
-"Copy emacs packages" is sans, its `wtf-elisp/*.el` sublabel is mono. Never put
+"Copy emacs packages" is sans, its `user-lisp/*.el` sublabel is mono. Never put
 a command or path in an eyebrow — its uppercase turns `set -e` into `SET -E`.
 
 Size a box from its label, not by eye: about 0.60em a character for sans and
