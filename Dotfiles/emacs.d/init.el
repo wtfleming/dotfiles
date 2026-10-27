@@ -2376,6 +2376,5 @@ readable as a bare symbol, such as \"glm-5.2 [1m]\".")
      ("c" "Find code issues in current buffer" wtf-gptel-find-code-issues-in-current-buffer)])
   (keymap-global-set "C-c g" 'wtf-transient-gptel-prefix)
 
-(add-to-list 'load-path (expand-file-name "wtf-elisp" user-emacs-directory))
 (require 'wtf-github)
 (require 'wtf-docker)
