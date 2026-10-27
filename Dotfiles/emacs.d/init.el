@@ -29,9 +29,6 @@
 
 
 (package-initialize)
-(unless (package-installed-p 'use-package)
-  (package-refresh-contents)
-  (package-install 'use-package))
 
 ;; use-package-hook-name-suffix is a variable defined in ‘use-package-core.el’.
 ;; Its default value is "-hook"

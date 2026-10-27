@@ -100,7 +100,7 @@ run cp ~/src/dotfiles/Dotfiles/emacs.d/user-lisp/*.el ~/.emacs.d/user-lisp/.
 
 # A running daemon compiles user-lisp only at startup, and `require` won't reload
 # a feature it already has, so recompile and reload whatever it has loaded.
-refresh_user_lisp='(when (fboundp (quote prepare-user-lisp))
+refresh_user_lisp='(progn
   (prepare-user-lisp)
   (dolist (file (directory-files user-lisp-directory))
     (when (and (string-suffix-p ".el" file)
