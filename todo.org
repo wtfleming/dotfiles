@@ -29,7 +29,7 @@ patterns that look like code rather than S-expressions:
 Going to raw tree-sitter instead -- the ~tree-sitter~ CLI is installed too --
 means wrangling grammars for strictly less capability.
 
-** TODO diff -> changed symbols
+** DONE diff -> changed symbols -- Dotfiles/claude/scripts/diff-symbols.sh
 
 Map each diff hunk's line range to its enclosing named node, so a lens is handed
 "these 7 functions, 2 classes and 1 exported const changed" instead of raw hunks.
