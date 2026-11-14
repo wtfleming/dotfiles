@@ -619,11 +619,11 @@ Everything else is committed, pushed and answered in the same run: a fix, a decl
 answer each get their reply on the thread without a second prompt, and the fixed threads
 are resolved. What waits for you is a held fix and a matter of taste.
 
-It fixes, runs the tests and the linter, prints a draft reply per thread, and stops. Replies
-are public and notify the reviewer, so posting waits for the user's word and for every commit
-a reply cites to be on the remote — "fixed in abc123" is false until abc123 is pushed. It
-replies on the thread itself, resolves only what it fixed, and leaves declined threads open
-for the reviewer, or a bot that accepts the reply, to close.
+It fixes, then runs the tests and the linter, before anything is committed. Replies are
+public and notify the reviewer, so a reply waits for every commit it cites to be on the
+remote — "fixed in abc123" is false until abc123 is pushed. It replies on the thread
+itself, resolves only what it fixed, and leaves declined threads open for the reviewer, or
+a bot that accepts the reply, to close.
 
 Each reply ends with a hidden `wtf-answered` marker, so a later run, or a later
 `wtf-babysit-pr` round, skips what it has already answered unless someone has replied
