@@ -312,35 +312,17 @@ never looking.
 
 ## Verifying prose against code
 
-For documentation, comments and READMEs, the polarity inverts: **the
-code is the source of truth and the prose is the subject under test.** Docs cannot be
-"run", so verification means extracting each claim and checking it individually.
+For docs, comments and READMEs the code is the source of truth and the prose is the
+subject under test. Only two kinds of claim in it are this skill's:
 
-Extract claims with `file:line`, then classify each — the class decides how it is
-checked:
+- **procedural** — "run `make setup`, then `make dev`": actually run it, in a clean
+  worktree, which is what makes the worktree worth building for a docs change
+- **behavioural** — "returns 404 when the slug is unknown": a row like any other
 
-| Claim class | Example | How to verify |
-| ----------- | ------- | ------------- |
-| a symbol or signature exists | "pass `meterName:` to the constructor" | grep the source; a documented parameter that does not exist is the classic finding |
-| behaviour | "returns 404 when the slug is unknown" | run it |
-| quantitative | "retries three times", "defaults to 30 seconds" | find the constant, and prefer running it where the constant is derived |
-| procedural | "run `make setup`, then `make dev`" | actually run it, in a clean worktree — which is what makes the worktree worth building for a docs change |
-| unfalsifiable | "this module is responsible for orchestration" | skip it, and say you skipped it |
-
-Three pitfalls specific to prose:
-
-- **Do not verify a claim by re-reading the prose.** Internal consistency across two
-  paragraphs is not accuracy, and a confidently written wrong claim reads as more
-  reliable than a hedged right one.
-- **A name that looks right is not a name that exists.** Plausible-but-absent symbols are
-  what documentation drift produces most, and they are invisible to a reader who is not
-  checking each one against the tree.
-- **Stale and wrong are indistinguishable to the reader** who follows the instruction. A
-  claim that was true two releases ago is a defect now; date it if you like, but report
-  it either way.
-
-The highest-value finding here is the claim that is *silently* wrong — accurate-sounding,
-plausible, and producing no error when followed, just the wrong result.
+A claim settled by reading — a symbol or parameter exists, a constant is 30 — is
+`wtf-code-review`'s. List it under **Left out** rather than grepping for it and reporting
+the grep as verification. Do not verify a claim by re-reading the prose either: two
+paragraphs that agree are consistent, not accurate.
 
 ## Verifying a subject with no diff
 

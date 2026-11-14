@@ -1,6 +1,6 @@
 ---
 name: wtf-code-verify
-description: 'Prove that code does what it is supposed to do before it merges, by executing it — derive the falsifiable expectations a change or a subject implies, probe each one including the inputs that must be refused, and report a verdict backed by raw output. Use this whenever a PR is about to be opened or changes are about to merge, and whenever the user asks to verify, prove, confirm or sanity-check that something actually works: "does this actually work", "verify the fix", "e2e test this change", "spin up the server and check it", "make sure auth still works before I merge". Takes a ref, branch, PR or a prose subject — "login and authentication" — so it also covers an area of a running system with no diff, and whether docs and comments still match the code. Expensive by design — it boots services and builds a second worktree. NOT for reading code without running it (that is wtf-code-review), routine test runs, or checking unfinished work mid-development.'
+description: 'Prove that code does what it is supposed to do before it merges, by executing it — derive the falsifiable expectations a change or a subject implies, probe each one including the inputs that must be refused, and report a verdict backed by raw output. Use this whenever a PR is about to be opened or changes are about to merge, and whenever the user asks to verify, prove, confirm or sanity-check that something actually works: "does this actually work", "verify the fix", "e2e test this change", "spin up the server and check it", "make sure auth still works before I merge". Takes a ref, branch, PR or a prose subject — "login and authentication" — so it also covers an area of a running system with no diff, and whether the procedures and behaviour docs describe still hold. Expensive by design — it boots services and builds a second worktree. NOT for reading code without running it (that is wtf-code-review), routine test runs, or checking unfinished work mid-development.'
 argument-hint: '[ref, branch, PR, path or subject — defaults to uncommitted, else the branch] [--tier 0|1|2|3] [--base <ref>]'
 allowed-tools: Agent, Bash, Read, Edit, Write, Glob, Grep
 ---
@@ -108,7 +108,7 @@ different kinds — classify each one.
 | a capability is new | it works, its unhappy paths fail correctly, and what worked before still works | `references/expectations.md` |
 | nothing observable changed (refactor) | the same input produces byte-identical output on both trees | `references/differential.md` |
 | it is faster | a threshold stated in advance, met across distributions rather than a single pair of numbers | `references/differential.md` |
-| the prose is accurate | each falsifiable claim in it holds against the implementation, which is the source of truth | `references/expectations.md` |
+| the prose is accurate | each procedure it gives runs, and each behaviour it describes happens; claims settled by reading are review's | `references/expectations.md` |
 | a subject behaves (no diff) | the contract holds, including its refusals | `references/expectations.md` |
 | it is safe to deploy | it survives the window where two versions run at once, and it can be rolled back | `references/compatibility.md` |
 | the branch is complete | a clean tree of HEAD installs, builds, boots and passes without your uncommitted state | `references/environments.md` |
@@ -295,9 +295,8 @@ else, three ways to earn discrimination, cheapest first — pick one per claim:
 A bugfix claim needs (3): the claim is itself a difference, so nothing weaker can carry
 it. A new capability usually takes (1) plus (2), because on the base the surface does not
 exist — "the base rejects an argument it has never heard of" is true and tells you
-nothing about whether HEAD does the right thing. Prose claims get neither: what
-discriminates there is checking the claim against the implementation rather than against
-your memory of it.
+nothing about whether HEAD does the right thing. A prose claim is a procedure
+or a behaviour, so it takes the same partner its kind would.
 
 **When the probe only runs a test this change adds, (1) is not available.** That test was
 written alongside the code it checks, so varying its input checks the test rather than

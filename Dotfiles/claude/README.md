@@ -375,8 +375,8 @@ to fail without the fix.
 
 Scope can be a ref, a branch, a PR, a path, or plain prose — `/wtf-code-verify login and
 authentication` verifies an area of a running system with no diff at all, and a docs
-change is verified by treating the code as the source of truth and each written claim as
-the subject under test.
+change is verified by running the procedures it gives and the behaviour it describes —
+claims a reader can settle by grep are left to review.
 
 It absorbed the earlier `wtf-verify-fix`, whose merge-base differential is now one
 technique among several in `references/differential.md` — the two would otherwise have
