@@ -97,7 +97,9 @@ still meets every acceptance criterion; record the ones declined and why.
 ## 2. Build
 
 Implement against the spec and the repo's `CLAUDE.md`, add the tests the change calls for,
-and run the suite and linter until both pass. Commit per topic. Do not push: every push
+and run the suite and linter until both pass. A failure the base also has is not this
+branch's: note it in the ledger for §5's comment and go on. One of the branch's own that
+three attempts do not fix is **Needs you**. Commit per topic. Do not push: every push
 starts a rate-limited bot review, so the first push is §5's.
 
 ## 3. Review, fix, repeat
@@ -143,8 +145,11 @@ least one row** before any row the diff suggests. Show the plan block as it says
 without waiting unless something lands under the **Asks first** that still holds.
 
 A **Falsified** row is fixed the way §3 fixes a finding — snapshot, edit, tests and lint,
-cold review of the fix diff, commit — then that row and its control are re-run. Stop at the
-verify budget; a row still red is **Needs you** and makes the PR a draft. **Not verified**
+cold review of the fix diff with its findings triaged as §3 triages them, commit — then that
+row and its control are re-run. Stop at the verify budget; a row still red, or a Critical or
+Warning from those cold reviews still open, is **Needs you**. After
+the last fix, re-run every row once: a fix for one criterion can break another that already
+passed, and the report must describe the branch as it ends. **Not verified**
 rows are gaps, not failures: they go in the report as verify writes them.
 
 Do not promote probes to tests. List verify's **Keep as tests** in the PR comment; writing
@@ -158,7 +163,8 @@ Open it as a draft if `--draft` was given or anything is **Needs you**; ready ot
    one, as context. This is the first push.
 2. Publish the verification section as verify's `references/evidence.md` describes.
 3. Post one PR comment headed **Shipped by wtf-ship**: the rounds run and how each loop
-   ended; every **Decline** with its reason; every **Needs you**; verify's gaps and **Keep as
+   ended; every **Decline** with its reason; every **Needs you**; failures the base already
+   had; verify's gaps and **Keep as
    tests**. A comment rather than the body, because the body belongs to `/wtf-create-pr` —
    see `~/.claude/reference/github-publishing.md`, and scrub per that file. Leave the spec
    and plan out unless the user asks: they live in `.git` and may hold what the ticket did.
