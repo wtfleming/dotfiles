@@ -70,8 +70,10 @@ already in hand: `scope.diff` is `gh pr diff`. Anchor with `path`, `line` and
 `side: RIGHT` — not the deprecated `position` — and set the review's `commit_id`
 to the manifest's `scope_head`, the head the findings were read from.
 
-A finding bound for inline whose line falls outside every hunk goes in the
-review body instead, grouped under Critical / Warning / Pre-existing headings.
+A finding bound for inline goes in the review body instead, grouped under
+Critical / Warning / Pre-existing headings, where its line falls outside every
+hunk or its file is one the change deleted — a deleted line has no `RIGHT` side
+to anchor on.
 
 When posting, say how many findings went inline, how many fell back to the body
 for want of an anchor, how many Suggestions are in the body block, how many were

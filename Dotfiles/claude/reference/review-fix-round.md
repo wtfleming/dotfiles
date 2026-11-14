@@ -61,6 +61,12 @@ Otherwise it prints the path of the fix diff. Dispatch a single
 `wtf-change-reviewer` with that path and nothing else: not the findings it
 answers, not which edit was which, not that the diff is a set of fixes at all.
 
+One thing does travel. Where step 3 ran neither command because the tree is not
+the user's own work, tell the reviewer not to run the tests or the linter. That
+is a limit on what it may execute, not a view of the code, and without it the
+reviewer's own check — reading the test script's body — would let it run the
+suite step 3 just declined.
+
 Print what comes back in its own section, titled by what the review found:
 `## New problems introduced by the fixes` where it has findings,
 `## Cold review of the fixes — nothing found` where it has none. Do not act on

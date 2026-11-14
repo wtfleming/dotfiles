@@ -52,6 +52,15 @@ check "the files the fixes touched, and only those" \
 check "the reviewed change is not in the fix diff" "0" "$(grep -c '^+reviewed' "$diff" || :)"
 check "a file the fixes deleted is a deletion" "1" "$(grep -c '^deleted file' "$diff" || :)"
 
+# A file git cannot read must stop the run, not yield a tree that is missing it.
+printf 'fix\n' > unreadable.txt
+chmod 000 unreadable.txt
+rc=0; "$SNAP" diff "$tree" >/dev/null 2>&1 || rc=$?
+check "an unreadable file fails the diff" "1" "$rc"
+rc=0; "$SNAP" take >/dev/null 2>&1 || rc=$?
+check "an unreadable file fails the snapshot" "1" "$rc"
+chmod 644 unreadable.txt
+
 if [ "$failures" -gt 0 ]; then
   echo "$failures check(s) failed" >&2
   exit 1

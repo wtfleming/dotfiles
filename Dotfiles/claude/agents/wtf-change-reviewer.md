@@ -86,7 +86,10 @@ caller, the existing error handling, and the conventions you are judging against
 
 ## 2. Run the tests
 
-Discover the command; do not guess it. In order:
+If the dispatch says not to run the tests or the linter, run neither, and report
+both as `not run: execution withheld by the caller`.
+
+Otherwise discover the command; do not guess it. In order:
 
 1. `CLAUDE.md`, `AGENTS.md`, `README.md`, `CONTRIBUTING.md` — a documented command wins.
 2. Project manifest: `package.json` scripts, `Cargo.toml`, `Makefile`, `pyproject.toml`, `mix.exs`, `go.mod`.
