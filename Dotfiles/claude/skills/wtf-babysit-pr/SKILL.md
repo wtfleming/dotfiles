@@ -27,46 +27,53 @@ A **round** is one push. The budget caps rounds, not waits.
 
 ## 1. Wait for the head to settle
 
-Take `headRefOid` and wait until every check on it has left `pending`. Wait in the
-background with a deadline, so a hung check ends the wait rather than the session:
+Wait for one commit, named up front: the PR's `headRefOid` on the first pass, and the commit
+this skill just pushed (`git rev-parse HEAD`) on every pass after. Wait in the background
+with a deadline, so a hung check ends the wait rather than the session:
 
 ```sh
+export sha=<the commit>
 start=$(date +%s); quiet=0
-# Settled = gh answered, at least one check exists, none pending -- on two polls running.
-# Just after a push one check can register before the others exist, and for that moment
-# the head looks finished. "No checks reported" (exit 1) reads as "not yet", not "done".
+# One answer per poll, read from the status rollup of the PR's head: "moved" while the head
+# is not $sha, "none" with no checks yet, "pending", or "settled".
+query='if .headRefOid != env.sha then "moved"
+  elif (.statusCheckRollup | length) == 0 then "none"
+  elif any(.statusCheckRollup[]; if .__typename == "CheckRun" then .status != "COMPLETED"
+    else (.state == "PENDING" or .state == "EXPECTED") end) then "pending"
+  else "settled" end'
 while :; do
-  if b=$(gh pr checks <n> --json bucket -q '.[].bucket' 2>"$TMPDIR/checks.err") \
-      && [ -n "$b" ] && ! printf '%s\n' "$b" | grep -qx pending; then
-    quiet=$((quiet + 1)); [ "$quiet" -lt 2 ] || break
-  else
-    quiet=0
-  fi
+  s=$(gh pr view <n> --json headRefOid,statusCheckRollup -q "$query" 2>"$TMPDIR/checks.err") || s=error
+  # Twice running: one check can register before the others exist.
+  if [ "$s" = settled ]; then quiet=$((quiet + 1)); [ "$quiet" -lt 2 ] || break; else quiet=0; fi
   elapsed=$(( $(date +%s) - start ))
-  if [ -z "$b" ] && [ "$elapsed" -ge 300 ]; then
-    grep -q 'no checks reported' "$TMPDIR/checks.err" \
-      && { echo "no checks after 5 min"; exit 2; }
-    echo "gh failing: $(cat "$TMPDIR/checks.err")"; exit 3
+  if [ "$elapsed" -ge 300 ]; then
+    case $s in
+      none) echo "no checks after 5 min"; exit 2 ;;
+      error) echo "gh failing: $(cat "$TMPDIR/checks.err")"; exit 3 ;;
+      moved) echo "head is not $sha"; exit 4 ;;
+    esac
   fi
   [ "$elapsed" -lt 1800 ] || { echo "timed out"; exit 1; }
   sleep 30
 done
 ```
 
-Exit 2 means the repo runs no checks on this PR: report CI as absent, not as passed. Exit 3
-means `gh` itself is failing — auth, network, API — so CI is unknown: report the error.
+Tying the wait to the commit is what makes "settled" mean this code: just after a push
+GitHub still serves the previous commit's finished checks, and a wait that asked only
+"is anything pending?" ends on those.
 
-Run it with Bash `run_in_background` and wait for its notification. On a timeout, report the
-checks still pending and stop.
+- Exit 2: the repo runs no checks on this PR. Report CI as absent, not as passed.
+- Exit 3: `gh` itself is failing — auth, network, API — so CI is unknown. Report the error.
+- Exit 4: the head is some other commit, so someone else pushed. Start §1 again with the
+  new head, and fast-forward to it before any edit (§2).
+- Exit 1: timed out. Report the checks still pending and stop.
 
-Then read `gh pr checks <n> --json name,bucket,state,link` and the reviews on the head:
+Run it with Bash `run_in_background` and wait for its notification. Then read
+`gh pr checks <n> --json name,bucket,state,link` and the reviews on the head:
 
 ```sh
 gh pr view <n> --json headRefOid,mergeable,mergeStateStatus,reviews
 ```
-
-If `headRefOid` is not the one you took at the start of the wait, someone pushed meanwhile
-and the checks you read belong to another commit: start §1 again.
 
 **A review bot has looked only if it reviewed this head.** A bot review whose commit is not
 `headRefOid` is about older code. A bot check that passed, was cancelled or skipped can mean
