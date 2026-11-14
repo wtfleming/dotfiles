@@ -25,8 +25,9 @@ redirects through `redirect`, `return`, `next` or `url` parameters; trust in
 `Host` or forwarded headers. A socket that authenticates by cookie and does
 not check `Origin` (LiveView's `check_origin`) can be driven by any page the
 operator visits, including for an app served from localhost. CORS that
-reflects the request's origin, or allows credentials from origins the app does
-not control, lets another site read the operator's authenticated responses.
+allows credentials while reflecting the request's origin, or naming origins
+the app does not control, lets another site read the operator's authenticated
+responses.
 
 **OAuth and keys.** An OAuth or OIDC flow whose request and callback are not
 bound to each other: a missing or unchecked `state`, a callback that accepts a
