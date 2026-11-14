@@ -134,8 +134,15 @@ until one of these, recorded in the ledger:
   as **Needs you: rethink**, and stop looping.
 
 **Then one `--lite` review of the whole branch**, because each cold review read only its
-fixes. A Critical or Warning from it gets one more round if the budget allows, and is
-**Needs you** otherwise.
+fixes. Skip it when it would re-read what was just read: no fix round ran, or the fix
+diffs together cover every line the branch changes. A Critical or Warning from it gets one
+more round if the budget allows, and is **Needs you** otherwise. Nothing re-reads the
+branch after that round — its cold review is the last look — so say in §5's comment that
+those fixes were read as a diff only.
+
+**Clear up after the agents.** A reviewer or lens that reproduces a finding builds scratch
+repositories under the session scratchpad, and its own cleanup is often refused. After each
+round, remove the directories the reports name, and nothing else.
 
 ## 4. Verify
 

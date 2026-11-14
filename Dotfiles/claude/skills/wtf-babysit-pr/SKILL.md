@@ -69,7 +69,9 @@ summary comment before counting it. A bot that did not look is reported as that,
 clean. A bot with no check of its own may post after CI settles: where one has reviewed
 this PR before and has nothing on this head yet, poll the reviews for up to ten minutes
 before reporting it did not look. A bot that says it is rate limited is not waited for or
-re-triggered: report it as *did not look: rate limited* and go on. Human reviewers are not waited for: their review is the
+re-triggered: report it as *did not look: rate limited* and go on. The same holds for a
+bot that says it skips drafts: on a draft PR that is expected, so report *did not look:
+draft* and do not wait. Human reviewers are not waited for: their review is the
 user's to chase.
 
 ## 2. Act on what came back
@@ -115,7 +117,7 @@ would refresh it. Do not re-run verification here — it is the expensive step.
 ## 4. Report
 
 **Ready** means all of: every required check passed on the head, every review bot looked at
-the head or said it was rate limited, no unresolved thread except declined ones awaiting their reviewer and **Needs
+the head or said why it did not (rate limited, a draft), no unresolved thread except declined ones awaiting their reviewer and **Needs
 you**, and no conflicts. Anything short of that names what is missing.
 
 ```markdown
