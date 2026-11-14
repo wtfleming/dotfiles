@@ -44,7 +44,7 @@ query($owner:String!,$name:String!,$number:Int!){
     reviewThreads(first:100){ pageInfo{hasNextPage} nodes{
       id isResolved isOutdated path line originalLine
       comments(first:50){ nodes{ author{login} body url } }
-      latest: comments(last:1){ nodes{ author{login} body } } } }
+      latest: comments(last:1){ nodes{ id lastEditedAt author{login} body } } } }
     reviews(last:50){ nodes{ author{login} state body url } }
     comments(last:100){ pageInfo{hasPreviousPage startCursor} nodes{ author{login} body } }
   } } }'
@@ -166,6 +166,22 @@ abc123" is false until abc123 is on the remote. So, in this order:
 4. **Scrub** each reply per `~/.claude/reference/github-publishing.md`. Say
    what changed and why; no internal reasoning, no paths outside the repo, no
    machine-specific output.
+
+**Before every post, on whichever path it is made**, read that thread's latest
+comment again and compare its `id` and `lastEditedAt` with what step 1 read:
+
+```sh
+gh api graphql -F id=<thread id> -f query='
+query($id:ID!){ node(id:$id){ ... on PullRequestReviewThread{
+  comments(last:1){ nodes{ id lastEditedAt } } } } }'
+```
+
+If either differs, something was added or edited while this run worked: do not
+post on the thread and do not resolve it. A marked reply would become its latest
+comment, and a resolved thread is left alone, so either would hide the new
+request from every later run. Leave the thread for the next run and name it in
+the report. This holds for the declines and answers posted after a blocked push
+as much as for the rest.
 
 Reply on the thread itself, never as a new top-level comment:
 

@@ -94,7 +94,8 @@ than committing somewhere the push cannot carry.
   that name a commit this round made, as its step 5 says. The rest do not wait for a push
   that may never come: post a **Decline** or an **Answer** here, and an **Already
   addressed** too, resolving its thread, where the commit it names is already reachable
-  from `headRefOid`. Its step 1 skips what an earlier round already answered, by the marker
+  from `headRefOid`. Every post, here or after the push, is subject to that skill's check
+  before each post. Its step 1 skips what an earlier round already answered, by the marker
   each reply carries, so a declined thread is not answered again every round.
 
 A Critical or Warning from a cold review here gets one repair before the push, checked
