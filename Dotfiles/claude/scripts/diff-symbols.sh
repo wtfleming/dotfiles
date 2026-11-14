@@ -37,6 +37,7 @@ while [ $# -gt 0 ]; do
   case $1 in
     --) shift; paths=("$@"); break ;;
     -*) die "unknown option: $1" ;;
+    "") die "empty range argument" ;;
     *) [ -z "$range" ] || die "one range only, got '$range' and '$1'"; range=$1; shift ;;
   esac
 done
@@ -62,10 +63,11 @@ esac
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
-# Explicit prefixes and --no-relative: the parser below needs a/ and b/ on repo-root paths,
-# whatever diff.mnemonicPrefix, diff.noprefix or diff.relative say.
-diff_cmd=(git -c core.quotePath=false diff -U0 --no-renames --no-color --no-ext-diff
-  --src-prefix=a/ --dst-prefix=b/ --no-relative "$old_sha")
+# Every flag here pins something user config or .gitattributes could otherwise change under
+# the parser: a/ and b/ on repo-root paths, hunks that hold changed lines only, and line
+# numbers that count the raw file ast-grep is about to read.
+diff_cmd=(git -c core.quotePath=false diff -U0 --inter-hunk-context=0 --no-renames --no-color
+  --no-ext-diff --no-textconv --src-prefix=a/ --dst-prefix=b/ --no-relative "$old_sha")
 [ -z "$new_sha" ] || diff_cmd+=("$new_sha")
 diff_cmd+=(-- ${paths[@]+"${paths[@]}"})
 
@@ -76,7 +78,7 @@ echo "# new side: ${new_sha:-working tree}; renames appear as a deletion plus an
 
 # Records, one file at a time: F and the repo path (taken from the `diff --git` line, which
 # every entry has -- binary, empty and mode-only changes have no ---/+++ lines), then A
-# (added) or D (deleted) and B (binary) where they apply, each touched new-side line (N),
+# (added) or D (deleted), B (binary) and L (symlink) where they apply, each touched new-side line (N),
 # each deleted old-side line (O), and G for a pure deletion after new-side line c.
 # --no-renames makes both paths on the `diff --git` line the same, so the path is half of
 # what follows "a/".
@@ -87,6 +89,9 @@ awk '
   head && /^--- \/dev\/null$/ { print "A"; next }
   head && /^\+\+\+ \/dev\/null$/ { print "D"; next }
   head && /^Binary files / { print "B"; next }
+  # the blob of a symlink is its target path, not source; cp would follow it to another file
+  head && /^(new file mode|deleted file mode|old mode|new mode) 120000$/ { print "L"; next }
+  head && /^index [0-9a-f]+\.\.[0-9a-f]+ 120000$/ { print "L"; next }
   /^@@ / {
     head = 0
     # @@ -a[,b] +c[,d] @@ -- an omitted count is 1
@@ -131,8 +136,8 @@ rules_for() {
 }
 
 # Declarations in one file as TSV: kind, name, start line, end line, exported, start byte,
-# end byte (the bytes tell nesting apart on a line several declarations share), parent
-# name. Prints ERROR instead when the parse has error nodes, since symbols from a broken
+# end byte (the bytes tell nesting apart on a line several declarations share), dotted
+# path of the enclosing declarations. Prints ERROR instead when the parse has error nodes, since symbols from a broken
 # parse are guesses, and ENCODING when the file is not UTF-8: ast-grep then prints [] and
 # exits 0, which would read as a file with no declarations.
 #
@@ -164,7 +169,7 @@ decls() {
             if $x.id == "export" then .exp = $x
             else
               .stack |= until(length == 0 or (.[-1].eb >= $x.eb and (.[-1].sb != $x.sb or .[-1].eb != $x.eb)); .[:-1])
-              | .out += [{ x: $x, p: (.stack[-1] // null),
+              | .out += [{ x: $x, p: (.stack[-1] // null), path: (.stack | map(.name) | join(".")),
                            inexp: (.exp != null and .exp.sb <= $x.sb and $x.eb <= .exp.eb) }]
               | .stack += [$x]
             end)
@@ -173,7 +178,7 @@ decls() {
         | (if .p != null then "no"
            elif $lang == "python" then (if (.x.name | startswith("_")) then "no" else "yes" end)
            elif .inexp then "yes" else "no" end) as $exported
-        | [ $kind, .x.name, .x.s, .x.e, $exported, .x.sb, .x.eb, (.p.name // "") ] | @tsv
+        | [ $kind, .x.name, .x.s, .x.e, $exported, .x.sb, .x.eb, .path ] | @tsv
         end'
 }
 
@@ -232,13 +237,11 @@ enclosing() {
 files=0
 
 analyse() {
-  local path=$1 added=$2 deleted=$3 binary=$4 lang nf of
+  local path=$1 added=$2 deleted=$3 skip=$4 lang nf of
   [ -n "$path" ] || return 0
   lang="$(lang_of "$path")"
-  if [ "$binary" = quoted ]; then
-    printf '%s\tpath git had to quote\n' "$path" >> "$WORK/skipped"; return 0
-  elif [ "$binary" = 1 ]; then
-    printf '%s\tbinary\n' "$path" >> "$WORK/skipped"; return 0
+  if [ -n "$skip" ]; then
+    printf '%s\t%s\n' "$path" "$skip" >> "$WORK/skipped"; return 0
   elif ! grep -q . "$WORK/file-lines"; then
     printf '%s\tno content lines changed (mode-only, or an empty file)\n' "$path" >> "$WORK/skipped"; return 0
   elif [ -z "$lang" ]; then
@@ -267,30 +270,33 @@ analyse() {
       { print $1, $2, $3, $4 >> changed }
     '
   fi
-  # A declaration enclosing a deleted line is removed if nothing of the same kind and
-  # name is left under the same parent.
+  # A declaration enclosing a deleted line is removed if fewer of its kind and name are
+  # left under the same enclosing path than there were -- a count, because a getter and
+  # its setter share all three.
   enclosing "$WORK/old.tsv" O "$path" | awk -F'\t' -v OFS='\t' '
-    FILENAME == ARGV[1] { present[$1 "\t" $8 "\t" $2] = 1; next }
-    $1 != "-" && !(($1 "\t" $5 "\t" $2) in present) { print $1, $2, $3, $4 }
-  ' "$WORK/new.tsv" - >> "$WORK/removed"
+    FILENAME == ARGV[1] { new[$1 "\t" $8 "\t" $2]++; next }
+    FILENAME == ARGV[2] { old[$1 "\t" $8 "\t" $2]++; next }
+    $1 != "-" && old[$1 "\t" $5 "\t" $2] > new[$1 "\t" $5 "\t" $2] { print $1, $2, $3, $4 }
+  ' "$WORK/new.tsv" "$WORK/old.tsv" - >> "$WORK/removed"
 }
 
-path="" added=0 deleted=0 binary=0
+path="" added=0 deleted=0 skip=""
 : > "$WORK/file-lines"
 while IFS=$'\t' read -r tag value; do
   case $tag in
     F)
-      analyse "$path" "$added" "$deleted" "$binary"
-      path=$value added=0 deleted=0 binary=0 files=$((files + 1))
+      analyse "$path" "$added" "$deleted" "$skip"
+      path=$value added=0 deleted=0 skip="" files=$((files + 1))
       : > "$WORK/file-lines" ;;
     A) added=1 ;;
     D) deleted=1 ;;
-    B) binary=1 ;;
-    Q) binary=quoted ;;
+    B) skip=binary ;;
+    L) skip=symlink ;;
+    Q) skip="path git had to quote" ;;
     *) printf '%s\t%s\n' "$tag" "$value" >> "$WORK/file-lines" ;;
   esac
 done < "$WORK/changes"
-analyse "$path" "$added" "$deleted" "$binary"
+analyse "$path" "$added" "$deleted" "$skip"
 
 section() {
   echo

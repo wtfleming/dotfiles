@@ -219,6 +219,42 @@ printf '# caf\xe9\ndef g():\n    return 2\n' > l.py
 check "a file that is not UTF-8 is listed, not reported as top-level" \
   "l.py${tab}not valid UTF-8" "$(section "not analyzed" "$("$SYMS")")"
 
+# Third repository: config, attributes and file types that could shift what the parser reads.
+git init -q -b main "$WORK/three"
+cd "$WORK/three"
+git config user.email ci@example.invalid
+git config user.name CI
+printf 'function f(){\n  return 1}\nfunction h(){\n\n  return 0}\nfunction g(){\n  return 1}\n' > x.ts
+printf '// header\n\n\nfunction a(){\n  return 1\n}\nfunction b(){\n  return 1\n}\n' > t.ts
+printf 't.ts diff=strip\n' > .gitattributes
+printf 'class O1:\n    class Inner:\n        def keep(self): pass\n        def m(self): pass\n\nclass O2:\n    class Inner:\n        def m(self): pass\n' > n.py
+printf 'class C {\n  get x() {\n    return 1;\n  }\n  set x(v) {\n    this.y = v;\n  }\n}\n' > c.ts
+printf 'export function target() {\n  return 1;\n}\n' > real.ts
+git add . && git commit -q -m base
+
+sed '2s/1/2/;7s/1/2/' x.ts > x.new && mv x.new x.ts
+sed '8s/1/2/' t.ts > t.new && mv t.new t.ts
+sed '4d' n.py > n.new && mv n.new n.py
+sed '5,7d' c.ts > c.new && mv c.new c.ts
+ln -s real.ts link.ts && ln -s missing.ts dangling.ts && git add link.ts dangling.ts
+out="$(GIT_CONFIG_COUNT=2 GIT_CONFIG_KEY_0=diff.interHunkContext GIT_CONFIG_VALUE_0=10 \
+  GIT_CONFIG_KEY_1=diff.strip.textconv GIT_CONFIG_VALUE_1='sed 1,3d' "$SYMS" 2>&1)"
+changed="$(section changed "$out")"
+removed="$(section "removed (old-side location)" "$out")"
+check "diff.interHunkContext does not pull in the unchanged function between two hunks" \
+  "f g" "$(grep 'x\.ts' <<<"$changed" | cut -f2 | tr '\n' ' ' | sed 's/ $//')"
+check "a textconv filter does not shift which function a line is credited to" \
+  "b" "$(grep 't\.ts' <<<"$changed" | cut -f2)"
+check "symlinks are listed, never read through to their target" \
+  "dangling.ts${tab}symlink
+link.ts${tab}symlink" "$(section "not analyzed" "$out")"
+check "a method removed under one of two same-named nested classes is a removal" \
+  "method${tab}m${tab}n.py:4-4${tab}no" "$(grep 'n\.py' <<<"$removed" || :)"
+check "a removed setter is a removal though its getter keeps the name" \
+  "method${tab}x${tab}c.ts:5-7${tab}no" "$(grep 'c\.ts' <<<"$removed" || :)"
+rc=0; "$SYMS" "" >/dev/null 2>&1 || rc=$?
+check "an empty range argument fails rather than meaning no range" "1" "$rc"
+
 rc=0; "$SYMS" no-such-ref >/dev/null 2>&1 || rc=$?
 check "a bad range fails" "1" "$rc"
 rc=0; (cd "$WORK" && "$SYMS") >/dev/null 2>&1 || rc=$?
