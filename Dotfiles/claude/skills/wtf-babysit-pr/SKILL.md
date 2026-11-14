@@ -28,53 +28,26 @@ A **round** is one push. The budget caps rounds, not waits.
 ## 1. Wait for the head to settle
 
 Wait for one commit, named up front: the PR's `headRefOid` on the first pass, and the commit
-this skill just pushed (`git rev-parse HEAD`) on every pass after. Wait in the background
-with a deadline, so a hung check ends the wait rather than the session:
+this skill just pushed (`git rev-parse HEAD`) on every pass after.
 
 ```sh
-export sha=<the commit>
-start=$(date +%s); quiet=0; err_since=""
-err=$(mktemp); trap 'rm -f "$err"' EXIT   # gh's stderr, kept for the exit-3 message
-# One answer per poll, read from the status rollup of the PR's head: "moved" while the head
-# is not $sha, "none" with no checks yet, "pending", or "settled".
-query='if .headRefOid != env.sha then "moved"
-  elif (.statusCheckRollup | length) == 0 then "none"
-  elif any(.statusCheckRollup[]; if .__typename == "CheckRun" then .status != "COMPLETED"
-    else (.state == "PENDING" or .state == "EXPECTED") end) then "pending"
-  else "settled" end'
-while :; do
-  s=$(gh pr view <n> --json headRefOid,statusCheckRollup -q "$query" 2>"$err") || s=error
-  now=$(date +%s); elapsed=$(( now - start ))
-  # Twice running: one check can register before the others exist.
-  if [ "$s" = settled ]; then quiet=$((quiet + 1)); [ "$quiet" -lt 2 ] || break; else quiet=0; fi
-  # gh must fail for five minutes on end to count: one bad poll in a long wait is a blip.
-  if [ "$s" = error ]; then
-    : "${err_since:=$now}"
-    [ $(( now - err_since )) -lt 300 ] || { echo "gh failing: $(cat "$err")"; exit 3; }
-  else
-    err_since=""
-  fi
-  if [ "$elapsed" -ge 300 ]; then
-    case $s in
-      none) echo "no checks after 5 min"; exit 2 ;;
-      moved) echo "head is not $sha"; exit 4 ;;
-    esac
-  fi
-  [ "$elapsed" -lt 1800 ] || { echo "timed out"; exit 1; }
-  sleep 30
-done
+~/.claude/scripts/pr-wait.sh <n> <the commit>
 ```
 
-Tying the wait to the commit is what makes "settled" mean this code: just after a push
-GitHub still serves the previous commit's finished checks, and a wait that asked only
-"is anything pending?" ends on those.
+It polls the status rollup of the PR's head and returns once that head is the named commit
+and every check on it has finished, on two polls running. Tying the wait to the commit is
+what makes "settled" mean this code: just after a push GitHub still serves the previous
+commit's finished checks. Its exit status says how the wait ended, with one line of why:
 
-- Exit 2: the repo runs no checks on this PR. Report CI as absent, not as passed.
-- Exit 3: `gh` itself has failed on every poll for five minutes — auth, network, API — so CI
-  is unknown. Report the error.
-- Exit 4: the head is some other commit, so someone else pushed. Start §1 again with the
-  new head, and fast-forward to it before any edit (§2).
-- Exit 1: timed out. Report the checks still pending and stop.
+- 0: settled. Go on.
+- 1: timed out after 30 minutes. Report what the last poll saw and stop.
+- 2: the repo runs no checks on this PR. Report CI as absent, not as passed.
+- 3: `gh` itself failed on every poll for five minutes — auth, network, API — so CI is
+  unknown. Report the error.
+- 4: the head is some other commit, so someone else pushed. Start §1 again with the new
+  head, and fast-forward to it before any edit (§2).
+- 64: the script was called wrongly, or `gh` or `jq` is missing. Nothing was waited for:
+  report the error and stop.
 
 Run it with Bash `run_in_background` and wait for its notification. Then read
 `gh pr checks <n> --json name,bucket,state,link` and the reviews on the head:
@@ -115,9 +88,10 @@ than committing somewhere the push cannot carry.
   the rerun: §3's push starts every check again on the new head. A rerun returns before
   its checks exist, so until `gh run view <run id> --json attempt` shows the attempt
   number go up, §1 would settle on the old failure: wait for that first.
-- **Open review threads or review bodies.** Follow `~/.claude/skills/wtf-address-review/`
-  `SKILL.md` steps 1–4. At its step 5, make its commits, then push in §3 together with any CI
-  fix, and post its replies after that push as its step 5 says.
+- **Open review threads or review bodies.** Follow
+  `~/.claude/skills/wtf-address-review/SKILL.md` steps 1–4. At its step 5, make its
+  commits, then push in §3 together with any CI fix, and post its replies after that push
+  as its step 5 says.
 
 A Critical or Warning from a cold review here gets one repair before the push, checked
 against the code like any finding, with a second cold review of that repair. Holding it
