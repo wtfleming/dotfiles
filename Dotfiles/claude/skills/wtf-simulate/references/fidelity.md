@@ -6,9 +6,6 @@ wrong number has been actively misled. The ledger is the honesty mechanism, and
 it belongs in **four** places — About modal, README, panel, code comments — see
 "Where it goes" below.
 
-It is also, in practice, the most-quoted part of these projects. Readers who know
-the domain go looking for it first.
-
 ## The four buckets
 
 Sort every quantity into exactly one.
@@ -26,7 +23,7 @@ credential.
 > 1.
 
 "They sum to exactly 1" is the kind of detail that earns trust. Point at the file:
-"all of it lives in `js/spec.js`".
+"all of it lives in `js/model.js`".
 
 ### Scaled down
 

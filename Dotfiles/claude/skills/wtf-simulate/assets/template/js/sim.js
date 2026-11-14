@@ -1,7 +1,8 @@
 /* sim.js: the state machine that walks one request through the town.
  *
- * This is the pacing engine, and it is the part worth copying verbatim into a
- * new explainer. Three ideas do all the work:
+ * This is the pacing engine. Copy update(), the boosts and `tour` verbatim into
+ * a new explainer; the model inputs, OPS and advanceRoute() are the domain's.
+ * Three ideas do all the work:
  *
  *   1. The van moves along a route by distance, and a station fires when it
  *      passes one. Stations own the model steps; travel owns nothing.

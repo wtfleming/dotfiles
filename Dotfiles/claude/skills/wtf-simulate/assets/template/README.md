@@ -15,8 +15,9 @@ Pure static site. No build step, no dependencies, no network calls.
 > **This is the reference example for the `wtf-simulate` skill.** It is a
 > complete, working explainer, not a scaffold. Copy the directory and replace
 > `js/model.js`, `js/world.js`, the landmark functions in `js/render.js` and the
-> panels in `js/ui.js` with your own subject. `js/iso.js`, `js/sim.js` and
-> `js/main.js` are engine — copy them unchanged.
+> panels in `js/ui.js` with your own subject, along with the model inputs, the
+> `OPS` table and `advanceRoute()` in `js/sim.js`. `js/iso.js`, `js/main.js`
+> and the rest of `js/sim.js` are engine — copy them unchanged.
 
 ## Run it
 
@@ -26,7 +27,7 @@ If you'd rather serve it:
 
 ```
 python3 -m http.server --bind 127.0.0.1 8000
-# → http://localhost:8000
+# → http://127.0.0.1:8000
 ```
 
 ## Controls
@@ -89,10 +90,10 @@ the larger of the time the pipe needs for the bytes and the time TCP slow start
 needs to open the congestion window — starting from a ten-segment initial window
 (RFC 6928) and doubling each round. Time to first byte, the completion time, the
 round-trip count and the latency-bound / bandwidth-bound verdict all fall out of
-that arithmetic. It lives in `js/model.js`, about 120 lines, and it is worth
+that arithmetic. It lives in `js/model.js`, about 160 lines, and it is worth
 reading on its own.
 
-**Assumed:** that the resolver sits as far away as the server; that the origin
+**Assumed:** that the resolver sits as far away as the edge; that the origin
 sits twice as far as the edge; that headers cost 800 bytes compressed; that one
 connection carries everything. A real page opens several connections and fetches
 dozens of files over them — this is one request, deliberately.
@@ -142,17 +143,13 @@ van you are meant to be watching.
 # One file at a time: `node --check js/*.js` only checks the first one.
 fail=0; for f in js/*.js; do node --check "$f" || fail=1; done; test "$fail" -eq 0
 
-# Then serve it and run the skill's smoke test against the URL. Check the
-# bind and kill the server after — a stale listener from an earlier run
-# answers on the same port and the smoke test passes against the wrong code.
-# The trap does the killing so the block's status is the smoke test's own,
-# and the URL is the bound address: `localhost` can resolve to ::1 first and
-# miss an IPv4-only listener.
+# Then serve it and run the skill's smoke test. Kill the server after: a stale
+# listener on the port makes the smoke test pass against the wrong code.
 python3 -m http.server --bind 127.0.0.1 8000 & pid=$!
 trap 'kill "$pid" 2>/dev/null' EXIT
 sleep 1
 if kill -0 "$pid" 2>/dev/null; then
-  node path/to/wtf-simulate/scripts/smoke.mjs http://127.0.0.1:8000/
+  node ~/.claude/skills/wtf-simulate/scripts/smoke.mjs http://127.0.0.1:8000/
 else
   echo "FAIL: server did not start (port 8000 busy?)" >&2
   false
@@ -160,7 +157,7 @@ fi
 ```
 
 The smoke test fails on any console error, steps the van through every station,
-and writes a screenshot. Look at the screenshot: occlusion and label collisions
-do not raise errors. It needs Playwright
+and writes a screenshot at each one. Look at them: occlusion and label
+collisions do not raise errors. It needs Playwright
 (`npm i -D playwright && npx playwright install chromium`); without it, just open
 `index.html` and watch a full trip.

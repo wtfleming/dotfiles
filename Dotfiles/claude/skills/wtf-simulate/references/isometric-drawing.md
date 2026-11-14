@@ -104,7 +104,7 @@ var TOP = 1.0, RIGHT = 0.89, LEFT = 0.76;
 ```
 
 Gentle steps, not dramatic ones. Pale surfaces keep their colour and the scene
-reads as a paper model rather than a render. The night-scene values (0.5 / 0.6)
+reads as a paper model rather than a render. Steeper steps (0.5 / 0.6)
 turn a pale cylinder nearly black — if a solid looks muddy, this is why.
 
 For an arbitrary footprint, shade from the face's own outward normal:

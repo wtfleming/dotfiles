@@ -117,13 +117,3 @@ and its step; **the full fidelity ledger**; the file map; and one paragraph of
 architecture — the non-obvious thing a person modifying it needs to know first
 (the occlusion rule, where the state machine branches, what `routes` and
 `stations` mean).
-
-## Checks
-
-- Read every `short` in sequence. Does it read as a coherent summary of the whole
-  system?
-- Does every `body` contain at least one number?
-- Does every `body` say why the stage exists, not only what it does?
-- Would a reader who knows the domain find anything to disagree with? If yes, it
-  is either wrong or belongs in the ledger.
-- Read it aloud. Awkwardness you skim past on screen is obvious out loud.

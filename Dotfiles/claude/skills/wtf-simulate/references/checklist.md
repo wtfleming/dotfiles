@@ -1,11 +1,11 @@
 # Finishing checklist
 
-Walk this before calling an explainer done. Each line is a failure someone has
-actually shipped.
+Walk this before calling an explainer done. It covers what your own work can
+get wrong; what the engine files already do is not re-checked here.
 
-Everything here applies to both forms except **Rendering** and **Camera**, which
-assume the isometric form — for the flat schematic form, substitute the checks
-at the end of `references/flat-format.md`.
+Everything here applies to both forms except **Rendering**, which assumes the
+isometric form — for the flat schematic form, substitute the checks at the end
+of `references/flat-format.md`.
 
 ## The model
 
@@ -29,41 +29,20 @@ at the end of `references/flat-format.md`.
 
 ## Pacing
 
-- [ ] First visit stops for `readSeconds`; later visits get the short dwell.
-- [ ] Stops are keyed on **district**, so a shared write-up is not charged twice.
-- [ ] The reading stop is scaled by the speed slider **only** — no travel boost
-      touches it.
+- [ ] Stations that share a write-up are mapped in `stationToDistrict`, so it is
+      not charged twice.
 - [ ] A progress bar shows the remaining stop time.
-- [ ] `tour.seen` survives `reset()`.
-- [ ] **Run** keeps what has been read; **Reset (⟲)** replays the tour. Labelled
-      distinctly.
-- [ ] Space holds a stop indefinitely. S advances exactly one station.
 - [ ] The HUD says which pacing mode is active, always.
 - [ ] The first full pass takes roughly 4–6 minutes at 1×.
 
 ## Rendering
 
-- [ ] One sorted list, keyed `x + y` (plus half-footprint for boxes).
 - [ ] Structures the road passes under are registered as separate pieces.
 - [ ] No building violates `(w + d) / 2 > setback` against the route.
 - [ ] Flat layers (ground, washes, roads, elevated pillars) painted before the
       sorted pass; overlays after it.
-- [ ] Labels drawn with the **dpr** transform, not identity. Verified at
-      `deviceScaleFactor: 2`.
-- [ ] Labels de-collide; the live readout has priority.
-- [ ] Labels declutter below ~0.34 zoom.
 - [ ] No `Math.random()` in any draw path.
-- [ ] `shade()` quantises its factor before caching.
 - [ ] Face decoration uses `FACE_ANG` / `FACE_U`, not guessed pixel offsets.
-
-## Camera
-
-- [ ] Opens close on the vehicle, following it.
-- [ ] Looks ahead along the direction of travel.
-- [ ] Easing is frame-rate independent (`1 - Math.pow(k, dt)`).
-- [ ] Fitting the whole world is deliberate — button, double-click or scroll.
-- [ ] Camera aims at the rectangle not covered by panels, measured from the DOM.
-- [ ] A drag turns follow off.
 
 ## Copy
 
@@ -75,6 +54,9 @@ at the end of `references/flat-format.md`.
 - [ ] The reader is told what to trust and what to ignore.
 - [ ] The done card lands the lesson rather than saying "complete".
 - [ ] Read the `short`s in sequence — coherent summary of the whole system.
+- [ ] A reader who knows the domain would find nothing to disagree with; anything
+      they would is either wrong or belongs in the ledger.
+- [ ] Read aloud once. Awkwardness you skim past on screen is obvious out loud.
 
 ## The fidelity ledger
 
@@ -91,23 +73,15 @@ at the end of `references/flat-format.md`.
 - [ ] No network requests, no CDN, no fonts fetched, no build step.
 - [ ] Works at 360 px wide: panel becomes a bottom sheet, sliders behind the gear.
 - [ ] **Landscape phone** checked — the worst case, and the easiest to forget.
-- [ ] Keyboard: Space, S, R, F, L, Escape.
-- [ ] Under `prefers-reduced-motion: reduce` it opens paused and the HUD says
-      how to step; nothing travels until the reader asks.
-- [ ] `Escape` closes the About modal; clicking the backdrop closes it.
 - [ ] Buttons have `title` and `aria-label`; toggles are real labelled checkboxes.
-- [ ] The frame loop schedules the next frame **first**, so one thrown error does
-      not freeze the whole page.
 
 ## Verification
 
-- [ ] `fail=0; for f in js/*.js; do node --check "$f" || fail=1; done;
-      test "$fail" -eq 0` passes — a loop, because `node --check` only checks
-      its first argument, and a flag, so one failure fails the whole block.
+- [ ] The `node --check` loop from `SKILL.md` passes.
 - [ ] `scripts/smoke.mjs` reports zero console errors and zero page errors.
 - [ ] The smoke test reaches every station and finishes the run.
-- [ ] **The screenshot has been looked at.** Occlusion and label collisions raise
-      no errors.
+- [ ] **Every station screenshot has been looked at.** Occlusion and label
+      collisions raise no errors.
 - [ ] One full first-visit tour watched at 1×, start to finish, without touching
       anything.
 - [ ] README station table matches the actual stations.
