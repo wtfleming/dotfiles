@@ -74,10 +74,10 @@ procedure returns a confident review of a scope nobody asked for.
 | `fell_through` | which auto steps produced nothing, and why |
 | `file_list_source` | `git-apply-numstat` normally. `fallback-headers` means the list was scraped from the diff's headers and may be incomplete — **say so** rather than presenting `files` as settled |
 | `changed_lines` | lines added plus removed, outside `test`, `tests`, `spec`, `__tests__` and `fixtures` directories. **null** under `fallback-headers`, and when an untracked file was stubbed, where nothing counted them |
-| `lenses` | for `/wtf-code-review`: each of its eight lenses with `dispatch`, and `skipped_by` naming the check that excluded it — prose only, small change, no manifest, no security surface, no interface. Decided from `files`, `changed_lines` and one pattern over the diff; under `fallback-headers` nothing is skipped |
+| `lenses` | for `/wtf-code-review`: each of its nine lenses with `dispatch`, and `skipped_by` naming the check that excluded it — prose only, small change, no manifest, no contract surface, no security surface, no interface. Decided from `files`, `changed_lines` and one pattern over the diff; under `fallback-headers` nothing is skipped |
 | `warnings` | anything the resolver could not do cleanly; disclose these the way you disclose `base_stale` |
 
-`scope_line` exists so that a reviewer, eight lenses and a merged report describe one scope
+`scope_line` exists so that a reviewer, nine lenses and a merged report describe one scope
 in one form rather than ten. Use it rather than composing your own.
 
 ## A phrase that names the default counts as naming nothing

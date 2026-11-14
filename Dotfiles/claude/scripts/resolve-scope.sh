@@ -3,7 +3,7 @@
 #
 # Several tools here -- /wtf-code-review and its lenses, wtf-change-reviewer,
 # wtf-design-reviewer, wtf-code-verify, wtf-prod-impact -- work the scope out from
-# prose instructions. On the full pass that is eight lens agents beside the reviewer,
+# prose instructions. On the full pass that is nine lens agents beside the reviewer,
 # each running its own git commands, and "the same scope" holds only for as long as every
 # one of them derives it identically. This produces the diff once, writes it to a file,
 # and hands every agent the path.
@@ -71,13 +71,13 @@ RESOLVED_BY=""
 RESOLUTION_STEP=explicit
 
 # Untracked files above this go into the diff as a stub rather than inline. A single
-# untracked 200MB CSV would otherwise become a 200MB scope.diff that eight agents are
+# untracked 200MB CSV would otherwise become a 200MB scope.diff that nine agents are
 # each told to read in full.
 MAX_INLINE_BYTES=1048576
 # And a budget across all of them, because the per-file cap alone does not bound the total:
 # four hundred files of just under the per-file limit clear every check individually and
 # still build a diff nobody can read. Ten times the per-file cap -- high enough that
-# ordinary untracked work never trips it, low enough to bite well before eight agents'
+# ordinary untracked work never trips it, low enough to bite well before nine agents'
 # context does.
 MAX_UNTRACKED_TOTAL_BYTES=10485760
 # Past this many untracked files the per-file `git diff` calls dominate the run, so say so
@@ -638,8 +638,18 @@ lens_plan() {
           "pipfile.lock","setup.py","setup.cfg","gemfile","gemfile.lock","composer.json",
           "composer.lock","pom.xml","build.gradle","build.gradle.kts","mix.exs","mix.lock",
           "brewfile"]))
-      or (base | test("^requirements.*[.](txt|in)$") or test("[.]gemspec$"))
-      or (dirs | any(among(["migrations","migrate"])));
+      or (base | test("^requirements.*[.](txt|in)$") or test("[.]gemspec$"));
+    # Path words and formats where a shape another version or caller reads tends to live:
+    # schemas, payloads, routes, exports, config. Compared with one trailing `s` dropped.
+    def contract:
+      (ext | among(["sql","proto","graphql","gql","avsc","thrift"]))
+      or (ascii_downcase | [scan("[a-z0-9]+") | sub("s$"; "")]
+          | any(among(["migration","migrate","schema","openapi","swagger","api","route",
+              "router","controller","endpoint","handler","serializer","model","entity",
+              "dto","event","message","job","worker","queue","consumer","producer",
+              "topic","webhook","client","contract","cache","session","config","cli",
+              "cmd","command"])))
+      or (ascii_downcase | split("/") | any(test("_web$")));
     # Path words that mark an input boundary, compared with one trailing `s` dropped.
     def boundary:
       agent_instructions
@@ -674,6 +684,9 @@ lens_plan() {
         dependencies: skip_when([
           [$prose_only, "prose only"],
           [$trusted and ($files | any(manifest) | not), "no manifest"]]),
+        compatibility: skip_when([
+          [$prose_only, "prose only"],
+          [$trusted and ($files | any(contract) | not), "no contract surface"]]),
         observability: skip_when([[$prose_only, "prose only"]]),
         ui: skip_when([
           [$prose_only, "prose only"], [$small, "small change"],
@@ -1099,7 +1112,7 @@ cmd_resolve() {
 
   lens_plan "$diff" "$tmp/files.json" > "$tmp/lenses.json"
 
-  # Composed once, here, so that eight lenses and a merged report describe one scope in one
+  # Composed once, here, so that nine lenses and a merged report describe one scope in one
   # form rather than ten.
   local scope_line
   scope_line="$RESOLVED_BY — $file_count files"

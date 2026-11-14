@@ -58,9 +58,9 @@ are fine or doubtful, or any reasoning from this conversation.
 
 ### Which lenses run
 
-`manifest.lenses` lists all eight lenses — `security`, `tests`,
-`maintainability`, `resilience`, `performance`, `dependencies`, `observability`,
-`ui` — each with `dispatch`, and `skipped_by` naming the check that excluded it
+`manifest.lenses` lists all nine lenses — `security`, `tests`,
+`maintainability`, `resilience`, `performance`, `dependencies`, `compatibility`,
+`observability`, `ui` — each with `dispatch`, and `skipped_by` naming the check that excluded it
 where `dispatch` is false.
 
 - **Full pass:** dispatch every lens whose `dispatch` is true.
@@ -92,7 +92,7 @@ two rounds. Say so when you announce the agents.
 1. Dispatch the reviewer with the subject as the user wrote it, and wait.
 2. If it reports that nothing in the repo implements the subject, relay that,
    say no lenses were launched, and stop. There is no report to build.
-3. On the full pass, dispatch all eight lenses in parallel. Each gets its lens
+3. On the full pass, dispatch all nine lenses in parallel. Each gets its lens
    name, the subject line, and the file list the reviewer settled on, **labelled
    as a subject**. The label is what stops a lens diffing a list of paths, which
    on a subject yields an empty diff. Pass nothing else the reviewer concluded.
@@ -228,7 +228,7 @@ Lenses: security — 2 findings · tests — clean · observability — not appl
   can be disagreed with. A Warning is set aside for being unlikely and harmless,
   a Suggestion for not being worth the churn; never the other way round. Omit
   the heading when nothing moved.
-- **Lenses.** On the full pass, one line naming all eight, each with what it
+- **Lenses.** On the full pass, one line naming all nine, each with what it
   returned. **Findings**, **clean**, **not applicable** and **not dispatched**
   are four different facts; `not dispatched` carries the manifest's
   `skipped_by`. A lens already named in the header appears here as `see above`.

@@ -662,6 +662,15 @@ check "a manifest dispatches dependencies" "true" "$(field "$out" .lenses.depend
 check "a larger change dispatches maintainability" "true" "$(field "$out" .lenses.maintainability.dispatch)"
 check "no interface file skips ui" "no interface" "$(field "$out" .lenses.ui.skipped_by)"
 check "no boundary and no sink skips security" "no security surface" "$(field "$out" .lenses.security.skipped_by)"
+check "no contract file skips compatibility" "no contract surface" "$(field "$out" .lenses.compatibility.skipped_by)"
+mkdir -p "$WORK/lenses/db/migrations"
+printf 'ALTER TABLE t DROP COLUMN c;\n' > "$WORK/lenses/db/migrations/002_drop.sql"
+out=$(cd "$WORK/lenses" && "$RESOLVE" resolve 2>/dev/null | tail -1)
+check "a migration dispatches compatibility" "true" "$(field "$out" .lenses.compatibility.dispatch)"
+rm -f "$WORK/lenses/package.json"
+out=$(cd "$WORK/lenses" && "$RESOLVE" resolve 2>/dev/null | tail -1)
+check "a migration alone is not a manifest" "no manifest" "$(field "$out" .lenses.dependencies.skipped_by)"
+rm -rf "$WORK/lenses/db"
 printf 'system("ls")\n' >> "$WORK/lenses/lib.rb"
 out=$(cd "$WORK/lenses" && "$RESOLVE" resolve 2>/dev/null | tail -1)
 check "a sink in the diff dispatches security" "true" "$(field "$out" .lenses.security.dispatch)"

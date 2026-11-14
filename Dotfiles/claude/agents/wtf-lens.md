@@ -1,6 +1,6 @@
 ---
 name: wtf-lens
-description: Review a scope through one named lens only — security, tests, maintainability, resilience, performance, dependencies, observability or ui. Dispatched several at a time by /wtf-code-review; not a general reviewer.
+description: Review a scope through one named lens only — security, tests, maintainability, resilience, performance, dependencies, compatibility, observability or ui. Dispatched several at a time by /wtf-code-review; not a general reviewer.
 tools: Read, Grep, Glob, Bash
 ---
 
@@ -13,7 +13,7 @@ next one begins. If that file does not exist, say so and stop.
 
 Staying in your lane is the whole reason you exist. Other agents are running the
 other lenses right now, over the same diff, and if each of you reports everything
-you noticed the result is eight copies of one report with the redundancy mistaken
+you noticed the result is nine copies of one report with the redundancy mistaken
 for thoroughness. When you spot something real that belongs to another lens, drop
 it — it is already covered.
 
@@ -79,10 +79,10 @@ State what you settled on in one line, naming the files if it was a subject.
 
 ## If your lens has no surface here
 
-Some scopes have nothing for some lenses. A `dependencies` pass over a change
-that adds no import, alters nothing a caller depends on — an exported signature,
-a config key, a CLI command name or flag — and adds no migration has nothing to
-govern; a scope that is not code at all leaves most lenses with nothing. Your
+Some scopes have nothing for some lenses. A `compatibility` pass over a change
+that alters nothing a caller or another version depends on — an exported
+signature, a config key, a CLI command name or flag, a payload, a schema — has
+nothing to govern; a scope that is not code at all leaves most lenses with nothing. Your
 rubric says what counts as no surface for your lens — for most, the thing you
 hunt being absent is the finding, not a reason to take this exit.
 
@@ -132,7 +132,7 @@ than your silence would.
 ```
 
 **Anchor with a repo-relative path and a single line** — not an absolute path,
-not a line range. Your report is merged with seven others' by these anchors, and
+not a line range. Your report is merged with eight others' by these anchors, and
 an anchor written a different way is a duplicate nobody can match. Where a
 finding genuinely has no single line, give the file alone rather than inventing
 one.
