@@ -2,7 +2,9 @@
 
 Four tools here write outward: `/wtf-code-review` posts findings, `wtf-code-verify` posts
 verification sections, `/wtf-create-pr` composes the pull request itself, and
-`wtf-address-review` replies to review threads and resolves them. What they publish
+`wtf-address-review` replies to review threads and resolves them. `wtf-ship` and
+`wtf-babysit-pr` write through those four, and `wtf-ship` adds one PR comment of its own
+summarising the run. What they publish
 leaves your control the moment it lands — GitHub indexes it, mirrors it into notification
 email, and serves it to anyone who can read the repo. Editing a comment afterwards does not
 take back what was already delivered.
@@ -97,7 +99,7 @@ direction, and no delimiter prevents it.
 
 A tool that edits code where a published section may exist therefore reads the body for the
 markers and says the verdict is stale, naming what would refresh it. **The tools this binds
-today are `/wtf-code-review`, `wtf-code-verify` and `wtf-address-review`** — named rather than
+today are `/wtf-code-review`, `wtf-code-verify`, `wtf-address-review` and `wtf-babysit-pr`** — named rather than
 left as a class, because a class with no membership list gets wired into whichever
 members someone remembers. Add a tool to that list when it starts editing code.
 

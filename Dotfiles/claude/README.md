@@ -624,3 +624,34 @@ are public and notify the reviewer, so posting waits for the user's word and for
 a reply cites to be on the remote — "fixed in abc123" is false until abc123 is pushed. It
 replies on the thread itself, resolves only what it fixed, and leaves declined threads open
 for the reviewer, or a bot that accepts the reply, to close.
+
+## Shipping unattended
+
+`wtf-ship` chains the tools above so a request — an issue, a ticket, a paragraph — ends as
+a PR ready to merge without you routing between steps. It writes a spec with acceptance
+criteria and asks you to confirm it and a budget, once; then plans (with
+`/wtf-design-review` on the plan), builds, runs `/wtf-code-review` and fixes what holds up
+in a bounded loop, verifies with `wtf-code-verify`, opens the PR with `/wtf-create-pr`, and
+hands it to `wtf-babysit-pr`.
+
+It composes by reference rather than by invoking the other skills, and replaces only the
+points where each would hand back to you — the table under *The authority this run
+carries* names them. Three choices carry the design:
+
+- **The spec is the one independent check.** Review agents start cold and never see it,
+  and verification would otherwise read its expectations off the implementation, so every
+  acceptance criterion becomes at least one verify row.
+- **Loops end on the fix round's own rules**, not just a count: only Criticals and
+  Warnings drive another round, and a Critical in lines the last fix wrote — or a defect
+  that comes back — means rethink, recorded for you rather than patched again.
+- **The implementer triages findings on its own code**, so every decline goes into a PR
+  comment with a reason you can check and overrule.
+
+State lives in a ledger under `.git/wtf-ship/<branch>/`, so a compacted conversation
+resumes from disk rather than from memory. Unconverged work still ends as a PR — a draft
+listing what needs you.
+
+`wtf-babysit-pr` also stands alone: it waits for CI and review bots on the current head,
+fixes a failure the branch caused, works the threads through `wtf-address-review`, and
+pushes once per round within a budget. A bot only counts as having looked when it reviewed
+this head — a green or cancelled check can mean it was rate limited. Neither skill merges.
