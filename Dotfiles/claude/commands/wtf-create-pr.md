@@ -447,7 +447,7 @@ asking for a change, plus a commit answering it, is a behaviour the body almost 
 does not mention — start there rather than re-reading the diff from scratch:
 
 ```sh
-gh pr view "$n" --json title,body,createdAt,commits
+gh pr view "$n" --json title,body,createdAt,commits,reviews,comments
 # Inline review threads are in neither `reviews` nor `comments` above, and a commit
 # answering one is the most common drift there is.
 gh api --paginate "repos/{owner}/{repo}/pulls/$n/comments" \
@@ -542,7 +542,8 @@ interaction between two components. Written out, the reviewer rebuilds the pictu
 paragraph and rebuilds it slightly wrong; drawn as a five-line tree, they have it before
 they reach the diff. **Read `~/.claude/skills/wtf-show-me/SKILL.md` before drawing one**;
 take the `diff`-shaped forms, since what a PR is about is what changed. They are maintained
-there rather than repeated here, for the reason §4 gives about the title.
+there rather than repeated here, since a second copy would drift out of step without either
+file looking wrong.
 
 Three things follow from where it sits. **Mermaid is available here in a way it is not in
 a terminal**, because GitHub renders it in a body. **It is body prose, so it is scrubbed

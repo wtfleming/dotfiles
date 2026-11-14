@@ -337,7 +337,8 @@ stale. Read the body for `<!-- verify:start -->` and say so, or say the read fai
 ## 10. Promote on a yes
 
 Write nothing until the user agrees. Then rewrite each probe in the project's own idiom,
-matching a neighbouring test. Prove it fails against the code that lacked the fix, and run
-the *unscoped* test command once to confirm the default selector collects it.
+matching a neighbouring test. Prove it fails against the code that lacked the fix — in a
+rebuilt pair, removed again afterwards so the report's **Residue** line stays true — and
+run the *unscoped* test command once to confirm the default selector collects it.
 `references/promotion.md` has where tests live per ecosystem, and the substitute check for
 a new capability the base cannot exercise.

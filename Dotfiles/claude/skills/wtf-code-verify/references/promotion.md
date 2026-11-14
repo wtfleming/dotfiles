@@ -39,7 +39,7 @@ skip the check.
 
 Tear the pair down with `baseline-worktree.sh remove` before the report is composed, so
 its **Residue** line describes a clean tree; *Prove it fails without the fix* below
-rebuilds the baseline if the user agrees to promote anything.
+rebuilds the pair if the user agrees to promote anything, and removes it again.
 
 That is a different question from the coverage run behind the report's **Covered** line,
 and the two disagree usefully. Coverage says a changed line was executed. This says
@@ -131,10 +131,16 @@ The promoted test must fail against the code that lacked the fix, and pass with 
 test that passes on both sides asserts nothing, and unlike an unverified probe it will be
 trusted for years and cited as coverage.
 
-Rebuild the baseline with `baseline-worktree.sh create`. The test file does not
-exist there, so copy it in rather than committing it into the baseline tree — see
-`differential.md`. If the baseline reports *no such test* or *no such file*, the test
-never ran and the check proved nothing.
+Rebuild the pair exactly as the guard check above built it — `baseline-worktree.sh create
+--head <branch>`, with the same `--base` where the branch was already merged. A bare
+`create` uses your checkout as the head side and refuses it, because the promoted test you
+just wrote is uncommitted there. The test file does not exist in the baseline either, so
+copy it in rather than committing it into the baseline tree — see `differential.md`. If
+the baseline reports *no such test* or *no such file*, the test never ran and the check
+proved nothing.
+
+Then `baseline-worktree.sh remove`. The report's **Residue** line was written before this
+step, and a pair left registered also makes the next run's `create` refuse.
 
 For a promoted test that guards a **new capability** rather than a fix, the base has no
 surface to test and this check cannot run. Substitute the deliberate break: revert the
