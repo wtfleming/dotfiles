@@ -109,11 +109,12 @@ than committing somewhere the push cannot carry.
 - **A failed check.** Read why: `gh run view <run id> --log-failed`. If the branch caused it,
   fix it the way `~/.claude/reference/review-fix-round.md` steps 1–4 fix a finding —
   snapshot, edit, tests and lint, cold review of the fix diff — and commit. If it did not —
-  a runner outage, a flaky test the base also fails, an expired secret — re-run it once
-  (`gh run rerun <run id> --failed`) and go back to §1 once §2 is done, without counting a
-  round; a second failure is **Needs you**. The rerun returns before its checks exist, so
-  until `gh run view <run id> --json attempt` shows the attempt number go up, §1 would
-  settle on the old failure: wait for that first.
+  a runner outage, a flaky test the base also fails, an expired secret — and §2 commits
+  nothing, re-run it once (`gh run rerun <run id> --failed`) and go back to §1 without
+  counting a round; a second failure is **Needs you**. Where §2 does commit a fix, skip
+  the rerun: §3's push starts every check again on the new head. A rerun returns before
+  its checks exist, so until `gh run view <run id> --json attempt` shows the attempt
+  number go up, §1 would settle on the old failure: wait for that first.
 - **Open review threads or review bodies.** Follow `~/.claude/skills/wtf-address-review/`
   `SKILL.md` steps 1–4. At its step 5, make its commits, then push in §3 together with any CI
   fix, and post its replies after that push as its step 5 says.
@@ -141,8 +142,9 @@ would refresh it. Do not re-run verification here — it is the expensive step.
 ## 4. Report
 
 **Ready** means all of: every required check passed on the head, every review bot looked at
-the head or said why it did not (rate limited, a draft), no unresolved thread except declined ones awaiting their reviewer and **Needs
-you**, and no conflicts. Anything short of that names what is missing.
+the head or said why it did not (rate limited, a draft), no unresolved thread except
+declined ones awaiting their reviewer, nothing under **Needs you**, and no conflicts.
+Anything short of that names what is missing: a decision still owed is not ready.
 
 ```markdown
 ## PR #<n> — <ready to merge | not ready: <what is missing>>
