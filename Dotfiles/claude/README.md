@@ -33,7 +33,9 @@ them on a prose-only change or one of ten lines or fewer, `dependencies` without
 manifest, `security` without an input boundary or a sink in the diff, `ui` without
 an interface file. Every check runs on the scope artifact's file list, its
 changed-line count or one pattern over its diff, never a reading of the change, so
-none can disagree with what the lenses read. Under `--lite` the `dependencies` lens
+none can disagree with what the lenses read — `resolve-scope.sh` makes them and
+writes the plan into the manifest as `lenses`, so the command dispatches what it
+is handed. Under `--lite` the `dependencies` lens
 still runs beside the reviewer when a manifest changed, to read the upgrade's
 release notes. Their reports are merged and deduplicated with the reviewer's, then printed.
 
@@ -45,7 +47,7 @@ The merge is where two lenses finding one defect becomes one line. Each finding
 carries the lens that raised it, which shows which lens earned its dispatch, and a
 collision says which reports saw it however it was resolved. Collisions run down an
 ordered ladder — Pre-existing, then tier, then the statement naming a concrete
-failure, then the reviewer over a lens, then the longer evidence — because "keep
+failure, then the reviewer over a lens — because "keep
 the more specific statement" leaves two equally-tiered findings with nothing to
 separate them, and the model then picks by
 feel between reports its own agents wrote. There is
@@ -71,7 +73,7 @@ that never resets. Its safety half is correctness, which is the reviewer's, so
 the lock clauses sit in the checklist beside races rather than here beside the
 hangs.
 
-`performance` and `resilience` get an explicit boundary in the command, since a
+`performance` and `resilience` get an explicit boundary in their rubrics, since a
 lens that bleeds into the one beside it produces the same finding twice in
 different words: they divide by path — the cost of the happy path against the
 behaviour of the failure path.
@@ -91,9 +93,12 @@ it matter.
 There is no fix flag; the review itself never edits. The report lands in the
 conversation, so to act on it, say which findings — "fix the first two" — and
 the fixes happen in the main session, which knows what you were trying to do.
-The fix diff then goes to a cold `wtf-change-reviewer`
+The fix diff — built by `scripts/fix-snapshot.sh` from a snapshot taken before
+the first edit, untracked files included — then goes to a cold `wtf-change-reviewer`
 told nothing about which findings it answers, since a round of fixing is itself a
-source of bugs. Checking that each fix resolved its finding is left to you. Committing stays yours.
+source of bugs. The procedure is `reference/review-fix-round.md`, and posting
+findings to a PR is `reference/review-posting.md`; the command reads each only
+when asked for it. Checking that each fix resolved its finding is left to you. Committing stays yours.
 
 ### Design review, earlier in the cycle
 
@@ -172,8 +177,12 @@ here whose read-only guarantee is prose, so it is the one to supervise.
   without touching an agent definition.
 - A project's own `REVIEW.md`, `AGENTS.md` or `CLAUDE.md` wins where it conflicts.
   `REVIEW.md` is the name Anthropic's own code review reads.
-- The eight lens rubrics live in the command, not in `wtf-lens`, so they can be
-  retuned without editing an agent.
+- The eight lens rubrics live in `reference/lenses/`, one file per lens, which
+  each lens reads for itself — so they can be retuned without editing an agent
+  or the command, and what a lens is told does not depend on what the
+  dispatching session chose to paste.
+- Which lenses a scope gets is decided in `scripts/resolve-scope.sh`
+  (`lens_plan`), and covered by its smoke test.
 
 ### Cost
 
@@ -221,6 +230,11 @@ would describe an empty scope either falls through to the next step or exits wit
 writing anything, recording in `fell_through` what each step found. A scope that is not a
 PR, a range, a ref or a path exits 2, which is how a caller tells a subject from a failure
 without parsing an error string.
+
+The script also answers one question about a single line, as `classify`: was it
+already on the base, or is it this branch's work. That is what keeps a defect an
+earlier commit of the branch introduced out of the Pre-existing section, and the
+reviewer and the lenses ask it rather than each running the blame test by hand.
 
 Resolving before dispatch also removed a round: naming no scope at all used to wait for
 the reviewer to settle it. A prose subject is now the only shape that still runs in two.
