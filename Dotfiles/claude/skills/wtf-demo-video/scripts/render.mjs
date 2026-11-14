@@ -61,9 +61,11 @@ if (atTimes && !atTimes.every((t) => Number.isFinite(t) && t >= 0)) {
   console.error('--at takes comma-separated times in seconds, e.g. --at 3.4,3.6');
   process.exit(2);
 }
-// Stills are named to the hundredth, so closer times would overwrite each other.
-if (atTimes && new Set(atTimes.map((t) => t.toFixed(2))).size !== atTimes.length) {
-  console.error('--at times must be at least 0.01s apart');
+// Stills are named to the hundredth, so two times can claim one file.
+const atNames = atTimes ? atTimes.map((t) => t.toFixed(2)) : [];
+const atClash = atNames.find((n, i) => atNames.indexOf(n) !== i);
+if (atClash) {
+  console.error(`--at has more than one time that would be written as at-${atClash}.png`);
   process.exit(2);
 }
 if (!stillsDir && !checkLoop && spawnSync('ffmpeg', ['-version']).error) {
