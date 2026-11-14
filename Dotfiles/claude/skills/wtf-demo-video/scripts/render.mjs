@@ -43,9 +43,10 @@ const fps = Number(flag('fps', 60));
 const [width, height] = flag('size', '1920x1080').split('x').map(Number);
 const workers = Number(flag('workers', Math.min(4, availableParallelism())));
 const audio = flag('audio', null);
-const at = flag('at', null);
-const atTimes = at ? at.split(',').map(Number) : null;
-const stillsDir = flag('stills', at ? 'stills' : null);
+const atArg = flag('at', null);
+// Number('') is 0, so map an empty element to NaN and let the check below reject it
+const atTimes = atArg != null ? atArg.split(',').map((s) => (s.trim() === '' ? NaN : Number(s))) : null;
+const stillsDir = flag('stills', atArg != null ? 'stills' : null);
 const checkLoop = args.includes('--check-loop');
 
 if (!existsSync(filmPath)) {

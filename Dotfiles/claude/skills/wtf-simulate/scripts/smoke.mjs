@@ -1,12 +1,12 @@
 /* smoke.mjs — headless check for an explainer built from this skill.
  *
- *   node smoke.mjs <url> [--out shot.png] [--steps 60] [--dpr 1]
+ *   node smoke.mjs <url> [--out smoke.png] [--steps 60] [--dpr 1]
  *
  * A canvas app fails silently: one thrown error and you get an empty frame on a
  * page that still looks fine. This loads the page, fails on any console error or
  * page error, steps the vehicle through every station of the whole run, checks
  * that each one actually fired, and writes a screenshot at each station's first
- * visit (shot-<station>.png, beside --out) plus one of the finished run (--out).
+ * visit (smoke-<station>.png by default) plus one of the finished run (--out).
  *
  * LOOK AT THE SCREENSHOTS. Occlusion, label collisions and plates landing on
  * empty ground do not raise errors.
@@ -47,7 +47,7 @@ const flag = (name, dflt) => {
 };
 
 if (!url) {
-  console.error('usage: node smoke.mjs <url> [--out shot.png] [--steps 60] [--dpr 1]');
+  console.error('usage: node smoke.mjs <url> [--out smoke.png] [--steps 60] [--dpr 1]');
   process.exit(2);
 }
 

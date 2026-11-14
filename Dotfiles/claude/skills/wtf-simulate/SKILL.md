@@ -51,9 +51,9 @@ screen saver with captions.
    count. A token's size is the actual message size. If you could delete the
    markings without losing information, they were decoration.
 3. **Publish a fidelity ledger.** Say exactly what is computed, what is scaled
-   down, what is assumed, and what is faked — in the About modal, the README, the
-   panel and the code. Half the educational value is the reader knowing which
-   numbers to trust. See `references/fidelity.md`.
+   down, what is assumed, and what is faked — in the About modal, the README,
+   the panel and the code. Half the educational value is the reader knowing
+   which numbers to trust. See `references/fidelity.md`.
 4. **Pace it for reading, not watching.** The first visit to a station stops
    for as long as its write-up takes to read. Later visits get a beat. The
    reader never has to pause to keep up. See `references/pacing.md`.
@@ -93,17 +93,18 @@ css/styles.css      light print-like UI: full-screen canvas, floating panels
 js/iso.js           ENGINE. Projection, solids, routes. Copy unchanged.
 js/model.js         THE LESSON. The real simulation. Write this first.
 js/world.js         the static place: routes, stations, districts, buildings
-js/sim.js           state machine: travel, stations, reading stops. Pacing is ENGINE.
+js/sim.js           mostly ENGINE. State machine: travel, stations, reading stops.
 js/render.js        one sorted painter's pass over everything with a footprint
 js/ui.js            DOM panels, live numbers, narration, controls
 js/main.js          ENGINE. Camera, input, frame loop. Copy nearly unchanged.
 ```
 
 `iso.js` and `main.js` are engine: copy them from `assets/template/js/` and
-change almost nothing. `sim.js` is engine where it paces — `update()`, the two
-boosts, `tour` — and yours where it names the domain: the model inputs in
-`state`, the `OPS` table and `advanceRoute()`. `model.js` and `world.js` are
-100% yours. `render.js` keeps its structure — the sorted pass, the label
+change almost nothing. `sim.js` is engine too, except where it names the
+domain: the model inputs and outputs in `state`, `planNow()` and `charge()`,
+`beginTrip()` and `reset()`, the `OPS` table and `advanceRoute()`. Those are
+yours; leave the rest of the file as it is. `model.js` and `world.js` are 100%
+yours. `render.js` keeps its structure — the sorted pass, the label
 pass — and gets new landmark functions. `ui.js` keeps its shape and gets your
 panels.
 

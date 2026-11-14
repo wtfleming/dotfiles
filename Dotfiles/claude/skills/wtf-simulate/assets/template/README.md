@@ -15,9 +15,10 @@ Pure static site. No build step, no dependencies, no network calls.
 > **This is the reference example for the `wtf-simulate` skill.** It is a
 > complete, working explainer, not a scaffold. Copy the directory and replace
 > `js/model.js`, `js/world.js`, the landmark functions in `js/render.js` and the
-> panels in `js/ui.js` with your own subject, along with the model inputs, the
-> `OPS` table and `advanceRoute()` in `js/sim.js`. `js/iso.js`, `js/main.js`
-> and the rest of `js/sim.js` are engine — copy them unchanged.
+> panels in `js/ui.js` with your own subject. `js/iso.js` and `js/main.js` are
+> engine — copy them unchanged. So is `js/sim.js`, except where it names this
+> subject: the model inputs and outputs in `state`, `planNow()`, `charge()`,
+> `beginTrip()`, `reset()`, the `OPS` table and `advanceRoute()`.
 
 ## Run it
 

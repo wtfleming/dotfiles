@@ -32,6 +32,8 @@ of `references/flat-format.md`.
 - [ ] Stations that share a write-up are mapped in `stationToDistrict`, so it is
       not charged twice.
 - [ ] A progress bar shows the remaining stop time.
+- [ ] **Run** keeps what has been read; **Reset (⟲)** replays the tour. Labelled
+      distinctly.
 - [ ] The HUD says which pacing mode is active, always.
 - [ ] The first full pass takes roughly 4–6 minutes at 1×.
 
@@ -73,6 +75,8 @@ of `references/flat-format.md`.
 - [ ] No network requests, no CDN, no fonts fetched, no build step.
 - [ ] Works at 360 px wide: panel becomes a bottom sheet, sliders behind the gear.
 - [ ] **Landscape phone** checked — the worst case, and the easiest to forget.
+- [ ] Under `prefers-reduced-motion: reduce` the HUD still says how to step
+      (`hudNote()` in `ui.js`).
 - [ ] Buttons have `title` and `aria-label`; toggles are real labelled checkboxes.
 
 ## Verification
