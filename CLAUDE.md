@@ -95,6 +95,10 @@ home directory. Key consequences to keep in mind:
   back — it lived as a fenced block inside `reference/github-publishing.md` until the
   shellcheck glob and a test could reach it. `fix-snapshot.sh` builds the diff a fix
   round's cold review reads, so its failure mode is a diff that omits a file in silence.
+  `diff-symbols.sh` maps a diff to the declarations it touched, so its failure modes are a
+  line credited to the wrong symbol and an unparsed file dropped rather than listed.
+  `pr-wait.sh` decides when a pushed commit's checks have finished, so its failure modes
+  are settling on the previous commit's results and a long wait lost to one failed poll.
   A new test file here needs a step added to
   `.github/workflows/lint.yml` — the shellcheck glob picks it up, but nothing runs it
   otherwise.

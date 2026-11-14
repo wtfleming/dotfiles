@@ -1,7 +1,7 @@
 * Read-only structural tooling for code review
 
 Ideas for tooling the review agents could call to answer questions they currently
-answer by grepping and guessing. Notes only -- nothing here is built.
+answer by grepping and guessing. Notes, apart from the one item marked DONE below.
 
 ** Why this class of tooling fits the review agents specifically
 
@@ -26,16 +26,14 @@ patterns that look like code rather than S-expressions:
   ast-grep run -p 'await fetch($URL)' -l ts
 #+end_src
 
-The ~tree-sitter~ CLI is *not* on PATH on this machine even though
-install-dependencies-macos.sh asks for it, so going to raw tree-sitter means
-wrangling grammars for strictly less capability.
+Going to raw tree-sitter instead -- the ~tree-sitter~ CLI is installed too --
+means wrangling grammars for strictly less capability.
 
-Two loose ends:
-- ~ast-grep~ is an undeclared dependency -- installed here, absent from
-  install-dependencies-macos.sh.
-- The ~ast-grep@ast-grep-marketplace~ plugin is installed and unused.
+** DONE diff -> changed symbols -- Dotfiles/claude/scripts/diff-symbols.sh
 
-** TODO diff -> changed symbols
+Takes a git range for now. When it is wired into the reviewer, switch its input to a
+resolve-scope.sh artifact directory, so the symbols describe the same diff the lenses
+read. A file with an unclosed brace is analysed as if it parsed; accepted as a limit.
 
 Map each diff hunk's line range to its enclosing named node, so a lens is handed
 "these 7 functions, 2 classes and 1 exported const changed" instead of raw hunks.

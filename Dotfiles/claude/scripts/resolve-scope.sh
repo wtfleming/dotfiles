@@ -36,10 +36,11 @@
 #
 # The subcommands have different callers. `resolve` serves the review tools named above,
 # and `classify` answers one question about a line for the agents `resolve` handed an
-# artifact to: was it already on the base, or is it this branch's work. `base` is called on its own by
-# /wtf-create-pr, which needs the default branch and never reads scope.diff or
-# manifest.json -- so a change to `base`'s output or its die-rather-than-default
-# behaviour reaches a caller that none of the paragraphs above describe.
+# artifact to: was it already on the base, or is it this branch's work. `base` is called
+# on its own by /wtf-create-pr and wtf-ship-it, which need the default branch and never
+# read scope.diff or manifest.json -- so a change to `base`'s output or its
+# die-rather-than-default behaviour reaches a caller that none of the paragraphs above
+# describe.
 
 set -Eeuo pipefail
 

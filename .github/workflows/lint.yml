@@ -63,6 +63,22 @@ jobs:
       - name: fix-snapshot smoke test
         run: Dotfiles/claude/tests/fix-snapshot-smoke.sh
 
+      # diff-symbols.sh says which declarations a diff touched, so its failure modes are a
+      # line credited to the wrong symbol and a file it could not parse dropped in silence.
+      # The runner has no ast-grep; the version is pinned so a release cannot change what CI
+      # asserts.
+      - name: install ast-grep
+        run: npm install --global @ast-grep/cli@0.51.2
+
+      - name: diff-symbols smoke test
+        run: Dotfiles/claude/tests/diff-symbols-smoke.sh
+
+      # pr-wait.sh decides when a pushed commit's checks have finished, so its failure
+      # modes are all a wrong ending: settled on the previous commit's results, or a long
+      # wait thrown away by one failed poll. The test drives it with a stand-in gh.
+      - name: pr-wait smoke test
+        run: Dotfiles/claude/tests/pr-wait-smoke.sh
+
       # A skill, agent or command whose YAML header does not parse registers wrong or
       # not at all, and nothing else here would notice -- shellcheck skips markdown and
       # jq only sees settings.json.
