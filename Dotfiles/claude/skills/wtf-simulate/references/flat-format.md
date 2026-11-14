@@ -35,6 +35,14 @@ machine neither knows nor cares that there is no projection:
 Keep the globals as well — `World`, `Sim`, `Renderer`, `UI` — and
 `scripts/smoke.mjs` runs against the flat form unchanged.
 
+`main.js` is not a straight copy here. Its camera calls `Iso.project`,
+`Iso.unproject`, `Iso.TW` and `Iso.TH` in `screenToWorld()`, `fitWorld()`,
+`vanTarget()` and the fly-to in the frame loop, and without `iso.js` the page
+throws on startup. Flat world coordinates are already screen coordinates
+before the camera, so use the point itself in place of each projection and
+size `fitWorld()` from the world's own bounds. Move the two helpers the other
+files borrow from `Iso` — `hash2` and `rgba` — into `world.js`.
+
 `render.js` becomes simpler, not different in kind. There is no sorted pass;
 draw in fixed order — background, lanes and edges, tokens, nodes, labels,
 overlays. Token motion along an edge is position by distance, exactly like
