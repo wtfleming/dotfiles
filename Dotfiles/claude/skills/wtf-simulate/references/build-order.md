@@ -168,7 +168,7 @@ current inputs, is often the most valuable text on the page.
 - The README, with the same ledger, the station table, and the file map.
 - Mobile: the panel becomes a bottom sheet, the sliders hide behind a gear. Check
   landscape on a phone — it is the worst case and the easiest to forget.
-- Run the smoke test. Read the console output. **Look at the screenshot.**
+- Run the smoke test. Read the console output. **Look at the screenshots.**
 - Walk `references/checklist.md`.
 
 Then watch one full first-visit tour, start to finish, at 1×, without touching

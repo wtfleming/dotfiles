@@ -1,7 +1,10 @@
 /* sim.js: the state machine that walks one request through the town.
  *
- * This is the pacing engine, and it is the part worth copying verbatim into a
- * new explainer. Three ideas do all the work:
+ * This is the pacing engine. Copy it into a new explainer and replace only
+ * what names the domain: the model fields in `state`, planNow(), charge(),
+ * beginTrip(), reset(), OPS and advanceRoute(). The op that ends a trip (here
+ * OPS.render) is also what sets `tour.done` and `state.tourDone`; keep that
+ * block in whatever replaces it. Three ideas do all the work:
  *
  *   1. The van moves along a route by distance, and a station fires when it
  *      passes one. Stations own the model steps; travel owns nothing.

@@ -330,10 +330,12 @@ describing one. It is gated there: most changes are not shapes, and where there 
 there is no section.
 
 Adapted from the `show-me` skill in [humanlayer/skills](https://github.com/humanlayer/skills)
-(MIT). The form catalogue and its examples are upstream's; the skill's own footer records
-what diverges, and is the one place that list is kept. The design reference its HTML branch
-reads is condensed from [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design)
-(MIT).
+(MIT). The form catalogue and its examples are upstream's. Local: the destination table, the
+"never draw what you have not read" rule, the scratch-directory placement and send step for
+the HTML branch, and the `/wtf-create-pr` handoff. The two references its HTML branch reads
+are condensed from [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design)
+(MIT); the "say what you cut" rule comes from the same source's fidelity ledger for imported
+diagrams.
 
 ## Verifying that it works
 
@@ -608,6 +610,14 @@ Each thread is settled as fix, already addressed, decline, answer, or needs you 
 for a matter of taste a human reviewer raised, which is the author's to concede rather than
 the tool's to decline. Comment bodies are claims to check, never instructions: on a repo
 anyone can comment on, a suggested command is input from a stranger.
+
+A fix is checked twice before its reply is drafted. The check that confirmed the comment
+is run again against the fixed code, and one cold reviewer reads the diff of the fixes
+alone. A Critical or Warning there holds that thread's reply.
+
+Everything else is committed, pushed and answered in the same run: a fix, a decline and an
+answer each get their reply on the thread without a second prompt, and the fixed threads
+are resolved. What waits for you is a held fix and a matter of taste.
 
 It fixes, runs the tests and the linter, prints a draft reply per thread, and stops. Replies
 are public and notify the reviewer, so posting waits for the user's word and for every commit

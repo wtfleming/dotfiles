@@ -51,9 +51,9 @@ screen saver with captions.
    count. A token's size is the actual message size. If you could delete the
    markings without losing information, they were decoration.
 3. **Publish a fidelity ledger.** Say exactly what is computed, what is scaled
-   down, what is assumed, and what is faked — in the About modal *and* the
-   README. Half the educational value is the reader knowing which numbers to
-   trust. See `references/fidelity.md`.
+   down, what is assumed, and what is faked — in the About modal, the README,
+   the panel and the code. Half the educational value is the reader knowing
+   which numbers to trust. See `references/fidelity.md`.
 4. **Pace it for reading, not watching.** The first visit to a station stops
    for as long as its write-up takes to read. Later visits get a beat. The
    reader never has to pause to keep up. See `references/pacing.md`.
@@ -80,15 +80,6 @@ If nothing is computed, stop — the user wants a diagram, not this skill.
 That is `wtf-show-me` for a quick sketch of a shape or a diagram stepped
 through a part at a time, `artifact-diagramming` for a finished static diagram.
 
-## Start with the knowledge, not the code
-
-Before writing anything, write `NOTES.md`: the mechanism as a list of factual
-claims, each specific enough to be wrong, then review it in a second pass and
-demote anything you would not defend to a domain expert. It is the source
-`model.js` is written from and it seeds the fidelity ledger. Details in
-`references/build-order.md`, Phase 0 — the accuracy of the whole artifact is
-decided there, not in the rendering.
-
 ## Layout
 
 Nine files, in dependency order. Keep these names and this split — it is the
@@ -102,17 +93,18 @@ css/styles.css      light print-like UI: full-screen canvas, floating panels
 js/iso.js           ENGINE. Projection, solids, routes. Copy unchanged.
 js/model.js         THE LESSON. The real simulation. Write this first.
 js/world.js         the static place: routes, stations, districts, buildings
-js/sim.js           ENGINE. State machine: travel, stations, reading stops.
+js/sim.js           mostly ENGINE. State machine: travel, stations, reading stops.
 js/render.js        one sorted painter's pass over everything with a footprint
 js/ui.js            DOM panels, live numbers, narration, controls
 js/main.js          ENGINE. Camera, input, frame loop. Copy nearly unchanged.
 ```
 
-`iso.js`, `sim.js` and `main.js` are engine: copy them from
-`assets/template/js/` and change almost nothing. `model.js` and `world.js` are
-100% yours. `render.js` keeps its structure — the sorted pass, the label
-pass — and gets new landmark functions. `ui.js` keeps its shape and gets your
-panels.
+`iso.js` and `main.js` are engine: copy them from `assets/template/js/` and
+change almost nothing. `sim.js` is engine too, except where it names the
+domain; its header lists those parts. They are yours, and the rest of the file
+stays as it is. `model.js` and `world.js` are 100% yours. `render.js` keeps
+its structure — the sorted pass, the label pass — and gets new landmark
+functions. `ui.js` keeps its shape and gets your panels.
 
 ## Start here
 
@@ -137,45 +129,35 @@ A canvas app fails silently: one thrown error and you get an empty frame with
 a clean-looking page. Always run this before reporting done:
 
 ```bash
-# syntax. A loop, because `node --check` takes ONE file — `node --check js/*.js`
-# checks js/iso.js and silently treats the other six as arguments. The flag
-# makes the whole block exit non-zero if any file fails, so it can gate.
+# syntax — a loop, because `node --check` checks only its first file argument
 fail=0; for f in js/*.js; do node --check "$f" || fail=1; done; test "$fail" -eq 0
 
-# console errors, every station, and a screenshot. Needs a served URL.
-# Loopback only, check the bind, and kill the server after: a stale listener
-# from an earlier run answers on the same port and smoke tests the wrong
-# project — every project from this skill exposes the same globals, so that
-# false PASS looks exactly like a real one.
-# The trap does the killing, so the block's exit status is the smoke test's
-# own — a bare `kill` on the last line would report 0 over a failed run. The
-# URL is the bound address, not `localhost`, which can resolve to ::1 first
-# and miss an IPv4-only listener.
+# console errors, every station, screenshots. Bind loopback and kill the server
+# after: a stale listener on the port makes the smoke test pass against another
+# project. The trap does the killing, so the exit status is the smoke test's.
 python3 -m http.server --bind 127.0.0.1 8000 & pid=$!
 trap 'kill "$pid" 2>/dev/null' EXIT
 sleep 1
 if kill -0 "$pid" 2>/dev/null; then
-  node "$SKILL_DIR/scripts/smoke.mjs" http://127.0.0.1:8000/
+  node ~/.claude/skills/wtf-simulate/scripts/smoke.mjs http://127.0.0.1:8000/
 else
   echo "FAIL: server did not start (port 8000 busy?)" >&2
   false
 fi
 ```
 
-`$SKILL_DIR` is wherever this skill is installed — use `${CLAUDE_SKILL_DIR}`,
-or just copy `scripts/smoke.mjs` into the project next to `index.html`.
-
 `scripts/smoke.mjs` loads the page in headless Chromium, fails on any console
 error or page error, steps the vehicle through every station, and writes a
-screenshot. **Look at the screenshot.** Occlusion, label collisions and plates
-landing on empty ground do not raise errors.
+screenshot at each one plus one of the finished run. **Look at the
+screenshots.** Occlusion, label collisions and plates landing on empty ground
+do not raise errors.
 
 `smoke.mjs` needs Playwright (`npm i -D playwright` in the project). If it is
 not installed, do the same checks by hand with the chrome-devtools MCP tools:
 navigate to the served URL, read the console messages (must be empty), step
 the sim with `evaluate_script` (`Sim.state.speed = 8; Sim.step()`) until
-`Sim.state.finished`, and take a screenshot — and look at it. Never report a
-project as working on `node --check` alone.
+`Sim.state.finished`, taking a screenshot at each station — and look at
+them. Never report a project as working on `node --check` alone.
 
 ## References
 
@@ -188,26 +170,6 @@ project as working on `node --check` alone.
 | `references/isometric-drawing.md` | drawing anything isometric: projection, sort order, occlusion, faces |
 | `references/narration.md` | writing district copy and panel text |
 | `references/checklist.md` | before you call it finished |
-
-## Things that will bite you
-
-Each of these cost someone an afternoon. The references explain them properly.
-
-- A machine at `(mx, my)` **hides** the road point at `(mx, by)` when half its
-  footprint, `(w + d) / 2`, exceeds its setback `my - by`. Big halls stand
-  well back from the road or they swallow the thing the reader is watching.
-- Sort **every** ground-footprint object in **one** list keyed on `x + y`. A
-  structure the road passes under must be registered as separate pieces (left
-  post, beam, right post), or the near post draws behind the vehicle.
-- Label plates are drawn in screen space, but with the **dpr** transform, not
-  the identity transform — otherwise every plate lands at half position on a
-  retina display.
-- Scenery variation comes from a hash of its coordinates, never
-  `Math.random()`, or the whole world shimmers every frame.
-- The reading stop is scaled by the speed slider **only**. Travel
-  fast-forwards must never cut a first read short.
-- What the reader has already read survives a reset. Nobody wants to re-read
-  the tour because they pressed the wrong button.
 
 ---
 

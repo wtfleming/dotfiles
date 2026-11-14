@@ -1,13 +1,14 @@
-/* smoke.mjs — headless check for an isometric explainer.
+/* smoke.mjs — headless check for an explainer built from this skill.
  *
- *   node smoke.mjs <url> [--out shot.png] [--steps 60] [--dpr 1]
+ *   node smoke.mjs <url> [--out smoke.png] [--steps 60] [--dpr 1]
  *
  * A canvas app fails silently: one thrown error and you get an empty frame on a
  * page that still looks fine. This loads the page, fails on any console error or
  * page error, steps the vehicle through every station of the whole run, checks
- * that each one actually fired, and writes a screenshot.
+ * that each one actually fired, and writes a screenshot at each station's first
+ * visit (smoke-<station>.png by default) plus one of the finished run (--out).
  *
- * LOOK AT THE SCREENSHOT. Occlusion, label collisions and plates landing on
+ * LOOK AT THE SCREENSHOTS. Occlusion, label collisions and plates landing on
  * empty ground do not raise errors.
  *
  * Requires playwright:  npm i -D playwright && npx playwright install chromium
@@ -46,7 +47,7 @@ const flag = (name, dflt) => {
 };
 
 if (!url) {
-  console.error('usage: node smoke.mjs <url> [--out shot.png] [--steps 60] [--dpr 1]');
+  console.error('usage: node smoke.mjs <url> [--out smoke.png] [--steps 60] [--dpr 1]');
   process.exit(2);
 }
 
@@ -57,12 +58,12 @@ const dpr = Number(flag('dpr', 1));
 /* page.evaluate has no timeout, so a page whose main thread is wedged — an
    unbounded loop in the first animation frame gets past goto's load event —
    blocks the first evaluate forever and the gate hangs instead of failing.
-   The margin covers goto (30s), the step loop and the screenshot; unref()
+   The margin covers goto (30s), the step loop and the screenshots; unref()
    keeps a clean finish from waiting on it. */
 setTimeout(() => {
   console.error(`FAIL: smoke timed out — is the page's main thread wedged?`);
   process.exit(1);
-}, 1000 * maxSteps + 60_000).unref();
+}, 2000 * maxSteps + 60_000).unref();
 
 const fail = [];
 const browser = await chromium.launch();
@@ -80,15 +81,17 @@ page.on('requestfailed', (r) => fail.push(`requestfailed: ${r.url()}`));
 await page.goto(url, { waitUntil: 'load' });
 await page.waitForTimeout(1000);
 
-/* The globals every project built from this skill exposes. If one is missing, a
-   script tag is out of order or a file threw while loading. */
+/* The globals both forms expose. If one is missing, a script tag is out of
+   order or a file threw while loading. `Iso` is not listed: the flat form has
+   none, and where it is needed its absence throws while world.js loads. */
 const globals = await page.evaluate(() =>
-  ['Iso', 'World', 'Sim', 'Renderer', 'UI'].filter((k) => !window[k])
+  ['World', 'Sim', 'Renderer', 'UI'].filter((k) => !window[k])
 );
 if (globals.length) fail.push(`missing globals: ${globals.join(', ')}`);
 
 let seen = [];
 let finished = false;
+const shots = [];
 
 if (!globals.length) {
   /* Step past the reading stops rather than waiting them out: step() zeroes the
@@ -104,8 +107,16 @@ if (!globals.length) {
       station: window.Sim.state.station,
       finished: window.Sim.state.finished
     }));
+    if (st.finished) { seen.push(st.station); finished = true; break; }
+    if (st.station && !seen.includes(st.station)) {
+      /* step() has paused the run on arrival, so the camera can settle. */
+      await page.waitForTimeout(600);
+      // insert -<station> before the extension
+      const shot = out.replace(/(\.\w+)$/, `-${st.station.replace(/[^\w-]/g, '_')}$1`);
+      await page.screenshot({ path: shot });
+      shots.push(shot);
+    }
     if (st.station) seen.push(st.station);
-    if (st.finished) { finished = true; break; }
   }
 
   const expected = await page.evaluate(() =>
@@ -122,11 +133,11 @@ await browser.close();
 const unique = [...new Set(seen)];
 console.log(`stations visited (${unique.length}): ${unique.join(' → ') || '—'}`);
 console.log(`run finished: ${finished}`);
-console.log(`screenshot: ${out}`);
+console.log(`screenshots: ${[...shots, out].join(', ')}`);
 
 if (fail.length) {
   console.error(`\nFAIL (${fail.length}):`);
   for (const f of fail) console.error('  ' + f);
   process.exit(1);
 }
-console.log('\nPASS — no console or page errors. Now look at the screenshot.');
+console.log('\nPASS — no console or page errors. Now look at the screenshots.');

@@ -2,27 +2,19 @@
 name: wtf-demo-video
 description: >-
   Make a short motion-graphics demo video of a project — a launch clip, a
-  product reel, a feature demo — written as code and rendered to MP4. Every
-  animation is one deterministic window.seek(t) that paints the exact frame for
-  time t; Playwright screenshots each frame and ffmpeg encodes them. Uses the
-  project's real UI screenshots, a beat sheet of moments rather than
-  adjectives, and a render-then-critique loop on the frames. Use when the user
-  asks for a demo video, launch video, promo clip, product reel, animated
-  walkthrough or "a video of this project": "make a video demoing this", "build
-  a 15-second launch video", "/wtf-demo-video". NOT for screen-recording a live
-  session, editing existing footage, an interactive explainer someone clicks
-  through (wtf-simulate), or a GIF of a UI bug.
+  product reel, a feature demo — written as code and rendered to MP4, built
+  from the project's real UI screenshots. Use when the user asks for a demo
+  video, launch video, promo clip, product reel, animated walkthrough or "a
+  video of this project": "make a video demoing this", "build a 15-second
+  launch video", "/wtf-demo-video". NOT for screen-recording a live session,
+  editing existing footage, an interactive explainer someone clicks through
+  (wtf-simulate), or a GIF of a UI bug.
 argument-hint: '[what to demo, length, format — e.g. "15s launch video, 16:9 and 9:16"]'
 ---
 
 # Demo video
 
 Arguments: $ARGUMENTS
-
-A one-line prompt gets you a generic clip: centred text, a gradient, everything
-fading in. What makes these good is the harness around the model — a
-deterministic renderer, a real reference, a beat sheet of moments, and you
-looking hard at your own frames. This skill is that harness.
 
 ## The engine contract
 
@@ -59,18 +51,8 @@ The skill's files, all under `~/.claude/skills/wtf-demo-video/`:
 | `scripts/capture.mjs` | Screenshots states of the running app from a shot list. |
 | `scripts/render.mjs` | Renders stills, the video, or a loop check. |
 | `scripts/beat-track.mjs` | Synthesizes a backing track and its beat grid. |
-| `scripts/lib.mjs` | Shared setup for the scripts: loading playwright, reading flags. |
 
-## 1. Check dependencies, then set up the video directory
-
-Before anything else, run `~/.claude/skills/wtf-demo-video/scripts/check-deps.sh`.
-It lists every missing tool with its install command.
-
-- **`node` or `ffmpeg` missing:** tell the user exactly what is missing and the
-  `brew install` line for it, then stop. Don't install system packages
-  yourself, and don't hand-roll a substitute encoder.
-- **Only playwright missing:** this is expected on a first run. It is a
-  per-directory npm package, and the setup below installs it.
+## 1. Set up the video directory, then check dependencies
 
 Work in `~/demo-videos/<project>/` unless the user names somewhere else.
 **Don't put it inside the project:** a dev server under `cargo watch`,
@@ -81,8 +63,13 @@ Work in `~/demo-videos/<project>/` unless the user names somewhere else.
 D=~/demo-videos/<project> && mkdir -p "$D/assets" "$D/refs" && cd "$D"
 cp ~/.claude/skills/wtf-demo-video/assets/{index.html,kit.js} .
 npm init -y >/dev/null && npm i -D playwright && npx playwright install chromium
-~/.claude/skills/wtf-demo-video/scripts/check-deps.sh   # should now pass
+~/.claude/skills/wtf-demo-video/scripts/check-deps.sh
 ```
+
+The last line lists every missing tool with its install command. If `node` or
+`ffmpeg` is missing, tell the user exactly what is missing and the
+`brew install` line for it, then stop. Don't install system packages yourself,
+and don't hand-roll a substitute encoder.
 
 Open `index.html` with `?t=3` in a browser to hold a frame. Without `?t` it
 loops in real time.
@@ -90,16 +77,18 @@ loops in real time.
 ## 2. Gather real material
 
 The difference between a demo and a stock template is the actual product.
+Two things only the user has, so ask for both in one message before starting:
+the URL of a running instance of the app, rather than starting one yourself
+(skip this for a CLI, which has no screens to capture), and a reference — a
+frame from a video they like (`refs/frame.png`), a video, or a style to name.
 
 - **Pitch.** Read the README and the code until you can say in one sentence
   what the project does and who it is for. That sentence is the logline.
   Take the palette and fonts from the project's own stylesheet, so the film
   looks like the product.
-- **Screens.** Capture the real UI with `capture.mjs`. Ask the person for the
-  URL of a running instance rather than starting one. It takes a shot list of
-  pages, the steps to reach each state (click, fill, type, press, hover,
-  waitFor, wait) and an optional crop. `"fullPage": true` captures the whole
-  scroll height, for a camera pan. The script's header documents the format.
+- **Screens.** Capture the real UI with `capture.mjs`, from a shot list of
+  pages and the steps to reach each state. The script's header documents the
+  format.
 
   ```sh
   node ~/.claude/skills/wtf-demo-video/scripts/capture.mjs shots.json --out assets   # 1440x900 at 2x
@@ -115,10 +104,9 @@ The difference between a demo and a stock template is the actual product.
   - For a CLI, paste real command output into `terminal()` rather than
     inventing it.
   - Don't invent features, numbers or quotes.
-- **Reference.** Ask the user for a reference: a frame from a video they like
-  (`refs/frame.png`), a video, or a style to name. Say what to take from it,
-  such as palette, type, pacing or grain, and what to ignore, which is usually
-  the subject. Naming a style beats describing one. With a video reference,
+- **Reference.** Say what to take from the reference, such as palette, type,
+  pacing or grain, and what to ignore, which is usually the subject. Naming a
+  style beats describing one. With a video reference,
   pull a frame per second with `ffmpeg -i ref.mp4 -vf fps=1 refs/%03d.png` and
   describe its pacing before writing code. With no reference, the project's own
   look is the reference. Don't fall back to the default gradient. The
@@ -150,6 +138,9 @@ Rules for the sheet:
 - At 120 BPM a 4/4 bar is 2s, so the timestamps above already fall on
   downbeats. Keep scene changes there if there will be music.
 
+## 4. Build, render, critique, repeat
+
+Build the timeline in `index.html`, replacing the template's example film.
 Techniques that worked:
 
 - **Interaction inside a screenshot.** Draw the typed text over the real input
@@ -161,10 +152,7 @@ Techniques that worked:
   near-grey. Otherwise the blend swings through unrelated hues: amber to ink
   passes through teal.
 
-## 4. Build, render, critique, repeat
-
-Build the timeline in `index.html`, replacing the template's example film. Then
-loop:
+Then render and critique in a loop:
 
 ```sh
 R=~/.claude/skills/wtf-demo-video/scripts/render.mjs
@@ -175,9 +163,14 @@ ffmpeg -loglevel error -y -i stills/t%03d.png \
 ```
 
 Read `contact.png`, then the individual stills that look wrong. Whole seconds
-miss transitions, so also check stills at the moments between beats, where
-things morph, cross or hand over. Score each second out of 10, **name the
-three worst problems**, fix them, and re-render. Common problems:
+miss transitions, so also render the moments between beats, where things
+morph, cross or hand over:
+
+```sh
+node $R --stills stills/ --at 3.4,3.6,3.8   # stills/at-3.40.png and so on
+```
+
+**Name the three worst problems**, fix them, and re-render. Common problems:
 
 - collisions and clipping
 - text too small for the format
@@ -187,8 +180,9 @@ three worst problems**, fix them, and re-render. Common problems:
 - muddy mid-transition frames
 - the default "centred text, everything fades in" look creeping back
 
-Repeat until every still scores 8 or more and the first three seconds look
-finished. If the film should loop, check that it does:
+Repeat until the first three seconds look finished and the worst problems
+left are ones you would knowingly ship. If the film should loop, check that it
+does:
 
 ```sh
 node $R --check-loop   # exit 1, and the region that differs, if t=0 and t=DURATION don't match
@@ -210,9 +204,6 @@ for motion.
 
 ## 5. Optional extras, only when asked
 
-- **Springs everywhere.** Replace every remaining linear or eased tween with
-  `track`/`spring`. Give UI a tiny overshoot (`SPRING.ui`) and type none
-  (`SPRING.type`).
 - **Soundtrack.** Either measure a supplied track's BPM and put every scene
   change on a downbeat, or synthesize one:
 
@@ -221,9 +212,7 @@ for motion.
   ```
 
   That writes `track.wav` and `beats.json`, the downbeat times to cut on. Mux
-  the track in with `render.mjs --audio track.wav`. If the user has a TTS or
-  music API key, it goes in `.env`; read it from the environment and never
-  write it into a file.
+  the track in with `render.mjs --audio track.wav`.
 - **More formats.** Render 16:9, 9:16 and 1:1 from the same `seek(t)` by
   varying `--size`, and branch on `layout().portrait` where the composition
   needs reframing. Desktop screenshots letterbox badly in 9:16. Zoom the window

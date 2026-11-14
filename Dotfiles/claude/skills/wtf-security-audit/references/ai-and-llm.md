@@ -4,8 +4,7 @@ For code where a model takes part in a trust-sensitive decision: prompt
 assembly, agent and tool loops, approval gates, MCP clients and servers,
 persistent memory, and code that acts on model output. The flow that matters is
 untrusted content, into a model or memory, out to a capability, an authority or
-a sink. Use these beside `attack-classes.md`, not instead of it. Adapted from
-Cloudflare's security-audit skill (MIT).
+a sink. Use these beside `attack-classes.md`, not instead of it.
 
 ## Discipline
 
@@ -62,10 +61,6 @@ that a retry or resumed session cannot reuse it.
 **Schema and dispatcher disagreement.** Aliases, extra fields, coercions or
 defaults that the validator and the handler read differently.
 
-**Unbounded delegated loops.** A bounded request that can enqueue repeated
-spend, sends or mutations with no per-request budget, cancellation or
-idempotency.
-
 ## Sub-agents and MCP
 
 **Trust inheritance.** A delegated task receiving the whole session,
@@ -87,16 +82,6 @@ template, URL or command sink without the encoding and policy that sink needs.
 **Context extraction.** A credential, another principal's data or private
 source in an assembled context whose output a less trusted party can read.
 
-## Validation
+---
 
-1. Name the attacker, the affected principal or resource, the execution
-   identity, the target, and the unauthorized or unrequested action or
-   disclosure.
-2. For confused-deputy claims, show the tool lacks requester-and-resource
-   authorization and the attacker cannot do the same thing directly. For
-   action binding, show attacker content caused an action the operator did not
-   request or approve.
-3. For memory or retrieval claims, cite both the attacker-controlled write and
-   the later privileged read.
-4. Where provider, model or renderer behaviour outside the repository decides
-   it, the verdict is `needs_validation`.
+Adapted from Cloudflare's security-audit skill (MIT, see `../LICENSE`).

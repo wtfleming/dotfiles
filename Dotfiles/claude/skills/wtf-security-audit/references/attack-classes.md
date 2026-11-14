@@ -2,10 +2,7 @@
 
 Choose the classes that apply to what the code actually does. Each is a place
 to look, not a checklist to report against: every candidate still passes the
-gate in `method.md`. Adapted from Cloudflare's security-audit skill (MIT).
-The cache and sentinel cases under business logic are reworded from Visa's
-vulnerability agentic harness (Apache-2.0, see `LICENSE-vvah` and
-`NOTICE-vvah`).
+gate in `method.md`.
 
 **Injection.** Trace untrusted input to a dangerous sink: SQL or query
 construction, HTML or template output, shell commands and their arguments,
@@ -27,7 +24,11 @@ state-changing requests, including websocket and LiveView events; open
 redirects through `redirect`, `return`, `next` or `url` parameters; trust in
 `Host` or forwarded headers. A socket that authenticates by cookie and does
 not check `Origin` (LiveView's `check_origin`) can be driven by any page the
-operator visits, including for an app served from localhost.
+operator visits, including for an app served from localhost. CORS that
+allows credentials while reflecting the request's origin, or naming origins
+the app does not control, lets another site read the operator's authenticated
+responses. Where the app trusts network position instead of a login — a
+localhost or internal-only tool — any permissive CORS does the same.
 
 **OAuth and keys.** An OAuth or OIDC flow whose request and callback are not
 bound to each other: a missing or unchecked `state`, a callback that accepts a
@@ -103,8 +104,13 @@ or `legacy`; edge cases the tests do not cover.
 **Obvious things.** A literal sweep of your scope, not a creative one:
 hardcoded secrets and committed key files; security TODO, FIXME and HACK
 comments; debug or dev mode reachable in production; seed or default
-credentials; unprotected debug, admin or health endpoints; `.gitignore` gaps;
-unpinned dependencies and known CVEs in lockfiles; dynamic `eval` or code
-loaded from strings; permissive CORS; cookie flags; open redirects; stack
-traces in error responses. A flag is not a finding until its impact is traced
-through the gate.
+credentials; unprotected debug, admin or health endpoints; dynamic `eval` or
+code loaded from strings; stack traces in error responses. A flag is not a
+finding until its impact is traced through the gate.
+
+---
+
+Adapted from Cloudflare's security-audit skill (MIT, see `../LICENSE`). The
+cache and sentinel cases under business logic are reworded from Visa's
+vulnerability agentic harness (Apache-2.0, see `LICENSE-vvah` and
+`NOTICE-vvah`).

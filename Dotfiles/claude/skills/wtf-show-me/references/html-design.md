@@ -93,22 +93,6 @@ machine to machine, and a box fitted to one clips its label on another.
 Boxes take `rx` 6 at most, a 1px border and no shadow. A type tag in a box is a
 small `rx=2` rectangle, not a pill.
 
-## Showing a change
-
-When a `diff` fence cannot hold a structural change, draw Before · Changes ·
-After: two topology panels of the same size with a short ledger between them.
-If only attributes changed and the boxes and arrows did not, it is a table, not
-two diagrams.
-
-- Copy Before's coordinates into After, and move a box only when the move is
-  part of the change. Two panels laid out separately make everything look moved.
-- Mark each change with a word and a shape, never colour alone: a `+` badge for
-  added, `−` and a dashed outline for removed, `Δ` for changed. Unchanged boxes
-  stay plain.
-- Each ledger line starts with the change word, names the object and says what
-  differs — `CHANGED orders: dispatch → enqueue`, never just "updated".
-- The budget counts a box that appears in both panels once.
-
 ## Anti-patterns
 
 | Looks like | Why it fails |
@@ -162,8 +146,8 @@ stay under 360px. Inside one, a width can be anything — the wrapper scrolls.
 
 ---
 
-The budget, palette, type roles, label widths, connector rules, the
-before/after layout and most anti-patterns are condensed from
+The budget, palette, type roles, label widths, connector rules and most
+anti-patterns are condensed from
 [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design)
 (MIT — see `LICENSE-diagram-design`), with its web fonts replaced by system
 stacks to keep the page offline.

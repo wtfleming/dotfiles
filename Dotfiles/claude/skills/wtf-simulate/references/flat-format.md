@@ -6,19 +6,6 @@ schematic instead of an isometric town: nodes for the parts of the system,
 lanes and edges for the paths between them, animated tokens for whatever
 moves.
 
-## When to choose it
-
-Choose the isometric tour when one unit of state travels the whole process —
-a request, a part under construction, a hidden state. Choose the flat form
-when there is no such single traveller:
-
-- an architecture where many things move at once — queues, replicas, fan-out;
-- a protocol between peers, where the interesting object is the exchange;
-- a system whose truth is a topology, not a journey.
-
-If neither fits — nothing moves at all — you want a static diagram, not this
-skill.
-
 ## What replaces the vehicle
 
 The tour survives; the vehicle becomes a **focus ring**. Stations are still
@@ -42,7 +29,20 @@ machine neither knows nor cares that there is no projection:
 - routes are still polylines with a `total` and `cum[i]`, just in plain 2D
   world coordinates; stations still anchor to waypoint indices;
 - `World.readSeconds` and `World.stationToDistrict` keep their jobs;
-- `vanPosition()` becomes the focus-ring position along the tour route.
+- `vanPosition()` becomes the focus-ring position along the tour route — it
+  is the one place `sim.js` calls `Iso`.
+
+Keep the globals as well — `World`, `Sim`, `Renderer`, `UI` — and
+`scripts/smoke.mjs` runs against the flat form unchanged.
+
+`main.js` is not a straight copy here. Its camera calls `Iso.project`,
+`Iso.unproject`, `Iso.TW` and `Iso.TH` in `screenToWorld()`, `fitWorld()`,
+`vanTarget()` and the fly-to in the frame loop, and without `iso.js` the page
+throws on startup. Flat world coordinates are already screen coordinates
+before the camera, so use the point itself in place of each projection and
+size `fitWorld()` from the world's own bounds. Move the helpers the other
+files borrow from `Iso` into `world.js`: `makeRoute` and `smoothAt`, which
+build and walk routes and involve no projection, and `hash2` and `rgba`.
 
 `render.js` becomes simpler, not different in kind. There is no sorted pass;
 draw in fixed order — background, lanes and edges, tokens, nodes, labels,
@@ -57,17 +57,9 @@ These sections of `isometric-drawing.md` still apply verbatim:
 - **Camera** — start close on the focus, frame-rate-independent easing, aim
   at the DOM-measured visible rectangle, drag turns follow off.
 
-## Verify
-
-`scripts/smoke.mjs` hard-codes the isometric globals. Copy it into the
-project next to `index.html` and edit its globals list to what the project
-actually exposes (drop `Iso`); everything else — console errors, every
-station firing, the screenshot — applies as-is.
-
 ## Checklist substitutions
 
-Walk `checklist.md` as usual, replacing its Rendering and Camera sections
-with:
+Walk `checklist.md` as usual, replacing its Rendering section with:
 
 - [ ] Draw order is fixed and layered; no token ever paints over a label.
 - [ ] Tokens move by distance along an edge, not by tweening endpoints.
