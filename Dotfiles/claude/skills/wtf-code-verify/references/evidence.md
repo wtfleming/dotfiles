@@ -181,7 +181,7 @@ has nothing to say:
 **Unmet.**
 - #3 `includeArchived: "banana"` → 400, field-level error — ❌ 200, coerced to `false`
 
-**Inconclusive.** 2 rows could not be settled, 1 of them demoted by the refuter; each is in the table below.
+**Inconclusive.** 2 rows could not be settled, 1 of them a green demoted at SKILL.md §7; each is in the table below.
 ```
 
 Unmet rows are listed in full, number, expectation and result, because each is something a
@@ -314,7 +314,7 @@ pass.
 The author is the audience, reading once at the end of a long run, and they came for two
 answers: do I have to fix anything, and which probes are worth keeping as tests. The
 report gives those two first, then the evidence for them, then the lines no probe
-produced. The run's history — the defect found and fixed, the green the refuter
+produced. The run's history — the defect found and fixed, the green §7's check
 demoted — is told inside that shape, not as a narrative before it.
 
 ```
@@ -328,7 +328,7 @@ demoted — is told inside that shape, not as a narrative before it.
 
 | # | Expectation | Result |
 | - | ----------- | ------ |
-| 1 | editor with `includeArchived: true` sees archived id 7 | ✅ *unrefuted* 200, id 7 present; absent with the flag off |
+| 1 | editor with `includeArchived: true` sees archived id 7 | ✅ 200, id 7 present; absent with the flag off |
 | 2 | anonymous caller is refused | ❌ 200, empty `data.posts` — predicted ✅ |
 | 3 | `includeArchived: "banana"` → 400 naming the field | ❌ 500, unhandled `TypeError` — worse than predicted |
 | 4 | `posts` with no new argument is unchanged | ⚠️ not verified — byte-identical to baseline, but both sides were served from the response cache, so the probe never reached the resolver |
@@ -364,7 +364,7 @@ What the shape enforces:
   was, and cannot see that every row was accounted for. A green row says in a few words
   what its control did; that is the discriminator the reader was shown in the plan,
   closed.
-- **A refuted green is ⚠️ in its row**, with the refuter's reason, and is counted in
+- **A demoted green is ⚠️ in its row**, with the reason SKILL.md §7 demoted it, and is counted in
   neither the met nor the failed figure on the verdict line.
 - **The trailing lines carry the PR section's names**, plus **Guarded** from §9. Not
   "Coverage", "Test gaps" or "Cleanup": the same fact under two names reads as two facts,

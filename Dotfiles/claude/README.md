@@ -151,10 +151,9 @@ accident.
 | `wtf-design-reviewer` | shape of the change, Suggestion-only; dispatched by `/wtf-design-review` |
 | `wtf-prod-impact` | whether the change degrades production, read from the live system; dispatched by `/wtf-prod-impact` |
 | `wtf-verify-adversary` | the cases a verification pass would not think to include; dispatched by `wtf-code-verify` |
-| `wtf-verify-refuter` | argues a single passing probe would have been green anyway; dispatched by `wtf-code-verify` |
 
-The last two belong to `wtf-code-verify` rather than to a review, and are described under
-*Verifying that it works* below; they are listed here so this table is the whole roster.
+The last one belongs to `wtf-code-verify` rather than to a review, and is described under
+*Verifying that it works* below; it is listed here so this table is the whole roster.
 
 Every one of them except `wtf-prod-impact` is read-only by tool list — no `Edit`, no
 `Write`, and no ability to spawn an agent that has them. Edits only ever happen in the
@@ -351,11 +350,12 @@ directions: every claim in the body true, *and* every meaningful change accounte
 because what review produces is usually an omission nobody went back to write up, and a
 squash merge makes that title the permanent commit subject on `main`.
 
-Before a row is reported green it goes to a `wtf-verify-refuter` — one per result, given
-the expectation, the discriminator and the raw bytes but not the reasoning about them,
-and asked to show the probe would have been green anyway. A refuted green demotes to
-`Not verified` rather than disappearing. It aims an adversary at the one
-artifact that would otherwise have none: the verdict this tool produces itself.
+Before a row is reported green it is checked against the ways a probe passes without
+meaning anything — it never reached the change, its assertion is satisfied by anything,
+its discriminator fails for an unrelated reason. A green that cannot be defended demotes
+to `Not verified` rather than disappearing. That used to be a `wtf-verify-refuter` agent
+per green row; like the per-finding refuter `/wtf-code-review` dropped, it rarely changed
+a verdict for what the fan-out cost.
 
 Two more checks answer *is this actually guarded*. The probes run under the project's
 coverage tool, so **Covered** is measured against the changed lines rather than recalled —

@@ -204,10 +204,10 @@ broken in place, a tree someone else authored — or says `Nothing`; where it na
 the block ends waiting on it.
 
 **Rows keep their number from here to the end of the run.** The progress lines, the
-refuter dispatch, the result table and the promotion list all say `#3` — never `P3`,
+result table and the promotion list all say `#3` — never `P3`,
 `probe 3` or `row 3` in turn, since a reader who meets a fresh label has to guess whether
 it is the same thing. A progress line names the step and the rows —
-`refuting greens: #1 #3 #4 stand, waiting on #2 #5 #6` — and goes out when that changes,
+`probing: #1 #3 #4 done, running #2 #5 #6` — and goes out when that changes,
 not on every wake; four identical "still waiting" lines say less than one.
 
 ### The adversary pass
@@ -394,41 +394,29 @@ entity or a reset between; `references/environments.md` has the tier-2 detail.
 | **Not verified** | the probe could not discriminate: green on the base too, red for environmental reasons, or non-deterministic. Say which of the three, and what would tell them apart |
 | **Falsified** | an expectation failed for a real reason. A defect, found before the merge |
 
-### Refute the greens
+### Check each green before reporting it
 
-The table above is applied by the same agent that designed the probes, and a probe's
-author is the reader least able to see that it would have passed anyway. So before any
-row is reported green, dispatch `wtf-verify-refuter` with the Agent tool — one per ✅
-row and **in parallel**, since a shared dispatch lets a strong row carry a weak one and a
-serial fan-out spends a round-trip per row at the very end of an already long run. Hold
-back any two whose probes bind the same port, container name or database, and run those one
-at a time: §6's serialisation rule governs a re-run exactly as it governs the first run, and
-a refuter whose re-run dies on a collision cannot settle the row, so it falls to its own
-tie-break and answers `refuted` — the green becomes *Not verified* for a reason that is
-about your scheduling rather than about the code.
+The probe's author is the reader least able to see that it would have passed anyway. So
+before a behavioural row goes green, try to make it meaningless. It is demoted to **Not
+verified**, with the reason carried in its row, if any of these holds:
 
-Give it the expectation, the discriminator claimed for it, the probe that was run and the
-raw captures from every side the probe ran on — a tier-0 or tier-1 probe may only have
-run against HEAD, and the refuter is written for that, reading a baseline capture where
-one exists. The probe travels because re-running it is the only way it can
-settle non-determinism rather than allege it. **Say whose work the tree is**, which §0 has
-already established: the refuter treats silence as untrusted and will not re-run anything
-on a tree it cannot place, so an unstated provenance silently removes the one check that
-separates non-determinism from an allegation. An ordinary run over the user's own branch
-says so plainly; a fetched PR or a contributor's branch is named as such, and their
-sanction to execute it is relayed only where they gave it. Not your reasoning about them:
-that is the thing under test, and it is the same argument that keeps the adversary blind
-at §3.
+- **the probe never reached the change** — wrong endpoint or argument, a cached response, a
+  stale build. Something in the capture must be producible only by the changed path
+- **the assertion is satisfied by anything** — a grep that also matches the error body, a
+  `200` any route returns, an empty array from a query that returned nothing, `0 tests` with
+  exit 0
+- **the discriminator does not discriminate** — the negative case fails for an unrelated
+  reason, the break was made in a file the run never loads, the baseline failed to build
+- **it was green on the base too**, or, for a property, the generator never reached the
+  changed branch
+- **the expectation was read off the implementation** — the tautology trap in
+  `references/expectations.md`
+- **the environment answered** — a row an earlier probe left, a warmed cache, a value from
+  `.env`
 
-It answers `stands` or `refuted`, and a refuted green is neither a pass nor a defect —
-it is a **Not verified** whose reason you now have in writing, so demote the row and
-carry the reason rather than dropping it. Skip the pass for a row that came out red: a
-probe that failed for the reason it predicted has already discriminated. Skip the whole
-pass unless the verdict would otherwise be **Verified** or **Verified with gaps**: on a run
-already Falsified or Not verified, no demotion can change the verdict. The greens are still
-printed, and published if the section reaches a PR, so on such a run write each behavioural one as
-✅ *unrefuted* in the Result column — a reader must not take an unchecked green for a
-checked one. A command row (§4) has no discriminator to refute either.
+Where you cannot tell, demote: an undefendable green is what this check exists to catch.
+A row that came out red for its predicted reason has already discriminated, and a command
+row (§4) has no discriminator to check.
 
 `Not verified` is not a pass and not a defect, and the pull towards recording it as one
 or the other is strong. Say which of the three it was, and never loosen a probe until it
