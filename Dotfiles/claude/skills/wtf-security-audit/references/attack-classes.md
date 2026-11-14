@@ -2,10 +2,7 @@
 
 Choose the classes that apply to what the code actually does. Each is a place
 to look, not a checklist to report against: every candidate still passes the
-gate in `method.md`. Adapted from Cloudflare's security-audit skill (MIT).
-The cache and sentinel cases under business logic are reworded from Visa's
-vulnerability agentic harness (Apache-2.0, see `LICENSE-vvah` and
-`NOTICE-vvah`).
+gate in `method.md`.
 
 **Injection.** Trace untrusted input to a dangerous sink: SQL or query
 construction, HTML or template output, shell commands and their arguments,
@@ -103,8 +100,13 @@ or `legacy`; edge cases the tests do not cover.
 **Obvious things.** A literal sweep of your scope, not a creative one:
 hardcoded secrets and committed key files; security TODO, FIXME and HACK
 comments; debug or dev mode reachable in production; seed or default
-credentials; unprotected debug, admin or health endpoints; `.gitignore` gaps;
-unpinned dependencies and known CVEs in lockfiles; dynamic `eval` or code
-loaded from strings; permissive CORS; cookie flags; open redirects; stack
-traces in error responses. A flag is not a finding until its impact is traced
-through the gate.
+credentials; unprotected debug, admin or health endpoints; dynamic `eval` or
+code loaded from strings; stack traces in error responses. A flag is not a
+finding until its impact is traced through the gate.
+
+---
+
+Adapted from Cloudflare's security-audit skill (MIT, see `../LICENSE`). The
+cache and sentinel cases under business logic are reworded from Visa's
+vulnerability agentic harness (Apache-2.0, see `LICENSE-vvah` and
+`NOTICE-vvah`).

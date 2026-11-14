@@ -2,10 +2,7 @@
 
 Find vulnerabilities that cross a real trust boundary, and give the owner the
 source trace, the bounded evidence, a priority and the smallest fix. This is
-defensive, source-first work. Adapted from Cloudflare's security-audit skill
-(MIT, see `LICENSE`). The absence, variant and rejection rules and gate item 7
-are condensed and reworded from Visa's vulnerability agentic harness
-(Apache-2.0, see `LICENSE-vvah` and `NOTICE-vvah`).
+defensive, source-first work.
 
 ## Work from a concrete invariant
 
@@ -32,10 +29,10 @@ settled either way.
 
 An absence is a claim about every place the control belongs, so establish it by
 listing them: search for each site that should carry it — every handler, write
-path or entry point of that kind — and say how many there are and how you
-searched. Each site that lacks it on its own is its own candidate; sites that
-lack it for one shared reason, such as a base class they all inherit, are one
-candidate with the strongest trace, as **Fingerprints** has it. A control
+path or entry point of that kind — and say under **Searched** in the report
+how many there are and how you searched. Each site that lacks it on its own is
+its own candidate; sites that lack it for one shared reason, such as a base
+class they all inherit, are one candidate with the strongest trace. A control
 applied centrally (middleware, a base class, a framework default) that covers
 the site refutes the claim. A record nothing acts on is not the control: a
 table of failed attempts that no code reads limits nothing. An absence claim
@@ -47,10 +44,9 @@ When a candidate is confirmed and its root cause could recur, search your scope
 for its variants: lexical (the same call or idiom elsewhere), structural (the
 same shape under other names) and logical (another path to the same effect that
 skips the same control). Phrase the search two or three ways, and record each
-search with its hit count, so a clean result can be told from a skipped one. A
-variant with the same root cause shares its fingerprint, but establish each
-one's conditions and impact separately. Report a variant outside your scope as
-not covered, never as a candidate.
+search with its hit count under **Searched**, so a clean result can be told
+from a skipped one. Establish each variant's conditions and impact separately.
+Report a variant outside your scope as not covered, never as a candidate.
 
 Then check the same location for the classes that travel with it: a cookie
 missing `HttpOnly` usually lacks `Secure` and `SameSite` too; a route with no
@@ -66,6 +62,9 @@ the sink, and the strongest control on that path. Every candidate names:
 - the control that should stop it, and where it fails;
 - the principal or resource on the other side, and the concrete result.
 
+One root cause reachable from several entry points is one candidate with the
+strongest trace; independent missing controls are separate candidates.
+
 These are not findings:
 
 1. A missing best practice with no affected principal or resource.
@@ -76,9 +75,7 @@ These are not findings:
    `needs_validation`, not `confirmed`.
 4. A principal using authority it already has, or harming only itself.
 5. A crash, parser quirk or slow path written up as more than it does.
-6. A candidate the source refutes. That is `rejected`, never
-   `needs_validation`.
-7. A class the code cannot have: a server-side bug in code that only runs in
+6. A class the code cannot have: a server-side bug in code that only runs in
    the browser, memory corruption in a managed language with no native or
    `unsafe` code, `../` in object-store keys where there are no directories to
    escape, SSRF where the caller sets only the path on a host the server
@@ -131,22 +128,9 @@ The high/medium test: does the result fully defeat an explicit control for an
 action with real consequences, or only weaken it? If you cannot state the
 damage, the severity is lower than it feels.
 
-## Fingerprints
+---
 
-Every candidate carries a fingerprint: a short, stable identifier derived from
-the root cause in source — the file or module, the function, and the missing
-control — such as `lib/app/tickets.ex:save:approval-not-bound`. Lowercase
-letters, digits and `._:/-` only, and no line number, severity or verdict. The
-same root cause keeps the same fingerprint in every verdict, and derives the
-same one on a later run over the same code; when a prior audit report is
-supplied, reuse its fingerprint for a root cause it already named. One root
-cause reachable from several entry points is one candidate with the strongest
-trace; independent missing controls are separate candidates.
-
-## Execution
-
-Reading source is always allowed. Run the tree's code — a test, a small
-harness, a fixture — only when the user has said running it is fine, and then
-only for the minimum check that settles the claim: dummy principals and data,
-no network, nothing persistent. Never probe a deployed system, a real account
-or a shared service, and never continue past the minimum effect.
+Adapted from Cloudflare's security-audit skill (MIT, see `../LICENSE`). The
+absence, variant and rejection rules and gate item 6 are condensed and
+reworded from Visa's vulnerability agentic harness (Apache-2.0, see
+`LICENSE-vvah` and `NOTICE-vvah`).

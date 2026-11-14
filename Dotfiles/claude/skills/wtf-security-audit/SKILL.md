@@ -24,9 +24,8 @@ tree, try to kill each one yourself, and report what survives. You change
 nothing: the report describes the smallest fix, and a person decides.
 
 Read `references/method.md` before you start. It holds the invariant method,
-the gate every candidate must pass, the three verdicts, the severity anchors
-and the fingerprint rule, and the report below depends on all of them. Then
-read `references/attack-classes.md`, and `references/ai-and-llm.md` whenever a
+the gate every candidate must pass, the three verdicts and the severity
+anchors, and the report below depends on all of them. Then read `references/attack-classes.md`, and `references/ai-and-llm.md` whenever a
 model, an agent, a tool call, an approval gate or model output is anywhere in
 the area.
 
@@ -54,16 +53,17 @@ Write down, briefly, before reading for bugs:
 2. The entry surfaces, the sinks, and the controls between them.
 
 Then hunt class by class from the references. For each lead, apply the gate.
-For each candidate that passes, argue the opposite case before you keep it:
-find the guard upstream, the caller that never passes that value, the layer
-that already stops it. A candidate you can refute is `rejected`; say why in
-one line.
+For each candidate that passes, try to refute it before you keep it, as the
+method's verdict rules describe.
 
 ## Running code
 
-You may read anything. Run the tree's code only when the user has said running
-it is fine, and then only a bounded local check with dummy data — never a
-deployed service, a real credential, or anything past the minimum effect. When
+You may read anything. Run the tree's code — a test, a small harness, a
+fixture — only when the user has said running it is fine, and then only the
+minimum check that settles the claim: dummy principals and data, no network,
+nothing persistent. Never probe a deployed system, a real account or
+credential, or a shared service, and never continue past the minimum effect.
+When
 a check you could not run would decide a candidate, the verdict is
 `needs_validation` with that check as the plan.
 
@@ -76,18 +76,19 @@ End with this, and nothing after it:
 
 **Read:** <the files and the entry surfaces you covered>
 **Principals:** <one line each>
+**Searched:** <each absence and variant search, with its hit count>
 
 ### Confirmed
-- **<severity>** · `path:line` · `<fingerprint>` — <principal> can <action>
-  because <missing control>, so <result>. Evidence: <the trace, or the command
-  and its output>. Fix: <smallest source change, and the regression case>.
+- **<severity>** · `path:line` — <principal> can <action> because <missing
+  control>, so <result>. Evidence: <the trace, or the command and its
+  output>. Fix: <smallest source change, and the regression case>.
 
 ### Needs validation
-- `path:line` · `<fingerprint>` — <claimed root cause>. Blocked on: <the one
-  fact>. Settle it by: <the exact check>.
+- `path:line` — <claimed root cause>. Blocked on: <the one fact>. Settle it
+  by: <the exact check>.
 
 ### Ruled out
-- `<fingerprint>` — <claim>: <why it does not hold>.
+- `path:line` — <claim>: <what refutes it, and where>.
 
 ### Hardening notes
 - <defence-in-depth gaps that are not findings, one line each>
