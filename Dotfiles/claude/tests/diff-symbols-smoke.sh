@@ -281,6 +281,8 @@ printf 'function helper() {\n  return 1;\n}\nexport default { helper, run: () =>
 printf 'class C {\n  get x() {\n    return 1;\n  }\n  set x(v) {\n    this.y = v;\n    this.z = v;\n  }\n}\n' > mix.ts
 printf 'export declare function d(a: 1): void;\nfunction g() {\n  return 1;\n}\n' > amb.ts
 printf 'namespace N {\n  export function f() {\n    return 1;\n  }\n}\n' > ns.ts
+printf '// ast-grep-ignore\n\nfunction f() {\n  return 1;\n}\n' > ig.ts
+printf 'function a() {\n  return 1;\n}\n// ast-grep-ignore\nfunction b() {\n  return 1;\n}\n' > ig2.ts
 printf 'export default function () {\n  function inner() {\n    return 1;\n  }\n  return inner;\n}\n' > anon.ts
 printf 'export function f(a: string): void;\nexport function f(a: any) {}\nfunction g() {\n  return 1;\n}\n' > ov.ts
 git add . && git commit -q -m base
@@ -302,6 +304,8 @@ sed '2s/1/2/' c.js > c.new && mv c.new c.js
 sed '3s/1/2/' gs.ts > g.new && mv g.new gs.ts
 sed '3d' gd.ts > g.new && mv g.new gd.ts
 sed '3s/1/2/' anon.ts > a.new && mv a.new anon.ts
+sed '4s/1/2/' ig.ts > a.new && mv a.new ig.ts
+sed '6s/1/2/' ig2.ts > a.new && mv a.new ig2.ts
 sed '3s/1/2/' amb.ts > a.new && mv a.new amb.ts
 sed '3s/1/2/' ns.ts > a.new && mv a.new ns.ts
 sed '2s/1/2/' obj.ts > o.new && mv o.new obj.ts
@@ -341,6 +345,9 @@ check "export declare does not turn an unexported sibling to unknown" \
   "function${tab}g${tab}amb.ts:2-4${tab}no" "$(grep 'amb\.ts' <<<"$changed" || :)"
 check "an export inside a namespace the module does not export is not exported" \
   "function${tab}f${tab}ns.ts:2-4${tab}no" "$(grep 'ns\.ts' <<<"$changed" || :)"
+check "an ast-grep-ignore comment does not hide a declaration from the script" \
+  "function${tab}b${tab}ig2.ts:5-7${tab}no
+function${tab}f${tab}ig.ts:3-5${tab}no" "$(grep -E 'ig2?\.ts' <<<"$changed" || :)"
 check "a function nested in an unnamed default export is not exported" \
   "function${tab}inner${tab}anon.ts:2-4${tab}no" "$(grep 'anon\.ts' <<<"$changed" || :)"
 check "an overload signature does not turn an unexported sibling to unknown" \
@@ -352,16 +359,19 @@ rc=0; "$SYMS" no-such-ref >/dev/null 2>&1 || rc=$?
 check "a bad range fails" "1" "$rc"
 rc=0; (cd "$WORK" && "$SYMS") >/dev/null 2>&1 || rc=$?
 check "outside a repository fails" "1" "$rc"
-rc=0; out="$(PATH=/usr/bin:/bin "$SYMS" 2>&1)" || rc=$?
+# A PATH holding every tool the script needs but one, wherever each is installed.
+path_without() {
+  local bin="$WORK/bin-$1" t
+  mkdir "$bin"
+  for t in bash git jq ast-grep iconv awk sed sort grep cut mktemp rm dirname basename mkdir cat; do
+    [ "$t" = "$1" ] || ln -s "$(command -v "$t")" "$bin/$t"
+  done
+  echo "$bin"
+}
+rc=0; out="$(PATH="$(path_without ast-grep)" "$SYMS" 2>&1)" || rc=$?
 check "missing ast-grep fails rather than printing an empty result" "1:1" \
   "$rc:$(grep -c 'ast-grep is not on PATH' <<<"$out" || :)"
-
-# Every tool but iconv, so the UTF-8 check cannot mistake "no iconv" for "bad encoding".
-bin="$WORK/bin"; mkdir "$bin"
-for t in bash git jq ast-grep awk sed sort grep cut mktemp rm dirname basename cp mkdir cat; do
-  ln -s "$(command -v "$t")" "$bin/$t"
-done
-rc=0; out="$(PATH="$bin" "$SYMS" 2>&1)" || rc=$?
+rc=0; out="$(PATH="$(path_without iconv)" "$SYMS" 2>&1)" || rc=$?
 check "missing iconv fails rather than calling every file badly encoded" "1:1" \
   "$rc:$(grep -c 'iconv is not on PATH' <<<"$out" || :)"
 
