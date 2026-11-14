@@ -101,12 +101,10 @@ js/main.js          ENGINE. Camera, input, frame loop. Copy nearly unchanged.
 
 `iso.js` and `main.js` are engine: copy them from `assets/template/js/` and
 change almost nothing. `sim.js` is engine too, except where it names the
-domain: the model inputs and outputs in `state`, `planNow()` and `charge()`,
-`beginTrip()` and `reset()`, the `OPS` table and `advanceRoute()`. Those are
-yours; leave the rest of the file as it is. `model.js` and `world.js` are 100%
-yours. `render.js` keeps its structure — the sorted pass, the label
-pass — and gets new landmark functions. `ui.js` keeps its shape and gets your
-panels.
+domain; its header lists those parts. They are yours, and the rest of the file
+stays as it is. `model.js` and `world.js` are 100% yours. `render.js` keeps
+its structure — the sorted pass, the label pass — and gets new landmark
+functions. `ui.js` keeps its shape and gets your panels.
 
 ## Start here
 

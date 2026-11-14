@@ -16,9 +16,8 @@ Pure static site. No build step, no dependencies, no network calls.
 > complete, working explainer, not a scaffold. Copy the directory and replace
 > `js/model.js`, `js/world.js`, the landmark functions in `js/render.js` and the
 > panels in `js/ui.js` with your own subject. `js/iso.js` and `js/main.js` are
-> engine — copy them unchanged. So is `js/sim.js`, except where it names this
-> subject: the model inputs and outputs in `state`, `planNow()`, `charge()`,
-> `beginTrip()`, `reset()`, the `OPS` table and `advanceRoute()`.
+> engine — copy them unchanged. So is `js/sim.js`, except the parts that name
+> this subject, which its header lists.
 
 ## Run it
 

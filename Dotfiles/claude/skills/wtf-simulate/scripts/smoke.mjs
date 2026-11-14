@@ -111,8 +111,8 @@ if (!globals.length) {
     if (st.station && !seen.includes(st.station)) {
       /* step() has paused the run on arrival, so the camera can settle. */
       await page.waitForTimeout(600);
-      // insert -<station> before the extension, or at the end if there is none
-      const shot = out.replace(/(\.\w+)?$/, `-${st.station.replace(/[^\w-]/g, '_')}$1`);
+      // insert -<station> before the extension
+      const shot = out.replace(/(\.\w+)$/, `-${st.station.replace(/[^\w-]/g, '_')}$1`);
       await page.screenshot({ path: shot });
       shots.push(shot);
     }

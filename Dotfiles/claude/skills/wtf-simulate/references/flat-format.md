@@ -40,8 +40,9 @@ Keep the globals as well — `World`, `Sim`, `Renderer`, `UI` — and
 `vanTarget()` and the fly-to in the frame loop, and without `iso.js` the page
 throws on startup. Flat world coordinates are already screen coordinates
 before the camera, so use the point itself in place of each projection and
-size `fitWorld()` from the world's own bounds. Move the two helpers the other
-files borrow from `Iso` — `hash2` and `rgba` — into `world.js`.
+size `fitWorld()` from the world's own bounds. Move the helpers the other
+files borrow from `Iso` into `world.js`: `makeRoute` and `smoothAt`, which
+build and walk routes and involve no projection, and `hash2` and `rgba`.
 
 `render.js` becomes simpler, not different in kind. There is no sorted pass;
 draw in fixed order — background, lanes and edges, tokens, nodes, labels,
