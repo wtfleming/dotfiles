@@ -1,7 +1,7 @@
 * Read-only structural tooling for code review
 
 Ideas for tooling the review agents could call to answer questions they currently
-answer by grepping and guessing. Notes only -- nothing here is built.
+answer by grepping and guessing. Notes, apart from the one item marked DONE below.
 
 ** Why this class of tooling fits the review agents specifically
 
