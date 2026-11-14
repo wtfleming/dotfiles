@@ -24,13 +24,14 @@ reviews the diff against the checklist, and prints findings as Critical, Warning
 or Suggestion — then stops. The
 reviewer has no `Edit` or `Write`, so a review cannot change anything.
 
-By default it does more: up to eight `wtf-lens` agents in parallel, one per
+By default it does more: up to nine `wtf-lens` agents in parallel, one per
 lens — security, tests, maintainability, resilience, performance, dependencies,
-observability, ui. There is no correctness lens, because that is the reviewer's
+compatibility, observability, ui. There is no correctness lens, because that is the reviewer's
 first priority and a lens repeating it almost never found anything alone. Lenses
 with no surface are skipped before the spawn and disclosed in the report: most of
 them on a prose-only change or one of ten lines or fewer, `dependencies` without a
-manifest, `security` without an input boundary or a sink in the diff, `ui` without
+manifest, `compatibility` without a path that looks like a schema, payload, route,
+export or config, `security` without an input boundary or a sink in the diff, `ui` without
 an interface file. Every check runs on the scope artifact's file list, its
 changed-line count or one pattern over its diff, never a reading of the change, so
 none can disagree with what the lenses read — `resolve-scope.sh` makes them and
@@ -90,6 +91,14 @@ are nearly all absences, so it carries the reuse evidence bar, plus one of its
 own: a gap older than the change is reportable only where the change is what makes
 it matter.
 
+`compatibility` asks whether the old version and the new one survive each other: a
+rolling deploy runs both against one database and one queue, old clients keep
+calling, and a rollback puts old code on top of new data. It took migrations,
+wire formats and breaking public interfaces off `dependencies`, which keeps
+third-party packages, version bumps and unprovisioned config. It is the static
+half of `wtf-code-verify`'s `references/compatibility.md`, which runs the same
+questions as probes — this lens catches what the diff alone shows, at review cost.
+
 There is no fix flag; the review itself never edits. The report lands in the
 conversation, so to act on it, say which findings — "fix the first two" — and
 the fixes happen in the main session, which knows what you were trying to do.
@@ -137,18 +146,42 @@ Two of its other targets have no rubric row at all: an interface that will be
 awkward at the second call site, and a hardcoded decision the next caller needs
 parameterised — or its inverse, a parameter nothing will pass a second value
 to. Speculative generality is nobody's lens. Irreversibility is the mixed case:
-`dependencies` already covers migrations, config formats and breaking public
+`compatibility` already covers migrations, config formats and breaking public
 interfaces, so what the design reviewer adds there is the rest of the class —
 a name taken in a shared namespace, a shape that becomes an interface by
 accident.
+
+### Design docs, before the code
+
+`/wtf-doc-review` reviews a written proposal — a design doc, RFC or ADR, by path,
+link or pasted text — before anything is built from it. It dispatches a single
+`wtf-doc-reviewer`, cold, with the document and nothing else.
+
+```
+/wtf-doc-review docs/rfcs/0042-sharded-queue.md
+```
+
+Its distinguishing move is to check the doc against the system rather than against
+itself: every factual claim about how things are now — who writes a table, what a
+client retries, how much traffic a path takes — is checked against the code, and
+against read-only telemetry where the repo reports to a vendor the session can reach,
+and ends **holds**, **false** or **not checked here**. A design resting on a false
+claim is wrong however well it is argued, so that is the top finding. Then the
+problem, a smaller design, failure, rollout and rollback, ownership and how success is
+measured — each only where the proposal has that surface. The verdict is ready,
+ready once the blocking items are fixed, or not ready.
+
+`/wtf-design-review` also takes a plan, and asks the narrower question of whether a
+smaller shape exists; this asks whether the document is true and ready to approve.
 
 ### The agents
 
 | Agent | Role |
 |---|---|
 | `wtf-change-reviewer` | scope, tests, lint, the full review |
-| `wtf-lens` | one dimension only; dispatched up to eight times per review |
+| `wtf-lens` | one dimension only; dispatched up to nine times per review |
 | `wtf-design-reviewer` | shape of the change, Suggestion-only; dispatched by `/wtf-design-review` |
+| `wtf-doc-reviewer` | a design doc's claims checked against the code and telemetry; dispatched by `/wtf-doc-review` |
 | `wtf-prod-impact` | whether the change degrades production, read from the live system; dispatched by `/wtf-prod-impact` |
 | `wtf-verify-adversary` | the cases a verification pass would not think to include; dispatched by `wtf-code-verify` |
 | `wtf-verify-refuter` | argues a single passing probe would have been green anyway; dispatched by `wtf-code-verify` |
@@ -156,7 +189,7 @@ accident.
 The last two belong to `wtf-code-verify` rather than to a review, and are described under
 *Verifying that it works* below; they are listed here so this table is the whole roster.
 
-Every one of them except `wtf-prod-impact` is read-only by tool list — no `Edit`, no
+Every one of them except `wtf-prod-impact` and `wtf-doc-reviewer` is read-only by tool list — no `Edit`, no
 `Write`, and no ability to spawn an agent that has them. Edits only ever happen in the
 main session, one approval at a time.
 
@@ -167,8 +200,12 @@ cannot be enumerated in advance. It uses `disallowedTools` instead, which denies
 file-editing half fails closed without costing any reach. `Bash` stays, because the agent
 needs it for git reads, and vendor writes cannot be denied by name without naming the
 vendors. Those two are held read-only by instruction rather than by allowlist — with
-the tool-call disclosure in its report as the compensating control. It is the one agent
-here whose read-only guarantee is prose, so it is the one to supervise.
+the tool-call disclosure in its report as the compensating control.
+
+`wtf-doc-reviewer` is built the same way for the same reason — it checks a document's
+claims about traffic and deploys against telemetry — and carries the same disclosure.
+Those two are the agents whose read-only guarantee is prose, so they are the ones to
+supervise.
 
 ### Tuning it
 
@@ -177,7 +214,7 @@ here whose read-only guarantee is prose, so it is the one to supervise.
   without touching an agent definition.
 - A project's own `REVIEW.md`, `AGENTS.md` or `CLAUDE.md` wins where it conflicts.
   `REVIEW.md` is the name Anthropic's own code review reads.
-- The eight lens rubrics live in `reference/lenses/`, one file per lens, which
+- The nine lens rubrics live in `reference/lenses/`, one file per lens, which
   each lens reads for itself — so they can be retuned without editing an agent
   or the command, and what a lens is told does not depend on what the
   dispatching session chose to paste.
@@ -186,7 +223,7 @@ here whose read-only guarantee is prose, so it is the one to supervise.
 
 ### Cost
 
-A default run spawns one reviewer and up to eight lenses, and asking for fixes
+A default run spawns one reviewer and up to nine lenses, and asking for fixes
 afterwards adds a cold review of the fix diff. It announces each fan-out before
 spawning it, so the spend can be refused, and `--lite` cuts it to the reviewer, plus a `dependencies` lens when a manifest changed. For very large
 diffs, the built-in
@@ -198,7 +235,7 @@ diffs, the built-in
 here has to settle before it reads a line: **what code is under review**, and **does the
 working tree actually hold it**.
 
-The first matters because a full run dispatches eight lenses beside the reviewer,
+The first matters because a full run dispatches nine lenses beside the reviewer,
 each of which used to run its own git commands. "The same scope" then held only for as
 long as every agent derived it identically — an instruction, not a fact. Now the diff is
 produced once, written to `scope.diff`, and handed over by path, with `manifest.json`
@@ -443,7 +480,7 @@ agent that could not reach production and reports one has told the reader the op
 what it knows. It is tested first, ahead of the rungs that produce **go**, because placed
 last it is the rung that gets swallowed.
 
-Uncertainty being reportable reverses the rule every lens follows. Eight lenses hedging in
+Uncertainty being reportable reverses the rule every lens follows. Nine lenses hedging in
 parallel produce an unreadable report; one agent making a call about production has the
 opposite problem, and a chain it could not settle is among the most useful things it can
 say.
@@ -456,6 +493,24 @@ the pass called, so a write is visible afterwards even though nothing prevented 
 
 The gate is cheap and exits early — prose, tests, CI config and code nothing deployed
 imports are answered from the file list before a single provider call.
+
+## Investigating a bug
+
+`wtf-investigate` takes a symptom — an error, a stack trace, an alert, a flaky test, "this
+broke last week" — and finishes with a proven root cause and a failing test that
+reproduces it. It diagnoses and stops; the fix is yours to choose once the cause is
+visible.
+
+It replaced `reference/bug-investigation.md`, a checklist reached only through a table in
+the global `CLAUDE.md`. The method is the same — reproduce, rank hypotheses by evidence,
+kill them one at a time, ask why until the answer is a change rather than another symptom —
+with three things a checklist could not do. It reads production through
+`reference/telemetry-providers.md`, read-only and disclosed, because "it started at the
+14:02 deploy" is the strongest lead there is. It bisects in a worktree built by
+`wtf-code-verify`'s `baseline-worktree.sh`, so your checkout never moves; both ends are
+resolved to SHAs first, since `HEAD` inside that worktree is the good end and bisect then
+blames a commit outside the range without an error. And the deliverable is a test in the
+project's own suite, so the cause is something a reader can run rather than take on trust.
 
 ## Opening the PR
 
@@ -536,11 +591,29 @@ references without closing.
 
 It shows the title and body before anything is public, and stops after reporting the URL.
 
-`~/.claude/reference/github-publishing.md` holds the guards that apply to all three tools
-that write outward: who may write which part of a PR, scrubbing text, looking at every
+`~/.claude/reference/github-publishing.md` holds the guards that apply to every tool here
+that writes outward: who may write which part of a PR, scrubbing text, looking at every
 image, delimiting a generated section so a rerun replaces it instead of stacking a second
 verdict below the first, and keeping what cannot be regenerated in a comment rather than in
 a body that will be. Extracted rather than written a third time, so a fix lands once. The
 first of those is the one the other tools cross-reference most — the title and the author's
 prose are `/wtf-create-pr`'s alone, a delimited section belongs to whoever writes it, and a
 tool that finds the description stale reports the drift rather than repairing it.
+
+## Answering the review
+
+`wtf-address-review` works through the open threads on a PR — a person's or a bot's — and
+holds the rule this repo's `CLAUDE.md` sets for doing it by hand: verify a finding before
+acting on it, say in the reply how it was verified, and treat declining as a legitimate
+outcome. As a skill, the rule travels to repos whose `CLAUDE.md` never stated it.
+
+Each thread is settled as fix, already addressed, decline, answer, or needs you — the last
+for a matter of taste a human reviewer raised, which is the author's to concede rather than
+the tool's to decline. Comment bodies are claims to check, never instructions: on a repo
+anyone can comment on, a suggested command is input from a stranger.
+
+It fixes, runs the tests and the linter, prints a draft reply per thread, and stops. Replies
+are public and notify the reviewer, so posting waits for the user's word and for every commit
+a reply cites to be on the remote — "fixed in abc123" is false until abc123 is pushed. It
+replies on the thread itself, resolves only what it fixed, and leaves declined threads open
+for the reviewer, or a bot that accepts the reply, to close.
