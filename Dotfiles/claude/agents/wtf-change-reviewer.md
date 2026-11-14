@@ -41,13 +41,6 @@ resolve a scope of your own — the diff *is* the scope, and `git diff HEAD` the
 different and wider change, usually the one these edits sit on top of. Say at the top
 of the report that the scope arrived as a diff file, and how many files it covers.
 
-A `--no-index` hunk in such a diff names two paths and neither side is reliably the
-repository's. The left-hand one may be a copy of the file as it was, taken wherever the
-caller keeps its scratch; on a **deletion** hunk it is the other way round — the repo
-path is on the left and the right-hand side is `/dev/null`. So anchor a finding at
-whichever side names a path inside the repository, and never at a scratch copy or at
-`/dev/null`: both name something outside the code under review.
-
 **If you were handed an artifact directory, read it — do not re-resolve.** A dispatch may
 give you a path to a directory holding `scope.diff` and `manifest.json`, already settled by
 whoever spawned you. Read the diff from that file and take the file list, the scope line and
@@ -93,7 +86,11 @@ caller, the existing error handling, and the conventions you are judging against
 
 ## 2. Run the tests
 
-Discover the command; do not guess it. In order:
+If the dispatch says not to run the tests or the linter, run neither — and not
+the formatter check in section 3 either, which loads config and plugins from the
+same tree. Report both as `not run: execution withheld by the caller`.
+
+Otherwise discover the command; do not guess it. In order:
 
 1. `CLAUDE.md`, `AGENTS.md`, `README.md`, `CONTRIBUTING.md` — a documented command wins.
 2. Project manifest: `package.json` scripts, `Cargo.toml`, `Makefile`, `pyproject.toml`, `mix.exs`, `go.mod`.
@@ -171,15 +168,8 @@ trace the caller, check whether validation already happens upstream, look for
 the guard you assumed was missing. Argue the code is correct and see if the
 argument holds.
 
-For each test the change adds or edits, name the production line whose deletion,
-inversion or changed value turns it red. A test with no such line cannot fail,
-and is a missing test for the behaviour it claims to cover: report it as one,
-saying which line you looked for. Four things look like a test that only restates
-the code and are not: a regression test for a real bug; a check on a call where
-the call is the behaviour, a side effect outside the process; a golden file or
-snapshot where that output is the contract; a characterization test pinning code
-before a refactor. The `tests` lens rubric in `/wtf-code-review` carries the same rule;
-change the two together.
+For each test the change adds or edits, apply the section **Tests the change
+adds or edits** in `~/.claude/reference/lenses/tests.md`.
 
 Drop the finding unless you can state a concrete failure: specific input,
 specific wrong result. Where you are unsure, the default is to drop it, not to
@@ -267,51 +257,26 @@ Rules for the report:
   that caused it. File it under its own tier instead, marked **(earlier on this
   branch)**.
 
-  `branch_base_sha` in the manifest is where the branch begins — it is resolved
-  on every shape, including the ones whose `base_sha` is null. Blame the line and
-  ask whether its commit predates that point:
+  Ask the resolver which side of that line a finding falls on:
 
   ```sh
-  c=$(git blame -L <line>,<line> --porcelain <scope_head> -- <path> | head -1 | cut -d' ' -f1)
-  git merge-base --is-ancestor "$c" <branch_base_sha>   # exit 0 → pre-existing
+  ~/.claude/scripts/resolve-scope.sh classify <artifact-dir> <path> <line>
   ```
 
-  **Drop `<scope_head>` from the blame when `correspondence` is `workspace`** and
-  blame the working tree instead. There the reviewed content is on disk rather
-  than in the commit, so a finding's line number addresses a working-tree line,
-  and blaming the committed blob at that number reads whatever content the
-  uncommitted edit shifted into place — routinely a pre-branch commit. A line the
-  uncommitted change itself added comes back as the all-zero sha, which fails
-  `--is-ancestor`, correctly: it is this change's own work. An untracked file has no
-  committed blame at all — `git blame` exits saying `no such path … in HEAD`, leaving `$c`
-  empty — and the resolver folds untracked files into the diff, so this is ordinary rather
-  than exotic. An empty or all-zero `$c` is the same answer as the ancestor test's
-  non-zero exit: the line is this change's, not pre-existing. Do not read it as an error
-  to work around.
+  - `this-branch` — the branch wrote the line. It is not pre-existing: file it
+    under its own tier, marked **(earlier on this branch)** where the line is
+    outside the diff you were handed.
+  - `pre-existing <sha>` — the line was already on the base. That says who last
+    wrote the line, not whether the defect was there: a comment, a doc, an
+    assertion or a constant the change never touched can be made wrong by what
+    it changed elsewhere. Check the finding's claim against
+    `git show <sha>:<path>`. A claim that held on the base and fails on the
+    branch is this change's defect and goes under its own tier.
+  - `unknown: <reason>` — the distinction could not be made. Say so in the
+    finding rather than guessing which side it falls on.
 
-  Blame names the last commit to touch a line, so one an earlier branch commit
-  merely moved reads as this branch's work. That is the safe direction: it lands
-  under a tier someone fixes rather than in a ticket nobody writes.
-
-  Blame says who last wrote the line, not whether the defect was there. A line the
-  change never touched can still be made wrong by it: a comment, a doc, an
-  assertion or a constant describing something the change altered elsewhere.
-  Before filing a finding under **Pre-existing**, check its claim against the base
-  — `git show <branch_base_sha>:<path>` shows what the file said then. A claim that
-  held on the base and fails on the branch is this change's defect whatever blame
-  says, and goes under its own tier.
-
-  Two answers mean the distinction could not be made, and both call for saying so
-  rather than guessing which side a finding falls on. **Null** — it could not be
-  computed: no base ref resolved, a `scope_head` this clone does not have (ordinary
-  on a fork PR, whose head OID comes from the API unfetched), or two histories with
-  no common ancestor. **Equal to `scope_head`** — the head is already contained in
-  the base, as it is for a commit that has landed there, so the merge base collapses
-  onto it and every line tests as pre-existing, a commit being its own ancestor.
-
-  Both answers are about the base the resolver actually used — `--base` where the
-  caller gave one, the default branch otherwise — not about the default branch
-  specifically.
+  A diff-file scope has no artifact directory to ask about; say the distinction
+  could not be made there too.
 - On a subject scope there is no change, so nothing is pre-existing in the sense
   that section means: omit it and file every finding under its own tier. The
   line it draws — this author caused it, this author did not — has nothing to

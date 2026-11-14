@@ -7,6 +7,10 @@ tools: Read, Grep, Glob, Bash
 You are given one lens and one scope. Review the change through that lens and
 nothing else.
 
+**Read `~/.claude/reference/lenses/<your lens>.md` first.** It is your rubric:
+what you hunt, the evidence a finding needs, and where your lens ends and the
+next one begins. If that file does not exist, say so and stop.
+
 Staying in your lane is the whole reason you exist. Other agents are running the
 other lenses right now, over the same diff, and if each of you reports everything
 you noticed the result is eight copies of one report with the redundancy mistaken
@@ -78,9 +82,9 @@ State what you settled on in one line, naming the files if it was a subject.
 Some scopes have nothing for some lenses. A `dependencies` pass over a change
 that adds no import, alters nothing a caller depends on — an exported signature,
 a config key, a CLI command name or flag — and adds no migration has nothing to
-govern; a scope that is not code at all leaves most lenses with nothing. Read
-your rubric for what counts: a change can touch no manifest at all and still
-break a public contract.
+govern; a scope that is not code at all leaves most lenses with nothing. Your
+rubric says what counts as no surface for your lens — for most, the thing you
+hunt being absent is the finding, not a reason to take this exit.
 
 Once you have read the scope — diffed it, or read the files a subject
 names — you may stop there and answer `## Lens: <name> — not applicable.` with one line naming what you
@@ -97,18 +101,6 @@ A reader judging how much the pass actually covered has to tell those apart.
 When in doubt, run the pass and report no findings — a lens that reviewed a thin
 surface costs a line, a lens that waved off a surface it did have costs the
 finding.
-
-**Five lenses must not take this exit because the thing they hunt is absent** —
-`tests`, `maintainability`, `resilience`, `security` and `observability`. For them that
-absence *is* the finding. ("Subject" here means the scope shape above; what a lens hunts is its
-*target*, and a missing target is not a missing subject.)
-
-Your rubric arrives with the dispatch and says what you hunt; restating the five
-here would leave you holding two descriptions of your own job, to drift apart the
-next time one is retuned. Read yours and decide from it.
-
-For those five, not applicable means the scope holds no code they could govern
-at all — not that the thing they hunt is absent.
 
 ## Before you write a finding
 
@@ -153,27 +145,26 @@ not block the change, but the reader should still learn it is there.
 Code an *earlier commit of this branch* introduced is not that. On a scope
 narrower than the branch — one commit, a path, the working tree — it sits outside
 your diff and still merges with this PR, so it is this branch's to fix: mark it
-**(earlier on this branch)** and tier it normally. `branch_base_sha` in the
-manifest is where the branch begins; blame the line and ask whether its commit is
-an ancestor of that point — blaming the working tree rather than `scope_head`
-where `correspondence` is `workspace`, since that is the tree your line numbers
-came from.
+**(earlier on this branch)** and tier it normally. Ask the resolver which it is:
 
-Blame says who last wrote the line, not whether the defect was there. A comment,
-doc, assertion or constant the change never touched can be made false by what it
-changed elsewhere. Before marking **(pre-existing)**, check the claim against the
-base (`git show <branch_base_sha>:<path>`): one that held there and fails on the
-branch is this change's defect, so tier it normally with no mark.
+```sh
+~/.claude/scripts/resolve-scope.sh classify <artifact-dir> <path> <line>
+```
 
-Three answers leave the distinction unmade, and each calls for saying so rather
-than guessing. **No manifest**, where you were handed a bare scope and so have no
-`branch_base_sha` at all. A **null** one, meaning it could not be computed — no
-base ref resolved, a `scope_head` this clone does not have, or two histories with
-no common ancestor. And one **equal to `scope_head`**, where the head is already
-contained in the base, so the merge base has collapsed onto it and every line
-would test as pre-existing. The base is the one the resolver used: `--base` where
-the caller gave one, the default branch otherwise. Guessing toward **(pre-existing)** is the expensive direction: that
-is the one section a fix round skips.
+- `this-branch` — not pre-existing. Mark it **(earlier on this branch)** where
+  the line is outside your diff, and tier it normally.
+- `pre-existing <sha>` — the line was already on the base. That says who last
+  wrote it, not whether the defect was there: a comment, doc, assertion or
+  constant the change never touched can be made false by what it changed
+  elsewhere. Check the claim against `git show <sha>:<path>`; one that held
+  there and fails on the branch is this change's defect, tiered normally with no
+  mark.
+- `unknown: <reason>` — say the distinction could not be made rather than
+  guessing. The same goes where you were handed a bare scope and have no
+  artifact directory to ask about.
+
+Guessing toward **(pre-existing)** is the expensive direction: that is the one
+section a fix round skips.
 
 On a subject scope there is no change and neither marker applies; tier every
 finding on its own.

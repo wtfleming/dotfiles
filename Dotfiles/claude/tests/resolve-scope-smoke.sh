@@ -636,6 +636,68 @@ case "$err" in
   *) echo "  ok    a real path is not translated" ;;
 esac
 
+echo "== the lens plan is read from the listing, the count and one pattern =="
+scratch_repo "$WORK/lenses"
+commit "$WORK/lenses" README.md one base
+printf 'more\n' >> "$WORK/lenses/README.md"
+out=$(cd "$WORK/lenses" && "$RESOLVE" resolve 2>/dev/null | tail -1)
+check "prose skips tests" "prose only" "$(field "$out" .lenses.tests.skipped_by)"
+check "prose skips dependencies as prose" "prose only" "$(field "$out" .lenses.dependencies.skipped_by)"
+check "prose with no boundary skips security" "no security surface" "$(field "$out" .lenses.security.skipped_by)"
+
+# Agent instructions are Markdown that is executed, so they are code and a boundary.
+mkdir -p "$WORK/lenses/skills/x"
+printf 'do the thing\n' > "$WORK/lenses/skills/x/SKILL.md"
+out=$(cd "$WORK/lenses" && "$RESOLVE" resolve 2>/dev/null | tail -1)
+check "agent instructions are not prose" "true" "$(field "$out" .lenses.tests.dispatch)"
+check "agent instructions are a security boundary" "true" "$(field "$out" .lenses.security.dispatch)"
+check "ten lines or fewer skips maintainability" "small change" "$(field "$out" .lenses.maintainability.skipped_by)"
+check "no manifest skips dependencies" "no manifest" "$(field "$out" .lenses.dependencies.skipped_by)"
+rm -rf "$WORK/lenses/skills"
+
+seq 1 20 > "$WORK/lenses/lib.rb"
+printf '{}\n' > "$WORK/lenses/package.json"
+out=$(cd "$WORK/lenses" && "$RESOLVE" resolve 2>/dev/null | tail -1)
+check "a manifest dispatches dependencies" "true" "$(field "$out" .lenses.dependencies.dispatch)"
+check "a larger change dispatches maintainability" "true" "$(field "$out" .lenses.maintainability.dispatch)"
+check "no interface file skips ui" "no interface" "$(field "$out" .lenses.ui.skipped_by)"
+check "no boundary and no sink skips security" "no security surface" "$(field "$out" .lenses.security.skipped_by)"
+printf 'system("ls")\n' >> "$WORK/lenses/lib.rb"
+out=$(cd "$WORK/lenses" && "$RESOLVE" resolve 2>/dev/null | tail -1)
+check "a sink in the diff dispatches security" "true" "$(field "$out" .lenses.security.dispatch)"
+
+echo "== classify separates the base from the branch's own work =="
+scratch_repo "$WORK/classify"
+commit "$WORK/classify" a.txt base base
+base_sha=$(git -C "$WORK/classify" rev-parse HEAD)
+git -C "$WORK/classify" checkout -q -b feature
+printf 'branch\n' >> "$WORK/classify/a.txt"
+git -C "$WORK/classify" commit -q -am "on the branch"
+printf 'uncommitted\n' >> "$WORK/classify/a.txt"
+printf 'new\n' > "$WORK/classify/fresh.txt"
+out=$(cd "$WORK/classify" && "$RESOLVE" resolve 2>/dev/null | tail -1)
+classify() { (cd "$WORK/classify" && "$RESOLVE" classify "$out" "$1" "$2"); }
+check "a line from the base" "pre-existing $base_sha" "$(classify a.txt 1)"
+check "a line an earlier branch commit wrote" "this-branch" "$(classify a.txt 2)"
+check "an uncommitted line" "this-branch" "$(classify a.txt 3)"
+check "a line in an untracked file" "this-branch" "$(classify fresh.txt 1)"
+# The head is the base itself. Uncommitted work is still told apart from it; a committed
+# scope is not, since every line would test as pre-existing.
+git -C "$WORK/classify" checkout -q -- a.txt
+rm "$WORK/classify/fresh.txt"
+git -C "$WORK/classify" checkout -q main
+printf 'uncommitted\n' >> "$WORK/classify/a.txt"
+out=$(cd "$WORK/classify" && "$RESOLVE" resolve 2>/dev/null | tail -1)
+check "on the base, a committed line" "pre-existing $base_sha" "$(classify a.txt 1)"
+check "on the base, an uncommitted line" "this-branch" "$(classify a.txt 2)"
+git -C "$WORK/classify" checkout -q -- a.txt
+out=$(cd "$WORK/classify" && "$RESOLVE" resolve --scope HEAD 2>/dev/null | tail -1)
+case "$(classify a.txt 1)" in
+  unknown:*) echo "  ok    a head contained in the base is unknown" ;;
+  *) echo "  FAIL  a head contained in the base is unknown: got '$(classify a.txt 1)'" >&2
+     failures=$((failures + 1)) ;;
+esac
+
 if [ "$failures" -gt 0 ]; then
   echo "$failures check(s) failed" >&2
   exit 1
