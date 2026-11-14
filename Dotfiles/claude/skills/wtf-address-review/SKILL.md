@@ -3,9 +3,9 @@ name: wtf-address-review
 description: >-
   Work through the open review comments on a pull request — human reviewers and
   bots alike. Verifies each one against the code before acting, fixes what holds
-  up, declines what does not with a reason, answers questions, and drafts a reply
-  per thread saying what was done and how it was verified. Posts the replies and
-  resolves the fixed threads only once the user says to and the fixes are pushed.
+  up, declines what does not with a reason, answers questions, then commits and
+  pushes the fixes and posts a reply on each thread saying what was done and how
+  it was verified, resolving the ones it fixed.
   Use when asked to address, respond to, work through or action PR feedback:
   "address the review comments", "go through CodeRabbit's comments", "respond to
   the feedback on #123", "/wtf-address-review". NOT for reviewing code yourself
@@ -92,8 +92,7 @@ against the fixed code and record what came back. Where the claim was confirmed
 by reading, read the path again as it now stands. A thread whose check was not
 re-run says so in the report; it is not reported as verified.
 
-Leave committing to the user unless they asked you to commit. If they did, one
-commit per thread or per group, so a reply can name the commit that answers it.
+Do not commit yet. Step 4 reads the fixes first.
 
 If the PR body has a `verify:start` section, it now attests to a tree that no
 longer exists. Say so and name `wtf-code-verify` as what would refresh it — see
@@ -112,45 +111,32 @@ else. Print what comes back in the report, under the heading that file gives.
 - Skip it only where every fix is a one-line change to prose, and say it was
   skipped.
 - Do not act on its findings in the same turn. A Critical or a Warning in a fix
-  marks that thread's draft reply **held**: it would announce a fix that is not
+  marks that thread **held**: its reply would announce a fix that is not
   finished. A Suggestion is reported and holds nothing.
 
-## 5. Report, and stop
+## 5. Commit, push and post
 
-```markdown
-## Review comments on #<n>
-
-**Read:** <k> open threads, <m> review bodies · head <short sha> (<local is in sync | local is N ahead/behind>)
-**Tests:** <command — result> · **Lint:** <command — result>
-
-| # | Reviewer | Where | Verdict | How verified |
-|---|----------|-------|---------|--------------|
-| 1 | <login> | `path:line` | Fix | <one line> · after the fix: <what the re-run returned> |
-
-### <the cold review's heading from step 4, or "Cold review of the fixes — skipped: <why>">
-<its findings, as written>
-
-### Needs you
-- #<k> — <the decision, and the two options>
-
-### Draft replies
-**#1** — <the reply as it will be posted>
-**#2** — held: <the finding in its fix> — <the reply as it would be posted>
-```
-
-Then stop. Nothing is posted yet.
-
-## 6. Posting — only when the user says to, in a later message
+A thread is ready once it is settled and nothing holds it: **Fix** (not held),
+**Already addressed**, **Decline** and **Answer**. Post those now, without
+asking. **Needs you** and held threads get a draft in the report and nothing on
+the PR.
 
 Replies are public and notify the reviewer, and a reply that says "fixed in
-abc123" is false until abc123 is on the remote. So before writing anything:
+abc123" is false until abc123 is on the remote. So, in this order:
 
-- Re-fetch. Every commit a reply names must be reachable from the new
-  `headRefOid`; if not, say which and stop — the user has not pushed yet.
-- Skip any thread that is now resolved, and any whose reply is still held.
-- Scrub each reply per `~/.claude/reference/github-publishing.md`. Say what
-  changed and why; no internal reasoning, no paths outside the repo, no
-  machine-specific output.
+1. **Commit** the ready fixes, one commit per thread or per group, so each
+   reply can name the commit that answers it. A held thread's fix stays
+   uncommitted in the working tree; a thread whose fix cannot be committed
+   without it is held too.
+2. **Push.** If the local branch is not the PR's head branch, has diverged from
+   it, or the push fails, stop here: report the drafts and say what blocked the
+   push. Declines and answers name no commit, so post those regardless.
+3. **Re-fetch.** Every commit a reply names must be reachable from the new
+   `headRefOid`. A thread something else resolved in the meantime — a bot often
+   resolves on the push — still gets its reply; leave its state alone.
+4. **Scrub** each reply per `~/.claude/reference/github-publishing.md`. Say
+   what changed and why; no internal reasoning, no paths outside the repo, no
+   machine-specific output.
 
 Reply on the thread itself, never as a new top-level comment:
 
@@ -160,7 +146,7 @@ mutation($id:ID!,$body:String!){
   addPullRequestReviewThreadReply(input:{pullRequestReviewThreadId:$id, body:$body}){ comment{ url } } }'
 ```
 
-Then resolve only the **Fix** and **Already addressed** threads:
+Then resolve the **Fix** and **Already addressed** threads that are still open:
 
 ```sh
 gh api graphql -F id=<thread id> -f query='
@@ -172,4 +158,28 @@ reply settles it, and a bot that accepts it resolves the thread itself. Do not
 reopen or re-resolve a thread afterwards. A review body has no thread, so answer
 those together in one `gh pr comment`.
 
-Finish with each reply's URL, and any write that failed.
+## 6. Report
+
+```markdown
+## Review comments on #<n>
+
+**Read:** <k> open threads, <m> review bodies · head <short sha> (<local is in sync | local is N ahead/behind>)
+**Tests:** <command — result> · **Lint:** <command — result>
+
+| # | Reviewer | Where | Verdict | How verified | Reply |
+|---|----------|-------|---------|--------------|-------|
+| 1 | <login> | `path:line` | Fix (`abc123`) | <one line> · after the fix: <what the re-run returned> | <url> |
+| 2 | <login> | `path:line` | Fix — held | <one line> | not posted |
+
+### <the cold review's heading from step 4, or "Cold review of the fixes — skipped: <why>">
+<its findings, as written>
+
+### Needs you
+- #<k> — <the decision, and the two options>
+
+### Drafts not posted
+**#2** — held: <the finding in its fix> — <the reply as it would be posted>
+```
+
+Finish with any write that failed. Then stop: a held thread or a **Needs you**
+is the user's next move.

@@ -615,6 +615,10 @@ A fix is checked twice before its reply is drafted. The check that confirmed the
 is run again against the fixed code, and one cold reviewer reads the diff of the fixes
 alone. A Critical or Warning there holds that thread's reply.
 
+Everything else is committed, pushed and answered in the same run: a fix, a decline and an
+answer each get their reply on the thread without a second prompt, and the fixed threads
+are resolved. What waits for you is a held fix and a matter of taste.
+
 It fixes, runs the tests and the linter, prints a draft reply per thread, and stops. Replies
 are public and notify the reviewer, so posting waits for the user's word and for every commit
 a reply cites to be on the remote — "fixed in abc123" is false until abc123 is pushed. It
