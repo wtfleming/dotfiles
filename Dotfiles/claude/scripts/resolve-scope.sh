@@ -31,10 +31,12 @@
 #
 # Usage:
 #   resolve-scope.sh resolve [--scope <ref|range|path|PR#|PR-url>] [--base <ref>]
+#   resolve-scope.sh classify <artifact-dir> <path> <line>
 #   resolve-scope.sh base
 #
-# The two subcommands have different callers, and only the first has the artifact.
-# `resolve` serves the review tools named above. `base` is called on its own by
+# The subcommands have different callers. `resolve` serves the review tools named above,
+# and `classify` answers one question about a line for the agents `resolve` handed an
+# artifact to: was it already on the base, or is it this branch's work. `base` is called on its own by
 # /wtf-create-pr, which needs the default branch and never reads scope.diff or
 # manifest.json -- so a change to `base`'s output or its die-rather-than-default
 # behaviour reaches a caller that none of the paragraphs above describe.
@@ -599,6 +601,86 @@ files_from_diff() {
   rm -f "$dest.raw"
 }
 
+# Which of /wtf-code-review's lenses have a surface in this scope, decided from the file
+# list, the changed-line count and one pattern over the diff -- never from a reading of
+# the change, which is the author waving off a reviewer. Prints the manifest's `lenses`
+# object: every lens, with `dispatch` and, where false, the check that excluded it.
+#
+# Every check errs towards dispatching: a lens sent to a thin surface costs a line in the
+# report, and one never sent costs the finding without a word.
+lens_plan() {
+  local diff=$1 files=$2 sink=false
+  # An added or removed line naming a shell, eval, deserialiser, file, query, HTML or URL
+  # sink, a tool grant, or a secret. Removed lines count, so deleting a guard dispatches.
+  if grep -qiE '^[+-].*(exec|spawn|system\(|popen|subprocess|child_process|shell=|eval\(|Function\(|unserialize|deserializ|pickle\.|yaml\.load|Marshal\.load|binary_to_term|readFile|writeFile|open\(|sendFile|path\.join|query\(|execute\(|raw\(|fragment\(|innerHTML|outerHTML|insertAdjacentHTML|dangerouslySetInnerHTML|document\.write|v-html|redirect|urlopen|requests\.|fetch\(|allowed-?tools|permissions|secret|passw|api_?key|private_?key|token|credential)' "$diff"; then
+    sink=true
+  fi
+  jq --argjson sink "$sink" \
+     --arg source "$FILE_LIST_SOURCE" \
+     --arg changed_lines "$CHANGED_LINES" '
+    def among($l): . as $x | $l | index($x) != null;
+    def base: split("/") | last | ascii_downcase;
+    def dirs: split("/") | .[:-1] | map(ascii_downcase);
+    def ext: base | if test("[.]") then sub("^.*[.]"; "") else "" end;
+    def markdown: ext | among(["md","markdown","rst","adoc"]);
+    # Markdown an agent executes: a change to it is a change to what an agent does.
+    def agent_instructions:
+      markdown and ((base | among(["claude.md","agents.md","skill.md"]))
+                    or (dirs | any(among(["claude",".claude","agents","commands","skills"]))));
+    # An allowlist. `.txt` is absent on purpose: requirements.txt is a manifest.
+    def prose:
+      (agent_instructions | not)
+      and (markdown or (base | among(["readme","license","changelog","notice"])));
+    def manifest:
+      (base | among(["package.json","package-lock.json","yarn.lock","pnpm-lock.yaml",
+          "bun.lock","bun.lockb","npm-shrinkwrap.json","cargo.toml","cargo.lock","go.mod",
+          "go.sum","pyproject.toml","poetry.lock","uv.lock","pdm.lock","pipfile",
+          "pipfile.lock","setup.py","setup.cfg","gemfile","gemfile.lock","composer.json",
+          "composer.lock","pom.xml","build.gradle","build.gradle.kts","mix.exs","mix.lock",
+          "brewfile"]))
+      or (base | test("^requirements.*[.](txt|in)$") or test("[.]gemspec$"))
+      or (dirs | any(among(["migrations","migrate"])));
+    # Path words that mark an input boundary, compared with one trailing `s` dropped.
+    def boundary:
+      agent_instructions
+      or (ascii_downcase | [scan("[a-z0-9]+") | sub("s$"; "")]
+          | any(among(["router","route","controller","endpoint","handler","middleware",
+              "plug","socket","channel","auth","session","token","password","secret",
+              "credential","webhook","upload","api","config","sandbox","network","fetch",
+              "tool","permission","workflow"])))
+      or (ascii_downcase | split("/") | any(test("_web$")));
+    # Templates often live inside code files, so this errs towards UI.
+    def interface:
+      (ext | among(["html","htm","css","scss","sass","less","js","mjs","cjs","jsx","ts",
+          "tsx","vue","svelte","astro","heex","leex","eex","erb","hbs","njk","jinja",
+          "twig","liquid"]))
+      or (dirs | any(among(["live","components","templates","layouts","views","pages",
+          "assets","static"]) or test("_web$")));
+
+    . as $files
+    | ($source == "git-apply-numstat") as $trusted
+    | ($trusted and ($files | all(prose))) as $prose_only
+    | ($trusted and $changed_lines != "" and ($changed_lines | tonumber) <= 10) as $small
+    | def skip_when($checks):
+        ($checks | map(select(.[0]) | .[1]) | first // null) as $why
+        | if $why then {dispatch: false, skipped_by: $why} else {dispatch: true} end;
+      {
+        security: skip_when([
+          [$trusted and ($sink | not) and ($files | any(boundary) | not), "no security surface"]]),
+        tests: skip_when([[$prose_only, "prose only"]]),
+        maintainability: skip_when([[$small, "small change"]]),
+        resilience: skip_when([[$prose_only, "prose only"], [$small, "small change"]]),
+        performance: skip_when([[$prose_only, "prose only"], [$small, "small change"]]),
+        dependencies: skip_when([
+          [$prose_only, "prose only"],
+          [$trusted and ($files | any(manifest) | not), "no manifest"]]),
+        observability: skip_when([[$prose_only, "prose only"]]),
+        ui: skip_when([
+          [$prose_only, "prose only"], [$small, "small change"],
+          [$trusted and ($files | any(interface) | not), "no interface"]])
+      }' "$files"
+}
+
 # NUL-delimited into jq rather than split on newlines: a path or a warning containing a
 # newline would otherwise arrive as two array elements.
 json_array_from_lines() {
@@ -1015,6 +1097,8 @@ cmd_resolve() {
   [ "$file_count" -gt 0 ] \
     || die "the diff resolved but no files could be read from it; refusing to write a manifest that would claim an empty scope"
 
+  lens_plan "$diff" "$tmp/files.json" > "$tmp/lenses.json"
+
   # Composed once, here, so that eight lenses and a merged report describe one scope in one
   # form rather than ten.
   local scope_line
@@ -1053,6 +1137,7 @@ cmd_resolve() {
     --arg file_list_source "$FILE_LIST_SOURCE" \
     --arg changed_lines "$CHANGED_LINES" \
     --slurpfile files "$tmp/files.json" \
+    --slurpfile lenses "$tmp/lenses.json" \
     --argjson fell_through "$(json_array_from_lines ${FELL_THROUGH[@]+"${FELL_THROUGH[@]}"})" \
     --argjson warnings "$(json_array_from_lines ${WARNINGS[@]+"${WARNINGS[@]}"})" \
     '{
@@ -1083,9 +1168,10 @@ cmd_resolve() {
       file_list_source: $file_list_source,
       changed_lines: (if $changed_lines == "" then null else ($changed_lines | tonumber) end),
       files: $files[0],
+      lenses: $lenses[0],
       warnings: $warnings
     }' > "$tmp/manifest.json"
-  rm -f "$tmp/files.json"
+  rm -f "$tmp/files.json" "$tmp/lenses.json"
 
   publish_scope "$tmp" "$out"
 
@@ -1101,6 +1187,64 @@ cmd_resolve() {
   echo "$tmp"
 }
 
+# Was the line at <path>:<line> already on the base, or is it this branch's work? One line
+# on stdout: `pre-existing <branch_base_sha>`, `this-branch`, or `unknown: <reason>`.
+#
+# Blame names the last commit to touch a line, so one an earlier branch commit merely
+# moved reads as this branch's. That is the safe direction: pre-existing means "somebody
+# else's ticket", and a defect filed there wrongly merges with the PR that caused it.
+cmd_classify() {
+  [ $# -eq 3 ] || die "usage: $0 classify <artifact-dir> <path> <line>"
+  local dir=$1 path=$2 line=$3 manifest base head correspondence commit rc
+  manifest="$dir/manifest.json"
+  [ -f "$manifest" ] || die "no manifest.json in $dir"
+  case "$line" in
+    ''|*[!0-9]*) die "line must be a number: $line" ;;
+  esac
+  base="$(jq -r '.branch_base_sha // ""' "$manifest")"
+  head="$(jq -r '.scope_head // ""' "$manifest")"
+  correspondence="$(jq -r '.correspondence' "$manifest")"
+
+  if [ -z "$base" ]; then
+    echo "unknown: no branch base could be computed for this scope"
+    return 0
+  fi
+  # A head already contained in the base collapses the merge base onto it, and every
+  # line would then test as pre-existing, a commit being its own ancestor. Not on
+  # `workspace`: there the change is the uncommitted work, which blames to no commit,
+  # and everything committed really is on the base.
+  if [ "$base" = "$head" ] && [ "$correspondence" != workspace ]; then
+    echo "unknown: the scope's head is already contained in the base"
+    return 0
+  fi
+
+  cd "$(repo_root)"
+  # On `workspace` the reviewed content is on disk, so the line number addresses a
+  # working-tree line; blaming the committed blob there reads whatever the uncommitted
+  # edit shifted into place.
+  if [ "$correspondence" = workspace ]; then
+    commit="$(git blame -L "$line,$line" --porcelain -- "$path" 2>/dev/null | head -1 | cut -d' ' -f1 || true)"
+  else
+    commit="$(git blame -L "$line,$line" --porcelain "$head" -- "$path" 2>/dev/null | head -1 | cut -d' ' -f1 || true)"
+  fi
+  # No blame is an untracked file, and the all-zero sha an uncommitted line: both are
+  # this change's own work.
+  case "$commit" in
+    ''|*[!0]*) ;;
+    *) commit="" ;;
+  esac
+  if [ -z "$commit" ]; then
+    echo "this-branch"
+    return 0
+  fi
+  rc=0; git merge-base --is-ancestor "$commit" "$base" 2>/dev/null || rc=$?
+  case $rc in
+    0) echo "pre-existing $base" ;;
+    1) echo "this-branch" ;;
+    *) echo "unknown: $commit could not be compared with the branch base" ;;
+  esac
+}
+
 # scope.diff is the full source of whatever is under review, so it is not left readable by
 # other users on the machine. On macOS $TMPDIR is already a per-user 0700 directory; this is
 # for the Linux boxes where it is unset and the fallback is a shared /tmp.
@@ -1108,9 +1252,10 @@ umask 077
 
 case "${1:-}" in
   resolve) shift; cmd_resolve "$@" ;;
+  classify) shift; cmd_classify "$@" ;;
   base)
     repo_root >/dev/null
     resolve_default_branch || die "cannot resolve a default branch; ask for one, or pass --base"
     ;;
-  *) die "usage: $0 resolve [--scope <ref|range|path|PR#|PR-url>] [--base <ref>] | base" ;;
+  *) die "usage: $0 resolve [--scope <ref|range|path|PR#|PR-url>] [--base <ref>] | classify <artifact-dir> <path> <line> | base" ;;
 esac
