@@ -625,6 +625,11 @@ a reply cites to be on the remote — "fixed in abc123" is false until abc123 is
 replies on the thread itself, resolves only what it fixed, and leaves declined threads open
 for the reviewer, or a bot that accepts the reply, to close.
 
+Each reply ends with a hidden `wtf-answered` marker, so a later run, or a later
+`wtf-babysit-pr` round, skips what it has already answered unless someone has replied
+since. The marker counts only in a comment from the account the replies are posted from,
+so nobody else can use it to silence a review.
+
 ## Shipping unattended
 
 `wtf-ship-it` chains the tools above so a request — an issue, a ticket, a paragraph — ends as

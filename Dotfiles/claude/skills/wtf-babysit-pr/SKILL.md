@@ -91,7 +91,8 @@ than committing somewhere the push cannot carry.
 - **Open review threads or review bodies.** Follow
   `~/.claude/skills/wtf-address-review/SKILL.md` steps 1–4. At its step 5, make its
   commits, then push in §3 together with any CI fix, and post its replies after that push
-  as its step 5 says.
+  as its step 5 says. Its step 1 skips what an earlier round already answered, by the
+  marker each reply carries, so a declined thread is not answered again every round.
 
 A Critical or Warning from a cold review here gets one repair before the push, checked
 against the code like any finding, with a second cold review of that repair. Holding it
