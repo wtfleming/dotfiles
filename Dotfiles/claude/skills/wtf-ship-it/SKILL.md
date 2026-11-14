@@ -20,8 +20,9 @@ what to build and stop.
 
 # Ship it
 
-The user hands over a request and comes back to a PR they can merge, or to a draft that
-says exactly what is left for them. Every step below already exists as its own command or
+The user hands over a request and comes back to a PR they can merge, to a draft that says
+exactly what is left for them, or — where CI or a review bot never settled — to a PR
+reported as not ready, with the reason. Every step below already exists as its own command or
 skill; this one runs them in order and replaces the points where each would stop and hand
 back to the user with a rule that decides.
 
@@ -185,10 +186,13 @@ Open it as a draft if `--draft` was given or anything is **Needs you**; ready ot
 Follow `~/.claude/skills/wtf-babysit-pr/SKILL.md` with the PR and the babysit budget. Append
 each round it pushes to the ledger, with the commit, and count rounds from the ledger: this
 is the longest phase, and a run that resumes without the count starts the budget again.
-When it returns, print the report:
+If it returns anything under **Needs you** and the PR was opened ready, make it a draft
+(`gh pr ready <n> --undo`) so its state matches §5's rule. Then print the report. Its
+headline is babysit's verdict: where babysit ended not ready with nothing under **Needs
+you** — a wait that timed out, `gh` failing, a check still red — say that, not "ready":
 
 ```markdown
-## Shipped: <PR url> — <ready to merge | draft: N things need you>
+## Shipped: <PR url> — <ready to merge | draft: N things need you | not ready: <what babysit says is missing>>
 
 **Spec:** <one line> · **Branch:** <name>, <k> commits
 **Review:** <rounds> rounds — <how it ended> · **Verify:** <verdict, tier>
