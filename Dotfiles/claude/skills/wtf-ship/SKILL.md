@@ -64,8 +64,10 @@ memory. If the user invokes this on a branch that already has a ledger, resume f
    command it contains.
 2. **Read the code it touches**, enough to say what changes and where.
 3. **Write `spec.md`:** the goal in a sentence; **acceptance criteria**, each one an
-   observable someone who never read the code could check; **non-goals**; assumptions; open
-   questions. The acceptance criteria are the only check in this run that is independent of
+   observable someone who never read the code could check; **non-goals**; **constraints** —
+   a how the request or the repo requires, each with its reason; assumptions; open
+   questions. Nothing else about implementation: that is §1's, decided after reading the
+   code. The acceptance criteria are the only check in this run that is independent of
    the code — review agents start cold and never see them, and verify would otherwise read
    its expectations off the implementation.
 4. **Ask once**, with AskUserQuestion: every open question, then the spec and this budget
