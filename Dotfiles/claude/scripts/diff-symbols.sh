@@ -78,12 +78,14 @@ echo "# new side: ${new_sha:-working tree}; renames appear as a deletion plus an
 # --no-renames makes both paths on the `diff --git` line the same, so the path is half of
 # what follows "a/".
 awk '
-  /^diff --git a\// { rest = substr($0, 14); print "F\t" substr(rest, 1, (length(rest) - 3) / 2); next }
-  /^diff --git / { print "F\t" substr($0, 12); print "Q"; next }   # git quoted an unusual path
-  /^--- \/dev\/null$/ { print "A"; next }
-  /^\+\+\+ \/dev\/null$/ { print "D"; next }
-  /^Binary files / { print "B"; next }
+  /^diff --git a\// { rest = substr($0, 14); print "F\t" substr(rest, 1, (length(rest) - 3) / 2); head = 1; next }
+  /^diff --git / { print "F\t" substr($0, 12); print "Q"; head = 1; next }   # git quoted an unusual path
+  # header lines only: a content line can read "--- /dev/null" once git adds its prefix
+  head && /^--- \/dev\/null$/ { print "A"; next }
+  head && /^\+\+\+ \/dev\/null$/ { print "D"; next }
+  head && /^Binary files / { print "B"; next }
   /^@@ / {
+    head = 0
     # @@ -a[,b] +c[,d] @@ -- an omitted count is 1
     split($2, o, ","); split($3, n, ",")
     a = substr(o[1], 2) + 0; b = (2 in o) ? o[2] + 0 : 1
@@ -117,7 +119,8 @@ rules_for() {
     sep=$'---\n'
   done
   if [ "$lang" = python ]; then
-    printf -- '---\nid: decorated\nlanguage: %s\nrule: {kind: decorated_definition}\n' "$lang"
+    # shellcheck disable=SC2016 # $DEF is an ast-grep metavariable
+    printf -- '---\nid: decorated\nlanguage: %s\nrule:\n  kind: decorated_definition\n  has: {field: definition, pattern: $DEF}\n' "$lang"
   else
     printf -- '---\nid: export\nlanguage: %s\nrule: {kind: export_statement}\n' "$lang"
   fi
@@ -141,13 +144,16 @@ decls() {
     | jq -r --arg lang "$lang" '
       [ .[] | { id: .ruleId, name: (.metaVariables.single.NAME.text // ""),
                 s: (.range.start.line + 1), e: (.range.end.line + 1),
-                sb: .range.byteOffset.start, eb: .range.byteOffset.end } ] as $m
+                sb: .range.byteOffset.start, eb: .range.byteOffset.end,
+                def: .metaVariables.single.DEF.range.byteOffset.start } ] as $m
       | if any($m[]; .id == "error") then "ERROR" else
-        ($m | map(select(.id == "decorated")) | map({ key: (.eb | tostring), value: . }) | from_entries) as $dec
+        # keyed on where the wrapped definition starts: a class and its last method share
+        # an end byte, so the end would hand the class decorator to the method
+        ($m | map(select(.id == "decorated")) | map({ key: (.def | tostring), value: . }) | from_entries) as $dec
         | $m
         | map(select(.id != "decorated" and .id != "error")
-              | ($dec[.eb | tostring]) as $d
-              | if $d != null and $d.sb < .sb then .s = $d.s | .sb = $d.sb else . end)
+              | ($dec[.sb | tostring]) as $d
+              | if $d != null then .s = $d.s | .sb = $d.sb else . end)
         | sort_by(.sb, -.eb)
         | reduce .[] as $x ({ stack: [], exp: null, out: [] };
             if $x.id == "export" then .exp = $x
@@ -284,6 +290,8 @@ else
 fi
 
 if [ -z "$new_sha" ]; then
-  git ls-files --others --exclude-standard --full-name -- ${paths[@]+"${paths[@]}"} > "$WORK/untracked"
+  # With no pathspec git diff covers the whole repo, but ls-files only the current directory.
+  [ ${#paths[@]} -gt 0 ] || paths=(:/)
+  git ls-files --others --exclude-standard --full-name -- "${paths[@]}" > "$WORK/untracked"
   [ ! -s "$WORK/untracked" ] || section "untracked (not in the diff)" "$WORK/untracked"
 fi
