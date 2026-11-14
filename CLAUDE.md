@@ -93,7 +93,9 @@ home directory. Key consequences to keep in mind:
   over. `publish-verify-section.sh` rewrites a public PR description, so its failure mode is
   deleting prose the author wrote, somewhere that notifies watchers and cannot be taken
   back — it lived as a fenced block inside `reference/github-publishing.md` until the
-  shellcheck glob and a test could reach it. A new test file here needs a step added to
+  shellcheck glob and a test could reach it. `fix-snapshot.sh` builds the diff a fix
+  round's cold review reads, so its failure mode is a diff that omits a file in silence.
+  A new test file here needs a step added to
   `.github/workflows/lint.yml` — the shellcheck glob picks it up, but nothing runs it
   otherwise.
 - Prefer POSIX-compatible test syntax (`[ "$x" = "$y" ]`, not `==`) in `sh` scripts.

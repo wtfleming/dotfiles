@@ -58,6 +58,11 @@ jobs:
       - name: publish-verify-section smoke test
         run: Dotfiles/claude/tests/publish-verify-section-smoke.sh
 
+      # fix-snapshot.sh builds the diff a fix round's cold review reads, and its failure
+      # mode is a diff that omits a file -- an untracked one, a deleted one -- in silence.
+      - name: fix-snapshot smoke test
+        run: Dotfiles/claude/tests/fix-snapshot-smoke.sh
+
       # A skill, agent or command whose YAML header does not parse registers wrong or
       # not at all, and nothing else here would notice -- shellcheck skips markdown and
       # jq only sees settings.json.
