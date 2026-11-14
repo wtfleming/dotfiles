@@ -345,10 +345,7 @@ previous version, and whether the down migration has ever actually been run. It 
 whether a clean tree of the branch still builds and boots, which catches the dependency
 in the lockfile but not the manifest and the env var documented nowhere. It measures
 scale instead of eyeballing it, since an N+1 shows up as a query count of 3 + N where
-wall-clock is noise. And on a PR it verifies the title and description in both
-directions: every claim in the body true, *and* every meaningful change accounted for —
-because what review produces is usually an omission nobody went back to write up, and a
-squash merge makes that title the permanent commit subject on `main`.
+wall-clock is noise.
 
 Before a row is reported green it is checked against the ways a probe passes without
 meaning anything — it never reached the change, its assertion is satisfied by anything,

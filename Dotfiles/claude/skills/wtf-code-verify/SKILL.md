@@ -1,6 +1,6 @@
 ---
 name: wtf-code-verify
-description: 'Prove that code does what it is supposed to do before it merges, by executing it — derive the falsifiable expectations a change or a subject implies, probe each one including the inputs that must be refused, and report a verdict backed by raw output. Use this whenever a PR is about to be opened or changes are about to merge, and whenever the user asks to verify, prove, confirm or sanity-check that something actually works: "does this actually work", "verify the fix", "e2e test this change", "spin up the server and check it", "make sure auth still works before I merge". Takes a ref, branch, PR or a prose subject — "login and authentication" — so it also covers an area of a running system with no diff, and whether docs, comments or a PR''s own title and description still match the code. Expensive by design — it boots services and builds a second worktree. NOT for reading code without running it (that is wtf-code-review), routine test runs, or checking unfinished work mid-development.'
+description: 'Prove that code does what it is supposed to do before it merges, by executing it — derive the falsifiable expectations a change or a subject implies, probe each one including the inputs that must be refused, and report a verdict backed by raw output. Use this whenever a PR is about to be opened or changes are about to merge, and whenever the user asks to verify, prove, confirm or sanity-check that something actually works: "does this actually work", "verify the fix", "e2e test this change", "spin up the server and check it", "make sure auth still works before I merge". Takes a ref, branch, PR or a prose subject — "login and authentication" — so it also covers an area of a running system with no diff, and whether docs and comments still match the code. Expensive by design — it boots services and builds a second worktree. NOT for reading code without running it (that is wtf-code-review), routine test runs, or checking unfinished work mid-development.'
 argument-hint: '[ref, branch, PR, path or subject — defaults to uncommitted, else the branch] [--tier 0|1|2|3] [--base <ref>]'
 allowed-tools: Agent, Bash, Read, Edit, Write, Glob, Grep
 ---
@@ -71,9 +71,9 @@ A named scope comes in three shapes.
 `~/.claude/scripts/resolve-scope.sh resolve --scope <it>`, the same way an omitted scope is
 resolved below, so a named revision gets the artifact and the `correspondence` too rather
 than a diff derived a second way. `gh pr view <n>` still gives you the body, and the body
-is where the author already wrote down what they think they did. On a PR that body is both context
-and a claim in its own right, verified alongside the code — it was written before review
-and is rarely updated after.
+is where the author already wrote down what they think they did: its behavioural claims are
+expectations like any other. Whether the title and body still describe the change is
+`/wtf-create-pr`'s check, not this one.
 
 **A subject** — prose naming an area of behaviour, such as `login and authentication`.
 There is no diff and no author here: you are verifying a contract as it stands. Find
@@ -110,7 +110,6 @@ different kinds — classify each one.
 | it is faster | a threshold stated in advance, met across distributions rather than a single pair of numbers | `references/differential.md` |
 | the prose is accurate | each falsifiable claim in it holds against the implementation, which is the source of truth | `references/expectations.md` |
 | a subject behaves (no diff) | the contract holds, including its refusals | `references/expectations.md` |
-| the PR describes the change | every claim in the title and body holds, *and* every meaningful change is accounted for | `references/expectations.md` |
 | it is safe to deploy | it survives the window where two versions run at once, and it can be rolled back | `references/compatibility.md` |
 | the branch is complete | a clean tree of HEAD installs, builds, boots and passes without your uncommitted state | `references/environments.md` |
 
@@ -457,18 +456,13 @@ has the terminal and PR forms, and why each of these lines earns its place:
   nothing. A setting you turned up on something you did not start counts: a database's
   statement logging, a service's log level. Tear the worktrees down:
   `~/.claude/skills/wtf-code-verify/scripts/baseline-worktree.sh remove`.
-- **PR description** — whether the title and body still describe the change, or what
-  drifted. Only when the scope is a PR. Report the drift; do not fix it.
-  `references/expectations.md` has what makes that report actionable for the command
-  that does.
 
 **Every line in the report is either something you observed or is marked as inference.**
 The verdict has a probe behind it by construction, and the raw capture is on disk — but
 those trailing lines have no probe, and they are where an unbacked claim gets in. Each of
 them is a fact about the world with a command that establishes it: read `.github/workflows`
 before writing what CI covers, run `git status` and `docker ps` and
-`baseline-worktree.sh path` before writing *Residue: none*, re-read the PR body before
-saying it still describes the change, take **Covered** from a coverage run over the
+`baseline-worktree.sh path` before writing *Residue: none*, take **Covered** from a coverage run over the
 changed lines rather than from the probes you meant to write, and take **Guarded** from
 §9's unscoped run rather than from what the suite looks like it tests. Where you could not check,
 write what you assumed and say it is an assumption.
@@ -484,8 +478,7 @@ public and outward-facing, and a verification section landing on the wrong PR is
 than none at all.
 
 **It goes in the PR body, between the `verify:start` / `verify:end` markers** — that
-section, and **nothing else on the PR**. Not the title, not the description: where either
-has drifted, report it and `/wtf-create-pr` fixes it. Why the body rather than a comment,
+section, and **nothing else on the PR**. Why the body rather than a comment,
 and what a write there may and may not touch, are the ownership rule in
 `~/.claude/reference/github-publishing.md`; `evidence.md` has the channel mechanics, the
 check for whose PR it is, and when to fall back to a comment.

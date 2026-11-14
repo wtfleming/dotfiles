@@ -273,10 +273,9 @@ outside the section.
 
 **Establish whose PR it is before choosing the channel.** `gh pr view <n> --json
 author,headRepositoryOwner` — the field `/wtf-create-pr` already keys on for its own
-purposes. Nothing else in a verify run reads it: the drift check fetches
-`title,body,createdAt,commits,reviews,comments` and the resolver captures only
-`headRefOid`, so the manifest carries no ownership fact, and the execution gate never fires
-on a prose-claim run that needs no boot. Without the check the default channel is a
+purposes. Nothing else in a verify run reads it: the resolver captures only `headRefOid`,
+so the manifest carries no ownership fact, and the execution gate never fires on a run
+that needs no boot. Without the check the default channel is a
 read-modify-write over a contributor's own description. Say whose PR it is in the offer.
 
 ```bash
@@ -297,13 +296,6 @@ message went to stderr where nobody sees it. So report that the body still holds
 unreconciled `verify:start` section that reads as current and needs a hand fix, alongside
 which channel was used. A run that recovered itself and left the PR misleading has not
 finished.
-
-**Where the description drifted, report it and hand off.** Name what drifted — the claim
-in the title or body, and the code that contradicts it — and point at `/wtf-create-pr`,
-whose update path routes an existing PR to `gh pr edit` and carries the survivors across.
-Do not propose replacement wording here. On someone else's PR the wording is theirs to
-fix; on your own it is one command away, and the drift you found is what that command
-needs to hear.
 
 Re-read the verdict line before posting. Verification sections are read as endorsements,
 and a "verified with gaps" whose gaps are buried below a fold reads as an unqualified
@@ -338,7 +330,6 @@ demoted — is told inside that shape, not as a narrative before it.
 **Guarded.** Nothing — the unscoped suite stays green with the flag check removed.
 **CI.** Unit suite and lint on every push; none of the rows above is in CI today.
 **Residue.** None — compose dependencies down, worktree removed.
-**PR description.** Title still holds; body says "invalid values are rejected", which #3 contradicts.
 
 Files in `<scratch>/code-verify/`; PR section in `VERIFICATION.md`.
 
@@ -393,7 +384,6 @@ the ones a reader most relies on. Each has a command that settles it:
 | **Guarded** | the project's unscoped test command, run over a worktree of HEAD with the line the change turns on broken — `promotion.md` |
 | **CI** | reading `.github/workflows` or equivalent, this run, not from memory of the repo |
 | **Residue** | `git status --porcelain`, `docker compose ps`, `git worktree list`, and the scratch path — checked after teardown, not predicted before it |
-| **PR description** | the body re-read at the end, since your own commits may have outdated it since you looked |
 
 Counts and figures belong to the same rule. A character count taken from raw text rather
 than from a parse, a row count guessed from a fixture, a timing quoted from one run and
