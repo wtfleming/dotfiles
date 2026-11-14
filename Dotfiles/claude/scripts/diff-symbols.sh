@@ -78,8 +78,9 @@ echo "# new side: ${new_sha:-working tree}; renames appear as a deletion plus an
 
 # Records, one file at a time: F and the repo path (taken from the `diff --git` line, which
 # every entry has -- binary, empty and mode-only changes have no ---/+++ lines), then A
-# (added) or D (deleted), B (binary) and L (symlink) where they apply, each touched new-side line (N),
-# each deleted old-side line (O), and G for a pure deletion after new-side line c.
+# (added) or D (deleted), B (binary) and L (symlink) where they apply, each touched
+# new-side line (N), each deleted old-side line (O), and G for a pure deletion after
+# new-side line c.
 # --no-renames makes both paths on the `diff --git` line the same, so the path is half of
 # what follows "a/".
 awk '
@@ -137,9 +138,10 @@ rules_for() {
 
 # Declarations in one file as TSV: kind, name, start line, end line, exported, start byte,
 # end byte (the bytes tell nesting apart on a line several declarations share), dotted
-# path of the enclosing declarations. Prints ERROR instead when the parse has error nodes, since symbols from a broken
-# parse are guesses, and ENCODING when the file is not UTF-8: ast-grep then prints [] and
-# exits 0, which would read as a file with no declarations.
+# path of the enclosing declarations. Prints ERROR instead when the parse has error
+# nodes, since symbols from a broken parse are guesses, and ENCODING when the file is not
+# UTF-8: ast-grep then prints [] and exits 0, which would read as a file with no
+# declarations.
 #
 # One sweep in source order with a stack of open declarations finds each parent, so the
 # cost stays linear in a generated file of thousands of types. A Python definition starts
@@ -198,7 +200,7 @@ side() {
 }
 
 # For each line record in file-lines, print the innermost declarations that hold it: kind,
-# name, path:start-end, exported, parent -- or "-" and path:line when none does. A line
+# name, path:start-end, exported, enclosing path -- or "-" and path:line when none does. A line
 # can be held by several innermost declarations (`const a = 1, b = 2`), and a line diff
 # cannot say which of them changed, so all of them are printed. A gap after line c (a
 # pure deletion) is held only by a declaration spanning both c and c+1.
@@ -272,11 +274,22 @@ analyse() {
   fi
   # A declaration enclosing a deleted line is removed if fewer of its kind and name are
   # left under the same enclosing path than there were -- a count, because a getter and
-  # its setter share all three.
+  # its setter share all three. When more of them lost lines than went away, a line diff
+  # cannot say which survived, so each row says so rather than claiming a removal.
   enclosing "$WORK/old.tsv" O "$path" | awk -F'\t' -v OFS='\t' '
     FILENAME == ARGV[1] { new[$1 "\t" $8 "\t" $2]++; next }
     FILENAME == ARGV[2] { old[$1 "\t" $8 "\t" $2]++; next }
-    $1 != "-" && old[$1 "\t" $5 "\t" $2] > new[$1 "\t" $5 "\t" $2] { print $1, $2, $3, $4 }
+    $1 != "-" {
+      key = $1 "\t" $5 "\t" $2; row = $1 OFS $2 OFS $3 OFS $4
+      if (old[key] > new[key] && !(row in seen)) { seen[row] = 1; rows[key, ++cnt[key]] = row }
+    }
+    END {
+      for (key in cnt) {
+        gone = old[key] - new[key]
+        for (i = 1; i <= cnt[key]; i++)
+          print rows[key, i] (cnt[key] > gone ? OFS "ambiguous: " gone " of these " cnt[key] " removed" : "")
+      }
+    }
   ' "$WORK/new.tsv" "$WORK/old.tsv" - >> "$WORK/removed"
 }
 
@@ -308,7 +321,7 @@ if [ "$files" -eq 0 ]; then
   echo
   echo "no changes in this diff"
 else
-  echo "# columns: kind, name, file:start-end, exported"
+  echo "# columns: kind, name, file:start-end, exported[, note]"
   section changed "$WORK/changed"
   section top-level "$WORK/toplevel"
   section "removed (old-side location)" "$WORK/removed"

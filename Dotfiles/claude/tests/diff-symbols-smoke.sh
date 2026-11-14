@@ -254,6 +254,12 @@ check "a removed setter is a removal though its getter keeps the name" \
   "method${tab}x${tab}c.ts:5-7${tab}no" "$(grep 'c\.ts' <<<"$removed" || :)"
 rc=0; "$SYMS" "" >/dev/null 2>&1 || rc=$?
 check "an empty range argument fails rather than meaning no range" "1" "$rc"
+# Edit the surviving getter too: a line diff cannot say which x went, so neither is asserted.
+sed '3s/1/2/' c.ts > c.new && mv c.new c.ts
+check "a removal that could be either of two same-named members is marked ambiguous" \
+  "method${tab}x${tab}c.ts:2-4${tab}no${tab}ambiguous: 1 of these 2 removed
+method${tab}x${tab}c.ts:5-7${tab}no${tab}ambiguous: 1 of these 2 removed" \
+  "$(section "removed (old-side location)" "$("$SYMS" 2>/dev/null)" | grep 'c\.ts' || :)"
 
 rc=0; "$SYMS" no-such-ref >/dev/null 2>&1 || rc=$?
 check "a bad range fails" "1" "$rc"
