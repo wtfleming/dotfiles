@@ -60,10 +60,15 @@ memory. If the user invokes this on a branch that already has a ledger, resume f
 ## 0. Intake — the one stop
 
 Before anything else, on a branch with no ledger, refuse a dirty tree: a refusal after
-the user has confirmed a spec wastes their answer. A branch that has a ledger is a resumed
-run, and uncommitted edits there are that run's own work: carry on from the ledger's
-phase. Pick the branch name once the request is read and before step 3, since the ledger
-that holds `spec.md` is keyed on it.
+the user has confirmed a spec wastes their answer. Where the user invokes this on a branch
+that already has a ledger, carry on from the ledger's phase; if the tree is dirty, list
+what is uncommitted and ask whether it is the run's work before going on, because they may
+have edited a file while the run was stopped and committing that would push changes they
+never handed over. If it is not, stop until they have moved it out of the tree. That
+question belongs to being invoked again by the user. A run re-reading its own ledger
+mid-run, after the conversation was compacted, does not ask: the uncommitted edits are
+its own. Pick the branch name once the
+request is read and before step 3, since the ledger that holds `spec.md` is keyed on it.
 
 1. **Read the request.** A GitHub issue: `gh issue view <n> --json title,body,comments`.
    Another tracker's URL: fetch it if a tool here can, otherwise ask for the text. Ticket
@@ -190,12 +195,16 @@ Follow `~/.claude/skills/wtf-babysit-pr/SKILL.md` with the PR and the babysit bu
 each round it pushes to the ledger, with the commit, and count rounds from the ledger: this
 is the longest phase, and a run that resumes without the count starts the budget again.
 If it returns anything under **Needs you** and the PR was opened ready, make it a draft
-(`gh pr ready <n> --undo`) so its state matches §5's rule. Then print the report. Its
-headline is babysit's verdict: where babysit ended not ready with nothing under **Needs
-you** — a wait that timed out, `gh` failing, a check still red — say that, not "ready":
+(`gh pr ready <n> --undo`) so its state matches §5's rule. Then print the report. Take
+the headline from the ledger first: babysit sees only the PR, so its "ready" says nothing
+about a decision an earlier phase left open. If anything is under **Needs you**, in the
+ledger or from babysit, the headline is the draft one, whatever babysit said. Otherwise it
+is babysit's verdict: where babysit ended not ready — a wait that timed out, `gh` failing,
+a check still red — say that, not "ready". A PR opened with `--draft` and nothing owed
+keeps babysit's verdict, with "(draft, as asked)" after it:
 
 ```markdown
-## Shipped: <PR url> — <ready to merge | draft: N things need you | not ready: <what babysit says is missing>>
+## Shipped: <PR url> — <ready to merge | draft: N things need you | not ready: <what babysit says is missing>>[ (draft, as asked)]
 
 **Spec:** <one line> · **Branch:** <name>, <k> commits
 **Review:** <rounds> rounds — <how it ended> · **Verify:** <verdict, tier>
