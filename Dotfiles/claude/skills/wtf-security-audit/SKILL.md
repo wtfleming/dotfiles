@@ -25,7 +25,8 @@ nothing: the report describes the smallest fix, and a person decides.
 
 Read `references/method.md` before you start. It holds the invariant method,
 the gate every candidate must pass, the three verdicts and the severity
-anchors, and the report below depends on all of them. Then read `references/attack-classes.md`, and `references/ai-and-llm.md` whenever a
+anchors, and the report below depends on all of them. Then read
+`references/attack-classes.md`, and `references/ai-and-llm.md` whenever a
 model, an agent, a tool call, an approval gate or model output is anywhere in
 the area.
 
@@ -63,8 +64,7 @@ fixture — only when the user has said running it is fine, and then only the
 minimum check that settles the claim: dummy principals and data, no network,
 nothing persistent. Never probe a deployed system, a real account or
 credential, or a shared service, and never continue past the minimum effect.
-When
-a check you could not run would decide a candidate, the verdict is
+When a check you could not run would decide a candidate, the verdict is
 `needs_validation` with that check as the plan.
 
 ## Report
@@ -99,4 +99,6 @@ End with this, and nothing after it:
 
 An empty **Confirmed** section is a real and useful answer; never manufacture
 a finding to fill it. Leave out any section with nothing in it except
-**Confirmed**, which always appears.
+**Confirmed**, which always appears. **Searched** always appears too: write
+`none` when no absence or variant search was needed, so a clean result can be
+told from a skipped one.
