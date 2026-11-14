@@ -86,8 +86,9 @@ caller, the existing error handling, and the conventions you are judging against
 
 ## 2. Run the tests
 
-If the dispatch says not to run the tests or the linter, run neither, and report
-both as `not run: execution withheld by the caller`.
+If the dispatch says not to run the tests or the linter, run neither — and not
+the formatter check in section 3 either, which loads config and plugins from the
+same tree. Report both as `not run: execution withheld by the caller`.
 
 Otherwise discover the command; do not guess it. In order:
 
