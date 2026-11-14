@@ -37,12 +37,9 @@ contain, and pass that. The question is what guards this code now, not what guar
 while the branch was open, so a merged head is a reason to supply the base rather than to
 skip the check.
 
-**Do this before the report's Residue line is composed.** The pair is residue, so in
-section order it gets built after that line has said the tree is clean — possibly after
-the section has been posted to the PR — and the next `create` then refuses without
-`--force`. The one pair serves *Prove it fails without the fix* below as well, so build it
-once here, keep it through both, then `baseline-worktree.sh remove` and compose Residue
-over a tree that is actually clean.
+Tear the pair down with `baseline-worktree.sh remove` before the report is composed, so
+its **Residue** line describes a clean tree; *Prove it fails without the fix* below
+rebuilds the baseline if the user agrees to promote anything.
 
 That is a different question from the coverage run behind the report's **Covered** line,
 and the two disagree usefully. Coverage says a changed line was executed. This says
@@ -134,7 +131,7 @@ The promoted test must fail against the code that lacked the fix, and pass with 
 test that passes on both sides asserts nothing, and unlike an unverified probe it will be
 trusted for years and cited as coverage.
 
-The baseline worktree is probably still up, so this costs one run. The test file does not
+Rebuild the baseline with `baseline-worktree.sh create`. The test file does not
 exist there, so copy it in rather than committing it into the baseline tree — see
 `differential.md`. If the baseline reports *no such test* or *no such file*, the test
 never ran and the check proved nothing.

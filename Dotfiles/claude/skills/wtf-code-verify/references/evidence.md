@@ -344,7 +344,7 @@ What the shape enforces:
   says it can wait, in the list rather than by being left out. A ❌ absent from To fix leaves
   the reader to guess whether it was forgotten or judged harmless, and an entry there the
   table does not show as ❌ is an opinion.
-- **Keep as tests is §9's triage**, printed here rather than as a separate list later,
+- **Keep as tests is §8's triage**, printed here rather than as a separate list later,
   with every probe accounted for: promote with the reason, or leave with the reason.
 - **No Predict column.** The plan carried the prediction, written before the run, and
   that is where it does its work. A prediction the result contradicted is worth a few
@@ -357,7 +357,7 @@ What the shape enforces:
   closed.
 - **A demoted green is ⚠️ in its row**, with the reason SKILL.md §7 demoted it, and is counted in
   neither the met nor the failed figure on the verdict line.
-- **The trailing lines carry the PR section's names**, plus **Guarded** from §9. Not
+- **The trailing lines carry the PR section's names**, plus **Guarded** from §8. Not
   "Coverage", "Test gaps" or "Cleanup": the same fact under two names reads as two facts,
   and the reader is about to meet these lines again in the section they post.
 - **One question closes it** — fix, promote, post, on one line, naming the items. Nothing

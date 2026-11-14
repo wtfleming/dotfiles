@@ -13,22 +13,17 @@ checkout rather than the diff. Verification is not "run something and watch it p
 it is **discrimination**: a green result earns its meaning only next to a red one you
 predicted in advance.
 
-That is the idea the whole skill turns on. Everything below exists to stop the four
-ways verification decays into theatre: expectations invented after the fact to fit
-whatever happened, probes that would have passed anyway, environments that decide the
-answer instead of the code, and a report that rounds an inconclusive run up to a pass.
+Everything below exists to stop the four ways verification decays into theatre:
+expectations invented after the fact, probes that would have passed anyway, environments
+that decide the answer instead of the code, and a report that rounds an inconclusive run
+up to a pass.
 
 **This skill runs code. `wtf-code-review` reads it.** If the scope has nothing that can
 be executed and no claim that can be checked against a running system, say so and stop.
 Do not slide into reading the code and presenting that as verification — a reader cannot
-tell the two reports apart once they are written.
-
-Assume review has already run over this scope, because it usually has. So **do not
-re-report what a reader could have found**: the missing guard, the awkward name, the
-suspicious-looking query. Everything here has to be something only execution could tell
-you. Confirming a defect review already suspected is worth doing — that is turning a
-suspicion into a fact — but hunting for read-findable defects is work someone else
-already did, in a report the user is holding.
+tell the two reports apart once they are written. Assume review has already run, so do
+not re-report what a reader could have found; confirming a defect review only suspected
+is worth doing, because that turns a suspicion into a fact.
 
 Read each reference only when a claim calls for it:
 
@@ -39,68 +34,46 @@ Read each reference only when a claim calls for it:
 | `references/compatibility.md` | the change touches persisted state, a deploy boundary, or anything another system consumes |
 | `references/environments.md` | working out how to run this particular project, at any tier, and how to isolate it |
 | `references/evidence.md` | capturing output and writing the report |
-| `references/promotion.md` | turning a probe into a permanent test |
+| `references/promotion.md` | whether anything guards the change, and turning a probe into a permanent test |
 
 ## 0. Check this is the right moment
 
-This is an end-of-cycle gate, not a background check. At the upper tiers it boots
-services and builds a second worktree — minutes at best, longer in a large repo. That
-cost only makes sense once the change is finished and about to be defended in a PR.
+This is an end-of-cycle gate. At the upper tiers it boots services and builds a second
+worktree, which only makes sense once the change is finished. Run it when a human asks,
+or once on a finished branch immediately before the PR — not after ordinary edits, not
+as a substitute for the test suite, and not as an unrequested step inside some larger
+workflow. If the change is still moving, the verdict is stale before anyone reads it.
 
-Run it when a human asks, or once on a finished branch immediately before the PR. Not
-after ordinary edits, not on every commit, not as a substitute for the test suite, and
-not as an unrequested step inside some larger workflow. If the change is still moving,
-the verdict is stale before anyone reads it.
-
-Before starting: say which tiers you expect to need and roughly what that costs, then
-begin. If a claim needs tier 2 or 3 — booting services, driving a browser — ask first
-rather than assuming the user wants to spend that. And commit the change before any
-claim that will use a differential: uncommitted edits are live on the head side and
-absent from the baseline, so they get credited to the change and never reach the PR.
-
-And before bootstrapping or booting a ref you did not author — a fork's PR, a
-contributor's branch — say whose code is about to run and get explicit confirmation.
-Bootstrapping executes that tree's own install scripts in a worktree with this machine's
-`.env` symlinked in, so it is arbitrary code with live credentials to hand.
+Commit the change before any claim that will use a differential: uncommitted edits are
+live on the head side and absent from the baseline, so they get credited to the change
+and never reach the PR.
 
 ## 1. Establish the scope
 
-A named scope comes in three shapes.
-
 **A revision** — a ref, a branch, a path, a PR number. Resolve it with
-`~/.claude/scripts/resolve-scope.sh resolve --scope <it>`, the same way an omitted scope is
-resolved below, so a named revision gets the artifact and the `correspondence` too rather
-than a diff derived a second way. `gh pr view <n>` still gives you the body, and the body
-is where the author already wrote down what they think they did: its behavioural claims are
-expectations like any other. Whether the title and body still describe the change is
-`/wtf-create-pr`'s check, not this one.
+`~/.claude/scripts/resolve-scope.sh resolve --scope <it>`. On a PR, `gh pr view <n>` gives
+you the body, where the author already wrote down what they think they did: its
+behavioural claims are expectations like any other. Whether the title and body still
+describe the change is `/wtf-create-pr`'s check, not this one.
 
 **A subject** — prose naming an area of behaviour, such as `login and authentication`.
-There is no diff and no author here: you are verifying a contract as it stands. Find
-what implements the subject, name the files you settled on and say how you found them.
-A subject scope is the one case where *you* choose what gets verified, and a reader who
-cannot see that choice has no way to tell whether the run covered the thing they meant.
-If nothing in the repo plausibly implements the subject, say so and stop rather than
-verifying the nearest thing you found.
+There is no diff and no author: you are verifying a contract as it stands. Find what
+implements it and name the files you settled on and how you found them — this is the one
+case where *you* choose what gets verified, and the reader needs to see that choice. If
+nothing plausibly implements the subject, say so and stop.
 
-**Nothing** — resolve it with `~/.claude/scripts/resolve-scope.sh resolve` and no
-`--scope`: uncommitted work, else the branch against its merge base, else `git show HEAD`. It implements
-`~/.claude/reference/scope-resolution.md`, including the two things that decide whether
-this step is silently wrong — the default branch resolved rather than assumed to be
-`main`, and an empty diff treated as *fall through* rather than *no changes*. Where
-nothing resolves it says so and stops; ask for `--base` rather than guessing.
+**Nothing** — `~/.claude/scripts/resolve-scope.sh resolve` with no `--scope`: uncommitted
+work, else the branch against its merge base, else `git show HEAD`, per
+`~/.claude/reference/scope-resolution.md`. Where nothing resolves it says so and stops;
+ask for `--base` rather than guessing.
 
-The resolver exits **2** when the scope is prose — that is the subject case above, and
-its procedure applies instead. Any other non-zero exit is a real failure: report it and
-stop rather than verifying something else.
-
-State the scope you settled on before you run anything.
+The resolver exits **2** when the scope is prose — the subject case. Any other non-zero
+exit is a real failure: report it and stop.
 
 ## 2. Classify each claim, not the change
 
-"Verified" means different things depending on what is being claimed, and forcing one
-frame onto all of them produces nonsense. A single PR usually makes several claims of
-different kinds — classify each one.
+A single PR usually makes several claims of different kinds, and "verified" means
+something different for each:
 
 | The claim | Verified means | Read |
 | --------- | -------------- | ---- |
@@ -113,72 +86,60 @@ different kinds — classify each one.
 | it is safe to deploy | it survives the window where two versions run at once, and it can be rolled back | `references/compatibility.md` |
 | the branch is complete | a clean tree of HEAD installs, builds, boots and passes without your uncommitted state | `references/environments.md` |
 
-The deploy row is about surviving the two-version window and rolling back, and this skill
-settles both by *running* something. What the live system is currently doing — how much
-traffic the changed path actually takes, what is already failing on it — it cannot see at
-all. `/wtf-prod-impact` reads exactly that and runs nothing, so the two answer one
-question from opposite sides; where a chain it could not settle would be settled by
-executing something, it names the probe and this skill is where that happens.
+What the live system is doing — real traffic on the changed path, what is already
+failing — this skill cannot see; `/wtf-prod-impact` reads that and runs nothing.
 
 ## 3. Write the expectations down, then show them
 
-Before running anything, write the list. Each line pairs an input or action with an
-observable — something you could show to someone who has never read the code: a status
-code, a response field, an exit code, a rendered file, a log line, a pixel, a row that
+Each expectation pairs an input or action with an observable someone who never read the
+code could check: a status code, a response field, an exit code, a log line, a row that
 is or is not there afterwards. "The cache is no longer invalidated twice" is not an
 observable. "The second request returns 200 with the updated title instead of the stale
 one" is.
 
-**Start from the review, if there was one.** A review finding is the best
-expectation available: someone already thought it was suspicious. A Warning reading "this could 500
-on a null slug" is a hypothesis with an input and a predicted observable already
-attached — which is exactly the shape of a line below. Review produces hypotheses; this
-is the tool that closes them, and a finding that turns out to be wrong is as useful to the
-author as one that turns out to be real.
+**Start from the review, if there was one.** A finding like "this could 500 on a null
+slug" is already an input with a predicted observable. A finding that turns out wrong is
+as useful to the author as one that turns out real.
 
-Three kinds, and the second is where the bugs actually are:
+Three kinds, and the second is where the bugs are:
 
 - **positive** — the thing works. The part that was always going to pass.
-- **negative** — the inputs that must be *refused*, and refused correctly. A 500 where a
-  400 belongs, a bad parameter silently defaulting instead of erroring, an auth check
-  that fails open, a stack trace in the response body. `references/expectations.md`
-  carries the catalogue; the point is that the expectation names *how* it fails, not just that it does.
-  It carries how to *produce* the conditions too — an expired credential, a dependency that
-  is slow rather than down, twenty callers at once — because a case with no mechanism beside
-  it is a case that quietly drops out between being written and being run.
-- **regression** — what worked before still works. The change's blast radius.
+- **negative** — the inputs that must be *refused*, and refused correctly: the 400 that
+  should not be a 500, the auth check that must not fail open. Name *how* it fails, and
+  how you will produce the condition. `references/expectations.md` has the catalogue and
+  the mechanisms.
+- **regression** — what worked before still works.
 
-**The response is not the whole observable.** What a run leaves behind is the other half —
-the duplicate row, the send on a path that was supposed to refuse — and none of it reaches
-the caller, so no assertion on the response can be falsified by any of it. Snapshot the
-state, run, diff it: `references/expectations.md` has the rest of the list, and why the
-negative cases are where it pays.
+Also, from `references/expectations.md`:
 
-Cover a claim per meaningful area of the change rather than one probe for the whole
-thing, and pick the cheapest tier that can see each claim (§5) so breadth stays
-affordable. `references/expectations.md` has why, and what to say when the list runs past
-what the budget allows.
+- **What a run leaves behind is an observable.** Snapshot the state, run, diff it — a
+  handler that validates after it writes returns the same 400 either way.
+- **One row per independently checkable clause.** Rows that share a command are not
+  one row.
+- **Where the change states an invariant, the row is the property**, over generated input.
+- **One claim per meaningful area of the change**, each at the cheapest tier that can see
+  it (§5).
 
-**Split compound claims before numbering.** "The function and its tests are deleted" is
-two rows: a differential proving the function is gone says nothing about its tests.
-Each independently checkable clause gets its own observable and its own result, and rows
-that merely share a command are not one row. `references/expectations.md` has the
-procedure.
+**Check what CI already runs before designing probes** — a probe duplicating a job that
+fires on every push has spent minutes to reproduce a green check.
+`references/environments.md` has the discovery commands.
 
-**Where the change states an invariant, the row is the property.** A round trip, an
-idempotent operation, an output confined to a domain: a few hand-picked examples test
-the cases the author already thought of, and generated input reaches the ones they did
-not. `references/expectations.md` has which invariants count and how to generate without
-adding a dependency.
+### The adversary pass
 
-**Check what CI already runs before designing probes.** The probes worth building are the
-ones CI does *not* run; one that duplicates a job firing on every push has spent minutes
-to reproduce a green check. `references/environments.md` has the discovery commands and
-what to say about the overlap in the report.
+Where the change has a surface that takes outside input — an API, a CLI, a form, a
+parser, a queue consumer, an auth boundary — dispatch `wtf-verify-adversary` with the
+Agent tool and give it **only** the diff you resolved, or for a path or subject the files
+or area. None of your reasoning and none of your expectations: its value is in the inputs
+the author did not imagine. Skip it for a refactor or a prose change.
 
-The list goes to the user once, as one block in this shape, and it is the last thing on
-the page before anything runs. A reader should be able to answer "what is about to happen
-to my machine, and what will it check" from the block alone:
+Merge its cases into your list, dropping any whose expected refusal you cannot state
+concretely. A case it marks **unreachable** is not probed and cannot fail the run; list it
+under **Left out** with that reason.
+
+### Show the list, then run
+
+The list goes to the user once, as one block, and it is the last thing on the page before
+anything runs:
 
 ```
 **Verifying.** `feat/archived-posts` vs merge-base `2427dfb` — 4 files
@@ -194,127 +155,63 @@ to my machine, and what will it check" from the block alone:
 | 4 | regression | `posts` with no new argument | archived rows absent, as before | baseline `2427dfb` | ✅ |
 ```
 
-One line per cell. The mechanism that produces an input and the full observable go in
-`plan.md`; the table carries what a reader scans. **Control** is §4's discriminating
-partner and **Runs** is §5's tier and isolation — both are settled before anything runs,
-so the block waits for them rather than printing the controls as a second list keyed by
-row number. **Asks first** names every pause the run will make — a tier-2 boot, a file
-broken in place, a tree someone else authored — or says `Nothing`; where it names one,
-the block ends waiting on it.
+One line per cell; the mechanism and full observable go in `plan.md`. **Control** is §4's
+discriminating partner and **Runs** is §5's tier and isolation, both settled before the
+block prints.
 
-**Rows keep their number from here to the end of the run.** The progress lines, the
-result table and the promotion list all say `#3` — never `P3`,
-`probe 3` or `row 3` in turn, since a reader who meets a fresh label has to guess whether
-it is the same thing. A progress line names the step and the rows —
-`probing: #1 #3 #4 done, running #2 #5 #6` — and goes out when that changes,
-not on every wake; four identical "still waiting" lines say less than one.
+**Asks first** is the one place the run stops for the user, and it names every pause or
+says `Nothing`. Three things always go there:
 
-### The adversary pass
+- tier 2 or 3 spend — booting services, driving a browser
+- a file broken in place in their checkout (§4)
+- a ref someone else authored, such as a fork's PR or a contributor's branch. Name whose
+  code it is: bootstrapping runs that tree's install scripts with this machine's `.env`
+  symlinked in.
 
-For the negative cases, dispatch the `wtf-verify-adversary` subagent with the Agent tool
-and give it **only** the diff or the subject — none of your reasoning, and none of the
-expectations you already wrote. Whoever wrote the code has already imagined the inputs
-it handles; the value is entirely in the ones they did not, and a fresh reader is the
-one positioned to name those.
+Where it names one, the block ends waiting on it. Otherwise run without waiting — the
+user can still interrupt with the case you missed.
 
-Worth the dispatch when the change has a surface that takes input from outside: an API,
-a CLI, a form, a parser, a queue consumer, anything with an auth boundary. Skip it for a
-refactor or a prose change, where "inputs that should fail" is not the interesting
-category. It proposes cases and expected refusals; it does not run anything. Hand it the
-diff you already resolved rather than having it derive one; for a path or a subject, name
-the files or area, so an empty diff is not read as no surface.
+**Predict** is written before execution, because afterwards everything looks like
+confirmation: a 500 reads as "rejected", an empty array as "filtered correctly". It says
+whether you expect the row met and, for a ❌, why.
 
-Merge what it returns into your list, dropping any case whose expected refusal you cannot
-state concretely. Each case carries the caller path that reaches its input from an
-external entry point. A case marked **unreachable** is not probed and cannot fail the run
-— list it under **Left out** with that reason, since a refusal nobody outside the code can
-trigger is not a requirement, and dropping it silently would hide that it was considered.
-
-### Show the list, then run
-
-Merge the adversary's cases first — a list still missing its negative cases is the half
-least likely to be right.
-
-**Show the list, then run it without waiting for approval.** The list on the page is what
-the verdict is argued from, and the user can still interrupt with the case you missed —
-"you forgot that the token can be expired rather than missing".
-
-**Predict each result before executing it.** Write the expected string down. Afterwards
-everything looks like confirmation: a 500 reads as "rejected", an empty array reads as
-"filtered correctly", a timeout reads as "slow but working". A prediction on the page is
-the only thing that makes those wrong later. **Predict** is that column: whether you
-expect the code to meet the row, and for a ❌ why, in a few words. A run where the
-predicted failures are the ones that fail is a different result from one that surprised
-you, and the column is what lets the report tell them apart.
+**Rows keep their number to the end of the run** — progress lines, result table and
+promotion list all say `#3`. A progress line names the rows (`probing: #1 #3 #4 done,
+running #2 #5 #6`) and goes out when that changes, not on every wake.
 
 ## 4. Give every behavioural probe a discriminating partner
 
-A probe you have only ever seen green is not evidence. A row whose claim is only that a
-command runs — "compiles with warnings as errors" — is the exception: it is settled by a
-fresh capture of that command meeting its declared result, and a contrived break would
-prove nothing it asked. Read the counts all the same: `0 tests` is not a pass when tests
-were asked for. `references/expectations.md` has where the line falls. For everything
-else, three ways to earn discrimination, cheapest first — pick one per claim:
+A probe you have only ever seen green is not evidence. The exception is a row whose claim
+is only that a command runs — "compiles with warnings as errors" — which is settled by a
+fresh capture meeting its declared result; `0 tests` is still not a pass when tests were
+asked for. For everything else, pick one, cheapest first:
 
 1. **The negative case is its own control.** If the invalid input produces the same
-   result as the valid one, the code is not reading it. Free: you already wrote both.
-2. **Break it deliberately.** Corrupt the input, drop the header, flip the flag off,
-   point at an id that does not exist. Confirm the probe goes red, and red for the reason
-   you expect. Seconds, no worktree — but it has to come back out, and **every git-shaped
-   way of undoing it is wrong on a file the user was already working in.**
-   `git checkout -- <path>` discards their edits along with the break; so does
-   reverse-applying `git diff -- <path>`, because that diff contains both and `git apply -R`
-   removes the whole of it. §0 only requires a commit for claims that use a differential, so
-   a dirty file is reachable here.
-
-   Break inside a worktree you can throw away. If it genuinely has to be in place, **name
-   the file and get the user's agreement before editing it** — the only edit in this skill
-   that is meant to be undone, and an unannounced edit to their checkout is
-   indistinguishable from a bug in whatever they were working on. The other two writes
-   there, §7's fix and §9's promoted tests, are meant to stay; this one is restored
-   byte-for-byte below, so leaving it behind is the failure. **Arrange the restore before
-   you make the edit, not after the probe** — a `trap ... EXIT` in the shell that does it,
-   or an equivalent that survives the probe failing, a later command exiting and the run
-   being interrupted. "Copy it back afterwards" describes the happy path only, and the
-   paths that skip it are exactly the ones where a broken file is left in the user's
-   checkout and committed with the next change. Then `cmp` the restored file against the
-   copy and say so, because a restore that silently did not happen looks identical to one
-   that did. Copy the file byte-for-byte before touching it and copy it back —
-   `cp <path> "$OUT/pre-break"` … `cp "$OUT/pre-break" <path>` — which restores exactly what
-   was there without asking git what it thinks the file should look like. A break left
-   behind survives an interrupted run as an uncommitted edit nobody attributes, and the next
-   `git commit -am` ships it.
-
-   The same break aimed at the project's **own** test suite rather than at your probe
-   answers a different question — whether anything guards the change today — and §9 is
-   where that one lands.
+   result as the valid one, the code is not reading it.
+2. **Break it deliberately.** Flip the flag off, drop the header, invert the condition,
+   and confirm the probe goes red for the reason you expect. Break inside a worktree you
+   can throw away. If it has to be in the user's checkout, it goes under **Asks first**,
+   and no git command undoes it: `git checkout` or `git apply -R` would also discard their
+   own edits to the file. Copy the file to `"$OUT/pre-break"` and set a `trap ... EXIT` to
+   copy it back *before* editing, so an interrupted run still restores it. Then `cmp` the
+   restored file against the copy, and say that it matched.
 3. **Run it against the base.** The full differential, and the only form that shows *the
-   change* caused the difference. Costs a worktree and a bootstrap —
-   `references/differential.md`.
+   change* caused the difference — `references/differential.md`.
 
-A bugfix claim needs (3): the claim is itself a difference, so nothing weaker can carry
-it. A new capability usually takes (1) plus (2), because on the base the surface does not
-exist — "the base rejects an argument it has never heard of" is true and tells you
-nothing about whether HEAD does the right thing. A prose claim is a procedure
-or a behaviour, so it takes the same partner its kind would.
+A bugfix claim needs (3). A new capability usually takes (1) plus (2), because a base that
+lacks the surface tells you nothing about whether HEAD gets it right. A prose claim is a
+procedure or a behaviour and takes the partner its kind would. When the probe only runs a
+test this change adds, (1) checks the test rather than the code: use (2) or (3).
 
-**When the probe only runs a test this change adds, (1) is not available.** That test was
-written alongside the code it checks, so varying its input checks the test rather than
-the code. Break the code (2) or run it against the base (3).
-
-The trap that produces the most confident wrong answers is **a probe that cannot run on
-both sides** — it fails the baseline with `Cannot find module`, and that reads as the bug
-reproducing. `references/differential.md` has it, and the three other probe rules.
-
-**Run the probe twice on each side you draw a conclusion from.** Non-determinism is
-indistinguishable from a fix, and the baseline is the side where that costs most and the
-side you will be tempted to run once. `references/differential.md` has why, and what to
-record instead of a reproduction.
+`references/differential.md` has the probe rules. Above all, the probe must run on both
+sides: a baseline failing with `Cannot find module` reads as the bug reproducing. Run it
+twice on each side you draw a conclusion from, because non-determinism is
+indistinguishable from a fix.
 
 ## 5. Pick the cheapest tier, and the isolation to match
 
-Escalate only when the tier below is genuinely blind to the symptom. Each step up costs
-minutes and adds ways for the environment, rather than the code, to decide the answer.
+Escalate only when the tier below is blind to the symptom; each step up adds ways for the
+environment, rather than the code, to decide the answer.
 
 | Tier | Environment | Cost | Use when the claim lives in |
 | ---- | ----------- | ---- | --------------------------- |
@@ -323,12 +220,7 @@ minutes and adds ways for the environment, rather than the code, to decide the a
 | 2 | the service booted, driven over its real interface | minutes | API shape, persistence, auth, background jobs |
 | 3 | full stack and a browser | many minutes | UI, hydration, anything visual |
 
-`--tier N` pins the tier when the user has already decided what to spend; `--base <ref>`
-names the comparison point for any claim that uses a differential.
-
-Isolation buys attributability and containment, and nothing else — so buy only what the
-claim needs; isolation you did not need is time you did not have.
-`references/environments.md` has the reasoning and the mechanisms.
+`--tier N` pins the tier; `--base <ref>` names the comparison point for a differential.
 
 | You need | Use | Because |
 | -------- | --- | ------- |
@@ -337,51 +229,28 @@ claim needs; isolation you did not need is time you did not have.
 | only HEAD, at tier 0–1 | your checkout | nothing to isolate from |
 
 **Never point a probe at a shared environment** — not staging, not production, not a
-colleague's instance. And before any probe that can send something outward (email, SMS,
-webhook, push notification, payment, a write to a third-party API) find the project's
-sandbox or mock mode and confirm you are in it. An accidental send cannot be undone by
-tearing down a worktree. It is not the only thing here that outlives the session — a
-migration run against a database somebody cared about is the other, and
-`references/compatibility.md` says how to keep that one disposable — but it is the one
-with no cleanup at all.
-
-Do not build a container the project does not already have; use its compose file or
-devcontainer, and drop a tier if it has neither. `references/environments.md` says why,
-and covers the detail per tier, per language and per isolation mechanism.
+colleague's instance. Before any probe that can send something outward (email, SMS,
+webhook, payment, a third-party write), confirm you are in the project's sandbox or mock
+mode: an accidental send has no cleanup at all. Do not build a container the project does
+not already have; use its compose file or devcontainer, or drop a tier.
+`references/environments.md` has the detail per tier, language and isolation mechanism.
 
 ## 6. Run
 
-**Turn the instrumentation up before the first run, not after a surprise.** The flags
-decide whether a failure the code already has appears in the bytes you are about to
-capture — strict unhandled rejections, warnings as errors, backtraces on, statement
-logging in the database. Set them identically on both sides of a differential, since they
-change what the output contains. `references/environments.md` has them per language, and
-why they are worth setting before anything looks wrong. One exception: a timing claim is
-measured with the loud flags **off**, because their cost scales with the thing being timed.
+**Turn the instrumentation up before the first run** — strict unhandled rejections,
+warnings as errors, backtraces, statement logging — identically on both sides of a
+differential. **Run under the project's coverage tool in the same pass**, so §9's
+**Covered** line measures the bytes the report quotes. A timing probe is the exception to
+both: it runs alone, quiet and uninstrumented. `references/environments.md` has the flags
+and the coverage invocation per ecosystem.
 
-**Run under the project's coverage tool in the same pass.** §8 reports which changed lines
-a probe reached, and taking that from a second run over the same probes pays the expensive
-part twice and measures bytes other than the ones the report quotes. The timing exception
-covers this too: coverage instruments the process or the node, so it costs time the claim
-would be measuring. A timing probe runs on its own, quiet and uninstrumented; the coverage
-pass answers what the probes reached, which is a different question from how long they
-took.
-`references/environments.md` has the invocation per ecosystem.
-
-Capture raw stdout, stderr and the exit code to files, verbatim — write the bytes first
-and read them second. `references/evidence.md` has the layout, and why summarizing at
-capture time is what launders a compile failure into "the expected failure".
-
-**Then read the whole capture, not the line you predicted.** A probe that returned the
-expected 200 also produced a stderr stream, a log and an exit code, and nothing else in
-this skill will ever look at them. The unhandled rejection under a passing assertion, the
-error-level line from a background job that failed where no caller could see, the
-deprecation warning that is a scheduled break, the query log that grew with the fixture:
-each is a defect only execution reveals, sitting in a file you have already written.
-`references/evidence.md` has what to read for and what to do with what you find.
+Capture raw stdout, stderr and the exit code to files, verbatim, then **read the whole
+capture, not the line you predicted** — the unhandled rejection under a passing
+assertion, the error from a background job no caller saw, the query log that grew with
+the fixture. `references/evidence.md` has the layout and what to read for.
 
 Serialize anything that binds a port or touches a database, and give each run a fresh
-entity or a reset between; `references/environments.md` has the tier-2 detail.
+entity or a reset between.
 
 ## 7. Adjudicate
 
@@ -416,130 +285,59 @@ Where you cannot tell, demote: an undefendable green is what this check exists t
 A row that came out red for its predicted reason has already discriminated, and a command
 row (§4) has no discriminator to check.
 
-`Not verified` is not a pass and not a defect, and the pull towards recording it as one
-or the other is strong. Say which of the three it was, and never loosen a probe until it
-finally goes red — `references/differential.md` has the adjudication table and why that
-last move is the worst outcome this method can produce.
+`Not verified` is neither a pass nor a defect. Never loosen a probe until it finally goes
+red — `references/differential.md` has why that is the worst outcome this method can
+produce.
 
-**Falsified is a success for this process.** Finding it now is the entire point of
-running before the PR. Report the failure with its reproduction first, then offer to fix
-it and re-verify — ask; do not assume. If you do fix and re-run, the **terminal** report
-says the verdict describes post-fix code and quotes the original failure verbatim. A
-report to the author showing only the final green run has erased the most valuable thing
-the run produced.
+**Falsified is a success for this process.** Report the failure with its reproduction
+first, then offer to fix it and re-verify — ask; do not assume. After a fix, the terminal
+report keeps the original failure and the PR section describes the code as it now stands;
+`references/evidence.md` has both forms.
 
-The PR section is the other audience and takes the opposite rule: it describes the code
-as it now stands and leaves the failure out, because the fix is a commit in the branch
-the reviewer is already reading. `references/evidence.md` has both forms.
+## 8. Is it guarded, and what is worth keeping
 
-## 8. Report
+Do this before the report, because it builds a worktree pair the report's **Residue** line
+must account for.
 
-Lead with the verdict in one line. Then the two answers the author is waiting for:
-**To fix** — every ❌ row, ordered by what happens if it ships, or `Nothing` — and **Keep
-as tests**, §9's triage. Then the plan's table again, every row in the same order with its
-result. Then the lines that are worth more to a reviewer than another passing assertion,
-under the same names the PR section uses, and one closing question. `references/evidence.md`
-has the terminal and PR forms, and why each of these lines earns its place:
+Break the line the change turns on in a worktree of HEAD and run the project's **own**
+test command, unscoped. Green means nothing in the suite guards the change — the report's
+**Guarded** line, and the strongest argument for promoting a probe. Where the change has
+no executable line to break — prose, a config the run never loads — say so and skip it.
+`references/promotion.md` has the mechanics, then tear the pair down with
+`baseline-worktree.sh remove`.
 
-- **Covered** — which parts of the change or subject a probe actually executed, and
-  which it did not. Measure it rather than recalling it: read §6's coverage result
-  against the changed lines. A changed line
-  with zero hits is the most useful thing this run can hand a reviewer, and until it is
-  measured this is the one line of the report that is a judgement.
-  `references/evidence.md` has what to report, `references/environments.md` the invocation.
-- **Guarded** — whether the project's own suite goes red when the line the change turns
-  on is broken. §9's check, run before this section is composed, and the strongest
-  argument the promotion triage can make.
-- **CI** — what already runs on every push, so this run's contribution is legible.
-- **Residue** — rows, files, containers, worktrees, ports left behind, or explicitly
-  nothing. A setting you turned up on something you did not start counts: a database's
-  statement logging, a service's log level. Tear the worktrees down:
-  `~/.claude/skills/wtf-code-verify/scripts/baseline-worktree.sh remove`.
+Then triage: promote a probe when it is deterministic, cheap, fits the project's existing
+harness and would catch this regression again; leave it throwaway otherwise. Offering to
+promote everything is how a suite gets slow, flaky and ignored.
+`references/promotion.md` has the table.
 
-**Every line in the report is either something you observed or is marked as inference.**
-The verdict has a probe behind it by construction, and the raw capture is on disk — but
-those trailing lines have no probe, and they are where an unbacked claim gets in. Each of
-them is a fact about the world with a command that establishes it: read `.github/workflows`
-before writing what CI covers, run `git status` and `docker ps` and
-`baseline-worktree.sh path` before writing *Residue: none*, take **Covered** from a coverage run over the
-changed lines rather than from the probes you meant to write, and take **Guarded** from
-§9's unscoped run rather than from what the suite looks like it tests. Where you could not check,
-write what you assumed and say it is an assumption.
+## 9. Report
 
-That is the same standard the rest of this skill applies to the code under test, turned on
-the report about it. A verification section is read as the output of a process that
-checked things; a sentence in it that was reasoned rather than run borrows that authority
-without earning it, and is indistinguishable from the ones that did.
+`references/evidence.md` has the terminal and PR forms. In order: the verdict in one line;
+**To fix** — every ❌ row, ordered by what happens if it ships, or `Nothing`; **Keep as
+tests** — §8's triage, every row accounted for; the plan's table again with results; then
+**Covered**, **Guarded**, **CI** and **Residue**; and one closing question.
 
-Write the PR verification section to the scratch directory with the template in
-`evidence.md`, tell the user the path, and offer to post it. Ask before posting: it is
-public and outward-facing, and a verification section landing on the wrong PR is worse
-than none at all.
+**Every trailing line is observed or marked as an assumption.** No probe produces them,
+so each needs its own command: **Covered** from §6's coverage run over the changed lines,
+**Guarded** from §8, **CI** from reading `.github/workflows`, and **Residue** from
+`git status`, `docker ps` and `baseline-worktree.sh path` *after* teardown. Where you
+could not check, write *assumed, not checked*.
 
-**It goes in the PR body, between the `verify:start` / `verify:end` markers** — that
-section, and **nothing else on the PR**. Why the body rather than a comment,
-and what a write there may and may not touch, are the ownership rule in
-`~/.claude/reference/github-publishing.md`; `evidence.md` has the channel mechanics, the
-check for whose PR it is, and when to fall back to a comment.
+Write the PR verification section to the scratch directory, tell the user the path, and
+offer to post it. Ask before posting: it is public. It goes in the PR body between the
+`verify:start` / `verify:end` markers and touches **nothing else on the PR** — the
+ownership rule in `~/.claude/reference/github-publishing.md`, with the channel mechanics
+in `evidence.md`. Post the whole section, not the verdict line: what a reviewer can use is
+the discriminators and what went uncovered.
 
-That boundary is about outward-facing writes and nothing more. Inside the repo this skill
-writes at three steps, each on a yes from the user: §4 breaks a file in place and restores
-it, §7 offers a fix to tracked source, and §9 writes promoted tests into the project.
+If you fixed code at §7 and the user declines to post, a section already on the PR is now
+stale. Read the body for `<!-- verify:start -->` and say so, or say the read failed.
 
-**Which is why declining to post has one more consequence.** Editing code where a published
-section may already exist obliges the tool to say that verdict is now stale — the rule in
-`~/.claude/reference/github-publishing.md`, which names this skill among the tools it binds.
-Posting satisfies it, because the section that goes up replaces the stale one. Fixing at §7
-and then *not* posting does not: the code has moved and the live section still reads as
-current. So on that path, read the body for a `<!-- verify:start -->` section and say it is
-stale, the same as a review command would — and where the read fails rather than coming back
-without markers, say that instead.
+## 10. Promote on a yes
 
-Post the whole section rather than the verdict line. The reviewer is the audience: they
-are about to read this diff, and what they can use is which expectations were probed, the
-discriminator that makes each result mean something, and — most of all — what the probes
-did **not** cover. A bare "Verified ✅" tells them a run happened and gives them nothing to
-review with, while reading as a broader endorsement than the run earned.
-
-## 9. Offer to promote the probes
-
-First find out whether anything guards the change today, because the answer decides how
-much the triage is worth. Break the line the change turns on — §4's mechanism, in a
-worktree of HEAD so nothing has to be restored — and run the project's **own** test command,
-unscoped. Green means nothing in the suite guards the change, which is a finding in its
-own right and the strongest argument the triage below can make.
-`references/promotion.md` has it, including why that answer and the coverage run disagree
-in a useful way.
-
-**Where the change has no executable line to break** — prose, a config the run never
-loads — there is nothing to guard and nothing to measure. Say so and go straight to the
-triage, the way §8's Covered line takes `N/A — no executable lines changed`.
-
-**Run this check before §8 composes its Residue line, not after.** It builds a worktree
-pair, so in section order it creates the residue that the line has already declared
-absent — in a section that may by then have been posted to the PR — and leaves the next
-`create` refusing without `--force`. Take its answer, report it as §8's **Guarded** line,
-tear the pair down, and compose Residue over a tree that is actually clean.
-
-A probe worth writing is often worth keeping, but not always — and offering to promote
-all of them is how a suite gets slow, flaky and eventually ignored. Triage, then ask.
-
-Promote a probe when it is deterministic, cheap, fits the project's existing harness and
-would catch this regression again; leave it throwaway otherwise.
-`references/promotion.md` has the triage table and the cases each way.
-
-Present it as the report's **Keep as tests:** line — which rows to promote, into which
-file, and why; which to leave, and why — and ask in the report's closing question. Write
-nothing until they say yes.
-
-```
-**Keep as tests:** #1–#3 → `tests/api/posts_test` — deterministic, 0.3 s each, nothing guards them today; #2 and #3 become the regression tests once fixed. Not #4: both sides were served from the response cache, so it asserts nothing until the probe bypasses it, and #1's flag-off control already pins the contract.
-```
-
-On a yes: rewrite each into the project's own idiom — read a neighbouring test and match
-it — then prove the promoted test fails against the code that lacked the fix, and run the
-project's *unscoped* test command once to confirm its default selector actually collects
-it. A test that passes on both sides asserts nothing; one that never runs on push is
-worse, because it reads as coverage forever. `references/promotion.md` has the detail,
-including where tests live per ecosystem and the substitute check for a capability the
-base cannot exercise at all.
+Write nothing until the user agrees. Then rewrite each probe in the project's own idiom,
+matching a neighbouring test. Prove it fails against the code that lacked the fix, and run
+the *unscoped* test command once to confirm the default selector collects it.
+`references/promotion.md` has where tests live per ecosystem, and the substitute check for
+a new capability the base cannot exercise.

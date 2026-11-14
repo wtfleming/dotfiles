@@ -103,7 +103,7 @@ members someone remembers. Add a tool to that list when it starts editing code.
 `wtf-code-verify` is on it for the case that looks like an exemption and is not. It writes
 the section itself, so a run that posts has already replaced any stale one — but it also
 edits code at three steps, and posting is an offer the user can decline. Fix a defect at §7,
-decline the offer at §8, and the code has changed with no section written: the condition
+decline the offer at §9, and the code has changed with no section written: the condition
 above, reached by the one tool that could have refreshed it.
 
 Two things that rule needs to be worth having:
