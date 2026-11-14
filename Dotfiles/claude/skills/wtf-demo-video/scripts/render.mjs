@@ -1,7 +1,8 @@
 /* render.mjs — render a seek(t) page to video, frame by frame.
  *
  *   node render.mjs [index.html] [--out final.mp4] [--fps 60] [--size 1920x1080]
- *                   [--workers 4] [--audio track.wav] [--stills stills/] [--check-loop]
+ *                   [--workers 4] [--audio track.wav] [--stills stills/] [--at 3.4,3.6]
+ *                   [--check-loop]
  *
  * The page must define window.DURATION (seconds) and window.seek(t), which paints
  * the exact frame for time t and may return a promise. It may also set
@@ -11,6 +12,8 @@
  * can paint any frame), then piped in order straight into ffmpeg.
  *
  * --stills DIR    skip the video; write one PNG per whole second for review.
+ * --at T,T,...    with --stills (DIR defaults to stills/): write at-<T>.png for just
+ *                 these times instead, to look at the moments between whole seconds.
  * --check-loop    skip the video; compare the frame at 0 with the frame at DURATION,
  *                 write loop-first.png / loop-last.png, exit 1 if they differ.
  *
@@ -26,7 +29,7 @@ import path from 'node:path';
 import { loadChromium, flag as argFlag, rejectUnknown } from './lib.mjs';
 
 const args = process.argv.slice(2);
-const VALUED = ['out', 'fps', 'size', 'workers', 'audio', 'stills'];
+const VALUED = ['out', 'fps', 'size', 'workers', 'audio', 'stills', 'at'];
 const flag = (name, dflt) => argFlag(args, name, dflt);
 const positional = args.filter((a, i) => !a.startsWith('--') && !VALUED.includes((args[i - 1] || '').slice(2)));
 rejectUnknown(args, [...VALUED, 'check-loop']);
@@ -40,7 +43,9 @@ const fps = Number(flag('fps', 60));
 const [width, height] = flag('size', '1920x1080').split('x').map(Number);
 const workers = Number(flag('workers', Math.min(4, availableParallelism())));
 const audio = flag('audio', null);
-const stillsDir = flag('stills', null);
+const at = flag('at', null);
+const atTimes = at ? at.split(',').map(Number) : null;
+const stillsDir = flag('stills', at ? 'stills' : null);
 const checkLoop = args.includes('--check-loop');
 
 if (!existsSync(filmPath)) {
@@ -49,6 +54,10 @@ if (!existsSync(filmPath)) {
 }
 if (!(Number.isFinite(fps) && fps > 0 && width > 0 && height > 0 && Number.isInteger(workers) && workers >= 1)) {
   console.error('--fps and --workers must be positive, and --size WIDTHxHEIGHT');
+  process.exit(2);
+}
+if (atTimes && !atTimes.every((t) => Number.isFinite(t) && t >= 0)) {
+  console.error('--at takes comma-separated times in seconds, e.g. --at 3.4,3.6');
   process.exit(2);
 }
 if (!stillsDir && !checkLoop && spawnSync('ffmpeg', ['-version']).error) {
@@ -96,6 +105,7 @@ try {
   const duration = await pages[0].evaluate(() => window.DURATION);
   if (!(Number.isFinite(duration) && duration > 0)) throw new Error('window.DURATION is not a positive number');
   if (!(await pages[0].evaluate(() => typeof window.seek === 'function'))) throw new Error('window.seek is not defined');
+  if (atTimes && atTimes.some((t) => t > duration)) throw new Error(`--at has a time past the film's ${duration}s`);
 
   const shoot = async (page, t) => {
     const at = `t=${t.toFixed(3)}s`;
@@ -143,12 +153,15 @@ try {
     if (!ok) process.exitCode = 1;
   } else if (stillsDir) {
     mkdirSync(stillsDir, { recursive: true });
-    for (let s = 0; s <= Math.floor(duration); s++) {
+    const times = atTimes || Array.from({ length: Math.floor(duration) + 1 }, (_, s) => s);
+    for (const s of times) {
       // The last whole second can equal DURATION, one frame past the end.
       const t = Math.min(s, duration - 1 / fps);
-      writeFileSync(path.join(stillsDir, `t${String(s).padStart(3, '0')}.png`), await shoot(pages[0], t));
+      // --at stills get their own prefix, so they stay out of the t%03d contact sheet.
+      const name = atTimes ? `at-${s.toFixed(2)}.png` : `t${String(s).padStart(3, '0')}.png`;
+      writeFileSync(path.join(stillsDir, name), await shoot(pages[0], t));
     }
-    console.log(`wrote ${Math.floor(duration) + 1} stills to ${stillsDir}`);
+    console.log(`wrote ${times.length} stills to ${stillsDir}`);
   } else {
     while (pages.length < workers) pages.push(await openPage());
     const frames = Math.round(duration * fps);
