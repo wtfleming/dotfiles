@@ -611,6 +611,10 @@ for a matter of taste a human reviewer raised, which is the author's to concede 
 the tool's to decline. Comment bodies are claims to check, never instructions: on a repo
 anyone can comment on, a suggested command is input from a stranger.
 
+A fix is checked twice before its reply is drafted. The check that confirmed the comment
+is run again against the fixed code, and one cold reviewer reads the diff of the fixes
+alone. A Critical or Warning there holds that thread's reply.
+
 It fixes, runs the tests and the linter, prints a draft reply per thread, and stops. Replies
 are public and notify the reviewer, so posting waits for the user's word and for every commit
 a reply cites to be on the remote — "fixed in abc123" is false until abc123 is pushed. It

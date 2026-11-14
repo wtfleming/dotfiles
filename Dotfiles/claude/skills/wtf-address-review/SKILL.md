@@ -78,9 +78,19 @@ Group threads that describe one defect and fix it once.
 
 ## 3. Fix
 
+Before the first edit, take the snapshot that step 1 of
+`~/.claude/reference/review-fix-round.md` describes, and keep the tree id. Step
+4 builds its diff from it.
+
 Make only the edits the **Fix** threads describe — a review is not a mandate to
 refactor. Then run the project's tests and linter, and report the results as
 they came back. A fix that turns something red is not done.
+
+**Re-run the check that confirmed each claim.** Whatever settled the thread as
+Fix in step 2 — the probe, the reproduction, the failing test — run it again
+against the fixed code and record what came back. Where the claim was confirmed
+by reading, read the path again as it now stands. A thread whose check was not
+re-run says so in the report; it is not reported as verified.
 
 Leave committing to the user unless they asked you to commit. If they did, one
 commit per thread or per group, so a reply can name the commit that answers it.
@@ -89,7 +99,23 @@ If the PR body has a `verify:start` section, it now attests to a tree that no
 longer exists. Say so and name `wtf-code-verify` as what would refresh it — see
 `~/.claude/reference/github-publishing.md`.
 
-## 4. Report, and stop
+## 4. Review the fixes, cold
+
+The checks above ask whether each fix answers its comment. Nothing yet has read
+the new lines for defects of their own.
+
+Once the tests and linter have finished, follow step 4 of
+`~/.claude/reference/review-fix-round.md`: build the fix diff from the
+snapshot and dispatch a single `wtf-change-reviewer` with that path and nothing
+else. Print what comes back in the report, under the heading that file gives.
+
+- Skip it only where every fix is a one-line change to prose, and say it was
+  skipped.
+- Do not act on its findings in the same turn. A Critical or a Warning in a fix
+  marks that thread's draft reply **held**: it would announce a fix that is not
+  finished. A Suggestion is reported and holds nothing.
+
+## 5. Report, and stop
 
 ```markdown
 ## Review comments on #<n>
@@ -99,25 +125,29 @@ longer exists. Say so and name `wtf-code-verify` as what would refresh it — se
 
 | # | Reviewer | Where | Verdict | How verified |
 |---|----------|-------|---------|--------------|
-| 1 | <login> | `path:line` | Fix | <one line> |
+| 1 | <login> | `path:line` | Fix | <one line> · after the fix: <what the re-run returned> |
+
+### <the cold review's heading from step 4, or "Cold review of the fixes — skipped: <why>">
+<its findings, as written>
 
 ### Needs you
 - #<k> — <the decision, and the two options>
 
 ### Draft replies
 **#1** — <the reply as it will be posted>
+**#2** — held: <the finding in its fix> — <the reply as it would be posted>
 ```
 
 Then stop. Nothing is posted yet.
 
-## 5. Posting — only when the user says to, in a later message
+## 6. Posting — only when the user says to, in a later message
 
 Replies are public and notify the reviewer, and a reply that says "fixed in
 abc123" is false until abc123 is on the remote. So before writing anything:
 
 - Re-fetch. Every commit a reply names must be reachable from the new
   `headRefOid`; if not, say which and stop — the user has not pushed yet.
-- Skip any thread that is now resolved.
+- Skip any thread that is now resolved, and any whose reply is still held.
 - Scrub each reply per `~/.claude/reference/github-publishing.md`. Say what
   changed and why; no internal reasoning, no paths outside the repo, no
   machine-specific output.
