@@ -101,10 +101,91 @@ out="$("$SYMS" HEAD~2..HEAD -- broken.ts a.ts)"
 check "a range and paths narrow the diff" "a.ts:10" "$(section top-level "$out")"
 check "a file that does not parse is listed with the reason" \
   "broken.ts${tab}parse errors" "$(section "not analyzed" "$out")"
-check "a committed range has no untracked section" "0" "$(grep -c '^untracked' <<<"$out" || :)"
+check "a committed range has no untracked section" "0" "$(grep -cx 'untracked (not in the diff):' <<<"$out" || :)"
 
 out="$("$SYMS" HEAD..HEAD)"
 check "an empty diff says so" "1" "$(grep -cx 'no changes in this diff' <<<"$out" || :)"
+check "A...B diffs from the merge base" "a.ts:10" "$(section top-level "$("$SYMS" HEAD~2...HEAD -- a.ts)")"
+printf 'still\n' > still-untracked.ts
+out="$("$SYMS" HEAD~2..HEAD)"
+check "a committed range has no untracked section, even with untracked files about" \
+  "0" "$(grep -cx 'untracked (not in the diff):' <<<"$out" || :)"
+check "a single rev diffs against the working tree" \
+  "still-untracked.ts" "$(section "untracked (not in the diff)" "$("$SYMS" HEAD~1)")"
+rm still-untracked.ts
+
+# Second repository: the cases a line diff gets wrong without care.
+git init -q -b main "$WORK/two"
+cd "$WORK/two"
+git config user.email ci@example.invalid
+git config user.name CI
+cat > s.ts <<'EOF'
+class P {
+  q() {
+    return 1;
+  }
+}
+function lonely() {
+  return 0;
+}
+function body() {
+  const a = 1;
+  const b = 2;
+  return a + b;
+}
+EOF
+cat > m.py <<'EOF'
+class A:
+    def __init__(self):
+        self.x = 1
+
+class B:
+    def __init__(self):
+        self.y = 2
+
+    @staticmethod
+    def s():
+        return 3
+EOF
+printf 'export function evil() {\n  return 1;\n}\n' > ./--globs=z.ts
+printf 'export function decoy() {\n  return 1;\n}\n' > z.ts
+printf '\x00\x01' > blob.bin
+printf 'export const m = 1;\n' > mode.ts
+mkdir sub && printf 'def f():\n    return 1\n' > sub/n.py
+git add . && git commit -q -m base
+
+# Delete lonely() alone, and one body line of body(), each its own hunk.
+sed -e '/^function lonely/,/^}/d' -e '/const b = 2;/d' s.ts > s.ts.new && mv s.ts.new s.ts
+# Delete A.__init__ only; B keeps one of the same name. Change B.s's decorator.
+printf 'class A:\n    pass\n\nclass B:\n    def __init__(self):\n        self.y = 2\n\n    @classmethod\n    def s():\n        return 3\n' > m.py
+printf 'export function evil() {\n  return 2;\n}\n' > ./--globs=z.ts
+printf '\x00\x02' > blob.bin
+chmod +x mode.ts
+: > empty.ts && git add -N empty.ts
+printf 'def f():\n    return 2\n' > sub/n.py
+
+out="$("$SYMS")"
+changed="$(section changed "$out")"
+check "a body-line deletion credits the function that lost it" "1" \
+  "$(grep -c "^function${tab}body${tab}" <<<"$changed" || :)"
+check "a whole-declaration deletion is not credited to its neighbour" "0" \
+  "$(grep -c "^class${tab}P${tab}" <<<"$changed" || :)"
+check "the deleted declaration is removed" "function${tab}lonely${tab}s.ts:6-8${tab}no" \
+  "$(section "removed (old-side location)" "$out" | grep lonely || :)"
+check "deleting one of two same-named methods is a removal" \
+  "method${tab}__init__${tab}m.py:2-3${tab}no" \
+  "$(section "removed (old-side location)" "$out" | grep __init__ || :)"
+check "a decorator change credits the decorated method" "1" \
+  "$(grep -c "^method${tab}s${tab}m.py:8-10${tab}no" <<<"$changed" || :)"
+check "a file named like an option is analysed as that file" "1" \
+  "$(grep -c "^function${tab}evil${tab}--globs=z.ts:1-3" <<<"$changed" || :)"
+check "binary, mode-only and empty files are listed, not dropped" \
+  "blob.bin${tab}binary
+empty.ts${tab}no content lines changed (mode-only, or an empty file)
+mode.ts${tab}no content lines changed (mode-only, or an empty file)" \
+  "$(section "not analyzed" "$out")"
+check "pathspecs are relative to the current directory" \
+  "function${tab}f${tab}sub/n.py:1-2${tab}yes" "$(cd sub && section changed "$("$SYMS" -- n.py)")"
 
 rc=0; "$SYMS" no-such-ref >/dev/null 2>&1 || rc=$?
 check "a bad range fails" "1" "$rc"
@@ -112,7 +193,7 @@ rc=0; (cd "$WORK" && "$SYMS") >/dev/null 2>&1 || rc=$?
 check "outside a repository fails" "1" "$rc"
 rc=0; out="$(PATH=/usr/bin:/bin "$SYMS" 2>&1)" || rc=$?
 check "missing ast-grep fails rather than printing an empty result" "1:1" \
-  "$rc:$(grep -c 'not on PATH' <<<"$out" || :)"
+  "$rc:$(grep -c 'ast-grep is not on PATH' <<<"$out" || :)"
 
 [ "$failures" -eq 0 ] || { echo "$failures check(s) failed" >&2; exit 1; }
 echo "all checks passed"
