@@ -62,7 +62,10 @@ esac
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
-diff_cmd=(git -c core.quotePath=false diff -U0 --no-renames --no-color --no-ext-diff "$old_sha")
+# Explicit prefixes and --no-relative: the parser below needs a/ and b/ on repo-root paths,
+# whatever diff.mnemonicPrefix, diff.noprefix or diff.relative say.
+diff_cmd=(git -c core.quotePath=false diff -U0 --no-renames --no-color --no-ext-diff
+  --src-prefix=a/ --dst-prefix=b/ --no-relative "$old_sha")
 [ -z "$new_sha" ] || diff_cmd+=("$new_sha")
 diff_cmd+=(-- ${paths[@]+"${paths[@]}"})
 
@@ -130,7 +133,8 @@ rules_for() {
 # Declarations in one file as TSV: kind, name, start line, end line, exported, start byte,
 # end byte (the bytes tell nesting apart on a line several declarations share), parent
 # name. Prints ERROR instead when the parse has error nodes, since symbols from a broken
-# parse are guesses.
+# parse are guesses, and ENCODING when the file is not UTF-8: ast-grep then prints [] and
+# exits 0, which would read as a file with no declarations.
 #
 # One sweep in source order with a stack of open declarations finds each parent, so the
 # cost stays linear in a generated file of thousands of types. A Python definition starts
@@ -139,6 +143,7 @@ rules_for() {
 # no leading underscore (Python).
 decls() {
   local file=$1 lang=$2
+  iconv -f UTF-8 -t UTF-8 "$file" >/dev/null 2>&1 || { echo ENCODING; return 0; }
   # ./ so a file named like an option reaches ast-grep as a file
   ( cd "$(dirname "$file")" && ast-grep scan --inline-rules "$(rules_for "$lang")" --json=compact "./$(basename "$file")" ) \
     | jq -r --arg lang "$lang" '
@@ -192,23 +197,35 @@ side() {
 # can be held by several innermost declarations (`const a = 1, b = 2`), and a line diff
 # cannot say which of them changed, so all of them are printed. A gap after line c (a
 # pure deletion) is held only by a declaration spanning both c and c+1.
+#
+# The line records are sorted once and each declaration visits only the records inside
+# its own range (found by binary search), so the cost is lines times nesting depth rather
+# than lines times declarations.
 enclosing() {
-  awk -F'\t' -v OFS='\t' -v tags="$2" -v path="$3" '
-    FILENAME == ARGV[1] { k[FNR] = $1; n[FNR] = $2; s[FNR] = $3; e[FNR] = $4; x[FNR] = $5; sb[FNR] = $6; eb[FNR] = $7; p[FNR] = $8; cnt = FNR; next }
-    index(tags, $1) {
-      lo = $2; hi = ($1 == "G") ? $2 + 1 : $2
-      m = 0
-      for (i = 1; i <= cnt; i++) if (s[i] <= lo && hi <= e[i]) c[++m] = i
-      hit = 0
-      for (a = 1; a <= m; a++) {
-        inner = 1
-        for (b = 1; b <= m; b++)
-          if (a != b && sb[c[a]] <= sb[c[b]] && eb[c[b]] <= eb[c[a]] && (sb[c[a]] != sb[c[b]] || eb[c[a]] != eb[c[b]])) inner = 0
-        if (inner) { i = c[a]; print k[i], n[i], path ":" s[i] "-" e[i], x[i], p[i]; hit = 1 }
-      }
-      if (!hit) print "-", ($1 == "G") ? path ":" $2 " (lines deleted after)" : path ":" $2
+  awk -F'\t' -v tags="$2" 'index(tags, $1)' "$WORK/file-lines" | sort -u | sort -t "$(printf '\t')" -k2,2n > "$WORK/records"
+  awk -F'\t' -v OFS='\t' -v path="$3" '
+    FILENAME == ARGV[1] { r++; tg[r] = $1; lo[r] = $2; hi[r] = ($1 == "G") ? $2 + 1 : $2; next }
+    {
+      i = FNR; k[i] = $1; n[i] = $2; s[i] = $3; e[i] = $4; x[i] = $5; sb[i] = $6; eb[i] = $7; p[i] = $8
+      a = 1; b = r + 1
+      while (a < b) { m = int((a + b) / 2); if (lo[m] < s[i]) a = m + 1; else b = m }
+      for (j = a; j <= r && lo[j] <= e[i]; j++) if (hi[j] <= e[i]) cand[j, ++nc[j]] = i
     }
-  ' "$1" "$WORK/file-lines"
+    END {
+      for (j = 1; j <= r; j++) {
+        hit = 0
+        for (a = 1; a <= nc[j]; a++) {
+          ca = cand[j, a]; inner = 1
+          for (b = 1; b <= nc[j]; b++) {
+            cb = cand[j, b]
+            if (a != b && sb[ca] <= sb[cb] && eb[cb] <= eb[ca] && (sb[ca] != sb[cb] || eb[ca] != eb[cb])) inner = 0
+          }
+          if (inner) { print k[ca], n[ca], path ":" s[ca] "-" e[ca], x[ca], p[ca]; hit = 1 }
+        }
+        if (!hit) print "-", (tg[j] == "G") ? path ":" lo[j] " (lines deleted after)" : path ":" lo[j]
+      }
+    }
+  ' "$WORK/records" "$1"
 }
 
 : > "$WORK/changed"; : > "$WORK/toplevel"; : > "$WORK/removed"; : > "$WORK/skipped"
@@ -236,6 +253,9 @@ analyse() {
   if [ "$added" = 0 ]; then
     of="$(side old "$old_sha" "$path")"
     decls "$of" "$lang" > "$WORK/old.tsv" || { printf '%s\tast-grep failed\n' "$path" >> "$WORK/skipped"; return 0; }
+  fi
+  if grep -qx ENCODING "$WORK/new.tsv" "$WORK/old.tsv"; then
+    printf '%s\tnot valid UTF-8\n' "$path" >> "$WORK/skipped"; return 0
   fi
   if grep -qx ERROR "$WORK/new.tsv" "$WORK/old.tsv"; then
     printf '%s\tparse errors\n' "$path" >> "$WORK/skipped"; return 0

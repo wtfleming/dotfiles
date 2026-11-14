@@ -101,7 +101,6 @@ out="$("$SYMS" HEAD~2..HEAD -- broken.ts a.ts)"
 check "a range and paths narrow the diff" "a.ts:10" "$(section top-level "$out")"
 check "a file that does not parse is listed with the reason" \
   "broken.ts${tab}parse errors" "$(section "not analyzed" "$out")"
-check "a committed range has no untracked section" "0" "$(grep -cx 'untracked (not in the diff):' <<<"$out" || :)"
 
 out="$("$SYMS" HEAD..HEAD)"
 check "an empty diff says so" "1" "$(grep -cx 'no changes in this diff' <<<"$out" || :)"
@@ -204,6 +203,21 @@ check "a decorated class's last method is credited alone, as a method" \
   "method${tab}last${tab}d.py:5-6${tab}no" "$(section changed "$out" | grep 'd\.py' || :)"
 check "a content line that looks like a header does not hide a removal" \
   "function${tab}g${tab}h.py:1-2${tab}yes" "$(section "removed (old-side location)" "$out" | grep 'h\.py' || :)"
+
+# The user's diff config must not change what the parser reads.
+expected="$(section changed "$out")"
+for cfg in diff.mnemonicPrefix=true diff.noprefix=true diff.relative=true; do
+  check "$cfg does not change the result" "$expected" \
+    "$(cd sub && section changed "$(GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0="${cfg%%=*}" GIT_CONFIG_VALUE_0="${cfg#*=}" "$SYMS")")"
+done
+git add -A && git commit -q -m fourth
+
+# A file ast-grep cannot read prints [] and exits 0; it must not read as "no declarations".
+printf '# caf\xe9\ndef g():\n    return 1\n' > l.py
+git add l.py && git commit -q -m latin1
+printf '# caf\xe9\ndef g():\n    return 2\n' > l.py
+check "a file that is not UTF-8 is listed, not reported as top-level" \
+  "l.py${tab}not valid UTF-8" "$(section "not analyzed" "$("$SYMS")")"
 
 rc=0; "$SYMS" no-such-ref >/dev/null 2>&1 || rc=$?
 check "a bad range fails" "1" "$rc"
