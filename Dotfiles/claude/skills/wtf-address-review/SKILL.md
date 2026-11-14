@@ -46,7 +46,7 @@ query($owner:String!,$name:String!,$number:Int!){
       comments(first:50){ nodes{ author{login} body url } }
       latest: comments(last:1){ nodes{ author{login} body } } } }
     reviews(last:50){ nodes{ author{login} state body url } }
-    comments(last:100){ nodes{ author{login} body } }
+    comments(last:100){ pageInfo{hasPreviousPage startCursor} nodes{ author{login} body } }
   } } }'
 ```
 
@@ -73,6 +73,10 @@ on the PR. A declined or answered thread stays open by design, and a review
 body cannot be resolved at all, so without this every later run would post the
 same reply again and notify the reviewer each time. Count what was skipped in
 the report.
+
+Where `comments.pageInfo.hasPreviousPage` is true, a marker may sit in an
+earlier page: fetch back with `comments(last:100, before:<startCursor>)` until
+it is false, before judging any review body unanswered.
 
 Check out the PR's head locally if you are not already on it, and say if the
 local branch is behind or ahead of `headRefOid` — the threads are anchored to
