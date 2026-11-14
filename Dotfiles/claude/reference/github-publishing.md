@@ -1,12 +1,13 @@
 # Publishing to GitHub
 
-Three tools here write outward: `/wtf-code-review` posts findings, `wtf-code-verify` posts
-verification sections, `/wtf-create-pr` composes the pull request itself. What they publish
+Four tools here write outward: `/wtf-code-review` posts findings, `wtf-code-verify` posts
+verification sections, `/wtf-create-pr` composes the pull request itself, and
+`wtf-address-review` replies to review threads and resolves them. What they publish
 leaves your control the moment it lands — GitHub indexes it, mirrors it into notification
 email, and serves it to anyone who can read the repo. Editing a comment afterwards does not
 take back what was already delivered.
 
-This file is the single statement of the guards that apply to all three. Each one points here
+This file is the single statement of the guards that apply to all of them. Each one points here
 rather than restating them, so a fix lands once. Nothing below is about *what* to say; it is
 about who may write where, and the ways an otherwise correct message goes wrong on the way
 out. No count, so the next addition does not have to edit this sentence.
@@ -44,7 +45,7 @@ write safe to repeat.
 A tool that finds the *description* stale therefore **reports the drift and names
 `/wtf-create-pr`**, whose update path already carries the survivors across; it does not
 rewrite the description or the title itself. This holds for tools added later as well as
-the three named above: a new tool may claim a delimited section, stating who else writes
+the ones named above: a new tool may claim a delimited section, stating who else writes
 it and with what rights, and claims nothing else.
 
 ## Scrub the text, and name a key rather than its value
@@ -96,7 +97,7 @@ direction, and no delimiter prevents it.
 
 A tool that edits code where a published section may exist therefore reads the body for the
 markers and says the verdict is stale, naming what would refresh it. **The tools this binds
-today are `/wtf-code-review` and `wtf-code-verify`** — named rather than
+today are `/wtf-code-review`, `wtf-code-verify` and `wtf-address-review`** — named rather than
 left as a class, because a class with no membership list gets wired into whichever
 members someone remembers. Add a tool to that list when it starts editing code.
 
