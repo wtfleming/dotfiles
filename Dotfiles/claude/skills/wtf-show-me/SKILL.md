@@ -37,7 +37,7 @@ choice.
 | Destination | What actually renders | Reach for |
 |---|---|---|
 | this conversation, a terminal | fenced text only — a Mermaid fence stays raw source | pseudocode, call tree, component tree, file tree, and diffs of each |
-| a PR body, a `.md` file, an Artifact | GitHub, and most Markdown viewers, render Mermaid | all of the above, plus Mermaid |
+| a PR body, a `.md` file read on GitHub | GitHub renders a Mermaid fence | all of the above, plus Mermaid |
 | a page opened locally | anything | one HTML file — see the last section |
 
 ## Then pick by what you are showing
@@ -94,34 +94,16 @@ sequenceDiagram
 ```
 
 When most of the block is new, when omitted context would hide ownership or
-order, or when the reader needs a copyable target shape — show the real code:
-
-```ts
-function expandSkill(command: string): string {
-  const skillName = command.slice(1)
-  return `use the ${skillName} skill`
-}
-```
+order, or when the reader needs a copyable target shape — show the real code
+in its own fence instead.
 
 ## Use `diff` when the shape already exists
 
 When the point is *what changed* rather than what is there, render the form
-above as a `diff` instead of drawing two of them. Match the diff's shape to the
-subject — these are the forms `/wtf-create-pr` reaches for, because a PR is
-about a change.
+above as a `diff` instead of drawing two of them. These are the forms
+`/wtf-create-pr` reaches for, because a PR is about a change.
 
-A component change:
-
-```diff
- <SessionPage>
-   useSessionEvents()
-   <SessionToolbar>
-+    <RunSkillButton />
-   <SessionTimeline>
-+    <SkillResultCard />
-```
-
-A file-layout change:
+A tree — file layout here; a call tree or a component tree diffs the same way:
 
 ```diff
  src/
@@ -134,20 +116,7 @@ A file-layout change:
 +    └── stream.ts
 ```
 
-A call-tree change:
-
-```diff
- submitForm
-   createSession
-     persistPrompt
-+    expandSkillMention
-     launchAgent
--  navigateToSession
-+  navigateToSession
-+    subscribeToEvents
-```
-
-A state or control-flow change:
+Pseudocode, for a state or control-flow change:
 
 ```diff
  on(save)
@@ -158,10 +127,13 @@ A state or control-flow change:
 +  invalidate cache
 ```
 
+A line that only gains a child is context, not a `-`/`+` pair.
+
 ## Rules
 
-**Never draw what you have not read.** Every node names a real symbol at a real
-path, taken from the file rather than from a plausible naming scheme. A diagram
+**Never draw what you have not read.** Every symbol and path is a real one,
+taken from the file rather than from a plausible naming scheme; pseudocode may
+paraphrase logic, but only logic you have read. A diagram
 is read as *checked* in a way a sentence is not — a reader who would question
 "it calls `launchAgent` next" accepts the same claim without a blink once it is
 a node in a tree. So an inferred call tree is not a rough sketch, it is a
@@ -199,11 +171,16 @@ it: [`references/html-steps.md`](references/html-steps.md).
 `show-me-*.html` dropped in the repo turns up in `git status`, reads as
 something the branch meant to add, and gets committed with it — a file in the
 history of a change it had nothing to do with, when it was written to be thrown
-away. Then open it:
+away. Check the render as the design reference describes, then hand it over:
 
 ```
 Bash(open <scratch>/show-me/{topic}.html)
 ```
+
+`open` puts it on this machine's screen only. If the user may be following
+from another device — the session offers a tool for sending them a file, such
+as `SendUserFile` — send the HTML with it as well; that reader is on a phone,
+which is why the page has to fit one.
 
 One file, no build step, no CDN — it has to open from `file://` on a machine
 with no network. If it wants a framework, the subject has outgrown this skill.
@@ -211,10 +188,5 @@ with no network. If it wants a framework, the subject has outgrown this skill.
 ---
 
 Adapted from the `show-me` skill in
-[humanlayer/skills](https://github.com/humanlayer/skills) (MIT — see `LICENSE`).
-The form catalogue and its examples are upstream's. Local: the destination
-table, the "never draw what you have not read" rule, the scratch-directory
-placement for the HTML branch, and the `/wtf-create-pr` handoff.
-`references/html-design.md` and `references/html-steps.md` are condensed from a
-second MIT source, credited in each; the "say what you cut" rule comes from the
-same source's fidelity ledger for imported diagrams.
+[humanlayer/skills](https://github.com/humanlayer/skills) (MIT — see `LICENSE`);
+the two references credit a second MIT source at their own feet.

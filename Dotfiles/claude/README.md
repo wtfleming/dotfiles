@@ -330,10 +330,12 @@ describing one. It is gated there: most changes are not shapes, and where there 
 there is no section.
 
 Adapted from the `show-me` skill in [humanlayer/skills](https://github.com/humanlayer/skills)
-(MIT). The form catalogue and its examples are upstream's; the skill's own footer records
-what diverges, and is the one place that list is kept. The design reference its HTML branch
-reads is condensed from [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design)
-(MIT).
+(MIT). The form catalogue and its examples are upstream's. Local: the destination table, the
+"never draw what you have not read" rule, the scratch-directory placement and send step for
+the HTML branch, and the `/wtf-create-pr` handoff. The two references its HTML branch reads
+are condensed from [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design)
+(MIT); the "say what you cut" rule comes from the same source's fidelity ledger for imported
+diagrams.
 
 ## Verifying that it works
 

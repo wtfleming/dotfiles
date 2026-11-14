@@ -3,9 +3,7 @@
 Read this when the point of a page is an order — a request's path, a state
 machine's transitions, a migration's stages — and seeing it all at once hides
 which came first. Next and Back reveal the diagram a step at a time, each with
-a one-line caption. Nothing is computed: every step is already drawn. If what a
-step shows has to be worked out from the reader's input, that is
-`wtf-simulate`.
+a one-line caption.
 
 ## Rules
 
