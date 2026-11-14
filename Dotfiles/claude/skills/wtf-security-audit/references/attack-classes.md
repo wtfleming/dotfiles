@@ -27,7 +27,8 @@ not check `Origin` (LiveView's `check_origin`) can be driven by any page the
 operator visits, including for an app served from localhost. CORS that
 allows credentials while reflecting the request's origin, or naming origins
 the app does not control, lets another site read the operator's authenticated
-responses.
+responses. Where the app trusts network position instead of a login — a
+localhost or internal-only tool — any permissive CORS does the same.
 
 **OAuth and keys.** An OAuth or OIDC flow whose request and callback are not
 bound to each other: a missing or unchecked `state`, a callback that accepts a
