@@ -26,14 +26,8 @@ patterns that look like code rather than S-expressions:
   ast-grep run -p 'await fetch($URL)' -l ts
 #+end_src
 
-The ~tree-sitter~ CLI is *not* on PATH on this machine even though
-install-dependencies-macos.sh asks for it, so going to raw tree-sitter means
-wrangling grammars for strictly less capability.
-
-Two loose ends:
-- ~ast-grep~ is an undeclared dependency -- installed here, absent from
-  install-dependencies-macos.sh.
-- The ~ast-grep@ast-grep-marketplace~ plugin is installed and unused.
+Going to raw tree-sitter instead -- the ~tree-sitter~ CLI is installed too --
+means wrangling grammars for strictly less capability.
 
 ** TODO diff -> changed symbols
 
