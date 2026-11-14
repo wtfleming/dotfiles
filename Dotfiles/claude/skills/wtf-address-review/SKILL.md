@@ -128,9 +128,12 @@ abc123" is false until abc123 is on the remote. So, in this order:
    reply can name the commit that answers it. A held thread's fix stays
    uncommitted in the working tree; a thread whose fix cannot be committed
    without it is held too.
-2. **Push.** If the local branch is not the PR's head branch, has diverged from
-   it, or the push fails, stop here: report the drafts and say what blocked the
-   push. Declines and answers name no commit, so post those regardless.
+2. **Push once**, after every commit is made — never a push per commit. Each
+   push can start a fresh run of whatever bot reviews the PR, and those are
+   rate-limited. If the local branch is not the PR's head branch, has diverged
+   from it, or the push fails, stop here: report the drafts and say what
+   blocked the push. Declines and answers name no commit, so post those
+   regardless.
 3. **Re-fetch.** Every commit a reply names must be reachable from the new
    `headRefOid`. A thread something else resolved in the meantime — a bot often
    resolves on the push — still gets its reply; leave its state alone.
