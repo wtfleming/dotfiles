@@ -81,9 +81,9 @@ tab=$'\t'
 check "changed: innermost declaration, every one on a shared line, deduplicated" \
   "function${tab}_priv${tab}b.py:4-5${tab}no
 function${tab}keep${tab}a.ts:1-3${tab}yes
-method${tab}m${tab}a.ts:5-7${tab}no
-method${tab}meth${tab}b.py:8-9${tab}no
-method${tab}n${tab}d.js:1-1${tab}no
+method${tab}m${tab}a.ts:5-7${tab}nested
+method${tab}meth${tab}b.py:8-9${tab}nested
+method${tab}n${tab}d.js:1-1${tab}nested
 variable${tab}j${tab}a.ts:9-9${tab}yes
 variable${tab}k${tab}a.ts:9-9${tab}yes" \
   "$(section changed "$out")"
@@ -172,10 +172,10 @@ check "a whole-declaration deletion is not credited to its neighbour" "0" \
 check "the deleted declaration is removed" "function${tab}lonely${tab}s.ts:6-8${tab}no" \
   "$(section "removed (old-side location)" "$out" | grep lonely || :)"
 check "deleting one of two same-named methods is a removal" \
-  "method${tab}__init__${tab}m.py:2-3${tab}no" \
+  "method${tab}__init__${tab}m.py:2-3${tab}nested" \
   "$(section "removed (old-side location)" "$out" | grep __init__ || :)"
 check "a decorator change credits the decorated method" "1" \
-  "$(grep -c "^method${tab}s${tab}m.py:8-10${tab}no" <<<"$changed" || :)"
+  "$(grep -c "^method${tab}s${tab}m.py:8-10${tab}nested" <<<"$changed" || :)"
 check "a file named like an option is analysed as that file" "1" \
   "$(grep -c "^function${tab}evil${tab}--globs=z.ts:1-3" <<<"$changed" || :)"
 check "binary, mode-only and empty files are listed, not dropped" \
@@ -200,7 +200,7 @@ sed 's/return 1/return 2/' d.py > d.py.new && mv d.py.new d.py
 printf 'NOTE = """\n"""\n' > h.py
 out="$("$SYMS")"
 check "a decorated class's last method is credited alone, as a method" \
-  "method${tab}last${tab}d.py:5-6${tab}no" "$(section changed "$out" | grep 'd\.py' || :)"
+  "method${tab}last${tab}d.py:5-6${tab}nested" "$(section changed "$out" | grep 'd\.py' || :)"
 check "a content line that looks like a header does not hide a removal" \
   "function${tab}g${tab}h.py:1-2${tab}yes" "$(section "removed (old-side location)" "$out" | grep 'h\.py' || :)"
 
@@ -249,16 +249,16 @@ check "symlinks are listed, never read through to their target" \
   "dangling.ts${tab}symlink
 link.ts${tab}symlink" "$(section "not analyzed" "$out")"
 check "a method removed under one of two same-named nested classes is a removal" \
-  "method${tab}m${tab}n.py:4-4${tab}no" "$(grep 'n\.py' <<<"$removed" || :)"
+  "method${tab}m${tab}n.py:4-4${tab}nested" "$(grep 'n\.py' <<<"$removed" || :)"
 check "a removed setter is a removal though its getter keeps the name" \
-  "method${tab}x${tab}c.ts:5-7${tab}no" "$(grep 'c\.ts' <<<"$removed" || :)"
+  "method${tab}x${tab}c.ts:5-7${tab}nested" "$(grep 'c\.ts' <<<"$removed" || :)"
 rc=0; "$SYMS" "" >/dev/null 2>&1 || rc=$?
 check "an empty range argument fails rather than meaning no range" "1" "$rc"
 # Edit the surviving getter too: a line diff cannot say which x went, so neither is asserted.
 sed '3s/1/2/' c.ts > c.new && mv c.new c.ts
 check "a removal that could be either of two same-named members is marked ambiguous" \
-  "method${tab}x${tab}c.ts:2-4${tab}no${tab}ambiguous: 1 of these 2 removed
-method${tab}x${tab}c.ts:5-7${tab}no${tab}ambiguous: 1 of these 2 removed" \
+  "method${tab}x${tab}c.ts:2-4${tab}nested${tab}ambiguous: 1 of these 2 removed
+method${tab}x${tab}c.ts:5-7${tab}nested${tab}ambiguous: 1 of these 2 removed" \
   "$(section "removed (old-side location)" "$("$SYMS" 2>/dev/null)" | grep 'c\.ts' || :)"
 
 # Fourth repository: whole-file adds and deletes, deletions with nothing after them, a
@@ -281,6 +281,9 @@ printf 'function helper() {\n  return 1;\n}\nexport default { helper, run: () =>
 printf 'class C {\n  get x() {\n    return 1;\n  }\n  set x(v) {\n    this.y = v;\n    this.z = v;\n  }\n}\n' > mix.ts
 printf 'export declare function d(a: 1): void;\nfunction g() {\n  return 1;\n}\n' > amb.ts
 printf 'namespace N {\n  export function f() {\n    return 1;\n  }\n}\n' > ns.ts
+printf 'function r() {\n  return 1;\n}\n' > ren.ts
+printf 'function z() {\n  return 1;\n}\n' > 'q"t.ts'
+{ printf 'function m%s(){}' {1..400}; echo; } > min.js
 printf '// ast-grep-ignore\n\nfunction f() {\n  return 1;\n}\n' > ig.ts
 printf 'function a() {\n  return 1;\n}\n// ast-grep-ignore\nfunction b() {\n  return 1;\n}\n' > ig2.ts
 printf 'export default function () {\n  function inner() {\n    return 1;\n  }\n  return inner;\n}\n' > anon.ts
@@ -305,6 +308,9 @@ sed '3s/1/2/' gs.ts > g.new && mv g.new gs.ts
 sed '3d' gd.ts > g.new && mv g.new gd.ts
 sed '3s/1/2/' anon.ts > a.new && mv a.new anon.ts
 sed '4s/1/2/' ig.ts > a.new && mv a.new ig.ts
+git mv ren.ts moved.ts && sed '2s/1/2/' moved.ts > a.new && mv a.new moved.ts
+sed '2s/1/2/' 'q"t.ts' > a.new && mv a.new 'q"t.ts'
+echo 'function extra(){}' >> min.js
 sed '6s/1/2/' ig2.ts > a.new && mv a.new ig2.ts
 sed '3s/1/2/' amb.ts > a.new && mv a.new amb.ts
 sed '3s/1/2/' ns.ts > a.new && mv a.new ns.ts
@@ -317,9 +323,10 @@ changed="$(section changed "$out")"
 removed="$(section "removed (old-side location)" "$out")"
 check "deleting a body's last line credits that function or method, not what holds it" \
   "function${tab}f${tab}p.py:1-2${tab}yes
-method${tab}a${tab}p.py:5-6${tab}no" "$(grep 'p\.py' <<<"$changed" || :)"
+method${tab}a${tab}p.py:5-6${tab}nested" "$(grep 'p\.py' <<<"$changed" || :)"
 check "a deleted file is named, and its declarations are removals" \
   "gone.py (file deleted)
+ren.ts (file deleted)
 script.py (file deleted)|function${tab}h${tab}gone.py:1-2${tab}yes" \
   "$(section top-level "$out")|$(grep 'gone\.py' <<<"$removed" || :)"
 check "an added file's declarations are changed" \
@@ -330,35 +337,71 @@ check "an export the script cannot resolve reads unknown, not no" \
   "function${tab}foo${tab}e.ts:1-3${tab}unknown
 function${tab}q${tab}c.js:1-3${tab}unknown" "$(grep -E '(e\.ts|c\.js)' <<<"$changed" | sort || :)"
 check "editing a getter does not credit the setter that shares its name" \
-  "method${tab}x${tab}gs.ts:2-4${tab}no" "$(grep 'gs\.ts' <<<"$changed" || :)"
+  "method${tab}x${tab}gs.ts:2-4${tab}nested" "$(grep 'gs\.ts' <<<"$changed" || :)"
 check "a line deleted from one of two same-named members is marked ambiguous" \
-  "method${tab}x${tab}gd.ts:2-4${tab}no${tab}ambiguous: lines deleted from this or a same-named sibling
-method${tab}x${tab}gd.ts:5-7${tab}no${tab}ambiguous: lines deleted from this or a same-named sibling" \
+  "method${tab}x${tab}gd.ts:2-4${tab}nested${tab}ambiguous: lines deleted from this or a same-named sibling
+method${tab}x${tab}gd.ts:5-7${tab}nested${tab}ambiguous: lines deleted from this or a same-named sibling" \
   "$(grep 'gd\.ts' <<<"$changed" || :)"
 check "a name exported through a default object reads unknown, whatever else the object holds" \
   "function${tab}helper${tab}obj.ts:1-3${tab}unknown" "$(grep 'obj\.ts' <<<"$changed" || :)"
 check "an edited member is listed once when its same-named sibling loses a line" \
-  "method${tab}x${tab}mix.ts:2-4${tab}no
-method${tab}x${tab}mix.ts:5-7${tab}no${tab}ambiguous: lines deleted from this or a same-named sibling" \
+  "method${tab}x${tab}mix.ts:2-4${tab}nested
+method${tab}x${tab}mix.ts:5-7${tab}nested${tab}ambiguous: lines deleted from this or a same-named sibling" \
   "$(grep 'mix\.ts' <<<"$changed" || :)"
 check "export declare does not turn an unexported sibling to unknown" \
   "function${tab}g${tab}amb.ts:2-4${tab}no" "$(grep 'amb\.ts' <<<"$changed" || :)"
-check "an export inside a namespace the module does not export is not exported" \
-  "function${tab}f${tab}ns.ts:2-4${tab}no" "$(grep 'ns\.ts' <<<"$changed" || :)"
+check "an export inside a namespace reads nested, not exported" \
+  "function${tab}f${tab}ns.ts:2-4${tab}nested" "$(grep 'ns\.ts' <<<"$changed" || :)"
+check "a rename is a removal at the old path and a change at the new one" \
+  "function${tab}r${tab}moved.ts:1-3${tab}no|function${tab}r${tab}ren.ts:1-3${tab}no" \
+  "$(grep 'moved\.ts' <<<"$changed" || :)|$(grep 'ren\.ts' <<<"$removed" || :)"
+check "a path git has to quote and a minified file are listed, each with its reason" \
+  "\"a/q\\\"t.ts\" \"b/q\\\"t.ts\"${tab}path git had to quote
+min.js${tab}very long lines (minified or generated)" "$(section "not analyzed" "$out")"
 check "an ast-grep-ignore comment does not hide a declaration from the script" \
   "function${tab}b${tab}ig2.ts:5-7${tab}no
 function${tab}f${tab}ig.ts:3-5${tab}no" "$(grep -E 'ig2?\.ts' <<<"$changed" || :)"
-check "a function nested in an unnamed default export is not exported" \
-  "function${tab}inner${tab}anon.ts:2-4${tab}no" "$(grep 'anon\.ts' <<<"$changed" || :)"
+check "a function nested in an unnamed default export reads nested, not exported" \
+  "function${tab}inner${tab}anon.ts:2-4${tab}nested" "$(grep 'anon\.ts' <<<"$changed" || :)"
 check "an overload signature does not turn an unexported sibling to unknown" \
   "function${tab}g${tab}ov.ts:3-5${tab}no" "$(grep 'ov\.ts' <<<"$changed" || :)"
 check "a removal is keyed on the enclosing path, not the name alone" \
-  "method${tab}m${tab}n.py:4-4${tab}no" "$(grep 'n\.py' <<<"$removed" || :)"
+  "method${tab}m${tab}n.py:4-4${tab}nested" "$(grep 'n\.py' <<<"$removed" || :)"
 
 rc=0; "$SYMS" no-such-ref >/dev/null 2>&1 || rc=$?
 check "a bad range fails" "1" "$rc"
 rc=0; (cd "$WORK" && "$SYMS") >/dev/null 2>&1 || rc=$?
 check "outside a repository fails" "1" "$rc"
+# Fifth repository: a submodule pointer named like source, and a side that cannot be read.
+git init -q -b main "$WORK/five"
+cd "$WORK/five"
+git config user.email ci@example.invalid
+git config user.name CI
+printf 'function f() {\n  return 1;\n}\n' > a.ts
+git add a.ts
+git update-index --add --cacheinfo 160000,1111111111111111111111111111111111111111,vendor/three.js
+git commit -q -m base
+sed '2s/1/2/' a.ts > a.new && mv a.new a.ts && git add a.ts
+git update-index --cacheinfo 160000,2222222222222222222222222222222222222222,vendor/three.js
+git commit -q -m change
+for cfg in diff.submodule=short diff.submodule=log diff.submodule=diff diff.ignoreSubmodules=all; do
+  out="$(GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0="${cfg%%=*}" GIT_CONFIG_VALUE_0="${cfg#*=}" "$SYMS" HEAD~1..HEAD 2>&1)"
+  check "$cfg: a submodule is listed as one, and the file beside it is analysed" \
+    "function${tab}f${tab}a.ts:1-3${tab}no|vendor/three.js${tab}submodule" \
+    "$(section changed "$out")|$(section "not analyzed" "$out")"
+done
+shim="$WORK/shim"; mkdir "$shim"
+cat > "$shim/git" <<EOF
+#!/usr/bin/env bash
+[ "\$1" != show ] || exit 128
+exec "$(command -v git)" "\$@"
+EOF
+chmod +x "$shim/git"
+out="$(PATH="$shim:$PATH" "$SYMS" HEAD~1..HEAD 2>/dev/null)"
+check "a side that cannot be read is listed, not analysed as an empty file" \
+  "(none)|a.ts${tab}could not read the new side" \
+  "$(section changed "$out")|$(section "not analyzed" "$out" | grep 'a\.ts' || :)"
+
 # A PATH holding every tool the script needs but one, wherever each is installed.
 path_without() {
   local bin="$WORK/bin-$1" t

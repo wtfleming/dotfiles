@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Map a diff's changed lines to the named declarations that enclose them, so a review agent
-# is handed "these functions, classes and consts changed" instead of raw hunks.
+# can be handed "these functions, classes and consts changed" instead of raw hunks. Nothing
+# calls it yet; todo.org has the plan for wiring it into the reviewer.
 #
 # Usage:
 #   diff-symbols.sh [<range>] [-- <path>...]
@@ -64,10 +65,12 @@ WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
 # Every flag here pins something user config or .gitattributes could otherwise change under
-# the parser: a/ and b/ on repo-root paths, hunks that hold changed lines only, and line
-# numbers that count the raw file ast-grep is about to read.
+# the parser: a/ and b/ on repo-root paths, hunks that hold changed lines only, line
+# numbers that count the raw file ast-grep is about to read, and a submodule shown as one
+# entry of its own rather than hidden, summarised or expanded into its files.
 diff_cmd=(git -c core.quotePath=false diff -U0 --inter-hunk-context=0 --no-renames --no-color
-  --no-ext-diff --no-textconv --src-prefix=a/ --dst-prefix=b/ --no-relative "$old_sha")
+  --no-ext-diff --no-textconv --src-prefix=a/ --dst-prefix=b/ --no-relative
+  --submodule=short --ignore-submodules=none "$old_sha")
 [ -z "$new_sha" ] || diff_cmd+=("$new_sha")
 diff_cmd+=(-- ${paths[@]+"${paths[@]}"})
 
@@ -78,9 +81,9 @@ echo "# new side: ${new_sha:-working tree}; renames appear as a deletion plus an
 
 # Records, one file at a time: F and the repo path (taken from the `diff --git` line, which
 # every entry has -- binary, empty and mode-only changes have no ---/+++ lines), then A
-# (added) or D (deleted), B (binary) and L (symlink) where they apply, each touched
-# new-side line (N), and each deleted old-side line (O) -- twice, also as X, when its hunk
-# adds nothing, so a deletion can be told from the old half of an edit.
+# (added) or D (deleted), B (binary), L (symlink) and M (submodule) where they apply,
+# each touched new-side line (N), and each deleted old-side line (O) -- twice, also as X,
+# when its hunk adds nothing, so a deletion can be told from the old half of an edit.
 # --no-renames makes both paths on the `diff --git` line the same, so the path is half of
 # what follows "a/".
 awk '
@@ -93,6 +96,9 @@ awk '
   # the blob of a symlink is its target path, not source, and reading it follows the link
   head && /^(new file mode|deleted file mode|old mode|new mode) 120000$/ { print "L"; next }
   head && /^index [0-9a-f]+\.\.[0-9a-f]+ 120000$/ { print "L"; next }
+  # a submodule is a commit id, whatever its name ends in
+  head && /^(new file mode|deleted file mode|old mode|new mode) 160000$/ { print "M"; next }
+  head && /^index [0-9a-f]+\.\.[0-9a-f]+ 160000$/ { print "M"; next }
   /^@@ / {
     head = 0
     # @@ -a[,b] +c[,d] @@ -- an omitted count is 1
@@ -161,22 +167,24 @@ rules_for() {
 # path of the enclosing declarations. Prints ERROR instead when the parse has error
 # nodes, since symbols from a broken parse are guesses, and ENCODING when the file is not
 # UTF-8: ast-grep then prints [] and exits 0, which would read as a file with no
-# declarations.
+# declarations. Prints LONGLINES for a minified or generated file: every match carries the
+# text of its line, so thousands of declarations on one line cost quadratic time and memory.
 #
 # One sweep in source order with a stack of open declarations finds each parent, so the
 # cost stays linear in a generated file of thousands of types. A Python definition starts
 # at its decorators, and a method is a Python function whose parent is a class.
 #
-# Exported: no for anything nested, including inside an unnamed function or class.
-# Python: yes unless the name starts with an underscore. TS/JS: yes when an export
-# statement declares it outright, as ast-grep reports it rather than by position.
-# Otherwise no -- or unknown when the file also exports by a route this does not
-# resolve: `export { a }`, `export default a`, `export * from`, CommonJS. Best effort for
-# TypeScript, which has more export forms than are listed here; an unlisted one reads
-# unknown.
+# Exported: nested for anything inside another declaration or an unnamed function or
+# class -- a method of an exported class is public, so "no" would mislead. Python: yes
+# unless the name starts with an underscore. TS/JS: yes when an export statement declares
+# it outright, as ast-grep reports it rather than by position. Otherwise no -- or unknown
+# when the file also exports by a route this does not resolve: `export { a }`,
+# `export default a`, `export * from`, CommonJS. Best effort for TypeScript, which has
+# more export forms than are listed here; an unlisted one reads unknown.
 decls() {
   local file=$1 lang=$2
   iconv -f UTF-8 -t UTF-8 "$file" >/dev/null 2>&1 || { echo ENCODING; return 0; }
+  LC_ALL=C awk 'length > 5000 { exit 1 }' "$file" || { echo LONGLINES; return 0; }
   # ./ so a file named like an option reaches ast-grep as a file
   ( cd "$(dirname "$file")" && ast-grep scan --inline-rules "$(rules_for "$lang")" --json=compact "./$(basename "$file")" ) \
     | jq -r --arg lang "$lang" '
@@ -202,7 +210,7 @@ decls() {
               .row) ]
         | .[] | select(.x.id != "scope")
         | (if $lang == "python" and .x.id == "function" and .p.id == "class" then "method" else .x.id end) as $kind
-        | (if .p != null then "no"
+        | (if .p != null then "nested"
            elif $lang == "python" then (if (.x.name | startswith("_")) then "no" else "yes" end)
            elif $direct["\(.x.sb):\(.x.eb)"] then "yes"
            elif $indirect then "unknown" else "no" end) as $exported
@@ -224,8 +232,10 @@ side() {
   local which=$1 rev=$2 path=$3 out
   out="$WORK/$which/$path"
   mkdir -p "$(dirname "$out")"
+  # the status matters: callers run this in $(...), where errexit is off, and a read that
+  # failed would otherwise leave an empty copy that parses as a file with no declarations
   if [ -z "$rev" ]; then cat "$top/$path"; else git show "$rev:$path"; fi \
-    | LC_ALL=C sed 's/ast-grep-ignore/ast-grep-ignorX/g' > "$out"
+    | LC_ALL=C sed 's/ast-grep-ignore/ast-grep-ignorX/g' > "$out" || return 1
   echo "$out"
 }
 
@@ -282,15 +292,18 @@ analyse() {
 
   : > "$WORK/new.tsv"; : > "$WORK/old.tsv"
   if [ "$deleted" = 0 ]; then
-    nf="$(side new "$new_sha" "$path")"
+    nf="$(side new "$new_sha" "$path")" || { printf '%s\tcould not read the new side\n' "$path" >> "$WORK/skipped"; return 0; }
     decls "$nf" "$lang" > "$WORK/new.tsv" || { printf '%s\tast-grep failed\n' "$path" >> "$WORK/skipped"; return 0; }
   fi
   if [ "$added" = 0 ]; then
-    of="$(side old "$old_sha" "$path")"
+    of="$(side old "$old_sha" "$path")" || { printf '%s\tcould not read the old side\n' "$path" >> "$WORK/skipped"; return 0; }
     decls "$of" "$lang" > "$WORK/old.tsv" || { printf '%s\tast-grep failed\n' "$path" >> "$WORK/skipped"; return 0; }
   fi
   if grep -qx ENCODING "$WORK/new.tsv" "$WORK/old.tsv"; then
     printf '%s\tnot valid UTF-8\n' "$path" >> "$WORK/skipped"; return 0
+  fi
+  if grep -qx LONGLINES "$WORK/new.tsv" "$WORK/old.tsv"; then
+    printf '%s\tvery long lines (minified or generated)\n' "$path" >> "$WORK/skipped"; return 0
   fi
   if grep -qx ERROR "$WORK/new.tsv" "$WORK/old.tsv"; then
     printf '%s\tparse errors\n' "$path" >> "$WORK/skipped"; return 0
@@ -355,6 +368,7 @@ while IFS=$'\t' read -r tag value; do
     D) deleted=1 ;;
     B) skip=binary ;;
     L) skip=symlink ;;
+    M) skip=submodule ;;
     Q) skip="path git had to quote" ;;
     *) printf '%s\t%s\n' "$tag" "$value" >> "$WORK/file-lines" ;;
   esac
@@ -371,7 +385,7 @@ if [ "$files" -eq 0 ]; then
   echo
   echo "no changes in this diff"
 else
-  echo "# columns: kind, name, file:start-end, exported (yes, no or unknown)[, note]"
+  echo "# columns: kind, name, file:start-end, exported (yes, no, nested or unknown)[, note]"
   section changed "$WORK/changed"
   section top-level "$WORK/toplevel"
   section "removed (old-side location)" "$WORK/removed"
