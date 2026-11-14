@@ -26,7 +26,7 @@ die() {
   exit 1
 }
 
-for tool in git jq ast-grep; do
+for tool in git jq ast-grep iconv; do
   command -v "$tool" >/dev/null 2>&1 || die "$tool is not on PATH"
 done
 top="$(git rev-parse --show-toplevel 2>/dev/null)" || die "not inside a git working tree"
@@ -79,8 +79,8 @@ echo "# new side: ${new_sha:-working tree}; renames appear as a deletion plus an
 # Records, one file at a time: F and the repo path (taken from the `diff --git` line, which
 # every entry has -- binary, empty and mode-only changes have no ---/+++ lines), then A
 # (added) or D (deleted), B (binary) and L (symlink) where they apply, each touched
-# new-side line (N), each deleted old-side line (O), and G for a pure deletion after
-# new-side line c.
+# new-side line (N), and each deleted old-side line (O) -- twice, also as X, when its hunk
+# adds nothing, so a deletion can be told from the old half of an edit.
 # --no-renames makes both paths on the `diff --git` line the same, so the path is half of
 # what follows "a/".
 awk '
@@ -99,8 +99,7 @@ awk '
     split($2, o, ","); split($3, n, ",")
     a = substr(o[1], 2) + 0; b = (2 in o) ? o[2] + 0 : 1
     c = substr(n[1], 2) + 0; d = (2 in n) ? n[2] + 0 : 1
-    for (i = 0; i < b; i++) print "O\t" a + i
-    if (d == 0) print "G\t" c
+    for (i = 0; i < b; i++) { print "O\t" a + i; if (d == 0) print "X\t" a + i }
     for (i = 0; i < d; i++) print "N\t" c + i
   }
 ' "$WORK/diff" > "$WORK/changes"
@@ -131,7 +130,28 @@ rules_for() {
     # shellcheck disable=SC2016 # $DEF is an ast-grep metavariable
     printf -- '---\nid: decorated\nlanguage: %s\nrule:\n  kind: decorated_definition\n  has: {field: definition, pattern: $DEF}\n' "$lang"
   else
-    printf -- '---\nid: export\nlanguage: %s\nrule: {kind: export_statement}\n' "$lang"
+    # What an export statement can declare outright, and the unnamed things it can wrap.
+    local named="" unnamed="{kind: function_expression}, {kind: arrow_function}, {kind: class}, {kind: generator_function}"
+    for pair in $(kinds_for "$lang"); do
+      case ${pair%%:*} in method|variable) ;; *) named="$named{kind: ${pair#*:}}, " ;; esac
+    done
+    named=${named%, }
+    printf -- '---\nid: direct\nlanguage: %s\nrule:\n  any: [%s]\n  inside: {kind: export_statement, stopBy: neighbor}\n' "$lang" "$named"
+    printf -- '---\nid: directvar\nlanguage: %s\nrule:\n  kind: variable_declarator\n  inside:\n    stopBy: neighbor\n    any: [{kind: lexical_declaration}, {kind: variable_declaration}]\n    inside: {kind: export_statement, stopBy: neighbor}\n' "$lang"
+    # An export statement that declares nothing itself exports by name or by value:
+    # `export { a }`, `export default a`, `export default { a }`, `export * from`.
+    local wraps="$named, {kind: lexical_declaration}, {kind: variable_declaration}, $unnamed"
+    # TypeScript only: overload signatures, `export declare`, and namespaces, which also
+    # hold declarations the module does not export.
+    if [ "$lang" != js ]; then
+      wraps="$wraps, {kind: function_signature}, {kind: ambient_declaration}, {kind: internal_module}, {kind: module}"
+      unnamed="$unnamed, {kind: internal_module}, {kind: module}"
+    fi
+    printf -- '---\nid: indirect\nlanguage: %s\nrule:\n  kind: export_statement\n  not:\n    has:\n      any: [%s]\n' "$lang" "$wraps"
+    printf -- '---\nid: cjs\nlanguage: %s\nrule: {kind: member_expression, regex: "^(module[.]exports|exports[.])"}\n' "$lang"
+    # Unnamed functions and classes a declaration can sit inside: tracked for nesting,
+    # never printed.
+    printf -- '---\nid: scope\nlanguage: %s\nrule: {any: [%s]}\n' "$lang" "$unnamed"
   fi
   printf -- '---\nid: error\nlanguage: %s\nrule: {kind: ERROR}\n' "$lang"
 }
@@ -145,9 +165,15 @@ rules_for() {
 #
 # One sweep in source order with a stack of open declarations finds each parent, so the
 # cost stays linear in a generated file of thousands of types. A Python definition starts
-# at its decorators. A method is a Python function whose parent is a class; a declaration
-# is exported when it has no parent and sits in an export statement (TS/JS) or its name has
-# no leading underscore (Python).
+# at its decorators, and a method is a Python function whose parent is a class.
+#
+# Exported: no for anything nested, including inside an unnamed function or class.
+# Python: yes unless the name starts with an underscore. TS/JS: yes when an export
+# statement declares it outright, as ast-grep reports it rather than by position.
+# Otherwise no -- or unknown when the file also exports by a route this does not
+# resolve: `export { a }`, `export default a`, `export * from`, CommonJS. Best effort for
+# TypeScript, which has more export forms than are listed here; an unlisted one reads
+# unknown.
 decls() {
   local file=$1 lang=$2
   iconv -f UTF-8 -t UTF-8 "$file" >/dev/null 2>&1 || { echo ENCODING; return 0; }
@@ -162,24 +188,24 @@ decls() {
         # keyed on where the wrapped definition starts: a class and its last method share
         # an end byte, so the end would hand the class decorator to the method
         ($m | map(select(.id == "decorated")) | map({ key: (.def | tostring), value: . }) | from_entries) as $dec
-        | $m
-        | map(select(.id != "decorated" and .id != "error")
-              | ($dec[.sb | tostring]) as $d
-              | if $d != null then .s = $d.s | .sb = $d.sb else . end)
-        | sort_by(.sb, -.eb)
-        | reduce .[] as $x ({ stack: [], exp: null, out: [] };
-            if $x.id == "export" then .exp = $x
-            else
+        | ($m | map(select(.id == "direct" or .id == "directvar")) | map({ key: "\(.sb):\(.eb)", value: true }) | from_entries) as $direct
+        | any($m[]; .id == "indirect" or .id == "cjs") as $indirect
+        | [ foreach ($m
+              | map(select(.id | IN("decorated", "error", "direct", "directvar", "indirect", "cjs") | not)
+                    | ($dec[.sb | tostring]) as $d
+                    | if $d != null then .s = $d.s | .sb = $d.sb else . end
+                    | if .id == "scope" then .name = "<unnamed>" else . end)
+              | sort_by(.sb, -.eb))[] as $x ({ stack: [], row: null };
               .stack |= until(length == 0 or (.[-1].eb >= $x.eb and (.[-1].sb != $x.sb or .[-1].eb != $x.eb)); .[:-1])
-              | .out += [{ x: $x, p: (.stack[-1] // null), path: (.stack | map(.name) | join(".")),
-                           inexp: (.exp != null and .exp.sb <= $x.sb and $x.eb <= .exp.eb) }]
-              | .stack += [$x]
-            end)
-        | .out[]
+              | .row = { x: $x, p: (.stack[-1] // null), path: (.stack | map(.name) | join(".")) }
+              | .stack += [$x];
+              .row) ]
+        | .[] | select(.x.id != "scope")
         | (if $lang == "python" and .x.id == "function" and .p.id == "class" then "method" else .x.id end) as $kind
         | (if .p != null then "no"
            elif $lang == "python" then (if (.x.name | startswith("_")) then "no" else "yes" end)
-           elif .inexp then "yes" else "no" end) as $exported
+           elif $direct["\(.x.sb):\(.x.eb)"] then "yes"
+           elif $indirect then "unknown" else "no" end) as $exported
         | [ $kind, .x.name, .x.s, .x.e, $exported, .x.sb, .x.eb, .path ] | @tsv
         end'
 }
@@ -199,11 +225,11 @@ side() {
   echo "$out"
 }
 
-# For each line record in file-lines, print the innermost declarations that hold it: kind,
-# name, path:start-end, exported, enclosing path -- or "-" and path:line when none does. A line
-# can be held by several innermost declarations (`const a = 1, b = 2`), and a line diff
-# cannot say which of them changed, so all of them are printed. A gap after line c (a
-# pure deletion) is held only by a declaration spanning both c and c+1.
+# For each line record in file-lines with one of the given tags, print the innermost
+# declarations that hold it: kind, name, path:start-end, exported, enclosing path, tag --
+# or "-", path:line and the tag when none does. A line can be held by several innermost
+# declarations (`const a = 1, b = 2`), and a line diff cannot say which of them changed,
+# so all of them are printed.
 #
 # The line records are sorted once and each declaration visits only the records inside
 # its own range (found by binary search), so the cost is lines times nesting depth rather
@@ -211,12 +237,12 @@ side() {
 enclosing() {
   awk -F'\t' -v tags="$2" 'index(tags, $1)' "$WORK/file-lines" | sort -u | sort -t "$(printf '\t')" -k2,2n > "$WORK/records"
   awk -F'\t' -v OFS='\t' -v path="$3" '
-    FILENAME == ARGV[1] { r++; tg[r] = $1; lo[r] = $2; hi[r] = ($1 == "G") ? $2 + 1 : $2; next }
+    FILENAME == ARGV[1] { r++; tg[r] = $1; ln[r] = $2; next }
     {
       i = FNR; k[i] = $1; n[i] = $2; s[i] = $3; e[i] = $4; x[i] = $5; sb[i] = $6; eb[i] = $7; p[i] = $8
       a = 1; b = r + 1
-      while (a < b) { m = int((a + b) / 2); if (lo[m] < s[i]) a = m + 1; else b = m }
-      for (j = a; j <= r && lo[j] <= e[i]; j++) if (hi[j] <= e[i]) cand[j, ++nc[j]] = i
+      while (a < b) { m = int((a + b) / 2); if (ln[m] < s[i]) a = m + 1; else b = m }
+      for (j = a; j <= r && ln[j] <= e[i]; j++) cand[j, ++nc[j]] = i
     }
     END {
       for (j = 1; j <= r; j++) {
@@ -227,9 +253,9 @@ enclosing() {
             cb = cand[j, b]
             if (a != b && sb[ca] <= sb[cb] && eb[cb] <= eb[ca] && (sb[ca] != sb[cb] || eb[ca] != eb[cb])) inner = 0
           }
-          if (inner) { print k[ca], n[ca], path ":" s[ca] "-" e[ca], x[ca], p[ca]; hit = 1 }
+          if (inner) { print k[ca], n[ca], path ":" s[ca] "-" e[ca], x[ca], p[ca], tg[j]; hit = 1 }
         }
-        if (!hit) print "-", (tg[j] == "G") ? path ":" lo[j] " (lines deleted after)" : path ":" lo[j]
+        if (!hit) print "-", path ":" ln[j], tg[j]
       }
     }
   ' "$WORK/records" "$1"
@@ -266,31 +292,51 @@ analyse() {
     printf '%s\tparse errors\n' "$path" >> "$WORK/skipped"; return 0
   fi
 
+  : > "$WORK/credited"
   if [ "$deleted" = 0 ]; then
-    enclosing "$WORK/new.tsv" NG "$path" | awk -F'\t' -v OFS='\t' -v changed="$WORK/changed" -v top="$WORK/toplevel" '
+    enclosing "$WORK/new.tsv" N "$path" | awk -F'\t' -v OFS='\t' \
+        -v changed="$WORK/changed" -v top="$WORK/toplevel" -v credited="$WORK/credited" '
       $1 == "-" { print $2 >> top; next }
-      { print $1, $2, $3, $4 >> changed }
+      { print $1, $2, $3, $4 >> changed; print $1, $5, $2, $3 >> credited }
     '
+  else
+    printf '%s (file deleted)\n' "$path" >> "$WORK/toplevel"
   fi
-  # A declaration enclosing a deleted line is removed if fewer of its kind and name are
-  # left under the same enclosing path than there were -- a count, because a getter and
-  # its setter share all three. When more of them lost lines than went away, a line diff
-  # cannot say which survived, so each row says so rather than claiming a removal.
-  enclosing "$WORK/old.tsv" O "$path" | awk -F'\t' -v OFS='\t' '
-    FILENAME == ARGV[1] { new[$1 "\t" $8 "\t" $2]++; next }
-    FILENAME == ARGV[2] { old[$1 "\t" $8 "\t" $2]++; next }
-    $1 != "-" {
+  # Deleted lines are credited from the old side, where they still exist. The declaration
+  # that held one is removed if fewer of its kind and name are left under the same
+  # enclosing path than there were -- a count, because a getter and its setter share all
+  # three. Otherwise it changed, and is credited at its new-side location, unless the
+  # new-side pass already credited that key: the old half of an edit says nothing new.
+  # Wherever several declarations share the key, a line diff cannot say which one is
+  # meant, so each row says so rather than claiming it. A line deleted outright from
+  # outside any declaration is top-level.
+  enclosing "$WORK/old.tsv" OX "$path" | awk -F'\t' -v OFS='\t' -v path="$path" -v deleted="$deleted" \
+      -v changed="$WORK/changed" -v top="$WORK/toplevel" -v removed="$WORK/removed" '
+    FILENAME == ARGV[1] { credited[$1 "\t" $2 "\t" $3] = 1; printed[$0] = 1; next }
+    FILENAME == ARGV[2] {
+      key = $1 "\t" $8 "\t" $2; new[key]++; at[key, new[key]] = path ":" $3 "-" $4
+      loc[key, new[key]] = $1 OFS $2 OFS at[key, new[key]] OFS $5; next
+    }
+    FILENAME == ARGV[3] { old[$1 "\t" $8 "\t" $2]++; next }
+    $1 == "-" { if ($3 == "X" && deleted == 0) print $2 " (old side, deleted)" >> top; next }
+    {
       key = $1 "\t" $5 "\t" $2; row = $1 OFS $2 OFS $3 OFS $4
-      if (old[key] > new[key] && !(row in seen)) { seen[row] = 1; rows[key, ++cnt[key]] = row }
+      if (old[key] > new[key]) { if (!(row in seen)) { seen[row] = 1; rows[key, ++cnt[key]] = row } }
+      else if ($6 == "X" || !(key in credited))
+        for (i = 1; i <= new[key]; i++) {
+          if (new[key] == 1) print loc[key, i] >> changed
+          else if (!((key "\t" at[key, i]) in printed))
+            print loc[key, i], "ambiguous: lines deleted from this or a same-named sibling" >> changed
+        }
     }
     END {
       for (key in cnt) {
         gone = old[key] - new[key]
         for (i = 1; i <= cnt[key]; i++)
-          print rows[key, i] (cnt[key] > gone ? OFS "ambiguous: " gone " of these " cnt[key] " removed" : "")
+          print rows[key, i] (cnt[key] > gone ? OFS "ambiguous: " gone " of these " cnt[key] " removed" : "") >> removed
       }
     }
-  ' "$WORK/new.tsv" "$WORK/old.tsv" - >> "$WORK/removed"
+  ' "$WORK/credited" "$WORK/new.tsv" "$WORK/old.tsv" -
 }
 
 path="" added=0 deleted=0 skip=""
@@ -321,7 +367,7 @@ if [ "$files" -eq 0 ]; then
   echo
   echo "no changes in this diff"
 else
-  echo "# columns: kind, name, file:start-end, exported[, note]"
+  echo "# columns: kind, name, file:start-end, exported (yes, no or unknown)[, note]"
   section changed "$WORK/changed"
   section top-level "$WORK/toplevel"
   section "removed (old-side location)" "$WORK/removed"

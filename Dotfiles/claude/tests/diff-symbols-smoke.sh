@@ -6,6 +6,7 @@
 # agent reads as "nothing changed".
 
 set -Eeuo pipefail
+export LC_ALL=C   # the exact expectations below depend on byte-order sorting
 
 SYMS="$(cd "$(dirname "$0")/.." && pwd)/scripts/diff-symbols.sh"
 WORK="$(mktemp -d)"
@@ -104,7 +105,6 @@ check "a file that does not parse is listed with the reason" \
 
 out="$("$SYMS" HEAD..HEAD)"
 check "an empty diff says so" "1" "$(grep -cx 'no changes in this diff' <<<"$out" || :)"
-check "A...B diffs from the merge base" "a.ts:10" "$(section top-level "$("$SYMS" HEAD~2...HEAD -- a.ts)")"
 printf 'still\n' > still-untracked.ts
 out="$("$SYMS" HEAD~2..HEAD)"
 check "a committed range has no untracked section, even with untracked files about" \
@@ -261,6 +261,93 @@ check "a removal that could be either of two same-named members is marked ambigu
 method${tab}x${tab}c.ts:5-7${tab}no${tab}ambiguous: 1 of these 2 removed" \
   "$(section "removed (old-side location)" "$("$SYMS" 2>/dev/null)" | grep 'c\.ts' || :)"
 
+# Fourth repository: whole-file adds and deletes, deletions with nothing after them, a
+# diverged history, and exports the script cannot resolve.
+git init -q -b main "$WORK/four"
+cd "$WORK/four"
+git config user.email ci@example.invalid
+git config user.name CI
+printf 'function onMain() {\n  return 1;\n}\nfunction onSide() {\n  return 1;\n}\n' > d.ts
+printf 'def f():\n    x = 1\n    return x\n\nclass K:\n    def a(self):\n        y = 1\n        return y\n\n    def b(self):\n        return 2\n' > p.py
+printf 'def h():\n    return 1\n' > gone.py
+printf 'import os\nprint(1)\n' > script.py
+printf 'function body() {\n  const a = 1;\n  return a;\n}\n' > l.ts
+printf 'function foo() {\n  return 1;\n}\nexport { foo };\n' > e.ts
+printf 'function q() {\n  return 1;\n}\nmodule.exports = { q };\n' > c.js
+printf 'class O1:\n    class Inner:\n        def keep(self): pass\n        def m(self): pass\n\nclass O2:\n    def keep(self): pass\n' > n.py
+printf 'class C {\n  get x() {\n    return 1;\n  }\n  set x(v) {\n    this.y = v;\n  }\n}\n' > gs.ts
+printf 'class C {\n  get x() {\n    const a = 1;\n    return a;\n  }\n  set x(v) {\n    this.y = v;\n  }\n}\n' > gd.ts
+printf 'function helper() {\n  return 1;\n}\nexport default { helper, run: () => 2, go() { return 3; } };\n' > obj.ts
+printf 'class C {\n  get x() {\n    return 1;\n  }\n  set x(v) {\n    this.y = v;\n    this.z = v;\n  }\n}\n' > mix.ts
+printf 'export declare function d(a: 1): void;\nfunction g() {\n  return 1;\n}\n' > amb.ts
+printf 'namespace N {\n  export function f() {\n    return 1;\n  }\n}\n' > ns.ts
+printf 'export default function () {\n  function inner() {\n    return 1;\n  }\n  return inner;\n}\n' > anon.ts
+printf 'export function f(a: string): void;\nexport function f(a: any) {}\nfunction g() {\n  return 1;\n}\n' > ov.ts
+git add . && git commit -q -m base
+git switch -q -c side
+sed '5s/1/2/' d.ts > d.new && mv d.new d.ts && git commit -q -am side
+git switch -q main
+sed '2s/1/2/' d.ts > d.new && mv d.new d.ts && git commit -q -am main
+check "A...B diffs from the merge base, leaving out the other branch's work" "onMain" \
+  "$(section changed "$("$SYMS" side...main)" | cut -f2 | tr '\n' ' ' | sed 's/ $//')"
+check "A..B diffs the two tips" "onMain onSide" \
+  "$(section changed "$("$SYMS" side..main)" | cut -f2 | tr '\n' ' ' | sed 's/ $//')"
+
+sed -e '3d' -e '8d' p.py > p.new && mv p.new p.py
+git rm -q gone.py script.py
+printf 'export function fresh() {\n  return 1;\n}\n' > added.ts && git add added.ts
+sed '2s/1/5/' l.ts > l.new && mv l.new l.ts
+sed '2s/1/2/' e.ts > e.new && mv e.new e.ts
+sed '2s/1/2/' c.js > c.new && mv c.new c.js
+sed '3s/1/2/' gs.ts > g.new && mv g.new gs.ts
+sed '3d' gd.ts > g.new && mv g.new gd.ts
+sed '3s/1/2/' anon.ts > a.new && mv a.new anon.ts
+sed '3s/1/2/' amb.ts > a.new && mv a.new amb.ts
+sed '3s/1/2/' ns.ts > a.new && mv a.new ns.ts
+sed '2s/1/2/' obj.ts > o.new && mv o.new obj.ts
+sed -e '3s/1/2/' -e '7d' mix.ts > m.new && mv m.new mix.ts
+sed '4s/1/2/' ov.ts > o.new && mv o.new ov.ts
+printf 'class O1:\n    class Inner:\n        def keep(self): pass\n\nclass O2:\n    def keep(self): pass\n    def m(self): pass\n' > n.py
+out="$("$SYMS")"
+changed="$(section changed "$out")"
+removed="$(section "removed (old-side location)" "$out")"
+check "deleting a body's last line credits that function or method, not what holds it" \
+  "function${tab}f${tab}p.py:1-2${tab}yes
+method${tab}a${tab}p.py:5-6${tab}no" "$(grep 'p\.py' <<<"$changed" || :)"
+check "a deleted file is named, and its declarations are removals" \
+  "gone.py (file deleted)
+script.py (file deleted)|function${tab}h${tab}gone.py:1-2${tab}yes" \
+  "$(section top-level "$out")|$(grep 'gone\.py' <<<"$removed" || :)"
+check "an added file's declarations are changed" \
+  "function${tab}fresh${tab}added.ts:1-3${tab}yes" "$(grep 'added\.ts' <<<"$changed" || :)"
+check "a local const does not out-rank the function that holds it" \
+  "function${tab}body${tab}l.ts:1-4${tab}no" "$(grep 'l\.ts' <<<"$changed" || :)"
+check "an export the script cannot resolve reads unknown, not no" \
+  "function${tab}foo${tab}e.ts:1-3${tab}unknown
+function${tab}q${tab}c.js:1-3${tab}unknown" "$(grep -E '(e\.ts|c\.js)' <<<"$changed" | sort || :)"
+check "editing a getter does not credit the setter that shares its name" \
+  "method${tab}x${tab}gs.ts:2-4${tab}no" "$(grep 'gs\.ts' <<<"$changed" || :)"
+check "a line deleted from one of two same-named members is marked ambiguous" \
+  "method${tab}x${tab}gd.ts:2-4${tab}no${tab}ambiguous: lines deleted from this or a same-named sibling
+method${tab}x${tab}gd.ts:5-7${tab}no${tab}ambiguous: lines deleted from this or a same-named sibling" \
+  "$(grep 'gd\.ts' <<<"$changed" || :)"
+check "a name exported through a default object reads unknown, whatever else the object holds" \
+  "function${tab}helper${tab}obj.ts:1-3${tab}unknown" "$(grep 'obj\.ts' <<<"$changed" || :)"
+check "an edited member is listed once when its same-named sibling loses a line" \
+  "method${tab}x${tab}mix.ts:2-4${tab}no
+method${tab}x${tab}mix.ts:5-7${tab}no${tab}ambiguous: lines deleted from this or a same-named sibling" \
+  "$(grep 'mix\.ts' <<<"$changed" || :)"
+check "export declare does not turn an unexported sibling to unknown" \
+  "function${tab}g${tab}amb.ts:2-4${tab}no" "$(grep 'amb\.ts' <<<"$changed" || :)"
+check "an export inside a namespace the module does not export is not exported" \
+  "function${tab}f${tab}ns.ts:2-4${tab}no" "$(grep 'ns\.ts' <<<"$changed" || :)"
+check "a function nested in an unnamed default export is not exported" \
+  "function${tab}inner${tab}anon.ts:2-4${tab}no" "$(grep 'anon\.ts' <<<"$changed" || :)"
+check "an overload signature does not turn an unexported sibling to unknown" \
+  "function${tab}g${tab}ov.ts:3-5${tab}no" "$(grep 'ov\.ts' <<<"$changed" || :)"
+check "a removal is keyed on the enclosing path, not the name alone" \
+  "method${tab}m${tab}n.py:4-4${tab}no" "$(grep 'n\.py' <<<"$removed" || :)"
+
 rc=0; "$SYMS" no-such-ref >/dev/null 2>&1 || rc=$?
 check "a bad range fails" "1" "$rc"
 rc=0; (cd "$WORK" && "$SYMS") >/dev/null 2>&1 || rc=$?
@@ -268,6 +355,15 @@ check "outside a repository fails" "1" "$rc"
 rc=0; out="$(PATH=/usr/bin:/bin "$SYMS" 2>&1)" || rc=$?
 check "missing ast-grep fails rather than printing an empty result" "1:1" \
   "$rc:$(grep -c 'ast-grep is not on PATH' <<<"$out" || :)"
+
+# Every tool but iconv, so the UTF-8 check cannot mistake "no iconv" for "bad encoding".
+bin="$WORK/bin"; mkdir "$bin"
+for t in bash git jq ast-grep awk sed sort grep cut mktemp rm dirname basename cp mkdir cat; do
+  ln -s "$(command -v "$t")" "$bin/$t"
+done
+rc=0; out="$(PATH="$bin" "$SYMS" 2>&1)" || rc=$?
+check "missing iconv fails rather than calling every file badly encoded" "1:1" \
+  "$rc:$(grep -c 'iconv is not on PATH' <<<"$out" || :)"
 
 [ "$failures" -eq 0 ] || { echo "$failures check(s) failed" >&2; exit 1; }
 echo "all checks passed"
