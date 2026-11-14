@@ -186,6 +186,24 @@ mode.ts${tab}no content lines changed (mode-only, or an empty file)" \
   "$(section "not analyzed" "$out")"
 check "pathspecs are relative to the current directory" \
   "function${tab}f${tab}sub/n.py:1-2${tab}yes" "$(cd sub && section changed "$("$SYMS" -- n.py)")"
+printf 'x\n' > root-untracked.ts
+check "untracked files outside the current directory are still named" "1" \
+  "$(cd sub && "$SYMS" | grep -cx 'root-untracked.ts' || :)"
+rm root-untracked.ts
+git add -A && git commit -q -m second
+
+# A class decorator must not reach the class's last method, which ends on the same byte.
+printf '@dataclass\nclass Foo:\n    x: int\n\n    def last(self):\n        return 1\n' > d.py
+# A content line that reads like a /dev/null header once git prefixes it.
+printf 'def g():\n    return 1\n\nNOTE = """\n-- /dev/null\n"""\n' > h.py
+git add . && git commit -q -m third
+sed 's/return 1/return 2/' d.py > d.py.new && mv d.py.new d.py
+printf 'NOTE = """\n"""\n' > h.py
+out="$("$SYMS")"
+check "a decorated class's last method is credited alone, as a method" \
+  "method${tab}last${tab}d.py:5-6${tab}no" "$(section changed "$out" | grep 'd\.py' || :)"
+check "a content line that looks like a header does not hide a removal" \
+  "function${tab}g${tab}h.py:1-2${tab}yes" "$(section "removed (old-side location)" "$out" | grep 'h\.py' || :)"
 
 rc=0; "$SYMS" no-such-ref >/dev/null 2>&1 || rc=$?
 check "a bad range fails" "1" "$rc"
