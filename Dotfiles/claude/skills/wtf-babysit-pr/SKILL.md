@@ -31,11 +31,17 @@ Take `headRefOid` and wait until every check on it has left `pending`. Wait in t
 background with a deadline, so a hung check ends the wait rather than the session:
 
 ```sh
-start=$(date +%s)
-# Settled = gh answered, at least one check exists, none pending. Right after a push gh
-# exits 1 with "no checks reported", which must read as "not yet", not as "done".
-until b=$(gh pr checks <n> --json bucket -q '.[].bucket' 2>"$TMPDIR/checks.err") \
-    && [ -n "$b" ] && ! printf '%s\n' "$b" | grep -qx pending; do
+start=$(date +%s); quiet=0
+# Settled = gh answered, at least one check exists, none pending -- on two polls running.
+# Just after a push one check can register before the others exist, and for that moment
+# the head looks finished. "No checks reported" (exit 1) reads as "not yet", not "done".
+while :; do
+  if b=$(gh pr checks <n> --json bucket -q '.[].bucket' 2>"$TMPDIR/checks.err") \
+      && [ -n "$b" ] && ! printf '%s\n' "$b" | grep -qx pending; then
+    quiet=$((quiet + 1)); [ "$quiet" -lt 2 ] || break
+  else
+    quiet=0
+  fi
   elapsed=$(( $(date +%s) - start ))
   if [ -z "$b" ] && [ "$elapsed" -ge 300 ]; then
     grep -q 'no checks reported' "$TMPDIR/checks.err" \
