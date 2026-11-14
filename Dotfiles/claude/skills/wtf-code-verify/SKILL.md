@@ -43,7 +43,7 @@ worktree, which only makes sense once the change is finished. Run it when a huma
 or once on a finished branch immediately before the PR — not after ordinary edits, not
 as a substitute for the test suite, and not as an unrequested step inside some larger
 workflow. If the change is still moving, the verdict is stale before anyone reads it.
-Under `wtf-ship` it is requested: invoking that skill is the ask, and its intake agreed the
+Under `wtf-ship-it` it is requested: invoking that skill is the ask, and its intake agreed the
 tier in advance — its **The authority this run carries** names which pauses that replaces.
 
 Commit the change before any claim that will use a differential: uncommitted edits are

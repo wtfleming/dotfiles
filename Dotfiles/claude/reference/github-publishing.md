@@ -2,8 +2,8 @@
 
 Four tools here write outward: `/wtf-code-review` posts findings, `wtf-code-verify` posts
 verification sections, `/wtf-create-pr` composes the pull request itself, and
-`wtf-address-review` replies to review threads and resolves them. `wtf-ship` and
-`wtf-babysit-pr` write through those four, and `wtf-ship` adds one PR comment of its own
+`wtf-address-review` replies to review threads and resolves them. `wtf-ship-it` and
+`wtf-babysit-pr` write through those four, and `wtf-ship-it` adds one PR comment of its own
 summarising the run. What they publish
 leaves your control the moment it lands — GitHub indexes it, mirrors it into notification
 email, and serves it to anyone who can read the repo. Editing a comment afterwards does not

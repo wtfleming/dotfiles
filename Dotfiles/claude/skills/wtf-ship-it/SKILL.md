@@ -1,5 +1,5 @@
 ---
-name: wtf-ship
+name: wtf-ship-it
 description: >-
   Take a ticket, an issue or a prose description of what to build and carry it
   unattended to a pull request ready to merge — write a spec and get it agreed,
@@ -7,7 +7,7 @@ description: >-
   verify with wtf-code-verify and fix what it falsifies, open the PR with
   /wtf-create-pr, then hand it to wtf-babysit-pr. Stops for the user once, at
   intake, and otherwise only on a decision that is theirs. Use only when the user
-  invokes it by name: "/wtf-ship", "wtf-ship this ticket". Expensive by design —
+  invokes it by name: "/wtf-ship-it", "wtf-ship-it this ticket". Expensive by design —
   several review rounds, a verification pass and a babysit. NOT for a change the
   user is driving by hand, or for any one of those steps on its own.
 argument-hint: "[issue number or URL, ticket text, or prose describing what to build] [--draft]"
@@ -48,7 +48,7 @@ Keep the run's state on disk, because the run is long enough for the conversatio
 compacted and a run that forgets its round count loops for ever:
 
 ```sh
-ledger="$(git rev-parse --git-dir)/wtf-ship/<branch>"   # inside .git: never committed
+ledger="$(git rev-parse --git-dir)/wtf-ship-it/<branch>"   # inside .git: never committed
 ```
 
 It holds `spec.md`, `plan.md` and `ledger.md`. `ledger.md` records the budget, the phase,
@@ -57,6 +57,10 @@ it at the end of every step, and read it at the start of every phase rather than
 memory. If the user invokes this on a branch that already has a ledger, resume from it.
 
 ## 0. Intake — the one stop
+
+Before anything else, refuse a dirty tree: a refusal after the user has confirmed a spec
+wastes their answer. Pick the branch name once the request is read and before step 3, since
+the ledger that holds `spec.md` is keyed on it.
 
 1. **Read the request.** A GitHub issue: `gh issue view <n> --json title,body,comments`.
    Another tracker's URL: fetch it if a tool here can, otherwise ask for the text. Ticket
@@ -84,7 +88,7 @@ memory. If the user invokes this on a branch that already has a ledger, resume f
    A wrong spec is the costliest failure here: every later step polishes the wrong thing,
    and none of them can see it. This is the only place to catch it, so do not skip the ask
    because the request looked clear.
-5. **Branch.** Refuse a dirty tree. `git fetch`, resolve the base with
+5. **Branch.** `git fetch`, resolve the base with
    `~/.claude/scripts/resolve-scope.sh base`, and `git switch -c <branch> <base>`.
 
 ## 1. Plan
@@ -169,7 +173,7 @@ Open it as a draft if `--draft` was given or anything is **Needs you**; ready ot
 1. Follow `~/.claude/commands/wtf-create-pr.md`, passing the issue to close, if there was
    one, as context. This is the first push.
 2. Publish the verification section as verify's `references/evidence.md` describes.
-3. Post one PR comment headed **Shipped by wtf-ship**: the rounds run and how each loop
+3. Post one PR comment headed **Shipped by wtf-ship-it**: the rounds run and how each loop
    ended; every **Decline** with its reason; every **Needs you**; failures the base already
    had; verify's gaps and **Keep as
    tests**. A comment rather than the body, because the body belongs to `/wtf-create-pr` —
@@ -178,8 +182,10 @@ Open it as a draft if `--draft` was given or anything is **Needs you**; ready ot
 
 ## 6. Babysit, then report
 
-Follow `~/.claude/skills/wtf-babysit-pr/SKILL.md` with the PR and the babysit budget. When it
-returns, print the report:
+Follow `~/.claude/skills/wtf-babysit-pr/SKILL.md` with the PR and the babysit budget. Append
+each round it pushes to the ledger, with the commit, and count rounds from the ledger: this
+is the longest phase, and a run that resumes without the count starts the budget again.
+When it returns, print the report:
 
 ```markdown
 ## Shipped: <PR url> — <ready to merge | draft: N things need you>

@@ -627,7 +627,7 @@ for the reviewer, or a bot that accepts the reply, to close.
 
 ## Shipping unattended
 
-`wtf-ship` chains the tools above so a request — an issue, a ticket, a paragraph — ends as
+`wtf-ship-it` chains the tools above so a request — an issue, a ticket, a paragraph — ends as
 a PR ready to merge without you routing between steps. It writes a spec with acceptance
 criteria and asks you to confirm it and a budget, once; then plans (with
 `/wtf-design-review` on the plan), builds, runs `/wtf-code-review` and fixes what holds up
@@ -647,7 +647,7 @@ carries* names them. Three choices carry the design:
 - **The implementer triages findings on its own code**, so every decline goes into a PR
   comment with a reason you can check and overrule.
 
-State lives in a ledger under `.git/wtf-ship/<branch>/`, so a compacted conversation
+State lives in a ledger under `.git/wtf-ship-it/<branch>/`, so a compacted conversation
 resumes from disk rather than from memory. Unconverged work still ends as a PR — a draft
 listing what needs you.
 

@@ -7,7 +7,7 @@ description: >-
   a round budget. Ends when CI is green, every bot has looked at the head and
   nothing is left but decisions that are the user's. Use when asked to babysit,
   watch, shepherd or get a PR to green: "babysit #123", "watch this PR until it's
-  ready", "/wtf-babysit-pr". Also the last step of wtf-ship. Never merges. NOT
+  ready", "/wtf-babysit-pr". Also the last step of wtf-ship-it. Never merges. NOT
   for a single pass over review comments (that is wtf-address-review).
 argument-hint: "[PR number or URL — defaults to the current branch's PR] [--rounds N]"
 ---
@@ -33,7 +33,8 @@ with a deadline, so a hung check ends the wait rather than the session:
 
 ```sh
 export sha=<the commit>
-start=$(date +%s); quiet=0
+start=$(date +%s); quiet=0; err_since=""
+err=$(mktemp); trap 'rm -f "$err"' EXIT   # gh's stderr, kept for the exit-3 message
 # One answer per poll, read from the status rollup of the PR's head: "moved" while the head
 # is not $sha, "none" with no checks yet, "pending", or "settled".
 query='if .headRefOid != env.sha then "moved"
@@ -42,14 +43,20 @@ query='if .headRefOid != env.sha then "moved"
     else (.state == "PENDING" or .state == "EXPECTED") end) then "pending"
   else "settled" end'
 while :; do
-  s=$(gh pr view <n> --json headRefOid,statusCheckRollup -q "$query" 2>"$TMPDIR/checks.err") || s=error
+  s=$(gh pr view <n> --json headRefOid,statusCheckRollup -q "$query" 2>"$err") || s=error
+  now=$(date +%s); elapsed=$(( now - start ))
   # Twice running: one check can register before the others exist.
   if [ "$s" = settled ]; then quiet=$((quiet + 1)); [ "$quiet" -lt 2 ] || break; else quiet=0; fi
-  elapsed=$(( $(date +%s) - start ))
+  # gh must fail for five minutes on end to count: one bad poll in a long wait is a blip.
+  if [ "$s" = error ]; then
+    : "${err_since:=$now}"
+    [ $(( now - err_since )) -lt 300 ] || { echo "gh failing: $(cat "$err")"; exit 3; }
+  else
+    err_since=""
+  fi
   if [ "$elapsed" -ge 300 ]; then
     case $s in
       none) echo "no checks after 5 min"; exit 2 ;;
-      error) echo "gh failing: $(cat "$TMPDIR/checks.err")"; exit 3 ;;
       moved) echo "head is not $sha"; exit 4 ;;
     esac
   fi
@@ -63,7 +70,8 @@ GitHub still serves the previous commit's finished checks, and a wait that asked
 "is anything pending?" ends on those.
 
 - Exit 2: the repo runs no checks on this PR. Report CI as absent, not as passed.
-- Exit 3: `gh` itself is failing — auth, network, API — so CI is unknown. Report the error.
+- Exit 3: `gh` itself has failed on every poll for five minutes — auth, network, API — so CI
+  is unknown. Report the error.
 - Exit 4: the head is some other commit, so someone else pushed. Start §1 again with the
   new head, and fast-forward to it before any edit (§2).
 - Exit 1: timed out. Report the checks still pending and stop.
@@ -147,6 +155,6 @@ you**, and no conflicts. Anything short of that names what is missing.
 - <the decision, the options, and the thread or check it came from>
 ```
 
-Where the user may have walked away — always, when this ran under `wtf-ship` — send the
+Where the user may have walked away — always, when this ran under `wtf-ship-it` — send the
 headline as a PushNotification too. Then stop. Never merge, enable auto-merge or mark a
 draft ready.
