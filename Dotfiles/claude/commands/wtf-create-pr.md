@@ -411,12 +411,12 @@ name what made it negative, and move on to the title.
 
 ## 4. The title
 
-Why a title carries this much weight — it becomes the permanent commit subject on a squash
-merge, and the conventional-commit prefix is judged separately from the wording because a
-`fix:` grown into a `feat:` is a wrong version bump rather than a wording nit — is stated in
-`~/.claude/skills/wtf-code-verify/references/expectations.md`, under the PR-description
-section. It is maintained there, and a second copy here would drift out of step with it
-without either file looking wrong.
+**The title travels further than the body.** On a squash merge it becomes the subject
+line on `main`, outliving the PR, the branch and the review. Where the repo derives
+anything from it — a conventional-commit prefix, a changelog section, a release version
+— a `fix:` that has grown into a `feat:` is a wrong version bump rather than a wording
+nit. On the update path, judge the prefix separately from the wording, and say which one
+moved.
 
 What composing adds to that: **match the repo's existing style rather than importing one.**
 Read recent merged titles (`gh pr list --state merged --limit 20 --json title`) and follow
@@ -440,6 +440,24 @@ The second is the failure nobody catches. Nothing written is false, the descript
 simply silent about a change that is in the diff, and silence does not read as an error —
 so the reviewer forms a smaller picture of the change than the change actually is, and
 reviews accordingly.
+
+**On the update path, go straight to what arrived after the PR opened.** Review lands,
+commits follow, and the body still describes the change as first proposed. A review thread
+asking for a change, plus a commit answering it, is a behaviour the body almost certainly
+does not mention — start there rather than re-reading the diff from scratch:
+
+```sh
+gh pr view "$n" --json title,body,createdAt,commits,reviews,comments
+# Inline review threads are in neither `reviews` nor `comments` above, and a commit
+# answering one is the most common drift there is.
+gh api --paginate "repos/{owner}/{repo}/pulls/$n/comments" \
+  --jq '.[] | select(.in_reply_to_id == null) | "\(.id)\t\(.path):\(.line)\t\(.body)"'
+```
+
+Find the boundary from `createdAt` against each commit's `committedDate`. It is
+best-effort — a commit authored before the PR opened can be pushed after it — so it says
+where to look first, not where to stop. Not `<first-commit-of-pr>..HEAD`: that counts the
+PR's own opening commits as later work, and after a rebase it yields the whole branch.
 
 **The ticket reference belongs here, not only in the title.** A closing keyword takes
 effect from the body — `Closes #412` in a *title* links nothing and closes nothing, which
@@ -524,7 +542,8 @@ interaction between two components. Written out, the reviewer rebuilds the pictu
 paragraph and rebuilds it slightly wrong; drawn as a five-line tree, they have it before
 they reach the diff. **Read `~/.claude/skills/wtf-show-me/SKILL.md` before drawing one**;
 take the `diff`-shaped forms, since what a PR is about is what changed. They are maintained
-there rather than repeated here, for the reason §4 gives about the title.
+there rather than repeated here, since a second copy would drift out of step without either
+file looking wrong.
 
 Three things follow from where it sits. **Mermaid is available here in a way it is not in
 a terminal**, because GitHub renders it in a body. **It is body prose, so it is scrubbed
@@ -649,8 +668,8 @@ section may drop it.
 **This path is also where the other tools land.** `~/.claude/reference/github-publishing.md`
 makes this command the only one that writes the title or the author's prose in the body —
 another tool may replace a delimited section of its own, and nothing else — so
-`wtf-code-verify`, and anything added later that finds the description stale, reports the
-drift and names this command rather than rewriting the description itself. A run that arrives
+any tool that finds the description stale reports the drift and names this command rather
+than rewriting the description itself. A run that arrives
 that way is an update like any other, with one difference worth honouring: the drift has
 already been named, so say which of the named claims the new wording fixes. Regenerating the
 body and leaving the author to re-diff it against a report they already read is the round

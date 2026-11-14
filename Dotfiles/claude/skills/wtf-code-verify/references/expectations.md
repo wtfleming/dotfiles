@@ -16,7 +16,6 @@ correct will run cleanly, pass, and tell you nothing.
 - The state afterwards is an observable
 - An invariant is an expectation over every input
 - Verifying prose against code
-- Verifying a PR's title and description
 - Verifying a subject with no diff
 - How many expectations
 
@@ -313,101 +312,17 @@ never looking.
 
 ## Verifying prose against code
 
-For documentation, comments, READMEs and PR descriptions, the polarity inverts: **the
-code is the source of truth and the prose is the subject under test.** Docs cannot be
-"run", so verification means extracting each claim and checking it individually.
+For docs, comments and READMEs the code is the source of truth and the prose is the
+subject under test. Only two kinds of claim in it are this skill's:
 
-Extract claims with `file:line`, then classify each — the class decides how it is
-checked:
+- **procedural** — "run `make setup`, then `make dev`": actually run it, in a clean
+  worktree, which is what makes the worktree worth building for a docs change
+- **behavioural** — "returns 404 when the slug is unknown": a row like any other
 
-| Claim class | Example | How to verify |
-| ----------- | ------- | ------------- |
-| a symbol or signature exists | "pass `meterName:` to the constructor" | grep the source; a documented parameter that does not exist is the classic finding |
-| behaviour | "returns 404 when the slug is unknown" | run it |
-| quantitative | "retries three times", "defaults to 30 seconds" | find the constant, and prefer running it where the constant is derived |
-| procedural | "run `make setup`, then `make dev`" | actually run it, in a clean worktree — which is what makes the worktree worth building for a docs change |
-| unfalsifiable | "this module is responsible for orchestration" | skip it, and say you skipped it |
-
-Three pitfalls specific to prose:
-
-- **Do not verify a claim by re-reading the prose.** Internal consistency across two
-  paragraphs is not accuracy, and a confidently written wrong claim reads as more
-  reliable than a hedged right one.
-- **A name that looks right is not a name that exists.** Plausible-but-absent symbols are
-  what documentation drift produces most, and they are invisible to a reader who is not
-  checking each one against the tree.
-- **Stale and wrong are indistinguishable to the reader** who follows the instruction. A
-  claim that was true two releases ago is a defect now; date it if you like, but report
-  it either way.
-
-The highest-value finding here is the claim that is *silently* wrong — accurate-sounding,
-plausible, and producing no error when followed, just the wrong result.
-
-## Verifying a PR's title and description
-
-A description is written when the PR opens and then quietly stops being true. Review
-lands, commits follow, and the body still describes the change as first proposed — which
-is the version a future reader believes, because a squash merge turns the title into the
-permanent commit subject on `main` and the body into the message beneath it.
-
-Check it whenever the scope resolves to a PR. It is cheap: no environment, no worktree,
-and only the behavioural claims need a probe at all.
-
-**Two directions, and the second is the one that drifts.**
-
-*Claims to code* — each falsifiable statement in the body, checked as any prose claim is:
-"adds a `--dry-run` flag", "no migration needed", "behind the `archive` flag".
-
-*Code to claims* — each meaningful change in the diff, checked for whether the body
-accounts for it. Omission is what review produces: a reviewer asks for null handling, a
-commit adds it, nobody edits the body. Nothing in the body is false, so a claim-by-claim
-pass reports clean, and the description is wrong anyway — by silence. This direction is
-the whole reason to run the check.
-
-**Go straight to what arrived after it opened.** You do not need to re-verify the whole
-body, only the part the post-open commits touched.
-
-```bash
-gh pr view <n> --json title,body,createdAt,commits,reviews,comments
-
-# Per-line review comments are NOT in the above: `reviews` carries the submission
-# summaries and `comments` the timeline, and neither includes the inline threads.
-# A later commit answering an inline request is the most common kind of drift there
-# is, and without this the check cannot see it happened.
-gh api --paginate repos/<owner>/<repo>/pulls/<n>/comments \
-  --jq '.[] | select(.in_reply_to_id == null) | "\(.id)\t\(.path):\(.line)\t\(.body)"'
-gh pr diff <n>                                     # the change as it stands
-```
-
-Find the boundary from `createdAt` against each commit's `committedDate`, both of which
-that first call already returns, and diff from the last commit at or before it. Treat that
-as best-effort rather than exact: a commit authored before the PR opened can be pushed
-after it, so this under-reports where the old form over-reported. It tells you where to
-look first; where the distinction decides the verdict, read the whole current diff and say
-that is what you did. Do not
-reach for `<first-commit-of-pr>..HEAD`: `A..HEAD` excludes only `A` and its ancestors, so
-a PR opened with three commits reports two of them as post-open work, and after a rebase
-the old first commit is not an ancestor at all and you get the whole branch. It
-over-includes rather than under-includes, so no verdict goes wrong — you just lose the
-shortcut this section exists to give you.
-
-The review threads are the map. A comment asking for a change, plus a commit answering
-it, is a behaviour the body almost certainly does not mention — start there rather than
-re-reading the diff from scratch.
-
-**The title travels further than the body.** On a squash merge it becomes the subject
-line on `main`, outliving the PR, the branch and the review. Where the repo derives
-anything from it — a conventional-commit prefix, a changelog section, a release version
-— a `fix:` that has grown into a `feat:` is not cosmetic. Judge the prefix separately
-from the wording, and say which one moved.
-
-**You are establishing the drift, not repairing it** — the title and the description
-belong to `/wtf-create-pr`, per the ownership rule in
-`~/.claude/reference/github-publishing.md`. So what this section produces is a finding, and
-it is worth as much as it is specific: quote the claim, name the code that
-contradicts it, and say whether it is the prefix or the wording that moved. "The
-description has drifted" sends the next command back to re-derive everything you just
-established.
+A claim settled by reading — a symbol or parameter exists, a constant is 30 — is
+`wtf-code-review`'s. List it under **Left out** rather than grepping for it and reporting
+the grep as verification. Do not verify a claim by re-reading the prose either: two
+paragraphs that agree are consistent, not accurate.
 
 ## Verifying a subject with no diff
 

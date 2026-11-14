@@ -151,10 +151,9 @@ accident.
 | `wtf-design-reviewer` | shape of the change, Suggestion-only; dispatched by `/wtf-design-review` |
 | `wtf-prod-impact` | whether the change degrades production, read from the live system; dispatched by `/wtf-prod-impact` |
 | `wtf-verify-adversary` | the cases a verification pass would not think to include; dispatched by `wtf-code-verify` |
-| `wtf-verify-refuter` | argues a single passing probe would have been green anyway; dispatched by `wtf-code-verify` |
 
-The last two belong to `wtf-code-verify` rather than to a review, and are described under
-*Verifying that it works* below; they are listed here so this table is the whole roster.
+The last one belongs to `wtf-code-verify` rather than to a review, and is described under
+*Verifying that it works* below; it is listed here so this table is the whole roster.
 
 Every one of them except `wtf-prod-impact` is read-only by tool list — no `Edit`, no
 `Write`, and no ability to spawn an agent that has them. Edits only ever happen in the
@@ -346,16 +345,14 @@ previous version, and whether the down migration has ever actually been run. It 
 whether a clean tree of the branch still builds and boots, which catches the dependency
 in the lockfile but not the manifest and the env var documented nowhere. It measures
 scale instead of eyeballing it, since an N+1 shows up as a query count of 3 + N where
-wall-clock is noise. And on a PR it verifies the title and description in both
-directions: every claim in the body true, *and* every meaningful change accounted for —
-because what review produces is usually an omission nobody went back to write up, and a
-squash merge makes that title the permanent commit subject on `main`.
+wall-clock is noise.
 
-Before a row is reported green it goes to a `wtf-verify-refuter` — one per result, given
-the expectation, the discriminator and the raw bytes but not the reasoning about them,
-and asked to show the probe would have been green anyway. A refuted green demotes to
-`Not verified` rather than disappearing. It aims an adversary at the one
-artifact that would otherwise have none: the verdict this tool produces itself.
+Before a row is reported green it is checked against the ways a probe passes without
+meaning anything — it never reached the change, its assertion is satisfied by anything,
+its discriminator fails for an unrelated reason. A green that cannot be defended demotes
+to `Not verified` rather than disappearing. That used to be a `wtf-verify-refuter` agent
+per green row; like the per-finding refuter `/wtf-code-review` dropped, it rarely changed
+a verdict for what the fan-out cost.
 
 Two more checks answer *is this actually guarded*. The probes run under the project's
 coverage tool, so **Covered** is measured against the changed lines rather than recalled —
@@ -378,8 +375,8 @@ to fail without the fix.
 
 Scope can be a ref, a branch, a PR, a path, or plain prose — `/wtf-code-verify login and
 authentication` verifies an area of a running system with no diff at all, and a docs
-change is verified by treating the code as the source of truth and each written claim as
-the subject under test.
+change is verified by running the procedures it gives and the behaviour it describes —
+claims a reader can settle by grep are left to review.
 
 It absorbed the earlier `wtf-verify-fix`, whose merge-base differential is now one
 technique among several in `references/differential.md` — the two would otherwise have

@@ -181,7 +181,7 @@ has nothing to say:
 **Unmet.**
 - #3 `includeArchived: "banana"` → 400, field-level error — ❌ 200, coerced to `false`
 
-**Inconclusive.** 2 rows could not be settled, 1 of them demoted by the refuter; each is in the table below.
+**Inconclusive.** 2 rows could not be settled, 1 of them a green demoted at SKILL.md §7; each is in the table below.
 ```
 
 Unmet rows are listed in full, number, expectation and result, because each is something a
@@ -273,10 +273,9 @@ outside the section.
 
 **Establish whose PR it is before choosing the channel.** `gh pr view <n> --json
 author,headRepositoryOwner` — the field `/wtf-create-pr` already keys on for its own
-purposes. Nothing else in a verify run reads it: the drift check fetches
-`title,body,createdAt,commits,reviews,comments` and the resolver captures only
-`headRefOid`, so the manifest carries no ownership fact, and the execution gate never fires
-on a prose-claim run that needs no boot. Without the check the default channel is a
+purposes. Nothing else in a verify run reads it: the resolver captures only `headRefOid`,
+so the manifest carries no ownership fact, and the execution gate never fires on a run
+that needs no boot. Without the check the default channel is a
 read-modify-write over a contributor's own description. Say whose PR it is in the offer.
 
 ```bash
@@ -298,13 +297,6 @@ unreconciled `verify:start` section that reads as current and needs a hand fix, 
 which channel was used. A run that recovered itself and left the PR misleading has not
 finished.
 
-**Where the description drifted, report it and hand off.** Name what drifted — the claim
-in the title or body, and the code that contradicts it — and point at `/wtf-create-pr`,
-whose update path routes an existing PR to `gh pr edit` and carries the survivors across.
-Do not propose replacement wording here. On someone else's PR the wording is theirs to
-fix; on your own it is one command away, and the drift you found is what that command
-needs to hear.
-
 Re-read the verdict line before posting. Verification sections are read as endorsements,
 and a "verified with gaps" whose gaps are buried below a fold reads as an unqualified
 pass.
@@ -314,7 +306,7 @@ pass.
 The author is the audience, reading once at the end of a long run, and they came for two
 answers: do I have to fix anything, and which probes are worth keeping as tests. The
 report gives those two first, then the evidence for them, then the lines no probe
-produced. The run's history — the defect found and fixed, the green the refuter
+produced. The run's history — the defect found and fixed, the green §7's check
 demoted — is told inside that shape, not as a narrative before it.
 
 ```
@@ -328,7 +320,7 @@ demoted — is told inside that shape, not as a narrative before it.
 
 | # | Expectation | Result |
 | - | ----------- | ------ |
-| 1 | editor with `includeArchived: true` sees archived id 7 | ✅ *unrefuted* 200, id 7 present; absent with the flag off |
+| 1 | editor with `includeArchived: true` sees archived id 7 | ✅ 200, id 7 present; absent with the flag off |
 | 2 | anonymous caller is refused | ❌ 200, empty `data.posts` — predicted ✅ |
 | 3 | `includeArchived: "banana"` → 400 naming the field | ❌ 500, unhandled `TypeError` — worse than predicted |
 | 4 | `posts` with no new argument is unchanged | ⚠️ not verified — byte-identical to baseline, but both sides were served from the response cache, so the probe never reached the resolver |
@@ -338,7 +330,6 @@ demoted — is told inside that shape, not as a narrative before it.
 **Guarded.** Nothing — the unscoped suite stays green with the flag check removed.
 **CI.** Unit suite and lint on every push; none of the rows above is in CI today.
 **Residue.** None — compose dependencies down, worktree removed.
-**PR description.** Title still holds; body says "invalid values are rejected", which #3 contradicts.
 
 Files in `<scratch>/code-verify/`; PR section in `VERIFICATION.md`.
 
@@ -353,7 +344,7 @@ What the shape enforces:
   says it can wait, in the list rather than by being left out. A ❌ absent from To fix leaves
   the reader to guess whether it was forgotten or judged harmless, and an entry there the
   table does not show as ❌ is an opinion.
-- **Keep as tests is §9's triage**, printed here rather than as a separate list later,
+- **Keep as tests is §8's triage**, printed here rather than as a separate list later,
   with every probe accounted for: promote with the reason, or leave with the reason.
 - **No Predict column.** The plan carried the prediction, written before the run, and
   that is where it does its work. A prediction the result contradicted is worth a few
@@ -364,9 +355,9 @@ What the shape enforces:
   was, and cannot see that every row was accounted for. A green row says in a few words
   what its control did; that is the discriminator the reader was shown in the plan,
   closed.
-- **A refuted green is ⚠️ in its row**, with the refuter's reason, and is counted in
+- **A demoted green is ⚠️ in its row**, with the reason SKILL.md §7 demoted it, and is counted in
   neither the met nor the failed figure on the verdict line.
-- **The trailing lines carry the PR section's names**, plus **Guarded** from §9. Not
+- **The trailing lines carry the PR section's names**, plus **Guarded** from §8. Not
   "Coverage", "Test gaps" or "Cleanup": the same fact under two names reads as two facts,
   and the reader is about to meet these lines again in the section they post.
 - **One question closes it** — fix, promote, post, on one line, naming the items. Nothing
@@ -393,7 +384,6 @@ the ones a reader most relies on. Each has a command that settles it:
 | **Guarded** | the project's unscoped test command, run over a worktree of HEAD with the line the change turns on broken — `promotion.md` |
 | **CI** | reading `.github/workflows` or equivalent, this run, not from memory of the repo |
 | **Residue** | `git status --porcelain`, `docker compose ps`, `git worktree list`, and the scratch path — checked after teardown, not predicted before it |
-| **PR description** | the body re-read at the end, since your own commits may have outdated it since you looked |
 
 Counts and figures belong to the same rule. A character count taken from raw text rather
 than from a parse, a row count guessed from a fixture, a timing quoted from one run and
