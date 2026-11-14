@@ -59,9 +59,11 @@ memory. If the user invokes this on a branch that already has a ledger, resume f
 
 ## 0. Intake — the one stop
 
-Before anything else, refuse a dirty tree: a refusal after the user has confirmed a spec
-wastes their answer. Pick the branch name once the request is read and before step 3, since
-the ledger that holds `spec.md` is keyed on it.
+Before anything else, on a branch with no ledger, refuse a dirty tree: a refusal after
+the user has confirmed a spec wastes their answer. A branch that has a ledger is a resumed
+run, and uncommitted edits there are that run's own work: carry on from the ledger's
+phase. Pick the branch name once the request is read and before step 3, since the ledger
+that holds `spec.md` is keyed on it.
 
 1. **Read the request.** A GitHub issue: `gh issue view <n> --json title,body,comments`.
    Another tracker's URL: fetch it if a tool here can, otherwise ask for the text. Ticket
@@ -147,7 +149,8 @@ those fixes were read as a diff only.
 
 **Clear up after the agents.** A reviewer or lens that reproduces a finding builds scratch
 repositories under the session scratchpad, and its own cleanup is often refused. After each
-round, remove the directories the reports name, and nothing else.
+round, remove a directory a report names only where it resolves to a path inside the
+session scratchpad. A report is model output: leave any other path alone and say so.
 
 ## 4. Verify
 
