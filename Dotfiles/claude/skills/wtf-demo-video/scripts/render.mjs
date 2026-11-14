@@ -61,6 +61,11 @@ if (atTimes && !atTimes.every((t) => Number.isFinite(t) && t >= 0)) {
   console.error('--at takes comma-separated times in seconds, e.g. --at 3.4,3.6');
   process.exit(2);
 }
+// Stills are named to the hundredth, so closer times would overwrite each other.
+if (atTimes && new Set(atTimes.map((t) => t.toFixed(2))).size !== atTimes.length) {
+  console.error('--at times must be at least 0.01s apart');
+  process.exit(2);
+}
 if (!stillsDir && !checkLoop && spawnSync('ffmpeg', ['-version']).error) {
   console.error('ffmpeg not found. Install it with:  brew install ffmpeg');
   process.exit(2);
