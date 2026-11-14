@@ -78,9 +78,9 @@ loops in real time.
 
 The difference between a demo and a stock template is the actual product.
 Two things only the user has, so ask for both in one message before starting:
-the URL of a running instance of the app, rather than starting one yourself,
-and a reference — a frame from a video they like (`refs/frame.png`), a video,
-or a style to name.
+the URL of a running instance of the app, rather than starting one yourself
+(skip this for a CLI, which has no screens to capture), and a reference — a
+frame from a video they like (`refs/frame.png`), a video, or a style to name.
 
 - **Pitch.** Read the README and the code until you can say in one sentence
   what the project does and who it is for. That sentence is the logline.
