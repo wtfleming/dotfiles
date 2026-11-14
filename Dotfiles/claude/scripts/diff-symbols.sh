@@ -90,7 +90,7 @@ awk '
   head && /^--- \/dev\/null$/ { print "A"; next }
   head && /^\+\+\+ \/dev\/null$/ { print "D"; next }
   head && /^Binary files / { print "B"; next }
-  # the blob of a symlink is its target path, not source; cp would follow it to another file
+  # the blob of a symlink is its target path, not source, and reading it follows the link
   head && /^(new file mode|deleted file mode|old mode|new mode) 120000$/ { print "L"; next }
   head && /^index [0-9a-f]+\.\.[0-9a-f]+ 120000$/ { print "L"; next }
   /^@@ / {
@@ -216,12 +216,16 @@ lang_of() {
   esac
 }
 
-# Write one side of a file into the scratch directory under its own extension.
+# Write one side of a file into the scratch directory under its own extension. The copy
+# has ast-grep's suppression comment defused, same length so no offset moves: a file or a
+# declaration marked `ast-grep-ignore` would otherwise match no rule here, the parse-error
+# rule included, and read as having no declarations.
 side() {
   local which=$1 rev=$2 path=$3 out
   out="$WORK/$which/$path"
   mkdir -p "$(dirname "$out")"
-  if [ -z "$rev" ]; then cp "$top/$path" "$out"; else git show "$rev:$path" > "$out"; fi
+  if [ -z "$rev" ]; then cat "$top/$path"; else git show "$rev:$path"; fi \
+    | LC_ALL=C sed 's/ast-grep-ignore/ast-grep-ignorX/g' > "$out"
   echo "$out"
 }
 
