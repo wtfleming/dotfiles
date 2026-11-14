@@ -110,8 +110,11 @@ than committing somewhere the push cannot carry.
   `SKILL.md` steps 1–4. At its step 5, make its commits, then push in §3 together with any CI
   fix, and post its replies after that push as its step 5 says.
 
-A Critical or Warning from any cold review here holds that fix out of the push, as
-`wtf-address-review` holds a thread: report it, do not loop on it within the round.
+A Critical or Warning from a cold review here gets one repair before the push, checked
+against the code like any finding, with a second cold review of that repair. Holding it
+for the next round instead would spend a push on a fix already in hand. If the second
+review still has a Critical or Warning, hold that fix out of the push, as
+`wtf-address-review` holds a thread: report it, and do not go round again.
 
 ## 3. Push, then go round
 
