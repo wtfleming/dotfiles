@@ -14,7 +14,8 @@ description: >-
   that shows how X works", "explorable explanation", "learning simulation".
   Also use when editing an existing project built from this skill — look for a
   stations table in world.js and a sim.js pacing state machine. SKIP for: a
-  single chart, graph, plot or dashboard (use dataviz); a quick sketch of a
+  single chart, graph or plot (use dataviz); a whole dashboard (use
+  wtf-dashboard-design); a quick sketch of a
   shape — a call tree, a file tree, a diff of either, or a diagram stepped
   through with nothing computed (use wtf-show-me); a
   static diagram or flowchart (use artifact-diagramming); a slide deck; a game
