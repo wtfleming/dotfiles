@@ -65,8 +65,8 @@ correct behaviour is, you do not have a case — you have a worry, and it will c
 caller a probe run to learn nothing. Drop it.
 
 The exception is valid input with two defensible answers and nothing in the tree that
-chooses between them: ranges that touch, which duplicate survives, a rounding tie, text
-length in bytes or graphemes. That is a case, not a worry. Write both answers in
+chooses between them — the catalogue's "Valid input whose answer is a choice" group. That
+is a case, not a worry. Write both answers in
 **Expected refusal** as `undecided: A or B`. The caller probes it to record which one the
 code picked.
 

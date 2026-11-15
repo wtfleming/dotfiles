@@ -136,7 +136,10 @@ the author did not imagine. Skip it for a refactor or a prose change.
 
 Merge its cases into your list, dropping any whose expected refusal you cannot state
 concretely. A case it marks **unreachable** is not probed and cannot fail the run; list it
-under **Left out** with that reason.
+under **Left out** with that reason. A case marked `undecided: A or B` is kept, not dropped.
+The adversary never saw the PR body, ticket or spec, so settle it against the sources in
+`references/expectations.md` first: one that decides it makes it an ordinary row, and only
+where none does is it recorded as undecided.
 
 ### Show the list, then run
 
@@ -288,8 +291,9 @@ A row that came out red for its predicted reason has already discriminated, and 
 row (§4) has no discriminator to check.
 
 A row marked **undecided** under `references/expectations.md`'s "Valid input whose answer
-is a choice" does not count against **Verified**, and is never reported as met. Name it
-in the closing question as the user's decision.
+is a choice" is neither met nor failed, and does not count against **Verified**.
+`references/evidence.md` has how it is shown, and it goes to the user in the closing
+question as their decision.
 
 `Not verified` is neither a pass nor a defect. Never loosen a probe until it finally goes
 red — `references/differential.md` has why that is the worst outcome this method can

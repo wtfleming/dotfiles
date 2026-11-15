@@ -174,18 +174,22 @@ role. The subscription resolver shares the same guard and this PR does not touch
 
 **Only what did not pass is spelled out above the fold.** A PR body quotes this section
 word for word, so a twenty-row table lands in the description whole and buries the verdict.
-Between the header lines and the folded table go two optional lines, each left out when it
+Between the header lines and the folded table go three optional lines, each left out when it
 has nothing to say:
 
 ```markdown
 **Unmet.**
 - #3 `includeArchived: "banana"` → 400, field-level error — ❌ 200, coerced to `false`
 
+**Undecided.**
+- #5 two posts with the same slug — nothing chooses; HEAD keeps the newer one
+
 **Inconclusive.** 2 rows could not be settled, 1 of them a green demoted at SKILL.md §7; each is in the table below.
 ```
 
-Unmet rows are listed in full, number, expectation and result, because each is something a
-reviewer has to act on. Inconclusive rows are counted, not listed — a run with many of them
+Unmet and undecided rows are listed in full, number, expectation and result, because each
+is something a reviewer has to act on — an undecided row is a choice the code made that
+nobody signed off. Inconclusive rows are counted, not listed — a run with many of them
 would otherwise rebuild the table it folded. The table keeps every row, ✅ included, one
 click away for anyone checking a pass.
 
@@ -357,6 +361,9 @@ What the shape enforces:
   closed.
 - **A demoted green is ⚠️ in its row**, with the reason SKILL.md §7 demoted it, and is counted in
   neither the met nor the failed figure on the verdict line.
+- **An undecided row is ❔ in its row**, with what HEAD does, and is likewise counted in
+  neither figure. It does not stop a **Verified**, but it is named in the closing question,
+  and in the PR section under **Undecided**.
 - **The trailing lines carry the PR section's names**, plus **Guarded** from §8. Not
   "Coverage", "Test gaps" or "Cleanup": the same fact under two names reads as two facts,
   and the reader is about to meet these lines again in the section they post.
