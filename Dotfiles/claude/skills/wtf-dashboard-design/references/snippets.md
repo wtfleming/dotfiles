@@ -40,7 +40,7 @@ export function Delta({ cur, prev, format = int, min = 5, tone = 'up', vs }: { c
   if (prev < min) return <span className="text-[12px] text-muted tabular-nums">was {format(prev)}</span>;
   const d = ((cur - prev) / prev) * 100, r = Math.round(d);
   if (r === 0) return <span className="text-[12px] text-muted">±0%</span>;
-  const good = tone === 'down' ? d < 0 : d > 0, text = Math.abs(d) > 999 ? (d > 0 ? '10×+' : '−99%') : `${d > 0 ? '▲' : '▼'} ${Math.abs(r)}%`;
+  const good = tone === 'down' ? d < 0 : d > 0, text = d > 999 ? '10×+' : `${d > 0 ? '▲' : '▼'} ${Math.abs(r)}%`;
   return (
     <span className="inline-flex items-center gap-1.5 text-[12px] tabular-nums" data-tip={`${vs ?? 'Previous period'}: ${format(prev)}`}>
       <span className={`font-medium ${tone === 'neutral' ? 'text-muted' : good ? 'text-up' : 'text-down'}`}>{text}</span>

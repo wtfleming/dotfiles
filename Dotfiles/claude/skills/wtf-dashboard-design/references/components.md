@@ -69,7 +69,7 @@ For: how a total changed. Header: net figure large ("+3,650 net new MRR").
   lower-is-better metric (cost, CPL, churn) turns red when it rises; a neutral one (spend, volume) stays grey both
   ways.
 - Base below ~5 (counts) → `was 1` in grey with the formatted previous value. A red −100% for 1 → 0 is noise.
-- Over ±999% → `10×+` / `−99%`.
+- Over +999% → `10×+`. A fall is never capped: below −100% (a metric that can go negative) shows its real value.
 - Never repeat a tile's delta anywhere else on the screen.
 
 ## Sparkline
