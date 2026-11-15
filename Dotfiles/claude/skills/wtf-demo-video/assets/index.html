@@ -50,10 +50,11 @@ window.seek = function seek(t) {
     scale: 1 - 0.06 * Math.sin(Math.PI * span(t, click, click + 0.2)),
   });
 
+  // The cursor rests below the frame, so it enters and leaves rather than fading.
+  const offFrame = L.H + 120 * u;
   cursor(t, {
-    moves: [[0, L.W * 0.8, L.H * 0.9], [2.9, L.cx + 120 * u, L.cy - 140 * u], [4.2, L.W * 0.8, L.H * 0.9]],
+    moves: [[0, L.cx + 160 * u, offFrame], [2.6, L.cx + 120 * u, L.cy - 140 * u], [4.2, L.cx + 160 * u, offFrame]],
     clicks: [click],
-    visible: span(t, 2.6, 2.9) * (1 - span(t, 4.4, 4.7)),
   });
 
   const title = $('title');

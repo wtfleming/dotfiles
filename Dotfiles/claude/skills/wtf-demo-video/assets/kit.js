@@ -66,34 +66,33 @@ const kitEl = (id, html) => {
   return el;
 };
 
-/* A pointer that glides and clicks.
+/* An oversized pointer that enters, glides, clicks and leaves.
      moves:  [[t, x, y], ...]  start gliding toward (x, y) at time t
-     clicks: [t, ...]          press and ripple at time t
-   Time a click for after the glide lands: a move settles about one camera
-   period (0.6s) after it starts. Use pressed(t, click) to make the clicked UI
-   respond on the same frame the ripple starts. */
-function cursor(t, { moves, clicks = [], size = 36, visible = 1 }) {
+     clicks: [t, ...]          tap at time t
+   (x, y) is where the arrow's tip points. Start and end the moves off-frame, so
+   it enters and leaves physically; never fade it in or out where it sits. Time a
+   click for after the glide lands: a move settles about one camera period
+   (0.6s) after it starts. Every click should cause something: drive the clicked
+   UI with pressed(t, click), which starts on the same frame as the tap. */
+function cursor(t, { moves, clicks = [], size = 72 }) {
   const el = kitEl('kit-cursor',
-    '<div class="kit-ripple"></div>' +
-    '<svg viewBox="0 0 24 24"><path d="M3 2l7.5 19 2.6-7.9L21 10.5z" fill="#fff" stroke="#111" stroke-width="1.5" stroke-linejoin="round"/></svg>');
+    '<svg viewBox="0 0 24 24" style="width:100%;height:100%;display:block;overflow:visible"><path d="M3 2l7.5 19 2.6-7.9L21 10.5z" fill="#fff" stroke="#111" stroke-width="1.5" stroke-linejoin="round"/></svg>');
   const s = size * layout().u;
   const x = track(t, moves.map(([tt, xx]) => [tt, xx]), SPRING.camera);
   const y = track(t, moves.map(([tt, , yy]) => [tt, yy]), SPRING.camera);
-  let press = 0, ring = 0, ringAlpha = 0;
+  // A tap compresses in 0.1s and recovers in 0.2s; the 1:2 ratio reads as a real press.
+  let press = 0;
   for (const c of clicks) {
     const d = t - c;
-    if (d >= 0 && d < 0.18) press = Math.max(press, Math.sin((d / 0.18) * Math.PI));
-    if (d >= 0 && d < 0.6) { ring = span(d, 0, 0.6); ringAlpha = 1 - ring; }
+    if (d >= 0 && d < 0.1) press = Math.max(press, (d / 0.1) ** 2);
+    else if (d >= 0.1 && d < 0.3) press = Math.max(press, (1 - (d - 0.1) / 0.2) ** 2);
   }
+  // The tip sits at (3, 2) in the 24-unit viewBox: place it on (x, y) and pivot the press on it.
   Object.assign(el.style, {
     position: 'absolute', left: 0, top: 0, width: s + 'px', height: s + 'px', zIndex: 1000,
-    transform: `translate(${x}px, ${y}px) scale(${1 - 0.18 * press})`, transformOrigin: '0 0',
-    opacity: visible, pointerEvents: 'none',
-  });
-  Object.assign(el.firstChild.style, {
-    position: 'absolute', left: -s + 'px', top: -s + 'px', width: 2 * s + 'px', height: 2 * s + 'px',
-    borderRadius: '50%', border: `${0.08 * s}px solid rgba(255,255,255,.9)`, boxSizing: 'border-box',
-    transform: `scale(${0.2 + 0.8 * ring})`, opacity: ringAlpha,
+    transform: `translate(${x - s * 3 / 24}px, ${y - s * 2 / 24}px) scale(${1 - 0.16 * press})`,
+    transformOrigin: `${300 / 24}% ${200 / 24}%`,
+    filter: 'drop-shadow(0 4px 6px rgba(0,0,0,.3))', pointerEvents: 'none',
   });
   return { x, y };
 }
