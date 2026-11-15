@@ -119,7 +119,7 @@ For: sources, pages, countries, devices — "what's the top of this, and by how 
 - Bar: a 3 px rounded track spanning the row's bottom edge (`bg-line/70`), the share filled in the entity colour
   at ~75% opacity, full on hover. Row `h-11 px-3 pb-1.5`, `hover:bg-soft/60`. No tinted block behind the text.
 - Header row: column name left, metric right, 12 px muted.
-- Tabs inside a panel (Channels / Referrers / Campaigns): a segmented control that shrinks and truncates on narrow
+- Tabs inside a panel (Channels / Referrers / Campaigns): a segmented control that shrinks on narrow
   cards, never scrolls sideways.
 - Expand button opens the full list with search.
 - Shares below 0.1% read `<0.1%`; the footnote says what shares add up to.

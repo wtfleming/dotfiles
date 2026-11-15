@@ -43,7 +43,8 @@ trend chart moves below the problem view; the tile-driven chart belongs to analy
 - Navigation: site picker + current page + a **Menu** button opening a grid of all pages (3 columns, icon over
   label); close on tap, on Escape, on outside tap, on route change. Not a sideways-scrolling tab row.
 - Charts: `touch-pan-y` (never `touch-none`) so a vertical swipe still scrolls the page.
-- Segmented tabs: shrink and truncate with `title`, never scroll.
+- Segmented tabs: shrink, never scroll. Keep the labels short and distinct so a truncated one is still told apart;
+  wrap to two lines rather than cut two labels to the same prefix. `title` does not show on touch.
 - Date calendar: bottom sheet, one month.
 - Rows fold before they truncate: drop decorations (avatars, icon squares, chips) and move their facts into the
   muted second line, so names and numbers stay whole.
