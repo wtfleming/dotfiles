@@ -79,6 +79,12 @@ jobs:
       - name: pr-wait smoke test
         run: Dotfiles/claude/tests/pr-wait-smoke.sh
 
+      # verify_geometry.py is the only check on a wtf-show-me page's connectors before a
+      # person looks at it, so its failure mode is a broken connector passing. It is Python,
+      # which the shellcheck glob does not reach.
+      - name: verify-geometry smoke test
+        run: Dotfiles/claude/tests/verify-geometry-smoke.sh
+
       # A skill, agent or command whose YAML header does not parse registers wrong or
       # not at all, and nothing else here would notice -- shellcheck skips markdown and
       # jq only sees settings.json.

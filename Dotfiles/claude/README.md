@@ -335,7 +335,8 @@ Adapted from the `show-me` skill in [humanlayer/skills](https://github.com/human
 the HTML branch, and the `/wtf-create-pr` handoff. The two references its HTML branch reads
 are condensed from [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design)
 (MIT); the "say what you cut" rule comes from the same source's fidelity ledger for imported
-diagrams.
+diagrams, and `scripts/verify_geometry.py`, the connector-geometry check the HTML branch
+runs before its screenshot, is vendored from it.
 
 ## Humanizing text
 

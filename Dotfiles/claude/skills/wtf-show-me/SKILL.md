@@ -153,7 +153,8 @@ a wrong map too, just one drawn on purpose.
 **One form, or two. Never all of them.** The menu above is a menu.
 
 **If prose says it in one line, say the line.** Not everything asked as "show
-me" wants a drawing; sometimes it wants an answer.
+me" wants a drawing; sometimes it wants an answer. Likewise, if a table with a
+few columns says the same thing, give the table.
 
 ## When a fence is not enough
 
