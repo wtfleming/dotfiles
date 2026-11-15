@@ -287,6 +287,10 @@ Where you cannot tell, demote: an undefendable green is what this check exists t
 A row that came out red for its predicted reason has already discriminated, and a command
 row (§4) has no discriminator to check.
 
+A row marked **undecided** under `references/expectations.md`'s "Valid input whose answer
+is a choice" does not count against **Verified**, and is never reported as met. Name it
+in the closing question as the user's decision.
+
 `Not verified` is neither a pass nor a defect. Never loosen a probe until it finally goes
 red — `references/differential.md` has why that is the worst outcome this method can
 produce.

@@ -64,6 +64,12 @@ entire value is that you have not seen it.
 correct behaviour is, you do not have a case — you have a worry, and it will cost the
 caller a probe run to learn nothing. Drop it.
 
+The exception is valid input with two defensible answers and nothing in the tree that
+chooses between them: ranges that touch, which duplicate survives, a rounding tie, text
+length in bytes or graphemes. That is a case, not a worry. Write both answers in
+**Expected refusal** as `undecided: A or B`. The caller probes it to record which one the
+code picked.
+
 **Do not propose what is plainly handled.** A case whose guard you can see three lines
 from the entry point is noise, and a list padded with those trains the reader to skim
 past the two that matter.

@@ -27,7 +27,9 @@ Four things look like a test that only restates the code and are not: a
 regression test for a real bug; a check on a call where the call is the
 behaviour, a side effect outside the process; a golden file or snapshot where
 that output is the contract; a characterization test pinning code before a
-refactor.
+refactor. The golden exception does not hold when the change claims parity with
+something else, such as legacy output, and the golden was captured from the code
+under test: that test proves consistency, not correctness.
 
 ## Tests that cost more than they catch
 

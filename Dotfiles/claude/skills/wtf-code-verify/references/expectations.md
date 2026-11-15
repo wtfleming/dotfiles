@@ -28,7 +28,11 @@ something you are trying to reconstruct:
    think they did. Start here and treat it as a claim to be tested, not a fact.
 2. **The existing tests.** What the suite already asserts *is* the intended contract.
    A test that pins the old behaviour and was edited in this change is the single most
-   informative thing in the diff: someone decided the contract should move.
+   informative thing in the diff: someone decided the contract should move. A test or
+   golden file this change *adds* is the author's claim, and where its values were
+   captured by running the new code it is the implementation again. When the claim is
+   parity with something else — the legacy output, another service — only that other
+   thing is the oracle.
 3. **The schema or types.** What is required, what is nullable, what the enum permits,
    what the response is declared to contain. GraphQL SDL, OpenAPI, migrations, structs.
 4. **Validation code and error messages.** The author's own list of what to refuse.
@@ -100,6 +104,25 @@ menu, not a checklist to exhaust.
 - encoding: unicode, emoji, a newline, leading and trailing whitespace
 - injection-shaped input: a quote, `<script>`, `../`, a null byte. Not primarily to hunt
   a vulnerability, but because the escaping path is where the 500s are
+
+**Valid input whose answer is a choice** — nothing is refused, and more than one output
+is defensible
+
+- elements that touch or are equal: do `[1,2]` and `[2,3]` merge? Is an interval's end
+  inclusive?
+- ties and order: which of two duplicates survives, and does a sort keep equal items in
+  their input order?
+- rounding and precision: a half rounds which way, and is `0.1 + 0.2` compared exactly?
+- what length or equality means for text: bytes, code points or graphemes, before or
+  after normalisation
+
+These are the cases a verifier passes with confidence and without noticing, because the
+code's choice reads as the right answer. For each that the change's surface has, find a
+source above that decides it, or drop it with a reason. Where nothing decides it, still
+probe it, and record what HEAD does as the row's result: `❔ undecided — nothing
+chooses; HEAD keeps the last copy`. It is not met, not falsified and not a probe that
+failed to discriminate. It is a decision the code made on the user's behalf, and it goes
+to them in the closing question.
 
 **Authorisation** — the highest-value negatives, and the ones an author is least likely
 to have tried by hand
@@ -344,3 +367,7 @@ Keep it affordable by picking the cheapest tier that can see each claim rather t
 cutting the list — several tier-0 probes cost less than one tier-2 probe and cover more.
 When the list genuinely runs past the budget, name the claims you dropped and why.
 An honest three-of-six is useful; a silent three-of-six is misleading.
+
+The "valid input whose answer is a choice" cases and the circular-golden rule are
+adapted from GSD Core's edge-probe and verifier references (MIT, see
+`~/.claude/reference/LICENSE-gsd`).
