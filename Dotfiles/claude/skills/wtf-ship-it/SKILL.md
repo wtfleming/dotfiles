@@ -186,7 +186,8 @@ Open it as a draft if `--draft` was given or anything is **Needs you**; ready ot
    ended; every **Decline** with its reason; every **Needs you**; failures the base already
    had; verify's gaps and **Keep as
    tests**. A comment rather than the body, because the body belongs to `/wtf-create-pr` —
-   see `~/.claude/reference/github-publishing.md`, and scrub per that file. Leave the spec
+   see `~/.claude/reference/github-publishing.md`, and scrub per that file. Write it for a
+   person per `~/.claude/skills/wtf-humanize-text/SKILL.md`. Leave the spec
    and plan out unless the user asks: they live in `.git` and may hold what the ticket did.
 
 ## 6. Babysit, then report

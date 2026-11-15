@@ -166,6 +166,8 @@ abc123" is false until abc123 is on the remote. So, in this order:
 4. **Scrub** each reply per `~/.claude/reference/github-publishing.md`. Say
    what changed and why; no internal reasoning, no paths outside the repo, no
    machine-specific output.
+5. **Write each reply for a person**, per
+   `~/.claude/skills/wtf-humanize-text/SKILL.md`, as you draft it.
 
 **Before every post, on whichever path it is made**, read that thread's latest
 comment again and compare its `id` and `lastEditedAt` with what step 1 read:
