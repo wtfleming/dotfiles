@@ -15,7 +15,7 @@ itself.
 | `ink-2` | secondary text, unselected values |
 | `muted` | labels, axes; ≥ 4.5:1 on every surface it sits on |
 | `line` | hairlines, bar tracks (ink at ~7.5%) |
-| `line-strong` | inputs, disabled text (ink at ~14%) |
+| `line-strong` | input borders, at ≥ 3:1 against the surface they sit on; disabled text |
 | `accent` | traffic and people metrics, selection, focus |
 | `on-accent` | text on a solid accent fill |
 | `money` | revenue metrics |
