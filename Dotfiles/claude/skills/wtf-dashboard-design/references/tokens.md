@@ -42,7 +42,8 @@ values under `@media (prefers-color-scheme: dark) { :root:not([data-theme="light
   healthy heatmap tiers, avatar tints; **medium** (the token) for data marks; **bright or dark** only for what needs
   attention. A screen of medium and bright everywhere has nothing left to highlight with.
 - Heatmap tiers are token + alpha, so they adapt to both themes: `accent` at 25 / 15 / 7% over the card for the
-  healthy steps, `warn` at 30% with dark text for the problem tier.
+  healthy steps, `warn` at 30% with `ink` text for the problem tier,
+  its contrast checked against the composed tint in both themes.
 - Tints are token + alpha: selection `bg-accent/[.06] ring-accent/20`, range band `bg-accent/10`, bar track
   `bg-line/70`, hover `bg-soft/70`.
 - Check muted text contrast on every surface it sits on (card, soft, hover, page), in both themes.
