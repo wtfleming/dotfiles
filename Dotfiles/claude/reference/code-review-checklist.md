@@ -54,12 +54,10 @@ security issue that fits neither list still gets reported.
 - [ ] CI and deploy pipelines the change touches:
   - a job with no timeout, which can burn runner hours when it hangs; a call to a
     reusable workflow cannot set one, so that is not a finding
-  - a deploy where an older run can finish last and deploy over a newer one. A
-    concurrency group does not order runs: one on the deploy job alone still lets an
-    older run that was slow in its tests deploy after a newer one, so that also needs a
-    check that its revision is still the newest. Cancelling in progress suits a deploy
-    that is safe to interrupt; one that applies a migration should queue instead. A
-    test-only workflow needs none of this
+  - a deploy where an older run can finish last and deploy over a newer one: a
+    job-level concurrency group does not stop that without a newest-revision check;
+    queue rather than cancel when the deploy applies a migration. Not for test-only
+    workflows
   - a deploy with no health check or rollback, which reports green while broken
   - `continue-on-error` on a step whose result something downstream relies on
   - a third-party action pinned to a branch (`@main`, `@master`, `@latest`). A tag is
