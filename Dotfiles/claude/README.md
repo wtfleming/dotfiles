@@ -345,9 +345,8 @@ Simplified Technical English (ASD-STE100): one idea per sentence, active voice, 
 Its fidelity rules carry the most weight for technical text. A rewrite keeps every fact and
 every degree of certainty, and never touches an identifier.
 
-Invoke it on any text. The tools that post to GitHub also read it while they draft:
-`/wtf-create-pr` for the title and body, `review-posting.md` for posted findings,
-`wtf-address-review` for replies, and `wtf-ship-it` for its summary comment. They write
+Invoke it on any text. Every tool that posts to GitHub also reads it while drafting, a
+rule stated once in `reference/github-publishing.md`. They write
 in the style the first time instead of rewriting a draft, because a rewrite pass doubles
 the output and is where facts get lost. A posted finding also carries a collapsed block
 for the agent that will fix it: where, the failure scenario, the fix, what not to touch,

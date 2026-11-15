@@ -14,6 +14,10 @@ rather than restating them, so a fix lands once. Nothing below is about *what* t
 about who may write where, and the ways an otherwise correct message goes wrong on the way
 out. No count, so the next addition does not have to edit this sentence.
 
+One rule about *how* to say it applies to all of them: write prose a person will read per
+`~/.claude/skills/wtf-humanize-text/SKILL.md`, while drafting rather than as a pass over a
+finished draft. A tool that drafts before it reaches this file says so at its drafting step.
+
 ## Who may write what
 
 A PR has **three overwritable places** — the title, the author's prose in the body, and a

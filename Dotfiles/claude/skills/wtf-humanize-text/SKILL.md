@@ -8,9 +8,8 @@ description: >-
   sentence, short sentences, active voice, plain words. Keeps every fact. Use when asked to
   humanize, de-AI, simplify, tighten or make text less robotic: "humanize this", "this
   reads like a bot wrote it", "tighten this README", "/wtf-humanize-text". Also read by
-  the tools that post to GitHub (/wtf-create-pr, /wtf-code-review posting,
-  wtf-address-review, wtf-ship-it) while they draft. NOT for code, legal text, fiction,
-  or instructions written for an agent to act on.
+  the tools that post to GitHub while they draft. NOT for code, legal text, fiction, or
+  instructions written for an agent to act on.
 ---
 
 # Humanize text
