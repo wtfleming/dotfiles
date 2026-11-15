@@ -359,6 +359,22 @@ whose catalogue of tells comes from [blader/humanizer](https://github.com/blader
 only the 80% level is kept. Strict mode, the full word-swap list and the Python checker
 are not ported.
 
+## Designing a dashboard
+
+`wtf-dashboard-design` builds, redesigns or critiques a whole dashboard screen. It starts
+from the one question the screen answers and the problems it must flag. It ends with a QA
+pass that checks the numbers before the pixels: every tile, chart and list is checked
+against totals worked out by hand from a fixed fixture. Only then come the sentence count,
+the "where does the eye land first" test and screenshots at three widths.
+
+It owns the screen and leaves single charts and palettes to the built-in `dataviz` skill.
+Its tokens are named by role, and the values come from the project's design system or from
+`dataviz`.
+
+Adapted from [abdiraimov-otabek/dashboard-design-skill](https://github.com/abdiraimov-otabek/dashboard-design-skill)
+(MIT). Not ported: the sign-off that advertises the author's apps, the default hex palette,
+the SwiftUI reference, the source list and both case studies.
+
 ## Verifying that it works
 
 `wtf-code-verify` proves that code does what it is supposed to do, by running it. The
