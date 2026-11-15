@@ -89,10 +89,10 @@ const Bar = ({ pct, money }: { pct: number; money?: boolean }) => (
 );
 
 <button className="group relative flex h-11 w-full items-center gap-3 rounded-[10px] px-3 pb-1.5 text-left text-[14px] hover:bg-soft/60" onClick={() => filterBy(row.x)}>
-  <Bar pct={(100 * row.y) / max} />
+  <Bar pct={max ? (100 * row.y) / max : 0} />
   <span className="relative flex min-w-0 flex-1 items-center gap-2.5">{icon}<span className="truncate">{row.name}</span></span>
   <span className="relative tabular-nums text-ink">{int(row.y)}</span>
-  <span className="relative w-11 text-right tabular-nums text-[13px] text-muted">{share((100 * row.y) / total)}</span>
+  <span className="relative w-11 text-right tabular-nums text-[13px] text-muted">{total ? share((100 * row.y) / total) : '—'}</span>
 </button>
 ```
 
