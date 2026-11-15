@@ -8,8 +8,8 @@ description: >-
   X works", "sketch this", "diagram this", "draw the flow", "what shape is this
   change", "/wtf-show-me". Also read by /wtf-create-pr when a PR body needs the
   shape of a change. NOT for: something a real model drives, where a slider
-  moves real numbers or a tour runs itself (that is wtf-simulate); a chart, plot
-  or dashboard of data (dataviz); or an ordinary prose answer nobody asked to
+  moves real numbers or a tour runs itself (that is wtf-simulate); a chart or plot
+  of data (dataviz); a whole dashboard (wtf-dashboard-design); or an ordinary prose answer nobody asked to
   see drawn.
 ---
 
