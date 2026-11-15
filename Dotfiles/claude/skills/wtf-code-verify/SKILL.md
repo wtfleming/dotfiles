@@ -327,7 +327,9 @@ so each needs its own command: **Covered** from §6's coverage run over the chan
 could not check, write *assumed, not checked*.
 
 Write the PR verification section to the scratch directory, tell the user the path, and
-offer to post it. Ask before posting: it is public. It goes in the PR body between the
+offer to post it. Write its prose for a person per
+`~/.claude/skills/wtf-humanize-text/SKILL.md` as you draft it, and leave tables and quoted
+output as they are. Ask before posting: it is public. It goes in the PR body between the
 `verify:start` / `verify:end` markers and touches **nothing else on the PR** — the
 ownership rule in `~/.claude/reference/github-publishing.md`, with the channel mechanics
 in `evidence.md`. Post the whole section, not the verdict line: what a reviewer can use is
