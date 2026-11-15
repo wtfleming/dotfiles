@@ -25,6 +25,9 @@ itself.
 | `tip` | tooltip surface |
 | `live` | live dots |
 
+One non-colour token goes with them: `--shadow-card`, a faint card shadow
+(`0 1px 2px rgb(0 0 0 / .04)`), which Tailwind v4 also reads from `@theme`.
+
 In Tailwind v4, declare them as `--color-<token>` under `@theme`; in plain CSS, as custom properties. Put the dark
 values under `@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { … } }` and again under
 `:root[data-theme="dark"]`, so a theme the app pins wins over the system setting. Or declare each token once with
@@ -38,7 +41,7 @@ values under `@media (prefers-color-scheme: dark) { :root:not([data-theme="light
 - Three intensities, three jobs (Few): **pale** (token at 7–20%) for non-data and de-emphasis: tracks, bar fills,
   healthy heatmap tiers, avatar tints; **medium** (the token) for data marks; **bright or dark** only for what needs
   attention. A screen of medium and bright everywhere has nothing left to highlight with.
-- Heatmap tiers are token + alpha, so they adapt to both themes: `accent` at 26 / 15 / 7% over the card for the
+- Heatmap tiers are token + alpha, so they adapt to both themes: `accent` at 25 / 15 / 7% over the card for the
   healthy steps, `warn` at 30% with dark text for the problem tier.
 - Tints are token + alpha: selection `bg-accent/[.06] ring-accent/20`, range band `bg-accent/10`, bar track
   `bg-line/70`, hover `bg-soft/70`.

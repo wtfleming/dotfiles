@@ -33,16 +33,17 @@ export function niceTicks(max: number, count = 4): number[] {
 ## Delta badge
 
 ```tsx
-/** Change vs the previous period. Tiny bases say what they were instead of shouting a percentage. */
-export function Delta({ cur, prev, format = int, min = 5, invert = false, vs }: { cur: number; prev: number; format?: (n: number) => string; min?: number; invert?: boolean; vs?: string }) {
+/** Change vs the previous period. Tiny bases say what they were instead of shouting a percentage.
+ *  `tone`: which way is good — 'up' (revenue), 'down' (cost, CPL, churn), 'neutral' (spend, volume: grey both ways). */
+export function Delta({ cur, prev, format = int, min = 5, tone = 'up', vs }: { cur: number; prev: number; format?: (n: number) => string; min?: number; tone?: 'up' | 'down' | 'neutral'; vs?: string }) {
   if (!prev) return null;                                                     // nothing to compare with
-  if (prev < min) return <span className="text-[12px] text-muted tnum">was {format(prev)}</span>;
+  if (prev < min) return <span className="text-[12px] text-muted tabular-nums">was {format(prev)}</span>;
   const d = ((cur - prev) / prev) * 100, r = Math.round(d);
   if (r === 0) return <span className="text-[12px] text-muted">±0%</span>;
-  const good = invert ? d < 0 : d > 0, text = Math.abs(d) > 999 ? (d > 0 ? '10×+' : '−99%') : `${d > 0 ? '▲' : '▼'} ${Math.abs(r)}%`;
+  const good = tone === 'down' ? d < 0 : d > 0, text = Math.abs(d) > 999 ? (d > 0 ? '10×+' : '−99%') : `${d > 0 ? '▲' : '▼'} ${Math.abs(r)}%`;
   return (
-    <span className="inline-flex items-center gap-1.5 text-[12px] tnum" title={`${vs ?? 'Previous period'}: ${format(prev)}`}>
-      <span className={`font-medium ${good ? 'text-up' : 'text-down'}`}>{text}</span>
+    <span className="inline-flex items-center gap-1.5 text-[12px] tabular-nums" data-tip={`${vs ?? 'Previous period'}: ${format(prev)}`}>
+      <span className={`font-medium ${tone === 'neutral' ? 'text-muted' : good ? 'text-up' : 'text-down'}`}>{text}</span>
       {vs && <span className="text-muted">{vs}</span>}{/* one or two words: "vs Sep", "yesterday" */}
     </span>
   );
@@ -63,14 +64,15 @@ export function previousWindow(start: number, end: number, days: number, midnigh
 ## KPI tile with the selected fill
 
 ```tsx
-<button aria-pressed={selected} onClick={onSelect} title={explain}
+<button aria-pressed={selected} onClick={onSelect} data-tip={explain}
   className="group relative border-b border-r border-line p-2 text-left last:border-r-0 focus-visible:outline-none">
   <div className={`h-full rounded-xl px-4 py-3 transition-colors group-focus-visible:ring-2 group-focus-visible:ring-accent ${selected
     ? (money ? 'bg-money/[.07] ring-1 ring-inset ring-money/25' : 'bg-accent/[.06] ring-1 ring-inset ring-accent/20')
     : 'group-hover:bg-soft/70'}`}>
     <div className={`flex items-center justify-between gap-2 text-[14px] ${selected ? 'font-medium text-ink' : 'text-ink-2'}`}>{label}<Delta cur={cur} prev={prev} format={format} /></div>
-    <div className={`mt-1 text-[32px] font-semibold leading-[1.15] tracking-[-.03em] tnum ${selected ? 'text-ink' : 'text-ink-2'}`}>{format(cur)}</div>
-    {/* no explanatory sub-line: `explain` ("3% of visitors") is the tile's title / tooltip */}
+    <div className={`mt-1 text-[32px] font-semibold leading-[1.15] tracking-[-.03em] tabular-nums ${selected ? 'text-ink' : 'text-ink-2'}`}>{format(cur)}</div>
+    {/* no explanatory sub-line: `explain` ("3% of visitors") is the tile's tooltip; data-tip is unseen by screen readers */}
+    <span className="sr-only">{explain}</span>
     <Spark values={series /* same window as the main chart */} color={!selected ? 'var(--color-muted)' : money ? 'var(--color-money)' : 'var(--color-accent)'} />
   </div>
 </button>
@@ -89,8 +91,8 @@ const Bar = ({ pct, money }: { pct: number; money?: boolean }) => (
 <button className="group relative flex h-11 w-full items-center gap-3 rounded-[10px] px-3 pb-1.5 text-left text-[14px] hover:bg-soft/60" onClick={() => filterBy(row.x)}>
   <Bar pct={(100 * row.y) / max} />
   <span className="relative flex min-w-0 flex-1 items-center gap-2.5">{icon}<span className="truncate">{row.name}</span></span>
-  <span className="relative tnum text-ink">{int(row.y)}</span>
-  <span className="relative w-11 text-right tnum text-[13px] text-muted">{share((100 * row.y) / total)}</span>
+  <span className="relative tabular-nums text-ink">{int(row.y)}</span>
+  <span className="relative w-11 text-right tabular-nums text-[13px] text-muted">{share((100 * row.y) / total)}</span>
 </button>
 ```
 
@@ -121,7 +123,7 @@ export function RangeCalendar({ from, to, max, min, onChange }: { from: string; 
         <button type="button" aria-label="Next month" disabled={month >= monthOf(max)} onClick={() => setMonth(m => addMonths(m, 1))} className="grid size-8 place-items-center rounded-full hover:bg-soft disabled:opacity-30">›</button>
       </div>
       <div className="grid grid-cols-7 text-center text-[11px] font-medium text-muted">{['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(w => <div key={w} className="pb-1.5">{w}</div>)}</div>
-      <div className="grid grid-cols-7 gap-y-0.5" role="grid" aria-label={title}>
+      <div className="grid grid-cols-7 gap-y-0.5" role="group" aria-label={title}>
         {days.map((d, i) => {
           const out = d.slice(0, 7) !== month.slice(0, 7), off = d > max || (!!min && d < min);
           const isStart = d === from, isEnd = !!end && d === end, inside = !!from && !!end && d > from && d < end;
@@ -132,7 +134,7 @@ export function RangeCalendar({ from, to, max, min, onChange }: { from: string; 
               {(inside || (isStart && !!end && end !== from)) && <span aria-hidden className={`${band} left-1/2 right-0 ${i % 7 === 6 ? 'rounded-r-full' : ''}`} />}
               <button type="button" disabled={off} aria-pressed={isStart || isEnd} onClick={() => pick(d)} onPointerEnter={() => setHover(d)}
                 aria-label={new Date(d).toLocaleDateString('en', { dateStyle: 'full', timeZone: 'UTC' })}
-                className={`relative grid size-9 place-items-center rounded-full text-[13px] tnum disabled:pointer-events-none disabled:text-line-strong
+                className={`relative grid size-9 place-items-center rounded-full text-[13px] tabular-nums disabled:pointer-events-none disabled:text-line-strong
                   ${isStart || isEnd ? 'bg-accent font-medium text-on-accent' : inside ? 'text-ink' : out ? 'text-muted/60 hover:bg-soft' : 'text-ink hover:bg-soft'}`}>
                 {+d.slice(8)}
                 {d === max && <span aria-hidden className={`absolute bottom-1 size-1 rounded-full ${isStart || isEnd ? 'bg-on-accent' : 'bg-accent'}`} />}
@@ -155,9 +157,11 @@ both ends exist. Pass `max` = the site's today (in its time zone, not the browse
 const seq = useRef(0);
 async function load() {
   const n = ++seq.current;
-  const body = await fetch(url).then(r => (r.ok ? r.json() : null)).catch(() => null);
+  // A hung request would leave the stale view dimmed forever; the timeout sends it down the error path.
+  const body = await fetch(url, { signal: AbortSignal.timeout(15_000) }).then(r => (r.ok ? r.json() : null)).catch(() => null);
   if (n !== seq.current) return;          // a newer request started: this answer is for a site/range no longer shown
-  body ? setData(body) : setError('Couldn’t refresh. These are the last numbers loaded; retrying in a minute.');
+  if (body) { setData(body); setError(null); }
+  else setError('Couldn’t refresh. These are the last numbers loaded.');
 }
 ```
 
@@ -172,17 +176,18 @@ const TIER = {
   warn: 'bg-warn/30 text-ink underline decoration-2 underline-offset-2',   // non-colour cue survives greyscale
 };
 
-<div role="table" aria-label="Attendance by class and day, %" className="grid gap-2"
+<div role="group" aria-label="Attendance by class and day, %" className="grid gap-2"
   style={{ gridTemplateColumns: `52px repeat(${days.length}, minmax(0, 1fr))` }}>
   <span />
-  {days.map((d, i) => <span key={d.iso} className="text-center text-[12px] text-muted">{d.short}<b className={`block text-[13px] tnum ${i === days.length - 1 ? 'text-accent' : 'text-ink-2'}`}>{d.day}</b></span>)}
+  {days.map((d, i) => <span key={d.iso} className="text-center text-[12px] text-muted">{d.short}<b className={`block text-[13px] tabular-nums ${i === days.length - 1 ? 'text-accent' : 'text-ink-2'}`}>{d.day}</b></span>)}
   {rows.map(r => <Fragment key={r.name}>
     <span className="text-[13px] font-semibold text-ink-2" title={r.owner}>{r.name}</span>
     {r.cells.map((c, i) => c == null
       ? <button key={i} onClick={() => remind(r)} aria-label={`${r.name}, ${days[i].label}: not marked. Remind ${r.owner}`}
           className="grid h-9 place-items-center rounded-[10px] border-[1.5px] border-dashed border-warn/75 bg-warn/[.07] text-warn">{bell}</button>
-      : <span key={i} tabIndex={0} title={`${r.name} · ${days[i].label} · ${c.present}/${c.size}`}
-          className={`grid h-9 place-items-center rounded-[10px] text-[13px] font-semibold tnum ${TIER[tier(c.rate)]}`}>{Math.round(c.rate)}</span>)}
+      : <span key={i} tabIndex={0} role="img" data-tip={`${r.name} · ${days[i].label} · ${c.present}/${c.size}`}
+          aria-label={`${r.name}, ${days[i].label}: ${c.present} of ${c.size} present`}
+          className={`grid h-9 place-items-center rounded-[10px] text-[13px] font-semibold tabular-nums ${TIER[tier(Math.round(c.rate))]}`}>{Math.round(c.rate)}</span>)}
   </Fragment>)}
 </div>
 ```
@@ -193,7 +198,7 @@ const TIER = {
 /** Few's spec: bar a third of the track, target as a perpendicular line, ranges darker for poor. */
 export function Bullet({ value, target, ranges, max, label }: { value: number; target: number; ranges: number[]; max: number; label: string }) {
   const pct = (v: number) => `${Math.min(100, (v / max) * 100)}%`;
-  const shade = ['bg-ink/40', 'bg-ink/25', 'bg-ink/10'];   // ranges = ends of poor, fair, good; drawn poor on top
+  const shade = ['bg-ink/40', 'bg-ink/25', 'bg-ink/10'];   // exactly three ranges: ends of poor, fair, good; drawn poor on top
   return (
     <div className="relative isolate h-6" role="img" aria-label={`${label}: ${value} of target ${target}`}>
       {ranges.map((r, i) => <span key={i} className={`absolute inset-y-0 left-0 ${shade[i]}`} style={{ width: pct(r), zIndex: -i }} />)}
@@ -207,9 +212,10 @@ export function Bullet({ value, target, ranges, max, label }: { value: number; t
 ## Segmented share bar
 
 ```tsx
+{/* format: usd for money, int for counts */}
 <div className="flex gap-1.5" role="img" aria-label={parts.map(p => `${p.label} ${compact.format(p.value)}`).join(', ')}>
   {parts.filter(p => p.value > 0).map(p => (
-    <span key={p.label} title={`${p.label}: ${usd(p.value)} · ${share((100 * p.value) / total)}`}
+    <span key={p.label} data-tip={`${p.label}: ${format(p.value)} · ${share((100 * p.value) / total)}`}
       className="h-2.5 min-w-2.5 rounded-full" style={{ flex: p.value, background: p.color }} />
   ))}
 </div>

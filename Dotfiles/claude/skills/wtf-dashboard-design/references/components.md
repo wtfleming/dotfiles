@@ -49,9 +49,9 @@ For: a metric with a goal ("$48,230 of $60,000"), where pacing matters more than
 For: 4–6 secondary numbers under the KPI tiles (ARR, NRR, trial conversion, ARPU, LTV:CAC).
 
 - No cards: one row between two hairlines, columns separated by hairline dividers.
-- Per column: label 13 px ink-2 · value 24–28 px medium with a small green `↑ 8.2%` pill beside it · one muted
-  sub-line that defines it ("MRR * 12", "Expansion beats churn"). The sub-line is what makes it a stat, not a tile.
-- Deltas follow the delta-badge rules above; a ratio like 3.4x takes `↑ 0.2x`, not a percent.
+- Per column: label 13 px ink-2 · value 24–28 px medium with a small green `↑ 8.2%` pill beside it. The definition
+  ("MRR * 12", "Expansion beats churn") goes in the column's tooltip, not on a sub-line (qa.md → Words audit).
+- Deltas follow the delta-badge rules below; a ratio like 3.4x takes `↑ 0.2x`, not a percent.
 
 ## Movement bars (new, expansion, contraction, churn)
 
@@ -98,7 +98,8 @@ For: how a total changed. Header: net figure large ("+3,650 net new MRR").
 - X axis: 5–7 ticks ("21 Sep"), never every day. Hourly for Today, daily up to ~120 days, monthly beyond.
 - Previous period: grey or dashed line, no fill, behind the current series; legend "This period / Period before".
 - Incomplete current bucket: dotted tail.
-- Tooltip: date header, coloured dot + value, previous value and % change when comparing; vertical hairline.
+- Tooltip: a dark card with the exact value large and the date in a muted line under it, plus the previous value
+  and % change when comparing; a vertical hairline marks the point.
 - Selected bar: a full-height rounded outline around the bar's column (Apple's charts); the same column is the hit
   area and the keyboard focus mark.
 - Y-axis labels may sit on the right edge, next to the latest values, leaving the left edge clean; x labels at
@@ -107,7 +108,6 @@ For: how a total changed. Header: net figure large ("+3,650 net new MRR").
   sale days with the source's logo over the bar, so the chart says where the money came from.
 - Bars on their own: pastel fill (~20% of the entity hue) with a solid 6–7 px rounded cap at the top; the unfinished
   period as a dashed outline with a faint fill, its axis label in the accent.
-- Tooltip: a dark card with the exact value large and the period in a muted line under it.
 - Trim leading empty days by default, with a "show all" link.
 
 ## Ranked breakdown list
@@ -194,7 +194,7 @@ For: one measure across two dimensions where the grid is the point: classes × d
 For: a measure against a target in a small space, the replacement for gauges and dials (Few's specification in
 perception.md).
 
-- Horizontal bar about a third of the track's height; the target as a short perpendicular line; two to five
+- Horizontal bar about a third of the track's height; the target as a short perpendicular line; three
   background ranges in intensities of one hue, darker for poor.
 - Rows of bullet graphs share one layout and stack like a ranked list; each row: label, bullet, value.
 - Future target: show actual and projected segments, so "on track?" reads today.
