@@ -441,6 +441,10 @@ simply silent about a change that is in the diff, and silence does not read as a
 so the reviewer forms a smaller picture of the change than the change actually is, and
 reviews accordingly.
 
+**Write the title and the prose for a person**, per
+`~/.claude/skills/wtf-humanize-text/SKILL.md`, as you draft them. That covers your own
+prose only: quoted survivors and embedded sections are carried as they are.
+
 **On the update path, go straight to what arrived after the PR opened.** Review lands,
 commits follow, and the body still describes the change as first proposed. A review thread
 asking for a change, plus a commit answering it, is a behaviour the body almost certainly
