@@ -261,7 +261,7 @@ entity or a reset between.
 
 | Verdict | When |
 | ------- | ---- |
-| **Verified** | every expectation met — each behavioural row with a discriminating partner that behaved as predicted, each command row on a fresh capture |
+| **Verified** | every expectation met, undecided rows aside — each behavioural row with a discriminating partner that behaved as predicted, each command row on a fresh capture |
 | **Verified with gaps** | what you ran passed, but part of the change or subject went unexercised — name the part |
 | **Not verified** | the probe could not discriminate: green on the base too, red for environmental reasons, or non-deterministic. Say which of the three, and what would tell them apart |
 | **Falsified** | an expectation failed for a real reason. A defect, found before the merge |
