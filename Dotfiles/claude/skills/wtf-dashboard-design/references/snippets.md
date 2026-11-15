@@ -213,9 +213,10 @@ export function Bullet({ value, target, ranges, max, label }: { value: number; t
 
 ```tsx
 {/* format: usd for money, int for counts */}
-<div className="flex gap-1.5" role="img" aria-label={parts.map(p => `${p.label} ${compact.format(p.value)}`).join(', ')}>
+<div className="flex gap-1.5" role="group" aria-label={parts.map(p => `${p.label} ${compact.format(p.value)}`).join(', ')}>
   {parts.filter(p => p.value > 0).map(p => (
-    <span key={p.label} data-tip={`${p.label}: ${format(p.value)} · ${share((100 * p.value) / total)}`}
+    <span key={p.label} tabIndex={0} role="img" data-tip={`${p.label}: ${format(p.value)} · ${share((100 * p.value) / total)}`}
+      aria-label={`${p.label}: ${format(p.value)}, ${share((100 * p.value) / total)}`}
       className="h-2.5 min-w-2.5 rounded-full" style={{ flex: p.value, background: p.color }} />
   ))}
 </div>
