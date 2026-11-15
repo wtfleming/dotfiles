@@ -11,7 +11,7 @@ reference, or a beat that breaks one on purpose, wins for that beat.
 - **One viewer, one real task.** One real input (a query, a file, a command)
   travels from the hook to the payoff. A list of features is not a story.
 - **A launch shape**, scaled to the length: hook ~8%, the old way failing
-  ~12%, the product named ~8%, proof in the real UI ~40% as 3–6 verbs, the
+  ~8%, the product named ~8%, proof in the real UI ~40% as 3–6 verbs, the
   payoff ~20% and played at normal speed, the one-line claim ~8%, the end
   card ~8%.
 - **Show the product, then the part, then the product.** Establish the real

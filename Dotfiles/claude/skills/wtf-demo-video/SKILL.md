@@ -127,7 +127,8 @@ launch:
 4s   the main screen
 6s   one feature in action: the cursor enters, clicks, the UI responds
 10s  the result, the biggest moment, at normal speed
-12s  the mark and the call to action, held to the end
+12s  the claim, in one line
+13.5s the mark and the call to action, held to the end
 ```
 
 Rules for the sheet:
@@ -135,11 +136,11 @@ Rules for the sheet:
 - A visual payoff every 3–5 seconds.
 - One element morphs between states (button → loader → panel → chart) instead
   of hard cuts.
-- Each line holds 0.5 s plus 0.3 s a word, the last at least 2 s.
+- Every line is up long enough to read (`craft.md`, Text).
 - The first 3 seconds carry the video. Spend the most polish there.
 - Loop only if asked: then end on frame 0's shot instead of the mark.
-- At 120 BPM a 4/4 bar is 2s, so the timestamps above already fall on
-  downbeats. Keep scene changes there if there will be music.
+- At 120 BPM a beat is 0.5s and a 4/4 bar 2s, so the timestamps above fall on
+  beats and most on downbeats. Keep scene changes there if there will be music.
 
 ## 4. Build, render, critique, repeat
 
@@ -177,7 +178,7 @@ node $R --stills stills/ --at 3.4,3.6,3.8   # stills/at-3.40.png and so on
 `references/craft.md` describes, fix them, and re-render. Common problems:
 
 - collisions and clipping
-- text under 28 px at 1080, after any zoom
+- text below the size floor in `craft.md`
 - dead air
 - two things competing for the eye
 - an element popping in with no motion
