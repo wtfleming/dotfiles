@@ -138,8 +138,10 @@ resource not released — rather than that the symptom is absent: a test of "doe
 not throw" or "returns 200" passes a fix that catches the error and moves on.
 Where nothing stronger exists, say so in the report. A test that will not fail at
 the cause you identified is evidence against the cause: go back to §3 rather than
-reshaping the test until it fails. Run it and capture the failure. Leave it
-uncommitted.
+reshaping the test until it fails. Where the trigger cannot run locally — a race
+only production load opens — a passing test says nothing either way: keep the cause,
+mark it unreproduced as §2 says, and name what would exercise the trigger. Run it and
+capture the failure. Leave it uncommitted.
 
 ## Report
 
