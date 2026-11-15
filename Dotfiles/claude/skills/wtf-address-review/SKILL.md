@@ -145,7 +145,9 @@ else. Print what comes back in the report, under the heading that file gives.
 A thread is ready once it is settled and nothing holds it: **Fix** (not held),
 **Already addressed**, **Decline** and **Answer**. Post those now, without
 asking. **Needs you** and held threads get a draft in the report and nothing on
-the PR.
+the PR. Write every reply and draft for a person, per
+`~/.claude/skills/wtf-humanize-text/SKILL.md`, as you first draft it, so the
+scrub below is the last thing to touch the text.
 
 Replies are public and notify the reviewer, and a reply that says "fixed in
 abc123" is false until abc123 is on the remote. So, in this order:
@@ -166,8 +168,6 @@ abc123" is false until abc123 is on the remote. So, in this order:
 4. **Scrub** each reply per `~/.claude/reference/github-publishing.md`. Say
    what changed and why; no internal reasoning, no paths outside the repo, no
    machine-specific output.
-5. **Write each reply for a person**, per
-   `~/.claude/skills/wtf-humanize-text/SKILL.md`, as you draft it.
 
 **Before every post, on whichever path it is made**, read that thread's latest
 comment again and compare its `id` and `lastEditedAt` with what step 1 read:
