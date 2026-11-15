@@ -136,7 +136,10 @@ the author did not imagine. Skip it for a refactor or a prose change.
 
 Merge its cases into your list, dropping any whose expected refusal you cannot state
 concretely. A case it marks **unreachable** is not probed and cannot fail the run; list it
-under **Left out** with that reason.
+under **Left out** with that reason. A case marked `undecided: A or B` is kept, not dropped.
+The adversary never saw the PR body, ticket or spec, so settle it against the sources in
+`references/expectations.md` first: one that decides it makes it an ordinary row, and only
+where none does is it recorded as undecided.
 
 ### Show the list, then run
 
@@ -258,7 +261,7 @@ entity or a reset between.
 
 | Verdict | When |
 | ------- | ---- |
-| **Verified** | every expectation met — each behavioural row with a discriminating partner that behaved as predicted, each command row on a fresh capture |
+| **Verified** | every expectation met, undecided rows aside — each behavioural row with a discriminating partner that behaved as predicted, each command row on a fresh capture |
 | **Verified with gaps** | what you ran passed, but part of the change or subject went unexercised — name the part |
 | **Not verified** | the probe could not discriminate: green on the base too, red for environmental reasons, or non-deterministic. Say which of the three, and what would tell them apart |
 | **Falsified** | an expectation failed for a real reason. A defect, found before the merge |
@@ -286,6 +289,11 @@ verified**, with the reason carried in its row, if any of these holds:
 Where you cannot tell, demote: an undefendable green is what this check exists to catch.
 A row that came out red for its predicted reason has already discriminated, and a command
 row (§4) has no discriminator to check.
+
+A row marked **undecided** under `references/expectations.md`'s "Valid input whose answer
+is a choice" is neither met nor failed, and does not count against **Verified**.
+`references/evidence.md` has how it is shown, and it goes to the user in the closing
+question as their decision.
 
 `Not verified` is neither a pass nor a defect. Never loosen a probe until it finally goes
 red — `references/differential.md` has why that is the worst outcome this method can

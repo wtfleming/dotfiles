@@ -51,6 +51,18 @@ security issue that fits neither list still gets reported.
 - [ ] Migrations/rollouts reversible, or the irreversibility called out
 - [ ] A new required environment variable, secret or binding is provisioned where a
       deploy will look, not only documented in an `.env.example`
+- [ ] CI and deploy pipelines the change touches:
+  - a job with no timeout, which can burn runner hours when it hangs; a call to a
+    reusable workflow cannot set one, so that is not a finding
+  - a deploy where an older run can finish last and deploy over a newer one: a
+    job-level concurrency group does not stop that without a newest-revision check;
+    queue rather than cancel when the deploy applies a migration. Not for test-only
+    workflows
+  - a deploy with no health check or rollback, which reports green while broken
+  - `continue-on-error` on a step whose result something downstream relies on
+  - a third-party action pinned to a branch (`@main`, `@master`, `@latest`). A tag is
+    mutable too: pinning by SHA is a hardening note, not a finding
+  - long-lived cloud keys in secrets where the provider supports OIDC
 
 ## Author's Finish Line
 
@@ -80,3 +92,6 @@ Everything here is cheaper not to write than to have someone else find.
 - Explain the problem AND suggest a fix
 - Critical blocks merge, Important should fix, Minor is optional
 - Match existing code style, don't "improve" unrelated code
+
+The CI and deploy pipeline items are adapted from GSD Core's CI/CD review patterns,
+itself from l-gevity-skills (both MIT, see `~/.claude/reference/LICENSE-gsd`).
