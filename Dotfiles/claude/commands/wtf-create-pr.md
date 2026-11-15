@@ -333,6 +333,10 @@ direction is the one that finds things, because nothing in stale prose is false.
 wrong by omission, and an omission does not announce itself: the paragraph reads correctly
 right up to the sentence that should exist and does not.
 
+For each path, command, flag, script or symbol the diff deletes or renames, grep the whole
+tree for the old name: docs, prompts, CI config, string lookups. No compiler reads prose,
+so every hit is drift.
+
 **What was reviewed versus what you are opening.** If a review or a verification ran at
 some commit and the branch has moved since, it covered code that no longer exists — while
 the body is about to cite it as though it did. This is structurally the same failure as a
