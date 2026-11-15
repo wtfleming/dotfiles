@@ -36,7 +36,10 @@ Every finding that posts on its own (inline, or in the body for want of an
 anchor) ends with a collapsed block for whoever hands it to an agent. The
 paragraph above it is written for a person and leaves things out. The block
 leaves nothing out, so that an agent with only this comment and the checkout can
-confirm the defect, fix it and prove the fix. Grouped Suggestions get none.
+confirm the defect, fix it and prove the fix. Grouped Suggestions get none. A
+comment that folds two findings into one (see **One failure mode is one
+comment** below) carries one block, with a Defect, Fix and Done when for each
+finding, each led by its tier.
 
 ````markdown
 <details><summary>For an agent fixing this</summary>
@@ -104,9 +107,9 @@ the findings land together.
 - **Critical, Warning and Pre-existing findings go inline**, one comment each,
   anchored at `file:line`.
 - **Suggestions go in the review body**, as one grouped block under a
-  `Suggestions` heading, one line each with the `file:line` and wording the
-  report printed. They are the most numerous tier, and an inline thread is the
-  most expensive shape a finding has.
+  `Suggestions` heading, one line each with the `file:line` and the finding
+  written for a person, like the inline ones. They are the most numerous tier,
+  and an inline thread is the most expensive shape a finding has.
 
 GitHub rejects a comment on a line the diff does not touch, so check each
 anchor against the diff's hunks before posting. On a PR scope the hunks are
