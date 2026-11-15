@@ -85,7 +85,8 @@ request is read and before step 3, since the ledger that holds `spec.md` is keye
 
    Walk each criterion against the input-boundary and choice rows of verify's negative-case
    catalogue (`~/.claude/skills/wtf-code-verify/references/expectations.md`). An edge
-   where the request or the code already settles the answer needs nothing. Where two
+   where the request, an existing test, a type or a documented contract already settles
+   the answer needs nothing; what the code happens to do today does not settle it. Where two
    answers are defensible — ranges that touch, which duplicate wins, a rounding tie —
    write your proposed answer as a criterion and flag it in the ask, or the build decides
    it unseen.
@@ -184,6 +185,9 @@ Follow `~/.claude/skills/wtf-code-verify/SKILL.md` over the branch, with `--tier
 agreed cap, and with one change to §3: **every acceptance criterion in `spec.md` gets at
 least one row** before any row the diff suggests. Show the plan block as it says, and run
 without waiting unless something lands under the **Asks first** that still holds.
+
+An **undecided** row is **Needs you**: this run has replaced verify's closing question, so
+the ledger is the only place the choice it names survives to reach the user.
 
 A **Falsified** row is fixed the way §3 fixes a finding — snapshot, edit, tests and lint,
 cold review of the fix diff with its findings triaged as §3 triages them, commit — then that
