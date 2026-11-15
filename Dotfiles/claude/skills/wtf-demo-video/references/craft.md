@@ -10,17 +10,17 @@ reference, or a beat that breaks one on purpose, wins for that beat.
   never "Introducing" or "Meet" as the first line.
 - **One viewer, one real task.** One real input (a query, a file, a command)
   travels from the hook to the payoff. A list of features is not a story.
-- **A launch shape**, scaled to the length: hook ~8%, the old way failing
-  ~8%, the product named ~8%, proof in the real UI ~40% as 3–6 verbs, the
-  payoff ~20% and played at normal speed, the one-line claim ~8%, the end
-  card ~8%.
+- **A launch shape** for about 35 s: hook ~8%, the old way failing ~8%, the
+  product named ~8%, proof in the real UI ~40% as 3–6 verbs, the payoff ~20%
+  and played at normal speed, the one-line claim ~8%, the end card ~8%. In a
+  shorter film the hold times under Text win over these shares.
 - **Show the product, then the part, then the product.** Establish the real
   workspace; bring the one control or result forward at 1.6–2× its real size,
   with its real labels; then carry it back into place. A camera drifting over
   a frozen screenshot is not the product acting.
-- **The mark lands once**, in the last 5–10%, centred, 15–30% of the frame
-  width, carried or wiped in rather than faded. The call to action (a real
-  button, the command to type) holds 1.5–3 s.
+- **The mark lands once**, at the end, centred, 15–30% of the frame width,
+  carried or wiped in rather than faded. The call to action (a real button,
+  the command to type) lands with it and holds 2–3 s to the last frame.
 - **Looping is a choice, not a default.** A launch ends on its mark; a loop
   returns to frame 0's shot instead.
 

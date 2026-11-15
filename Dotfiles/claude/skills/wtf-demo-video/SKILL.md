@@ -126,9 +126,9 @@ launch:
 2s   the need, or the old way failing
 4s   the main screen
 6s   one feature in action: the cursor enters, clicks, the UI responds
-10s  the result, the biggest moment, at normal speed
-12s  the claim, in one line
-13.5s the mark and the call to action, held to the end
+9s   the result, the biggest moment, at normal speed
+11s  the claim, in one line
+13s  the mark and the call to action, held to the end
 ```
 
 Rules for the sheet:
