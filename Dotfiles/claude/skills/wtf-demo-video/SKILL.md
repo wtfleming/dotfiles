@@ -46,7 +46,7 @@ The skill's files, all under `~/.claude/skills/wtf-demo-video/`:
 | File | What it does |
 |---|---|
 | `assets/index.html` | The starter film. Replace its example timeline. |
-| `references/craft.md` | Numbers for story, text, motion, the cursor and transitions, the defaults that look generated, and how to write review notes. Read it before the beat sheet. |
+| `references/craft.md` | Numbers for story, text, motion, the camera, the cursor and transitions, the defaults that look generated, and how to write review notes. Read it before the beat sheet. |
 | `assets/kit.js` | `spring`, `track`, `layout`, `place`, plus `cursor()`, a pointer that enters, glides, clicks and leaves, and `terminal()`, which types commands and prints their output. Read its header comments before using them. |
 | `scripts/check-deps.sh` | Lists every missing dependency with its install command. |
 | `scripts/capture.mjs` | Screenshots states of the running app from a shot list. |
