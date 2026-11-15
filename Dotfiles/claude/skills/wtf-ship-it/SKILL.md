@@ -82,6 +82,20 @@ request is read and before step 3, since the ledger that holds `spec.md` is keye
    code. The acceptance criteria are the only check in this run that is independent of
    the code — review agents start cold and never see them, and verify would otherwise read
    its expectations off the implementation.
+
+   Walk each criterion against the input-boundary and choice rows of verify's negative-case
+   catalogue (`~/.claude/skills/wtf-code-verify/references/expectations.md`). An edge
+   where the request or the code already settles the answer needs nothing. Where two
+   answers are defensible — ranges that touch, which duplicate wins, a rounding tie —
+   write your proposed answer as a criterion and flag it in the ask, or the build decides
+   it unseen.
+
+   Sort what you would otherwise decide yourself by how hard it is to undo. Decide a
+   reversible choice and record it under assumptions. Bring a one-way choice — a persisted
+   schema, a public API or URL, the auth model, a new dependency, a data migration — to the
+   ask with your recommendation; the answer becomes a **constraint**. When unsure, treat it
+   as one-way: a wrong guess that way costs one question, the other way an unseen
+   commitment. Give each assumption its evidence, the file that suggests it.
 4. **Ask once**, with AskUserQuestion: every open question, then the spec and this budget
    to confirm or change:
 
@@ -113,6 +127,13 @@ and run the suite and linter until both pass. A failure the base also has is not
 branch's: note it in the ledger for §5's comment and go on. One of the branch's own that
 three attempts do not fix is **Needs you**. Commit per topic. Do not push: every push
 starts a rate-limited bot review, so the first push is §5's.
+
+If the plan proves wrong, rewrite `plan.md` and note why in the ledger. If the spec
+proves wrong — a confirmed assumption is false, or meeting a criterion needs a one-way
+choice §0 did not settle — record **Needs you** with what was assumed, what is true and
+what was built instead. A placeholder, a "for now" value or a criterion partly met is
+**Needs you** too, never a quietly smaller shape. Never install a package whose name
+came only from memory, or retry a failed install under a similar name.
 
 ## 3. Review, fix, repeat
 
@@ -224,3 +245,7 @@ stop.
 - Push before §5, or push to the default branch.
 - Fix a **Needs you**, or one the user's answer at intake ruled out.
 - Widen the change past the spec: a review is not a mandate to refactor.
+
+The edge walk, the reversibility sort and the mid-build rule are adapted from GSD
+Core's edge probe, smart-discuss and executor references (MIT, see
+`~/.claude/reference/LICENSE-gsd`).
