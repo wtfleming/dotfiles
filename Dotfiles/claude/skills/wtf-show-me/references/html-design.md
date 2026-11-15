@@ -93,6 +93,10 @@ machine to machine, and a box fitted to one clips its label on another.
 Boxes take `rx` 6 at most, a 1px border and no shadow. A type tag in a box is a
 small `rx=2` rectangle, not a pill.
 
+Write a box's `stroke` and a connector's `marker-end` as SVG attributes, not in
+CSS. The geometry check below finds boxes and connectors by those attributes,
+and skips anything styled through a class without saying so.
+
 ## Anti-patterns
 
 | Looks like | Why it fails |
@@ -116,8 +120,16 @@ small `rx=2` rectangle, not a pill.
 
 ## Look before handing it over
 
-No tool checks the connector rules, so check them by eye on a render — every
-label gap, attach point and crossing:
+Run the geometry check first. It reports diagonal connectors, a connector
+riding a box's border or leaving within 8px of a corner, attach points too
+close together, stacked strokes, and a label mask that a later box covers:
+
+```sh
+python3 ~/.claude/skills/wtf-show-me/scripts/verify_geometry.py <scratch>/show-me/{topic}.html
+```
+
+It does not check label gaps or a route behind a box, so look at a render as
+well:
 
 ```sh
 "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new \
@@ -150,4 +162,5 @@ The budget, palette, type roles, label widths, connector rules and most
 anti-patterns are condensed from
 [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design)
 (MIT — see `LICENSE-diagram-design`), with its web fonts replaced by system
-stacks to keep the page offline.
+stacks to keep the page offline. `scripts/verify_geometry.py` is vendored from
+the same repository under the same licence.

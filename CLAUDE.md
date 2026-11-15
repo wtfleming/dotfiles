@@ -99,6 +99,8 @@ home directory. Key consequences to keep in mind:
   line credited to the wrong symbol and an unparsed file dropped rather than listed.
   `pr-wait.sh` decides when a pushed commit's checks have finished, so its failure modes
   are settling on the previous commit's results and a long wait lost to one failed poll.
+  `verify_geometry.py` is the only check on a `wtf-show-me` page's connectors before a
+  person looks at it, so its failure mode is a broken connector passing.
   A new test file here needs a step added to
   `.github/workflows/lint.yml` — the shellcheck glob picks it up, but nothing runs it
   otherwise.
