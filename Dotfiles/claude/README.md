@@ -337,6 +337,29 @@ are condensed from [cathrynlavery/diagram-design](https://github.com/cathrynlave
 (MIT); the "say what you cut" rule comes from the same source's fidelity ledger for imported
 diagrams.
 
+## Humanizing text
+
+`wtf-humanize-text` rewrites text that people read so it no longer reads as machine
+written. Pass 1 removes 26 AI tells. Pass 2 rebuilds the sentences 80% of the way to
+Simplified Technical English (ASD-STE100): one idea per sentence, active voice, plain words.
+Its fidelity rules carry the most weight for technical text. A rewrite keeps every fact and
+every degree of certainty, and never touches an identifier.
+
+Invoke it on any text. The tools that post to GitHub also read it while they draft:
+`/wtf-create-pr` for the title and body, `review-posting.md` for posted findings,
+`wtf-address-review` for replies, and `wtf-ship-it` for its summary comment. They write
+in the style the first time instead of rewriting a draft, because a rewrite pass doubles
+the output and is where facts get lost. A posted finding also carries a collapsed block
+for the agent that will fix it: where, the failure scenario, the fix, what not to touch,
+and the test that proves it.
+
+Adapted from [Dodaios/ste80-humanizer](https://github.com/Dodaios/ste80-humanizer) (MIT),
+whose catalogue of tells comes from [blader/humanizer](https://github.com/blader/humanizer)
+(MIT). Local changes: no dashes in the output; technical terms such as "verify" and
+"whether" are kept rather than swapped; a perfect tense stays where it carries meaning; and
+only the 80% level is kept. Strict mode, the full word-swap list and the Python checker
+are not ported.
+
 ## Verifying that it works
 
 `wtf-code-verify` proves that code does what it is supposed to do, by running it. The
