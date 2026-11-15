@@ -442,7 +442,10 @@ today, which is the strongest argument the promotion triage can make.
 It reports one of four verdicts. `Not verified` is neither a pass nor a defect and says
 which of the three inconclusive shapes it was; `Falsified` — a real defect, found before
 the merge — is a success for the process, and it offers to fix and re-verify rather than
-quietly rewriting history. Every report carries what went uncovered, what CI already
+quietly rewriting history. A row can also come back `undecided`: valid input with more
+than one defensible answer — ranges that touch, which duplicate survives, a rounding tie —
+where nothing in the spec, tests or types chooses. It records what the code picked and
+hands the choice to you, rather than passing it as met. Every report carries what went uncovered, what CI already
 runs, and what state was left behind — and each of those lines is something checked
 rather than recalled. A verification section is read as the output of a process that
 checked things, so a sentence in it that was reasoned rather than run borrows that
