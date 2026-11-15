@@ -97,6 +97,21 @@ Write a box's `stroke` and a connector's `marker-end` as SVG attributes, not in
 CSS. The geometry check below finds boxes and connectors by those attributes,
 and skips anything styled through a class without saying so.
 
+## Sequence diagrams
+
+A sequence drawn by hand, when Mermaid's will not do:
+
+- Actors in a row along the top, each with a dashed lifeline down; time runs
+  down, so no message arrow points up.
+- A call is solid with a filled head. Its return is dashed `5,4` with a filled
+  head. A fire-and-forget message is dashed with an open head.
+- A branch, an optional step or a retry goes in a frame spanning only the
+  lifelines it involves, with `ALT`, `OPT` or `LOOP` in a mono tab top-left
+  and the guard (`[token valid]`) under it. An `alt` has two regions at most,
+  split by a dashed line. Never two loose arrow clusters for if and else.
+- One frame per diagram, never nested; five lifelines at most. More than that
+  is a happy-path diagram and a separate failure-path one.
+
 ## Anti-patterns
 
 | Looks like | Why it fails |
@@ -158,8 +173,8 @@ stay under 360px. Inside one, a width can be anything — the wrapper scrolls.
 
 ---
 
-The budget, palette, type roles, label widths, connector rules and most
-anti-patterns are condensed from
+The budget, palette, type roles, label widths, connector rules, sequence rules
+and most anti-patterns are condensed from
 [cathrynlavery/diagram-design](https://github.com/cathrynlavery/diagram-design)
 (MIT — see `LICENSE-diagram-design`), with its web fonts replaced by system
 stacks to keep the page offline. `scripts/verify_geometry.py` is vendored from
