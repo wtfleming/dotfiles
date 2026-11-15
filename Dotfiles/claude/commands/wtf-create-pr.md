@@ -335,7 +335,9 @@ right up to the sentence that should exist and does not.
 
 For each path, command, flag, script or symbol the diff deletes or renames, grep the whole
 tree for the old name: docs, prompts, CI config, string lookups. No compiler reads prose,
-so every hit is drift.
+so a hit is drift until its context says otherwise: the new name containing the old one
+(`foo` inside `fooBar`), or a changelog or migration note that names the old one on
+purpose.
 
 **What was reviewed versus what you are opening.** If a review or a verification ran at
 some commit and the branch has moved since, it covered code that no longer exists — while
