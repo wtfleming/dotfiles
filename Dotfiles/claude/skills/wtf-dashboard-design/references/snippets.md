@@ -64,15 +64,16 @@ export function previousWindow(start: number, end: number, days: number, midnigh
 ## KPI tile with the selected fill
 
 ```tsx
-<button aria-pressed={selected} onClick={onSelect} data-tip={explain}
+<button aria-pressed={selected} onClick={onSelect} data-tip={`${explain} · previous period ${format(prev)}`}
   className="group relative border-b border-r border-line p-2 text-left last:border-r-0 focus-visible:outline-none">
   <div className={`h-full rounded-xl px-4 py-3 transition-colors group-focus-visible:ring-2 group-focus-visible:ring-accent ${selected
     ? (money ? 'bg-money/[.07] ring-1 ring-inset ring-money/25' : 'bg-accent/[.06] ring-1 ring-inset ring-accent/20')
     : 'group-hover:bg-soft/70'}`}>
     <div className={`flex items-center justify-between gap-2 text-[14px] ${selected ? 'font-medium text-ink' : 'text-ink-2'}`}>{label}<Delta cur={cur} prev={prev} format={format} /></div>
     <div className={`mt-1 text-[32px] font-semibold leading-[1.15] tracking-[-.03em] tabular-nums ${selected ? 'text-ink' : 'text-ink-2'}`}>{format(cur)}</div>
-    {/* no explanatory sub-line: `explain` ("3% of visitors") is the tile's tooltip; data-tip is unseen by screen readers */}
-    <span className="sr-only">{explain}</span>
+    {/* no explanatory sub-line: `explain` ("3% of visitors") is the tile's tooltip. Focus lands on the button, not on
+        Delta, so the button's tip and the sr-only text carry the previous value too; data-tip is unseen by screen readers */}
+    <span className="sr-only">{explain}. Previous period {format(prev)}.</span>
     <Spark values={series /* same window as the main chart */} color={!selected ? 'var(--color-muted)' : money ? 'var(--color-money)' : 'var(--color-accent)'} />
   </div>
 </button>
