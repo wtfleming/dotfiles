@@ -12,8 +12,11 @@ Screenshots catch broken layouts, not three components agreeing on the same wron
    total, previous-period total and delta, busiest day, the top row of each ranked list and its share.
 2. **Check each component on its own** against those answers, reading what it renders rather than shared state:
    - KPI tile: the number and the delta as displayed.
-   - Chart: the plotted series summed over the range equals the tile total; the peak is the busiest day.
-   - Table or ranked list: rows (plus any "Other") sum to the total; the top row and its share match.
+   - Chart: for an additive metric (revenue, orders), the plotted series summed over the range equals the tile
+     total; the peak is the busiest day. Uniques and rates do not add up across days: check each point and the
+     tile against the expected answer computed with the metric's own aggregation.
+   - Table or ranked list: rows (plus any "Other") sum to the total when the rows split it; the top row and its
+     share match.
    - Every tooltip, chip or caption that repeats a number.
 3. **Make it a test that fails on a mismatch**: Playwright reading the tile text, the chart's data or aria labels
    and the table footer, or unit tests on the selector feeding each component. Rerun it after any change to
