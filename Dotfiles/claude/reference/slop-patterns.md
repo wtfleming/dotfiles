@@ -59,7 +59,8 @@ Guarding against states that cannot occur: re-checking a value validated one
 call up, null-checking a parameter every caller constructs, `is_nil`/`(when x
 ...)` around values that are never nil, `if let Some` on something just
 matched. A check is only justified by a caller that can actually produce the
-bad value.
+bad value. Data from outside the process — a request, a file, the environment,
+anything deserialised — always counts as such a caller, whatever its type says.
 
 ## Verbose Logging
 

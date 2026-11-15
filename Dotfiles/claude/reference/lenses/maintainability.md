@@ -17,7 +17,7 @@
   went away, a config key nothing reads, a flag now permanently on with its dead
   branch intact
 
-## Evidence bar for reuse and orphans
+## Evidence bar for reuse, orphans and unneeded code
 
 Both the duplicate and the orphan live in files the change did not touch, so
 each such finding is an assertion about code nobody else in this run reads.
@@ -26,6 +26,17 @@ and dynamic dispatch as callers. "Something like this probably already exists"
 and "nothing uses this any more" are not reportable without the search behind
 them. The orphan claim is the more dangerous, because a wrong one invites a
 deletion.
+
+A claim that added code guards against nothing invites a deletion too. Name why
+the state cannot occur and where that is proven: the type end to end, the deploy
+topology, every call site, the flag's value in every environment. A pattern name
+alone is not a finding. Three things are never unneeded, whatever the internal
+types say:
+
+- a check on data that crossed a trust boundary — a request, a file, the
+  environment, deserialised input. A static type does not survive that crossing.
+- a deliberate second security layer
+- a single-implementation interface the tests substitute
 
 ## Anchors
 
@@ -43,3 +54,6 @@ look.
 ## Not applicable
 
 Only when the scope holds no code this lens could govern at all.
+
+The evidence bar for unneeded code is adapted from GSD Core's necessity review,
+itself from l-gevity-skills (both MIT, see `~/.claude/reference/LICENSE-gsd`).
