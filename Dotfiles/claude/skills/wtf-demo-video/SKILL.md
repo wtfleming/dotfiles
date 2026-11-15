@@ -46,7 +46,8 @@ The skill's files, all under `~/.claude/skills/wtf-demo-video/`:
 | File | What it does |
 |---|---|
 | `assets/index.html` | The starter film. Replace its example timeline. |
-| `assets/kit.js` | `spring`, `track`, `layout`, `place`, plus `cursor()`, a pointer that glides and clicks, and `terminal()`, which types commands and prints their output. Read its header comments before using them. |
+| `references/craft.md` | Numbers for story, text, motion, the cursor and transitions, the defaults that look generated, and how to write review notes. Read it before the beat sheet. |
+| `assets/kit.js` | `spring`, `track`, `layout`, `place`, plus `cursor()`, a pointer that enters, glides, clicks and leaves, and `terminal()`, which types commands and prints their output. Read its header comments before using them. |
 | `scripts/check-deps.sh` | Lists every missing dependency with its install command. |
 | `scripts/capture.mjs` | Screenshots states of the running app from a shot list. |
 | `scripts/render.mjs` | Renders stills, the video, or a loop check. |
@@ -117,15 +118,17 @@ frame from a video they like (`refs/frame.png`), a video, or a style to name.
 Describe the video as moments, not adjectives: what is on screen at each
 timestamp and what changes between them. Use the user's beat sheet if they
 gave one. Otherwise draft one and get it approved, since it is the user's
-call. The shape that works for a 15-second launch:
+call. Read `references/craft.md` first. The shape that works for a 15-second
+launch:
 
 ```
-0s   logo
-2s   tagline
+0s   the product already doing its thing; frame 0 is the thumbnail
+2s   the need, or the old way failing
 4s   the main screen
-8s   one feature in action — a cursor makes real clicks, the UI responds
-12s  pricing or CTA
-14s  logo again, settled by 15s to match frame 0, so it loops
+6s   one feature in action: the cursor enters, clicks, the UI responds
+9s   the result, the biggest moment, at normal speed
+11s  the claim, in one line
+13s  the mark and the call to action, held to the end
 ```
 
 Rules for the sheet:
@@ -133,10 +136,11 @@ Rules for the sheet:
 - A visual payoff every 3–5 seconds.
 - One element morphs between states (button → loader → panel → chart) instead
   of hard cuts.
-- On-screen text short enough to read twice in the time it is up.
+- Every line is up long enough to read (`craft.md`, Text).
 - The first 3 seconds carry the video. Spend the most polish there.
-- At 120 BPM a 4/4 bar is 2s, so the timestamps above already fall on
-  downbeats. Keep scene changes there if there will be music.
+- Loop only if asked: then end on frame 0's shot instead of the mark.
+- At 120 BPM a beat is 0.5s and a 4/4 bar 2s, so the timestamps above fall on
+  beats and most on downbeats. Keep scene changes there if there will be music.
 
 ## 4. Build, render, critique, repeat
 
@@ -170,15 +174,16 @@ morph, cross or hand over:
 node $R --stills stills/ --at 3.4,3.6,3.8   # stills/at-3.40.png and so on
 ```
 
-**Name the three worst problems**, fix them, and re-render. Common problems:
+**Name the three worst problems**, written as review notes the way
+`references/craft.md` describes, fix them, and re-render. Common problems:
 
 - collisions and clipping
-- text too small for the format
+- text below the size floor in `craft.md`
 - dead air
 - two things competing for the eye
 - an element popping in with no motion
-- muddy mid-transition frames
-- the default "centred text, everything fades in" look creeping back
+- muddy mid-transition frames, or a jump across a cut
+- any default `craft.md` bans creeping back
 
 Repeat until the first three seconds look finished and the worst problems
 left are ones you would knowingly ship. If the film should loop, check that it
@@ -217,6 +222,7 @@ for motion.
   varying `--size`, and branch on `layout().portrait` where the composition
   needs reframing. Desktop screenshots letterbox badly in 9:16. Zoom the window
   in on the region that matters rather than shrinking the whole page to fit.
+  Keep 9:16 text inside the platform's safe band (`references/craft.md`).
 
 ## 6. Deliver
 
