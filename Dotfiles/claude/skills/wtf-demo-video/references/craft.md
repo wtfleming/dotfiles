@@ -34,6 +34,8 @@ reference, or a beat that breaks one on purpose, wins for that beat.
 - Titles 4–9% of the frame height. One highlighted word in the accent colour.
 - No "unlock", "seamless", "supercharge", "game-changer", "effortless", or
   "in seconds" unless measured.
+- No emoji glyphs. A renderer without an emoji font draws them as boxes; use
+  inline SVG.
 
 ## Motion
 
@@ -53,6 +55,19 @@ reference, or a beat that breaks one on purpose, wins for that beat.
 - **Cut at the fastest frame** of a move, with the same direction and speed
   on both sides. A click into a new screen cuts on the click; the new screen
   arrives slightly large and settles.
+
+## The camera
+
+- It moves only to what the current beat is about, and holds dead still there
+  until the next move. No drift between moves.
+- Every move starts from where the camera is. When keys change hands between
+  scenes, the first key repeats the last framing, so nothing jumps.
+- A held framing never crops text meant to be read; a zoom passing through
+  may.
+- Captions sit outside the camera transform, so pans never crop or move them.
+- A highlight or cursor target is placed inside the element it points at, or
+  measured from it at that `t`. Typed screen coordinates miss once the element
+  sits under a zoom or tilt.
 
 ## The cursor
 
@@ -102,6 +117,8 @@ the reference, and add it to the beat sheet as banned for this film.
 - Cover the words: do the pictures alone still tell it?
 - Look at the frames either side of every cut (`--at` with the cut time
   ±0.2 s): a jump there is a problem.
+- Render a still (`--at`) at each highlight and click: it must sit on its
+  target.
 - Write each problem as `t=4.2s · where · problem → exact change`. P0 breaks
   the read (unreadable, wrong, a banned default in the hero shot); P1 weakens
   it (dead stretch, soft payoff, jumping seam); P2 is polish. Fix the P0s,
