@@ -104,8 +104,9 @@ For: how a total changed. Header: net figure large ("+3,650 net new MRR").
   area and the keyboard focus mark.
 - Y-axis labels may sit on the right edge, next to the latest values, leaving the left edge clean; x labels at
   week steps across a month.
-- Revenue view: money as soft bars on a right-hand $ axis against the visitors line works well. Mark the biggest
-  sale days with the source's logo over the bar, so the chart says where the money came from.
+- Revenue view: money as soft bars on its own axis; visitors go in their own chart or tile, never on a second
+  y-axis (dataviz rules out dual axes). Mark the biggest sale days with the source's logo over the bar, so the
+  chart says where the money came from.
 - Bars on their own: pastel fill (~20% of the entity hue) with a solid 6–7 px rounded cap at the top; the unfinished
   period as a dashed outline with a faint fill, its axis label in the accent.
 - Trim leading empty days by default, with a "show all" link.
@@ -182,6 +183,8 @@ For: one measure across two dimensions where the grid is the point: classes × d
 - The warm tier also carries a non-colour cue (an underlined or bold number, or a small ▲), so it survives
   greyscale and colour blindness. Check it under achromatopsia emulation while building, not only at the end.
 - Text in every cell is ink (or ink-2), never the accent: accent text on an accent tint fails 4.5:1.
+- Show each number at the precision its threshold needs, and tier on the number shown: with an 85% line, 84.6 reads
+  "84.6", because "85" in a below-85 tier contradicts itself.
 - Numbers in cells only on small grids (up to ~60 cells) with enough contrast; exact value and its parts
   ("5-A · 28 Oct · 20/26") in the tooltip.
 - Missing data is its own state: a dashed outline cell with an icon, and when someone can fix it, the cell is the

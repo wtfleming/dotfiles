@@ -87,7 +87,7 @@ Wordless test; qa.md → Words audit says where each sentence goes instead.
 - **Context**: every headline number answers "compared to what?" with one baseline: previous period (same elapsed
   time), target, normal range or history.
 - **Numbers**: tabular figures, right-aligned in columns; as precise as the decision needs (5.2M on a card, exact in
-  the tooltip); compact on axes (1k, $4k); `<0.1%` below 0.1%; `—` for no data, never a fake $0 or 0%.
+  the tooltip); compact on axes (1k, $4k); `<0.1%` below 0.1%; `—` for no data, never a fake zero amount or 0%.
 - **Comparison**: the previous period is a grey or dashed line; an unfinished period is drawn dashed. A base under
   ~5 reads "was 1" in grey, never a red −100%. Deltas are coloured by meaning: lower-is-better metrics (cost, CPL,
   churn) flip green and red; neutral ones (spend, volume) stay grey.

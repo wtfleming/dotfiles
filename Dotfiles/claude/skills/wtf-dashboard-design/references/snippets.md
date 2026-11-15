@@ -187,7 +187,7 @@ const TIER = {
           className="grid h-9 place-items-center rounded-[10px] border-[1.5px] border-dashed border-warn/75 bg-warn/[.07] text-warn">{bell}</button>
       : <span key={i} tabIndex={0} role="img" data-tip={`${r.name} · ${days[i].label} · ${c.present}/${c.size}`}
           aria-label={`${r.name}, ${days[i].label}: ${c.present} of ${c.size} present`}
-          className={`grid h-9 place-items-center rounded-[10px] text-[13px] font-semibold tabular-nums ${TIER[tier(Math.round(c.rate))]}`}>{Math.round(c.rate)}</span>)}
+          className={`grid h-9 place-items-center rounded-[10px] text-[13px] font-semibold tabular-nums ${TIER[tier(+c.rate.toFixed(1))]}`}>{c.rate.toFixed(1)}</span>)}
   </Fragment>)}
 </div>
 ```
