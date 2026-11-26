@@ -67,6 +67,7 @@ check "a cookie header with only short values passes" "0:" "$(run 'Cookie: lang=
 check "a cookie on a removed diff line is refused" "1:text:1: Cookie header value" "$(run "-Cookie: session=${A20}")"
 check "so is one under another header name" "1:text:1: Cookie header value" "$(run "X-Cookie: session=${A20}")"
 check "and one whose name ends t-cookie" "1:text:1: Cookie header value" "$(run "X-Client-Cookie: session=${A20}")"
+check "or et-cookie" "1:text:1: Cookie header value" "$(run "X-Budget-Cookie: session=${A20}")"
 check "a redacted Set-Cookie with attributes passes" "0:" "$(run 'Set-Cookie: session=<redacted: SESSION>; Domain=example.com; Path=/api/v1/users; Max-Age=31536000')"
 check "a Set-Cookie value is refused" "1:text:1: Cookie header value" "$(run "Set-Cookie: session=${A20}; Path=/")"
 check "a header in escaped JSON is refused" "1:text:1: Authorization header value" "$(run "{\\\"Authorization\\\": \\\"Bearer ${A20}\\\"}")"
