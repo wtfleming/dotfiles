@@ -42,6 +42,11 @@ decision or reaches a capability.
 written somewhere a later, more privileged task reads as instructions or
 facts. Cite both the write and the later privileged read.
 
+**Invisible text.** Content a model reads and a person does not: Unicode tag
+characters (U+E0000–U+E007F, which mirror ASCII), zero-width characters, bidi
+overrides, an HTML comment, text set into an image. Where the only control on
+a source is that someone reviews it, that review did not see this.
+
 ## Tools and actions
 
 **Tool-argument injection.** Model-produced arguments reaching a shell, file,
@@ -84,4 +89,6 @@ source in an assembled context whose output a less trusted party can read.
 
 ---
 
-Adapted from Cloudflare's security-audit skill (MIT, see `../LICENSE`).
+Adapted from Cloudflare's security-audit skill (MIT, see `../LICENSE`). The
+invisible-text class is adapted from Claude-BugHunter (CC BY 4.0, see
+`~/.claude/reference/LICENSE-bughunter`).

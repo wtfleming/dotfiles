@@ -4,7 +4,11 @@
 sensitive data in logs and errors, authz gaps, model output or tool arguments
 reaching a shell, file, query or URL sink unchecked, an approval that does not
 bind the action it approved, a new handler missing the guard its siblings carry,
-a comment or suppression standing in for a control.
+a comment or suppression standing in for a control. In a CI workflow: a field
+the pull request's author sets (title, branch name, body, label) expanded by
+`${{ }}` inside `run:`, a `pull_request_target` or `workflow_run` job that runs
+the pull request's code with secrets in reach, a privileged job restoring a
+cache an untrusted branch can write.
 
 ## Evidence bar
 

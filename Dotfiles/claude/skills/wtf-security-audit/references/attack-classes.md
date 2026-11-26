@@ -76,7 +76,13 @@ caches, artifacts and workspaces: a worktree or build seeded with another
 tree's dependencies or compiled output runs that tree's code. Plugins and
 extensions — skills, MCP servers, hooks — that gain trust by being loaded
 rather than approved. An agent or job that runs a repository's own scripts,
-tests or build with credentials in reach.
+tests or build with credentials in reach. In a GitHub Actions workflow, three
+sinks by name: a field the pull request's author sets — title, branch name,
+body, label, commit message — expanded by `${{ }}` inside a `run:` script,
+where it becomes shell text before the shell starts; a `pull_request_target`
+or `workflow_run` job that checks out or runs the pull request's code with
+secrets or a write token in reach; a privileged job that restores a cache or
+artifact a job on an untrusted branch can write.
 
 **Local helpers.** A privileged helper — a sandbox daemon, a remote workspace
 host, a credential helper — acting as a confused deputy for a less-trusted
@@ -99,7 +105,9 @@ their own budget is self-impact, so a finding needs a lower-trust principal
 half-finished, experimental, compatibility and fallback paths; API calls the UI
 never makes; features combined in ways nobody designed; a comment explaining
 why something is safe — verify the explanation; anything named `temp`, `hack`
-or `legacy`; edge cases the tests do not cover.
+or `legacy`; edge cases the tests do not cover; a handler whose naming or
+error shape differs from its siblings', which was written separately and often
+lacks the control they share.
 
 **Obvious things.** A literal sweep of your scope, not a creative one:
 hardcoded secrets and committed key files; security TODO, FIXME and HACK
@@ -113,4 +121,5 @@ finding until its impact is traced through the gate.
 Adapted from Cloudflare's security-audit skill (MIT, see `../LICENSE`). The
 cache and sentinel cases under business logic are reworded from Visa's
 vulnerability agentic harness (Apache-2.0, see `LICENSE-vvah` and
-`NOTICE-vvah`).
+`NOTICE-vvah`). The workflow sinks and the sibling-anomaly lead are adapted from
+Claude-BugHunter (CC BY 4.0, see `~/.claude/reference/LICENSE-bughunter`).
