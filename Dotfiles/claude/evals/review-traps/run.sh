@@ -85,6 +85,27 @@ cmd_all() {
 	mkdir -p "$out"
 	out=$(cd "$out" && pwd)
 	local key repo n=0 results="$out/results.txt"
+	# Every refusal below comes before the first review is paid for, and before
+	# results.txt is touched: an earlier run's summary is not this run's to truncate.
+	if [ -e "$results" ] || ls -d "$out"/repo-* >/dev/null 2>&1; then
+		echo "$out already holds a run — give each run its own directory" >&2
+		exit 1
+	fi
+	# claude reads CLAUDE.md from every directory above where it runs, so a case repo
+	# built inside another checkout is reviewed under that checkout's instructions.
+	if git -C "$out" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+		echo "$out is inside a git work tree — use a directory outside any repository" >&2
+		exit 1
+	fi
+	local ground
+	while IFS=$'\t' read -r key ground _; do
+		[ -n "$key" ] || continue
+		[ -d "$HERE/cases/$key" ] || { echo "cases.tsv lists $key but cases/$key is missing" >&2; exit 1; }
+		case $ground in
+			safe | defect) ;;
+			*) echo "cases.tsv: $key has ground '$ground', expected safe or defect" >&2; exit 1 ;;
+		esac
+	done < "$CASES"
 	local claude_args=()
 	# Word-split on purpose: the variable holds a list of flags.
 	# shellcheck disable=SC2206

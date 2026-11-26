@@ -56,7 +56,8 @@ home directory. Key consequences to keep in mind:
   in the home directory is cruft. It is therefore also not one of the swept directories
   above; adding a file there needs no sync change *because* nothing syncs it.
 - `Dotfiles/claude/evals/` holds benchmarks run by hand, because each run spends model
-  tokens. It is not deployed and CI does not run it; CI only shellchecks its scripts. Its
+  tokens. It is not deployed and CI does not run it against a model; CI shellchecks its
+  scripts and drives the runner with a stand-in. Its
   fixtures are deliberately vulnerable code, so a finding there is the fixture working.
 - `old-scripts/` is archived and deliberately **not** deployed.
 
@@ -110,6 +111,8 @@ home directory. Key consequences to keep in mind:
   `publish-check.sh` is the last thing between a captured credential and a public PR, so
   its failure modes are a scan that could not run reading as a clean one and a denylist
   line that matches everything or nothing.
+  `evals/review-traps/run.sh` produces a number someone will decide on, so its failure
+  modes are a case that cannot be built and a score read from the wrong section of a report.
   A new test file here needs a step added to
   `.github/workflows/lint.yml` — the shellcheck glob picks it up, but nothing runs it
   otherwise.

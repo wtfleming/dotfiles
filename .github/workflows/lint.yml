@@ -64,6 +64,13 @@ jobs:
       - name: publish-check smoke test
         run: Dotfiles/claude/tests/publish-check-smoke.sh
 
+      # The benchmark in evals/ is run by hand, but its output is a number someone will
+      # decide on. This builds every case and drives the runner with a stand-in claude,
+      # so a case that cannot be built or a score read from the wrong section fails here
+      # rather than after the reviews were paid for.
+      - name: review-traps smoke test
+        run: Dotfiles/claude/tests/review-traps-smoke.sh
+
       # fix-snapshot.sh builds the diff a fix round's cold review reads, and its failure
       # mode is a diff that omits a file -- an untracked one, a deleted one -- in silence.
       - name: fix-snapshot smoke test
@@ -167,6 +174,7 @@ jobs:
               o = ord(ch)
               return (
                   (o < 0x20 and ch not in "\t\n") or o == 0x7F
+                  or o == 0xAD or o == 0x61C
                   or 0x200B <= o <= 0x200F or 0x202A <= o <= 0x202E
                   or 0x2060 <= o <= 0x2069 or o == 0xFEFF
                   or 0xE0000 <= o <= 0xE007F

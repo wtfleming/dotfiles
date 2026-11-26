@@ -24,9 +24,15 @@ the traps and starts missing the controls has only made the review quieter.
 
 ```sh
 ./run.sh all                      # every case, the full review
-./run.sh all out/ -- --lite       # keep the reports in out/, and pass --lite to the review
+./run.sh all ~/traps/run-1 -- --lite   # keep the reports there, and pass --lite to the review
 ./run.sh score <case> <report>    # score a report you already have
 ```
+
+Each run takes a directory of its own, outside any repository. `all` refuses one that
+already holds a run, and refuses one inside a git work tree: `claude` reads `CLAUDE.md`
+from every directory above where it runs, so a case built inside a checkout is reviewed
+under that checkout's instructions, and here those say the fixtures are vulnerable on
+purpose.
 
 `all` spends model tokens — one review per case — so it is run by hand, before and
 after the change being judged, and never in CI. It reviews with what is deployed in
@@ -49,7 +55,7 @@ that, never as clean.
 ## Adding a case
 
 Add a directory under `cases/` holding only the files the change touches, laid over
-`base/`, and a row in `cases.tsv`. A trap needs its reason to be visible in the tree: a
+`base/`, a row in `cases.tsv`, and a row in the table above. A trap needs its reason to be visible in the tree: a
 case that is safe only because of something the reviewer cannot see measures nothing.
 
 This directory is not deployed and holds deliberately vulnerable fixtures.
