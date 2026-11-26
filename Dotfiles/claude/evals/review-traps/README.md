@@ -49,7 +49,9 @@ not count, because the report did not ask for it to be fixed.
 The pattern is a keyword match, so it is approximate both ways. It can count an
 unrelated finding that happens to use the word, and it can miss the trap's finding
 written in words the pattern lacks. Read the reports behind any number that will decide
-something; `all` prints where they are. A run that produced no report is counted as
+something; `all` prints where they are. The case repos are numbered, not named, because
+a case's name gives its answer away and the directory is in front of the reviewer;
+`repos.txt` maps each number back to its case. A run that produced no report is counted as
 that, never as clean.
 
 ## Adding a case

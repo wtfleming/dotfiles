@@ -63,7 +63,11 @@ cmd_score() {
 		printf '%-28s %-7s %s\n' "$key" "$ground" "NO REPORT"
 		return 0
 	fi
-	if acted_on "$report" | grep -qiE -e "$match"; then hit=yes; fi
+	# Captured first: grep -q leaves at its first match, and under pipefail the SIGPIPE
+	# that gives awk on a long report turns a hit into "no match".
+	local acted
+	acted=$(acted_on "$report")
+	if printf '%s\n' "$acted" | grep -iE -e "$match" >/dev/null; then hit=yes; fi
 	case $ground:$hit in
 		safe:no) printf '%-28s %-7s %s\n' "$key" "$ground" "ok — nothing raised" ;;
 		safe:yes) printf '%-28s %-7s %s\n' "$key" "$ground" "FALSE POSITIVE" ;;
@@ -114,7 +118,10 @@ cmd_all() {
 	while IFS=$'\t' read -r key _; do
 		[ -n "$key" ] || continue
 		n=$((n + 1))
-		repo="$out/repo-$key"
+		# Numbered, not named: the case name says where the guard is or what the defect
+		# is, and the working directory is in front of the reviewer.
+		repo="$out/repo-$n"
+		printf '%s\t%s\n' "repo-$n" "$key" >> "$out/repos.txt"
 		cmd_prepare "$key" "$repo"
 		echo "reviewing $key ..." >&2
 		# stdin from /dev/null: claude would otherwise read the case list this loop is on.
