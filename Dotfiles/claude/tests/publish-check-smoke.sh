@@ -42,7 +42,8 @@ jwt="eyJ${A20}.eyJ${A20}.${A20}"
 echo "case: clean text"
 check "prose with nothing in it passes" "0:" "$(run 'The second request returns 200 with the updated title.')"
 check "a redacted credential passes" "0:" "$(run 'Authorization: Bearer <redacted: SESSION_TOKEN>')"
-check "a word that merely contains sk- passes" "0:" "$(run 'the task-runner-for-background-jobs-and-more package')"
+# The tail reaches 20, so only the boundary before sk- keeps this from reading as a key.
+check "a word that merely ends in sk- passes" "0:" "$(run 'pip install flask-sqlalchemy_session_extension_helpers')"
 
 echo "case: fixed patterns"
 check "an AWS key is refused, by line and name" "1:text:1: AWS access key" "$(run "id=$key")"
@@ -50,6 +51,8 @@ check "a GitHub token is refused" "1:text:1: GitHub token" "$(run "$token")"
 check "a JSON web token is refused" "1:text:1: JSON web token" "$(run "$jwt")"
 check "a bearer value is refused" "1:text:1: Authorization header value" "$(run "Authorization: Bearer ${A20}")"
 check "a password in a URL is refused" "1:text:1: password in a URL" "$(run "postgres://app:${A20:0:8}@db/app")"
+check "a password with no user name is refused" "1:text:1: password in a URL" "$(run "redis://:${A20}@cache:6379/0")"
+check "whatever the case of the scheme" "1:text:1: password in a URL" "$(run "HTTPS://app:${A20:0:8}@host")"
 check "a Slack token is refused" "1:text:1: Slack token" "$(run "xox""b-${A20:0:12}")"
 check "a Google API key is refused" "1:text:1: Google API key" "$(run "AIza""${A20}${A20:0:15}")"
 check "an sk- key is refused" "1:text:1: API key (sk-)" "$(run "key=sk""-ant-api03-${A20}")"
@@ -59,9 +62,18 @@ printf 'one\nid=%s\0\nthree\n' "$key" > "$WORK/text"
 check "a hit beside a NUL byte still names its line" "1:text:2: AWS access key" \
   "$(rc=0; out=$("$CHECK" "$WORK/text" 2>/dev/null) || rc=$?; echo "$rc:${out#"$WORK"/}")"
 check "a cookie value is refused" "1:text:1: Cookie header value" "$(run "Cookie: session=${A20:0:12}")"
+check "a cookie after a short one is refused" "1:text:1: Cookie header value" "$(run "Cookie: lang=en; session=${A20}")"
+check "a cookie header with only short values passes" "0:" "$(run 'Cookie: lang=en; theme=dark')"
+check "a cookie on a removed diff line is refused" "1:text:1: Cookie header value" "$(run "-Cookie: session=${A20}")"
+check "so is one under another header name" "1:text:1: Cookie header value" "$(run "X-Cookie: session=${A20}")"
+check "and one whose name ends t-cookie" "1:text:1: Cookie header value" "$(run "X-Client-Cookie: session=${A20}")"
+check "a redacted Set-Cookie with attributes passes" "0:" "$(run 'Set-Cookie: session=<redacted: SESSION>; Domain=example.com; Path=/api/v1/users; Max-Age=31536000')"
+check "a Set-Cookie value is refused" "1:text:1: Cookie header value" "$(run "Set-Cookie: session=${A20}; Path=/")"
+check "a header in escaped JSON is refused" "1:text:1: Authorization header value" "$(run "{\\\"Authorization\\\": \\\"Bearer ${A20}\\\"}")"
 check "a header quoted as JSON is refused" "1:text:1: Authorization header value" "$(run "{\"Authorization\": \"Bearer ${A20}\"}")"
 check "a lowercase header is refused" "1:text:1: Authorization header value" "$(run "authorization: bearer ${A20}")"
-# BSD grep in a UTF-8 locale matches nothing on a line with an invalid byte.
+# BSD grep in a UTF-8 locale matches nothing on a line with an invalid byte. GNU grep
+# matches around it, so this guards LC_ALL=C on macOS only and stays green in CI without it.
 check "a credential beside an invalid UTF-8 byte is refused" "1:text:1: AWS access key" "$(run "$(printf 'caf\351') id=$key")"
 check "a private key block is refused" "1:text:1: private key block" "$(run "-----BEGIN RSA PRIVATE ""KEY-----")"
 check "the line number is the matching line's" "1:text:3: AWS access key" "$(run "one
@@ -127,6 +139,7 @@ check "an empty segment before the run does not hide a key" "1:text:1: API key (
 check "nor does a hyphen straight after the prefix" "1:text:1: API key (sk-)" "$(run_tokens "+k=sk""---${A20}")"
 check "a run of 20 is a key" "1:text:1: API key (sk-)" "$(run_tokens "+k=sk""-x-${A20}")"
 check "a run of 19 is not" "0:" "$(run_tokens "+k=sk""-x-${A20:0:19}")"
+check "a word that merely ends in sk- passes in a diff" "0:" "$(run_tokens '+flask-sqlalchemy_session_extension_helpers==1.0')"
 check "a CSS class that starts sk- passes in a diff" "0:" "$(run_tokens '+  <div class="sk-folding-cube-wrapper-large">')"
 check "a CSS custom property passes in a diff" "0:" "$(run_tokens '+  --sk-estimator-doc-link-color: blue;')"
 check "a placeholder key passes in a diff" "0:" "$(run_tokens '+export OPENAI_API_KEY=sk-your-api-key-goes-here-xxxx')"
@@ -146,6 +159,11 @@ printf 'Verified.\n%s\n' "$token" > "$WORK/section"
 rc=0; "$SCRIPTS/publish-verify-section.sh" merge "$WORK/body" "$WORK/section" "$WORK/out" >/dev/null 2>&1 || rc=$?
 check "the merge exits 3, the status with no comment fallback" "3" "$rc"
 check "nothing was written" "no" "$([ -e "$WORK/out" ] && echo yes || echo no)"
+# Exit 1 sends a caller to the comment fallback, so the check has to come before every
+# refusal about the body.
+printf '<!-- verify:start -->\n<!-- verify:start -->\n' > "$WORK/doubled"
+rc=0; "$SCRIPTS/publish-verify-section.sh" merge "$WORK/doubled" "$WORK/section" "$WORK/out" >/dev/null 2>&1 || rc=$?
+check "a body the merge would refuse anyway still exits 3" "3" "$rc"
 rm "$PUBLISH_DENYLIST"; mkdir "$PUBLISH_DENYLIST"
 rc=0; err=$("$SCRIPTS/publish-verify-section.sh" merge "$WORK/body" "$WORK/section" "$WORK/out" 2>&1 >/dev/null) || rc=$?
 check "a check that could not run refuses the merge the same way" "3" "$rc"

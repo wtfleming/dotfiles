@@ -44,7 +44,11 @@ EOF
 # keep adding segments after it, so it is matched by shape, not by a list of prefixes: sk-,
 # then anything, ending in an unbroken run of 20. A key has such a run and a hyphenated
 # name does not. The cost is a key with a hyphen in every 20 characters, about 1 in 10,000.
-# A `header` is matched without regard to case, in its raw form and as a quoted JSON key.
+# A `header` is matched without regard to case, raw or as a JSON key, quoted or escaped;
+# In a Cookie header any pair counts, since the session rarely comes first. In Set-Cookie
+# only the first does: the rest are attributes, and Domain= or Path= is not a secret.
+# The first Cookie rule's opening group spells out "not after `set-`", which grep has no
+# shorter way to say.
 # This is the one list: /wtf-create-pr's pre-flight scans a branch's diff with it too.
 patterns() {
 	cat <<'EOF'
@@ -55,9 +59,10 @@ Google API key	token	AIza[0-9A-Za-z_-]{35}
 API key (sk-)	token	(^|[^A-Za-z0-9])sk-[A-Za-z0-9_-]*[A-Za-z0-9_]{20,}
 JSON web token	token	eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}
 private key block	token	-----BEGIN [A-Z ]*PRIVATE KEY-----
-Authorization header value	header	authorization["']?[[:space:]]*:[[:space:]]*["']?(bearer|basic|token)[[:space:]]+[A-Za-z0-9._~+/=-]{8,}
-Cookie header value	header	cookie["']?[[:space:]]*:[[:space:]]*["']?[A-Za-z0-9_.-]+=[^[:space:];<"']{8,}
-password in a URL	text	[a-z][a-z0-9+.-]*://[^/[:space:]:@<]+:[^/[:space:]@<]{3,}@
+Authorization header value	header	authorization\\?["']?[[:space:]]*:[[:space:]]*\\?["']?(bearer|basic|token)[[:space:]]+[A-Za-z0-9._~+/=-]{8,}
+Cookie header value	header	(^|[^-]|(^|[^Tt])-|(^|[^Ee])t-|(^|[^Ss])et-)cookie\\?["']?[[:space:]]*:[[:space:]]*\\?["']?([^;]*;[[:space:]]*)*[A-Za-z0-9_.-]+=[^[:space:];<"']{8,}
+Cookie header value	header	set-cookie\\?["']?[[:space:]]*:[[:space:]]*\\?["']?[A-Za-z0-9_.-]+=[^[:space:];<"']{8,}
+password in a URL	text	[A-Za-z][A-Za-z0-9+.-]*://[^/[:space:]:@<]*:[^/[:space:]@<]{3,}@
 EOF
 }
 

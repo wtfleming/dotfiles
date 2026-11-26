@@ -173,8 +173,8 @@ cmd_merge() {
 		exit 1
 	fi
 	# The section quotes raw probe output, and this is the last step before it is public.
-	# Exit 3, not 1: every other refusal is about the body, and a caller's answer to those
-	# is to post the section as a comment, which here would publish what was just refused.
+	# Exit 3, not 1: a caller answers exit 1 by posting the section as a comment, and this
+	# section must not be published by any channel.
 	local check_rc=0
 	"$(dirname "$0")/publish-check.sh" "$section" >&2 || check_rc=$?
 	if [ "$check_rc" -eq 1 ]; then

@@ -133,6 +133,14 @@ hand the scanner nothing, which reads as "no secrets found", and the branch woul
 unscanned — the one outcome this check exists to prevent. The scanner has three exits and
 only 0 lets the run go on: 1 is a hit, and 2 means it could not read what it was given.
 
+A hit prints as `stdin:<n>: <kind>` and never the matched text, where `<n>` is a line of
+that diff. Name the file it sits in from the nearest header above it, which does not print
+the line itself:
+
+```sh
+git diff "$base"...HEAD | sed -n '1,<n>p' | grep '^diff --git ' | tail -1
+```
+
 A hit from either stops the run. Nothing downstream asks a human anything, so there is no
 later point at which someone looks at it before it is public — and a published object stays
 reachable whatever is done next. Name what matched and what would clear it (remove it from
