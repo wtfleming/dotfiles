@@ -26,6 +26,15 @@ lookup() {
 		|| { echo "no such case: $1" >&2; exit 1; }
 }
 
+# A pattern that is empty matches every report, and one grep cannot parse matches none:
+# either way the row would be scored, and wrongly.
+check_match() {
+	local key=$1 match=$2 rc=0
+	[ -n "$match" ] || { echo "cases.tsv: $key has no pattern" >&2; exit 1; }
+	grep -iE -e "$match" < /dev/null > /dev/null 2>&1 || rc=$?
+	[ "$rc" -le 1 ] || { echo "cases.tsv: $key has a pattern grep cannot parse: $match" >&2; exit 1; }
+}
+
 cmd_prepare() {
 	local key=$1 dir=$2
 	lookup "$key" >/dev/null
@@ -58,6 +67,7 @@ cmd_score() {
 	row=$(lookup "$key")
 	ground=${row%%$'\t'*}
 	match=${row#*$'\t'}
+	check_match "$key" "$match"
 	# No report is a run that failed, never a clean review.
 	if [ ! -s "$report" ] || ! grep -q '^# Code Review' "$report"; then
 		printf '%-28s %-7s %s\n' "$key" "$ground" "NO REPORT"
@@ -68,6 +78,12 @@ cmd_score() {
 	local acted
 	acted=$(acted_on "$report")
 	if printf '%s\n' "$acted" | grep -iE -e "$match" >/dev/null; then hit=yes; fi
+	# The review marks a lens that returned no report `see above` on its Lenses line. With
+	# one missing, finding nothing says little: it is neither a trap declined nor a miss.
+	if [ "$hit" = no ] && grep -qiE '^Lenses:.*see above' "$report"; then
+		printf '%-28s %-7s %s\n' "$key" "$ground" "INCOMPLETE — a lens returned no report"
+		return 0
+	fi
 	case $ground:$hit in
 		safe:no) printf '%-28s %-7s %s\n' "$key" "$ground" "ok — nothing raised" ;;
 		safe:yes) printf '%-28s %-7s %s\n' "$key" "$ground" "FALSE POSITIVE" ;;
@@ -88,7 +104,7 @@ cmd_all() {
 	[ -n "$out" ] || out=$(mktemp -d)
 	mkdir -p "$out"
 	out=$(cd "$out" && pwd)
-	local key repo n=0 results="$out/results.txt"
+	local key repo n=0 hold results="$out/results.txt"
 	# Every refusal below comes before the first review is paid for, and before
 	# results.txt is touched: an earlier run's summary is not this run's to truncate.
 	if [ -e "$results" ] || ls -d "$out"/repo-* >/dev/null 2>&1; then
@@ -101,10 +117,13 @@ cmd_all() {
 		echo "$out is inside a git work tree — use a directory outside any repository" >&2
 		exit 1
 	fi
-	local ground
+	local ground row
 	while IFS=$'\t' read -r key ground _; do
 		[ -n "$key" ] || continue
 		[ -d "$HERE/cases/$key" ] || { echo "cases.tsv lists $key but cases/$key is missing" >&2; exit 1; }
+		# Through lookup, not read: read folds an empty column into the next one.
+		row=$(lookup "$key")
+		check_match "$key" "${row#*$'\t'}"
 		case $ground in
 			safe | defect) ;;
 			*) echo "cases.tsv: $key has ground '$ground', expected safe or defect" >&2; exit 1 ;;
@@ -114,26 +133,39 @@ cmd_all() {
 	# Word-split on purpose: the variable holds a list of flags.
 	# shellcheck disable=SC2206
 	claude_args=(${REVIEW_TRAPS_CLAUDE_ARGS:-})
+	# The run's parent directory is in front of the reviewer, so the two files that name
+	# cases are held elsewhere and moved in when the run ends, however it ends.
+	hold=$(mktemp -d)
+	# Globals: the trap fires after this function's locals are gone.
+	HOLD=$hold RUN_OUT=$out
+	trap 'mv "$HOLD"/*.txt "$RUN_OUT"/ 2>/dev/null; rmdir "$HOLD" 2>/dev/null' EXIT
+	results="$hold/results.txt"
 	: > "$results"
 	while IFS=$'\t' read -r key _; do
 		[ -n "$key" ] || continue
 		n=$((n + 1))
 		# Numbered, not named: the case name says where the guard is or what the defect
-		# is, and the working directory is in front of the reviewer.
+		# is, and the working directory and its parent are in front of the reviewer. So
+		# the reports are numbered too.
 		repo="$out/repo-$n"
-		printf '%s\t%s\n' "repo-$n" "$key" >> "$out/repos.txt"
 		cmd_prepare "$key" "$repo"
 		echo "reviewing $key ..." >&2
 		# stdin from /dev/null: claude would otherwise read the case list this loop is on.
 		(cd "$repo" && claude -p "/wtf-code-review ${review_args[*]:-}" ${claude_args[@]+"${claude_args[@]}"}) \
-			> "$out/$key.md" 2> "$out/$key.err" < /dev/null \
-			|| echo "  claude exited non-zero for $key — see $out/$key.err" >&2
-		cmd_score "$key" "$out/$key.md" | tee -a "$results"
+			> "$repo.md" 2> "$repo.err" < /dev/null \
+			|| echo "  claude exited non-zero for $key — see $repo.err" >&2
+		printf '%s\t%s\n' "repo-$n" "$key" >> "$hold/repos.txt"
+		cmd_score "$key" "$repo.md" | tee -a "$results"
 	done < "$CASES"
 	[ "$n" -gt 0 ] || { echo "cases.tsv has no cases" >&2; exit 1; }
+	mv "$hold"/*.txt "$out"/
+	rmdir "$hold"
+	trap - EXIT
+	results="$out/results.txt"
 	echo
 	echo "false positives: $(grep -c 'FALSE POSITIVE' "$results" || true) of $(grep -c ' safe ' "$results" || true) traps"
 	echo "missed:          $(grep -c 'MISSED' "$results" || true) of $(grep -c ' defect ' "$results" || true) controls"
+	echo "incomplete:      $(grep -c 'INCOMPLETE' "$results" || true) of $n runs"
 	echo "no report:       $(grep -c 'NO REPORT' "$results" || true) of $n runs"
 	echo "reports and repos are in $out"
 }

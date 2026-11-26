@@ -49,10 +49,12 @@ not count, because the report did not ask for it to be fixed.
 The pattern is a keyword match, so it is approximate both ways. It can count an
 unrelated finding that happens to use the word, and it can miss the trap's finding
 written in words the pattern lacks. Read the reports behind any number that will decide
-something; `all` prints where they are. The case repos are numbered, not named, because
-a case's name gives its answer away and the directory is in front of the reviewer;
-`repos.txt` maps each number back to its case. A run that produced no report is counted as
-that, never as clean.
+something; `all` prints where they are. The case repos and their reports are numbered, not
+named, because a case's name gives its answer away and both are in front of the reviewer;
+`repos.txt` maps each number back to its case, and is written with `results.txt` when the
+run ends. A run that produced
+no report is counted as that, never as clean. So is one that matched nothing while a lens
+returned no report: it is `INCOMPLETE`, neither a trap declined nor a control missed.
 
 ## Adding a case
 

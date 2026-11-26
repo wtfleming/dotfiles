@@ -35,6 +35,7 @@ while IFS=$'\t' read -r key ground _; do
   check "$key is safe or defect" "1" "$(printf '%s\n' "$ground" | grep -cxE 'safe|defect' || true)"
 done < "$TRAPS/cases.tsv"
 check "there are cases" "yes" "$([ "$rows" -gt 0 ] && echo yes || echo no)"
+check "every case is in the README's table" "$rows" "$(cut -f1 "$TRAPS/cases.tsv" | while read -r k; do grep -c -F "| \`$k\` |" "$TRAPS/README.md" || true; done | grep -cx 1 || true)"
 check "every case directory has a row" "$rows" "$(find "$TRAPS/cases" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
 rc=0; "$RUN" prepare sql-value-in-query "$WORK/prep-sql-value-in-query" >/dev/null 2>&1 || rc=$?
 check "prepare refuses a path that exists" "1" "$rc"
@@ -59,6 +60,11 @@ check "output with no report heading is not a clean one" "NO REPORT" "$(result s
   i=0; while [ "$i" -lt 4000 ]; do printf -- '- another finding that pads the section out, number %s\n' "$i"; i=$((i + 1)); done
 } > "$WORK/long.md"
 check "a match at the top of a long report is still found" "ok — found" "$(result sql-value-in-query "$WORK/long.md")"
+printf '# Code Review\n\n## Warning\n- no test\n\nLenses: security — see above · tests — 1 finding\n' > "$WORK/partial.md"
+check "nothing raised with a lens missing is incomplete, not declined" "INCOMPLETE — a lens returned no report" "$(result sql-allowlisted-column "$WORK/partial.md")"
+check "nor is it a miss" "INCOMPLETE — a lens returned no report" "$(result sql-value-in-query "$WORK/partial.md")"
+printf '# Code Review\n\n## Warning\n- SQL injection.\n\nLenses: security — see above\n' > "$WORK/partial-hit.md"
+check "a match still counts with a lens missing" "FALSE POSITIVE" "$(result sql-allowlisted-column "$WORK/partial-hit.md")"
 rc=0; "$RUN" score no-such-case "$WORK/hit.md" >/dev/null 2>&1 || rc=$?
 check "an unknown case is an error" "1" "$rc"
 
@@ -69,16 +75,19 @@ cat > "$WORK/bin/claude" <<'EOF'
 # Drain stdin as the real one does: a caller that leaves its case list on stdin loses it.
 cat > /dev/null
 printf '%s\n' "$PWD" >> "$CLAUDE_CALLS"
+# What a reviewer who looks one directory up can read while it works.
+{ ls ..; cat ../*.txt; } >> "$CLAUDE_SEEN" 2>/dev/null
 printf '%s\n' "$*" >> "$CLAUDE_ARGS"
 printf '# Code Review\n\n## Critical\n- SQL injection.\n'
 EOF
 chmod +x "$WORK/bin/claude"
-export CLAUDE_CALLS="$WORK/calls" CLAUDE_ARGS="$WORK/args"
+export CLAUDE_CALLS="$WORK/calls" CLAUDE_ARGS="$WORK/args" CLAUDE_SEEN="$WORK/seen"
 out=$(PATH="$WORK/bin:$PATH" "$RUN" all "$WORK/run1" -- --lite 2>/dev/null) && rc=0 || rc=$?
 check "it finishes" "0" "$rc"
 check "it reviewed every case" "$rows" "$(wc -l < "$CLAUDE_CALLS" | tr -d ' ')"
 check "each review ran inside its own case repo" "$rows" "$(sort -u "$CLAUDE_CALLS" | grep -c "^$WORK/run1/repo-" || true)"
 check "no working directory names its case" "0" "$(cut -f1 "$TRAPS/cases.tsv" | grep -c -F -f - "$CLAUDE_CALLS" || true)"
+check "nor does anything beside it, while the review runs" "0" "$(cut -f1 "$TRAPS/cases.tsv" | grep -c -F -f - "$CLAUDE_SEEN" || true)"
 check "the mapping from directory to case is kept" "$rows" "$(wc -l < "$WORK/run1/repos.txt" | tr -d ' ')"
 check "the review arguments reach claude" "$rows" "$(grep -c -- '/wtf-code-review --lite' "$CLAUDE_ARGS" || true)"
 check "flags from the environment reach claude" "1" \
@@ -95,6 +104,20 @@ rc=0; PATH="$WORK/bin:$PATH" "$RUN" all "$WORK/tree/out" >/dev/null 2>&1 || rc=$
 check "a directory inside a git work tree is refused" "1" "$rc"
 check "before any review runs" "0" "$(wc -l < "$CLAUDE_CALLS" | tr -d ' ')"
 
+echo "case: a run that is killed keeps what it had"
+mkdir "$WORK/killbin"
+cat > "$WORK/killbin/claude" <<'EOF'
+#!/usr/bin/env bash
+cat > /dev/null
+kill -TERM "$(cat "$RUN_PID_FILE")"
+EOF
+chmod +x "$WORK/killbin/claude"
+# An apostrophe in the path: the paths reach the exit trap as variables, not spliced text.
+rc=0; RUN_PID_FILE="$WORK/pid" PATH="$WORK/killbin:$PATH" \
+  bash -c 'echo $$ > "$RUN_PID_FILE"; exec "$0" all "$1"' "$RUN" "$WORK/q'x" >/dev/null 2>&1 || rc=$?
+check "it dies of the signal" "143" "$rc"
+check "its results are in the output directory" "yes" "$([ -e "$WORK/q'x/results.txt" ] && echo yes || echo no)"
+
 echo "case: a broken cases.tsv is refused before any review runs"
 cp -R "$TRAPS" "$WORK/copy"
 printf 'no-such-dir\tsafe\tinject\twhy\n' >> "$WORK/copy/cases.tsv"
@@ -108,6 +131,18 @@ printf 'odd\tmaybe\tinject\twhy\n' >> "$WORK/copy/cases.tsv"
 rc=0; PATH="$WORK/bin:$PATH" "$WORK/copy/run.sh" all "$WORK/run-ground" >/dev/null 2>&1 || rc=$?
 check "a row that is neither safe nor defect is refused" "1" "$rc"
 check "with no review run" "0" "$(wc -l < "$CLAUDE_CALLS" | tr -d ' ')"
+
+cp "$TRAPS/cases.tsv" "$WORK/copy/cases.tsv"
+rmdir "$WORK/copy/cases/odd"
+mkdir "$WORK/copy/cases/blank" "$WORK/copy/cases/broken"
+printf 'blank\tsafe\t\twhy\n' >> "$WORK/copy/cases.tsv"
+rc=0; PATH="$WORK/bin:$PATH" "$WORK/copy/run.sh" all "$WORK/run-blank" >/dev/null 2>&1 || rc=$?
+check "a row with an empty pattern is refused" "1" "$rc"
+cp "$TRAPS/cases.tsv" "$WORK/copy/cases.tsv"
+printf 'broken\tsafe\t(sql\twhy\n' >> "$WORK/copy/cases.tsv"
+rc=0; PATH="$WORK/bin:$PATH" "$WORK/copy/run.sh" all "$WORK/run-broken" >/dev/null 2>&1 || rc=$?
+check "a row whose pattern grep cannot parse is refused" "1" "$rc"
+check "with no review run for either" "0" "$(wc -l < "$CLAUDE_CALLS" | tr -d ' ')"
 
 [ "$failures" -eq 0 ] || { echo "$failures check(s) failed" >&2; exit 1; }
 echo "all checks passed"
