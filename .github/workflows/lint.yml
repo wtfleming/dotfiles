@@ -174,7 +174,9 @@ jobs:
               o = ord(ch)
               return (
                   (o < 0x20 and ch not in "\t\n") or o == 0x7F
-                  or o in (0xAD, 0x61C, 0x115F, 0x1160, 0x180E, 0x3164, 0xFEFF, 0xFFA0)
+                  # Every format character, then the fillers and marks that are not Cf.
+                  or unicodedata.category(ch) == "Cf"
+                  or o in (0x34F, 0x115F, 0x1160, 0x180B, 0x180C, 0x180D, 0x2800, 0x3164, 0xFFA0)
                   or 0x200B <= o <= 0x200F or 0x2028 <= o <= 0x202E
                   or 0x2060 <= o <= 0x2069 or 0xFFF9 <= o <= 0xFFFB
                   # Variation selectors change no letter and can carry smuggled bytes.
