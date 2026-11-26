@@ -74,6 +74,21 @@ it belongs. Naming the key rather than its value keeps the report readable — a
 which credential was in play, which is the part that mattered — without publishing the one
 thing that must not go up.
 
+Then run the text through the check, whatever is about to post it — a body, a comment, a
+reply on a thread:
+
+```sh
+~/.claude/scripts/publish-check.sh <the file about to be posted>    # or - for stdin
+```
+
+It refuses on a fixed set of credential shapes and on any term in the local denylist
+(`~/.claude/publish-denylist`, one term per line, kept outside every repo). The denylist is
+what covers the work identity above, which no pattern can recognise. A hit names the line
+and the kind of match, never the text: redact that line and run it again. A clean run is
+not the scrub — the patterns are deliberately few, so a credential in an unlisted shape
+passes — which is why reading the text first stays the rule and this is the net under it.
+`publish-verify-section.sh merge` runs it on the section itself.
+
 ## Look at every image before it goes up
 
 A text scrub has a handle: the key names are known, so it can be checked mechanically. Pixels

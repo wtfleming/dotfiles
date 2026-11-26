@@ -171,6 +171,11 @@ cmd_merge() {
 		echo "the section contains a verify marker; it would nest a second pair — refusing" >&2
 		exit 1
 	fi
+	# The section quotes raw probe output, and this is the last step before it is public.
+	if ! "$(dirname "$0")/publish-check.sh" "$section" >&2; then
+		echo "the section failed the publish check — redact the lines above and rerun" >&2
+		exit 1
+	fi
 
 	local tmp before after
 	tmp=$(mktemp) || { echo "could not create a temp file" >&2; exit 1; }
