@@ -83,7 +83,10 @@ home directory. Key consequences to keep in mind:
   `shellcheck sync-dotfiles.sh install-dependencies-macos.sh bin/* Dotfiles/claude/scripts/*.sh Dotfiles/claude/skills/*/scripts/*.sh Dotfiles/claude/tests/*.sh`
 - CI also parses the YAML frontmatter of every `SKILL.md`, agent and command. A header
   that does not parse registers wrong or not at all, and nothing else notices —
-  `shellcheck` skips markdown and `jq` only sees `settings.json`.
+  `shellcheck` skips markdown and `jq` only sees `settings.json`. Two further steps check
+  what parsing cannot: that each file registers under the `wtf-` name its path promises
+  and has a description, and that no instruction file holds a character a reviewer cannot
+  see.
 - CI runs the smoke tests in `Dotfiles/claude/tests/`, the only steps that *execute*
   anything. Each one is there because its script fails in a way no static check reaches.
   `resolve-scope.sh` is almost entirely branching and is the single authority on what every
@@ -101,6 +104,9 @@ home directory. Key consequences to keep in mind:
   are settling on the previous commit's results and a long wait lost to one failed poll.
   `verify_geometry.py` is the only check on a `wtf-show-me` page's connectors before a
   person looks at it, so its failure mode is a broken connector passing.
+  `publish-check.sh` is the last thing between a captured credential and a public PR, so
+  its failure modes are a scan that could not run reading as a clean one and a denylist
+  line that matches everything or nothing.
   A new test file here needs a step added to
   `.github/workflows/lint.yml` — the shellcheck glob picks it up, but nothing runs it
   otherwise.
