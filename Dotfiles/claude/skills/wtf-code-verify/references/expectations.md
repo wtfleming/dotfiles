@@ -179,6 +179,15 @@ real defect, which is erroring *wrongly*. Name the shape of the refusal:
 - logged at a level that matches: a user's typo is not an error-level event, and a
   failing dependency is not a debug one
 
+**One fault per probe.** A refusal tells you which layer answered first, not which layers
+exist. A malformed body sent with no credential can come back `400` from a parser that
+runs before authentication, and read as "the auth check is missing"; the same request
+with a well-formed `{}` gets the `401`. The reverse happens as often: a bad field sent
+without a session is refused by auth, and the validation the row was about never ran. So
+make each negative input valid in every respect except the one under test — a real
+session, a parseable body, a route that exists — and where the response does not name the
+fault you injected, the row has not reached its control.
+
 **Could you debug it from outside?** You have already run the negative case, so this
 costs one look at the log. Read only what an on-call engineer would have — the log line,
 the metric, the error-tracker event — and ask whether it names the input, the caller and
@@ -370,4 +379,5 @@ An honest three-of-six is useful; a silent three-of-six is misleading.
 
 The "valid input whose answer is a choice" cases and the circular-golden rule are
 adapted from GSD Core's edge-probe and verifier references (MIT, see
-`~/.claude/reference/LICENSE-gsd`).
+`~/.claude/reference/LICENSE-gsd`). The one-fault rule is adapted from Claude-BugHunter's
+layer-ordering trap (CC BY 4.0, see `~/.claude/reference/LICENSE-bughunter`).

@@ -273,10 +273,16 @@ before a behavioural row goes green, try to make it meaningless. It is demoted t
 verified**, with the reason carried in its row, if any of these holds:
 
 - **the probe never reached the change** — wrong endpoint or argument, a cached response, a
-  stale build. Something in the capture must be producible only by the changed path
+  stale build, a client that rewrote the input before sending it (`curl` collapses `/../`
+  without `--path-as-is`). Something in the capture must be producible only by the changed
+  path
 - **the assertion is satisfied by anything** — a grep that also matches the error body, a
   `200` any route returns, an empty array from a query that returned nothing, `0 tests` with
-  exit 0
+  exit 0, a `302` nobody followed (to the login page and to the dashboard it is the same
+  status), a searched-for string the page holds anyway. Search for a random token, and
+  check the control's output does not already contain it
+- **the loop ran fewer times than planned** — count the iterations against the plan. The
+  shell here is zsh, where `for x in $list` does not split a variable and runs once
 - **the discriminator does not discriminate** — the negative case fails for an unrelated
   reason, the break was made in a file the run never loads, the baseline failed to build
 - **it was green on the base too**, or, for a property, the generator never reached the
@@ -354,3 +360,7 @@ rebuilt pair, removed again afterwards so the report's **Residue** line stays tr
 run the *unscoped* test command once to confirm the default selector collects it.
 `references/promotion.md` has where tests live per ecosystem, and the substitute check for
 a new capability the base cannot exercise.
+
+The unfollowed-redirect, natural-marker and loop-count checks in §7 are adapted from
+Claude-BugHunter's exploit-completion and methodology-discipline rules (CC BY 4.0, see
+`~/.claude/reference/LICENSE-bughunter`).
