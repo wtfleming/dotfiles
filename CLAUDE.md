@@ -55,6 +55,9 @@ home directory. Key consequences to keep in mind:
   It is deliberately **not** deployed — nothing in `~/.claude` runs them, and a test suite
   in the home directory is cruft. It is therefore also not one of the swept directories
   above; adding a file there needs no sync change *because* nothing syncs it.
+- `Dotfiles/claude/evals/` holds benchmarks run by hand, because each run spends model
+  tokens. It is not deployed and CI does not run it; CI only shellchecks its scripts. Its
+  fixtures are deliberately vulnerable code, so a finding there is the fixture working.
 - `old-scripts/` is archived and deliberately **not** deployed.
 
 ## Workflow
@@ -80,7 +83,7 @@ home directory. Key consequences to keep in mind:
 
 - Shell scripts target bash/zsh on macOS. Keep them `shellcheck`-clean — CI runs
   the same set on every push:
-  `shellcheck sync-dotfiles.sh install-dependencies-macos.sh bin/* Dotfiles/claude/scripts/*.sh Dotfiles/claude/skills/*/scripts/*.sh Dotfiles/claude/tests/*.sh`
+  `shellcheck sync-dotfiles.sh install-dependencies-macos.sh bin/* Dotfiles/claude/scripts/*.sh Dotfiles/claude/skills/*/scripts/*.sh Dotfiles/claude/tests/*.sh Dotfiles/claude/evals/*/*.sh`
 - CI also parses the YAML frontmatter of every `SKILL.md`, agent and command. A header
   that does not parse registers wrong or not at all, and nothing else notices —
   `shellcheck` skips markdown and `jq` only sees `settings.json`. Two further steps check

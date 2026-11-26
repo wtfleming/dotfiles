@@ -219,6 +219,8 @@ supervise.
   dispatching session chose to paste.
 - Which lenses a scope gets is decided in `scripts/resolve-scope.sh`
   (`lens_plan`), and covered by its smoke test.
+- `evals/review-traps/` measures whether a retune helped: changes that look like defects
+  and are not, beside ones that are. It is run by hand, since each case is a review.
 
 ### Cost
 
@@ -479,6 +481,10 @@ bootstraps a second worktree, so it announces the tiers it expects to need and a
 before spending tier 2 or 3. Meant to run once on a finished branch just before the PR
 opens — not per commit, and not as a substitute for running the tests.
 
+A fix for an intermittent bug is verified as a rate: the base's failure count first, then
+enough HEAD runs that a clean result would be surprising at that rate, with the two sides
+alternated. Before that variant a flaky-test fix could only come out *Not verified*.
+
 ## Production impact
 
 `/wtf-prod-impact` asks one question — would this change degrade production once merged
@@ -552,6 +558,9 @@ with three things a checklist could not do. It reads production through
 resolved to SHAs first, since `HEAD` inside that worktree is the good end and bisect then
 blames a commit outside the range without an error. And the deliverable is a test in the
 project's own suite, so the cause is something a reader can run rather than take on trust.
+
+Its report accounts for every hypothesis it listed — the cause, ruled out, or not checked
+— so one that was never tested does not read as eliminated.
 
 ## Opening the PR
 
@@ -640,6 +649,16 @@ a body that will be. Extracted rather than written a third time, so a fix lands 
 first of those is the one the other tools cross-reference most — the title and the author's
 prose are `/wtf-create-pr`'s alone, a delimited section belongs to whoever writes it, and a
 tool that finds the description stale reports the drift rather than repairing it.
+
+`scripts/publish-check.sh` is the mechanical half of the scrub. It refuses text holding a
+known credential shape or a term from `~/.claude/publish-denylist`, a file kept outside
+every repo because the terms in it — an employer's name, an internal hostname — are the
+ones that must not be published. A machine without that file checks the patterns only.
+
+Rules credited to `reference/LICENSE-bughunter` are adapted from
+[elementalsouls/Claude-BugHunter](https://github.com/elementalsouls/Claude-BugHunter)
+(MIT code, CC BY 4.0 content): its false-positive discipline, re-aimed from bug-bounty
+findings at verifying, investigating and reviewing code.
 
 ## Answering the review
 
