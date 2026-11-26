@@ -90,6 +90,8 @@ refusal nobody outside the code can trigger is not a requirement.
 **Flag anything dangerous to run.** If exercising a case would send an email, charge a
 card, call a third-party API, or write to something shared, say so on the case. The caller
 needs to find a sandbox before running it, and cannot tell from your description alone.
+Judge a case by what it does if the guard you expect is missing: a request that should be
+refused is a real write the moment it is not.
 
 ## 4. Report
 

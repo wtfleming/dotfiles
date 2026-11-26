@@ -18,6 +18,10 @@ set -Eeuo pipefail
 PUBLISH="$(cd "$(dirname "$0")/.." && pwd)/scripts/publish-verify-section.sh"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
+# merge runs publish-check.sh, which would otherwise read this machine's own denylist
+# and fail a fixture on whatever term it holds. An empty list, since a missing one named
+# here is an error.
+export PUBLISH_DENYLIST="$WORK/denylist"; : > "$PUBLISH_DENYLIST"
 failures=0
 
 check() {

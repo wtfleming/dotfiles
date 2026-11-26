@@ -81,7 +81,10 @@ than committing somewhere the push cannot carry.
   in — that rewrites a public branch or widens the diff. It is **Needs you**; go to §4.
 - **A failed check.** Read why: `gh run view <run id> --log-failed`. If the branch caused it,
   fix it the way `~/.claude/reference/review-fix-round.md` steps 1–4 fix a finding —
-  snapshot, edit, tests and lint, cold review of the fix diff — and commit. If it did not —
+  snapshot, edit, tests and lint, cold review of the fix diff — and commit. A check that
+  fails the same way on the head an earlier round's fix for it produced is **Needs you**:
+  that fix aimed at the wrong cause, and another push spends a bot review to learn it
+  again. If the branch did not cause it —
   a runner outage, a flaky test the base also fails, an expired secret — and §2 commits
   nothing, re-run it once (`gh run rerun <run id> --failed`) and go back to §1 without
   counting a round; a second failure is **Needs you**. Where §2 does commit a fix, skip

@@ -53,6 +53,11 @@ Write down, briefly, before reading for bugs:
    tool or MCP peer — and what each is allowed to do by design.
 2. The entry surfaces, the sinks, and the controls between them.
 
+Every entry surface on that list owes a line in the report: under **Read** once
+you have traced it to its sinks, under **Not covered** with the reason when you
+have not. A surface mapped and then left off the page reads as checked and
+clean.
+
 Then hunt class by class from the references. For each lead, apply the gate.
 For each candidate that passes, try to refute it before you keep it, as the
 method's verdict rules describe.
@@ -94,7 +99,8 @@ End with this, and nothing after it:
 - <defence-in-depth gaps that are not findings, one line each>
 
 ### Not covered
-- <boundaries noticed outside the scope, or classes you did not reach>
+- <mapped surfaces you did not trace and why, boundaries noticed outside the
+  scope, classes you did not reach>
 ```
 
 An empty **Confirmed** section is a real and useful answer; never manufacture

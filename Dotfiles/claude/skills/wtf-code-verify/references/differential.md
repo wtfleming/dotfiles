@@ -14,7 +14,7 @@ never heard of cannot tell you anything about whether HEAD gets it right.
 - Run the control before you trust the baseline
 - Run the differential
 - Adjudicate
-- Variants: refactor, performance, flagged
+- Variants: refactor, performance, intermittent, flagged
 - A probe promoted to a test
 
 ## State the claim as a before/after
@@ -52,6 +52,8 @@ HEAD is the obvious one; the baseline is the one that gets skipped and the one t
 more, because a baseline failing only *sometimes* is not a reproduction — and read as one
 it produces the top row of the table below, **Verified**, for a change that did nothing.
 An intermittent bug is exactly the kind someone reaches for a differential to prove.
+Where the bug cannot be made deterministic, the claim is a rate, not a boolean — the
+**Intermittent** variant below.
 
 **It must be narrow.** A probe that boots the whole product and eyeballs a page will find
 *something* different between two commits and invite you to call that the bug.
@@ -277,7 +279,21 @@ looks identical under both.
 **Performance** claims a threshold, not a boolean. One run of each is noise. Take at
 least five runs per side, report median and spread, and state the threshold before
 measuring. Two distributions that overlap have not demonstrated anything, however
-different the medians look. Say so rather than reporting the better median.
+different the medians look. Say so rather than reporting the better median. Alternate the
+sides — base, head, base, head — rather than running one side and then the other, so that
+whatever drifts on the machine during the run (a warming cache, thermal throttling, a
+background job) lands on both.
+
+**Intermittent** bugs claim a rate. A failure that shows one run in ten passes a single
+HEAD run nine times in ten with no fix at all, so "run it twice" settles nothing here.
+Measure the base first: loop the probe until the failure count is stable and write it down
+as `k of n`. Then size the HEAD run from that rate — about three divided by it, so a
+failure seen one run in ten needs thirty clean runs before a clean HEAD is surprising —
+and state that number before running. Alternate the sides, for the reason the performance
+variant gives. Report both counts: `base 12 of 40, HEAD 0 of 40`. A HEAD that fails less
+often but not never has improved the rate and is **Falsified** for a claim of fixed. A
+base that never failed in the loop is the second row of the table, not a baseline. Every
+run is still read whole: a HEAD run that fails for another reason is not a clean run.
 
 **Behind a flag**, run the probe with the flag both off and on. Off must match the
 baseline exactly — that is the claim a flag makes.
@@ -294,3 +310,7 @@ The baseline predates the test, so the file is not there — copy it in before r
 rather than committing it into the baseline tree, so the baseline stays the code as it
 was. If the baseline run reports *no such test* or *no such file*, that is an invalid
 probe, not a reproduction: the test never ran, so it measured nothing.
+
+The intermittent variant and the alternation rule are adapted from Claude-BugHunter's
+statistical-sample rule (CC BY 4.0, see `~/.claude/reference/LICENSE-bughunter`); sizing
+the run count from the base's failure rate is this file's own.

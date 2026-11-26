@@ -17,8 +17,9 @@ usage: publish-verify-section.sh merge <body-file> <section-file> <out-file>
 
   merge  Replace the body's verification section with <section-file>, in place;
          append it at the end when the body has none. Refuses on a body whose
-         markers are doubled, out of order or unterminated, and on any merge that
-         would change a byte outside the section.
+         markers are doubled, out of order or unterminated, on any merge that
+         would change a byte outside the section, and — with exit 3 — on a
+         section that publish-check.sh refuses or could not scan.
   strip  Print the body with its verification section removed. The merge gate is
          `strip` before == `strip` after, which is the ownership rule's claim that
          every byte outside the markers is carried across untouched.
@@ -170,6 +171,19 @@ cmd_merge() {
 	if grep -qxE -e "[[:space:]]*($START|$END)[[:space:]]*" -- "$section"; then
 		echo "the section contains a verify marker; it would nest a second pair — refusing" >&2
 		exit 1
+	fi
+	# The section quotes raw probe output, and this is the last step before it is public.
+	# Exit 3, not 1: a caller answers exit 1 by posting the section as a comment, and this
+	# section must not be published by any channel.
+	local check_rc=0
+	"$(dirname "$0")/publish-check.sh" "$section" >&2 || check_rc=$?
+	if [ "$check_rc" -eq 1 ]; then
+		echo "the section failed the publish check — redact the lines above and rerun" >&2
+		exit 3
+	elif [ "$check_rc" -ne 0 ]; then
+		# Not a hit: there is nothing to redact, and saying so sends the reader hunting.
+		echo "the publish check could not run (exit $check_rc) — see above; nothing written" >&2
+		exit 3
 	fi
 
 	local tmp before after

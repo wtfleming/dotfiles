@@ -33,7 +33,7 @@ jobs:
 
       # shellcheck and jq are preinstalled on ubuntu-latest runners
       - name: shellcheck
-        run: shellcheck sync-dotfiles.sh install-dependencies-macos.sh bin/* Dotfiles/claude/scripts/*.sh Dotfiles/claude/skills/*/scripts/*.sh Dotfiles/claude/tests/*.sh
+        run: shellcheck sync-dotfiles.sh install-dependencies-macos.sh bin/* Dotfiles/claude/scripts/*.sh Dotfiles/claude/skills/*/scripts/*.sh Dotfiles/claude/tests/*.sh Dotfiles/claude/evals/*/*.sh
 
       - name: validate claude settings.json
         run: jq empty Dotfiles/claude/settings.json
@@ -57,6 +57,19 @@ jobs:
       # the shellcheck glob could not see it and no test could run it.
       - name: publish-verify-section smoke test
         run: Dotfiles/claude/tests/publish-verify-section-smoke.sh
+
+      # publish-check.sh is the last thing between a captured credential and a public PR,
+      # so its failure modes are both silent: a scan that could not run reading as a clean
+      # one, and a denylist line that matches everything or nothing.
+      - name: publish-check smoke test
+        run: Dotfiles/claude/tests/publish-check-smoke.sh
+
+      # The benchmark in evals/ is run by hand, but its output is a number someone will
+      # decide on. This builds every case and drives the runner with a stand-in claude,
+      # so a case that cannot be built or a score read from the wrong section fails here
+      # rather than after the reviews were paid for.
+      - name: review-traps smoke test
+        run: Dotfiles/claude/tests/review-traps-smoke.sh
 
       # fix-snapshot.sh builds the diff a fix round's cold review reads, and its failure
       # mode is a diff that omits a file -- an untracked one, a deleted one -- in silence.
@@ -109,3 +122,91 @@ jobs:
               || { echo "invalid frontmatter: $f" >&2; rc=1; }
           done
           exit $rc
+
+      # The step above proves a header parses, not that it registers under the name the
+      # file promises. CLAUDE.md's rule is a wtf- prefix on the file name and the
+      # registered name, and a collision with a project's own .claude/ resolves silently.
+      # A missing description registers too, as something nothing can select.
+      - name: validate registered names
+        run: |
+          python3 - <<'PY'
+          import glob, os, sys, yaml
+
+          def header(path):
+              text = open(path, encoding="utf-8").read()
+              return yaml.safe_load(text.split("\n---\n", 1)[0][4:]) or {}
+
+          errors = []
+          root = "Dotfiles/claude"
+          found = {
+              "skill": glob.glob(f"{root}/skills/*/SKILL.md"),
+              "agent": glob.glob(f"{root}/agents/*.md"),
+              "command": glob.glob(f"{root}/commands/*.md"),
+          }
+          for kind, paths in found.items():
+              if not paths:
+                  errors.append(f"no {kind} files found: the glob is wrong, not the tree")
+              for path in sorted(paths):
+                  fields = header(path)
+                  stem = os.path.basename(os.path.dirname(path) if kind == "skill" else path[:-3])
+                  if not stem.startswith("wtf-"):
+                      errors.append(f"{path}: file name lacks the wtf- prefix")
+                  # A command registers under its file name and has no name field.
+                  if kind != "command" and fields.get("name") != stem:
+                      errors.append(f"{path}: name is {fields.get('name')!r}, expected {stem!r}")
+                  desc = fields.get("description")
+                  if not isinstance(desc, str) or not desc.strip():
+                      errors.append(f"{path}: description is missing or not a string")
+          print("\n".join(errors) or "names and descriptions are consistent")
+          sys.exit(1 if errors else 0)
+          PY
+
+      # These files are instructions an agent follows, and prose is ported into them from
+      # other repositories. A character a reviewer cannot see is still read by the model:
+      # the Unicode tag block mirrors ASCII invisibly, and zero-width and bidi characters
+      # hide or reorder what is shown. A raw control byte also makes a file binary to grep.
+      - name: reject invisible characters in agent instructions
+        run: |
+          python3 - <<'PY'
+          import glob, sys, unicodedata
+
+          def hidden(ch):
+              o = ord(ch)
+              return (
+                  (o < 0x20 and ch not in "\t\n") or o == 0x7F
+                  # Every format character, then the fillers and marks that are not Cf.
+                  or unicodedata.category(ch) == "Cf"
+                  or o in (0x34F, 0x115F, 0x1160, 0x180B, 0x180C, 0x180D, 0x2800, 0x3164, 0xFFA0)
+                  or 0x200B <= o <= 0x200F or 0x2028 <= o <= 0x202E
+                  or 0x2060 <= o <= 0x2069 or 0xFFF9 <= o <= 0xFFFB
+                  # Variation selectors change no letter and can carry smuggled bytes.
+                  or 0xFE00 <= o <= 0xFE0F or 0xE0100 <= o <= 0xE01EF
+                  or 0xE0000 <= o <= 0xE007F
+              )
+
+          paths = sorted(glob.glob("Dotfiles/claude/**/*.md", recursive=True)) + ["CLAUDE.md"]
+          if len(paths) < 2:
+              sys.exit("no instruction files found: the glob is wrong, not the tree")
+          bad = 0
+          for path in paths:
+              try:
+                  with open(path, encoding="utf-8", newline="") as fh:
+                      lines = fh.readlines()
+              except UnicodeDecodeError as err:
+                  # Name the file: the bare traceback gives a byte offset and no path.
+                  print(f"{path}: not valid UTF-8 ({err.reason} at byte {err.start})")
+                  bad += 1
+                  continue
+              for number, line in enumerate(lines, 1):
+                  prev = ""
+                  for ch in line:
+                      # The one selector with a use: U+FE0F straight after a symbol asks
+                      # for its emoji form. One fixed value there carries nothing.
+                      emoji_form = ch == "\uFE0F" and unicodedata.category(prev or "a") == "So"
+                      prev = ch
+                      if hidden(ch) and not emoji_form:
+                          print(f"{path}:{number}: U+{ord(ch):04X}")
+                          bad += 1
+          print(f"{len(paths)} files, {bad} invisible characters or unreadable files")
+          sys.exit(1 if bad else 0)
+          PY

@@ -1,0 +1,6 @@
+sql-allowlisted-column	safe	inject	The concatenated column comes only from SORT_COLUMNS; the value is bound.
+guard-in-router	safe	unauthori|missing auth|no auth|without auth|access control|unprotected|any user can|permission check	router.py wraps every ADMIN_ROUTES entry in require_admin.
+argv-clamped-int	safe	inject	The value is an int clamped to 1..100 in a fixed argv with no shell.
+html-escaped-echo	safe	xss|cross-site|html injection	Both reflected values pass through html.escape; the query is bound.
+note-without-owner-check	defect	owner|another user|other user|idor|any note	show_note returns any note by id; list_notes filters by owner.
+sql-value-in-query	defect	inject	title is formatted into the SQL text.

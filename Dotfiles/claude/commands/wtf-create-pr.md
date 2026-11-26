@@ -1,7 +1,7 @@
 ---
 description: 'Compose and open a pull request — pre-flight the branch, report what has gone stale since it was written, then write a title that survives a squash merge and a body that is true in both directions. Use this whenever a finished branch is ready to go up for review: "open a PR", "raise a PR for this", "push this up for review", "PR this branch", "make a pull request". It composes and opens without stopping to ask; it does not review the code (that is /wtf-code-review), prove it works (wtf-code-verify), or merge anything.'
 argument-hint: "[--draft] [extra context — an issue to close, framing the diff cannot show]"
-allowed-tools: Read, Grep, Glob, Write, Bash(git:*), Bash(~/.claude/scripts/resolve-scope.sh:*), Bash(gh pr list:*), Bash(gh pr view:*), Bash(gh pr create:*), Bash(gh pr edit:*), Bash(gh pr comment:*), Bash(gh repo view:*), Bash(gh api:*)
+allowed-tools: Read, Grep, Glob, Write, Bash(git:*), Bash(~/.claude/scripts/resolve-scope.sh:*), Bash(~/.claude/scripts/publish-check.sh:*), Bash(gh pr list:*), Bash(gh pr view:*), Bash(gh pr create:*), Bash(gh pr edit:*), Bash(gh pr comment:*), Bash(gh repo view:*), Bash(gh api:*)
 ---
 
 Arguments: $ARGUMENTS
@@ -119,18 +119,27 @@ command reads the *commits* for secrets — the scrub governs published text onl
 ```sh
 git diff --stat "$base"...HEAD    # names that look like .env, .pem, id_rsa, credentials.json
 
-# Materialise the diff first: piping git into grep hides git's exit status, and a grep
-# that received nothing exits 1 exactly as a clean scan does.
+# Materialise the diff first: piping git straight into the scanner hides git's exit
+# status, and a scanner handed nothing exits 0 exactly as a clean scan does.
 diff_out=$(git diff "$base"...HEAD) || { echo "diff failed — branch not scanned" >&2; exit 1; }
-# Fixed credential markers, not entropy: a literal match is a secret, never a coincidence.
-printf '%s' "$diff_out" | grep -nE '(-----BEGIN [A-Z ]*PRIVATE KEY-----|AKIA[0-9A-Z]{16}|xox[baprs]-|gh[pousr]_[A-Za-z0-9]{16,}|github_pat_[A-Za-z0-9_]{20,})'
+# Fixed vendor token shapes, not entropy: a literal match is a secret, never a coincidence.
+# The list lives in the script, shared with the scrub of published text.
+printf '%s\n' "$diff_out" | ~/.claude/scripts/publish-check.sh --tokens-only -
 ```
 
-The scan must **fail closed**, which is why the diff is not piped straight into `grep`. A
-pipeline reports only the last command's status, and `grep` handed an empty stream exits 1 —
-the same status a clean scan returns. So a `git diff` that failed for any reason would read
-as "no secrets found" and the branch would be pushed unscanned, which is the one outcome
-this check exists to prevent.
+The scan must **fail closed**, which is why the diff is captured and its status checked
+before anything reads it. A `git diff` that failed for any reason would otherwise
+hand the scanner nothing, which reads as "no secrets found", and the branch would be pushed
+unscanned — the one outcome this check exists to prevent. The scanner has three exits and
+only 0 lets the run go on: 1 is a hit, and 2 means it could not read what it was given.
+
+A hit prints as `stdin:<n>: <kind>` and never the matched text, where `<n>` is a line of
+that diff. Name the file it sits in from the nearest header above it, which does not print
+the line itself:
+
+```sh
+git diff "$base"...HEAD | sed -n '1,<n>p' | grep '^diff --git ' | tail -1
+```
 
 A hit from either stops the run. Nothing downstream asks a human anything, so there is no
 later point at which someone looks at it before it is public — and a published object stays
