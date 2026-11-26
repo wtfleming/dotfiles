@@ -292,8 +292,16 @@ change that would reach outside the section), a tripped lost-update check, or a 
 asks for a comment. Say which channel was used, since the two are read differently — a
 comment is timestamped and attributable, a body section reads as current.
 
-**On a refusal, name the state you left behind.** Every refusal except "the user asked for a
-comment" means the live body is *already* wrong — a half-section, two verdicts oldest-first,
+**One refusal has no fallback: exit 3.** The merge runs `publish-check.sh` over the section
+and exits 3 when it finds a credential or a denylisted term, or when the check could not
+run. The section is what is wrong then, not the body, and a comment would publish the same
+text by another door. Redact the lines the check names, or fix what stopped it running, and
+run the merge again. Run `~/.claude/scripts/publish-check.sh VERIFICATION.md` before posting
+it as a comment on any of the paths above, too: the comment channel does not pass through
+the merge.
+
+**On a refusal, name the state you left behind.** Every refusal except exit 3 and "the user
+asked for a comment" means the live body is *already* wrong — a half-section, two verdicts oldest-first,
 or a section the merge would not touch — and the new verdict has just gone somewhere else. A
 reviewer opening that PR reads the body's older verdict as current, and the guard's own
 message went to stderr where nobody sees it. So report that the body still holds an

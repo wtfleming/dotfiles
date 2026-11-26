@@ -40,6 +40,10 @@ EOF
 
 # name<TAB>kind<TAB>extended regex. Fixed markers, not entropy: a literal match is a secret.
 # A `token` is a vendor shape with no innocent reading, and is all --tokens-only checks.
+# sk- is the one prefix with innocent readings (CSS classes, placeholder text), and vendors
+# keep adding segments after it, so it is matched by shape, not by a list of prefixes: sk-,
+# then anything, ending in an unbroken run of 20. A key has such a run and a hyphenated
+# name does not. The cost is a key with a hyphen in every 20 characters, about 1 in 10,000.
 # A `header` is matched without regard to case, in its raw form and as a quoted JSON key.
 # This is the one list: /wtf-create-pr's pre-flight scans a branch's diff with it too.
 patterns() {
@@ -48,7 +52,7 @@ AWS access key	token	(AKIA|ASIA)[0-9A-Z]{16}
 GitHub token	token	(gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{22,})
 Slack token	token	xox[abpors]-[0-9A-Za-z-]{10,}
 Google API key	token	AIza[0-9A-Za-z_-]{35}
-API key (sk-)	token	(^|[^A-Za-z0-9])sk-(ant-)?[A-Za-z0-9_-]{20,}
+API key (sk-)	token	(^|[^A-Za-z0-9])sk-[A-Za-z0-9_-]*[A-Za-z0-9_]{20,}
 JSON web token	token	eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}
 private key block	token	-----BEGIN [A-Z ]*PRIVATE KEY-----
 Authorization header value	header	authorization["']?[[:space:]]*:[[:space:]]*["']?(bearer|basic|token)[[:space:]]+[A-Za-z0-9._~+/=-]{8,}
@@ -64,7 +68,8 @@ found=0
 report() {
 	local label=$1 what=$2 rc=0 out
 	shift 2
-	out=$(grep -n "$@") || rc=$?
+	# -a: a NUL byte would otherwise make grep print "Binary file matches" with no line.
+	out=$(grep -a -n "$@") || rc=$?
 	if [ "$rc" -gt 1 ]; then
 		echo "publish-check: could not search $label for: $what" >&2
 		exit 2
@@ -113,12 +118,18 @@ elif [ -e "$DENYLIST" ]; then
 		echo "publish-check: cannot read the denylist at $DENYLIST" >&2
 		exit 2
 	fi
-	tr -d '\r' < "$DENYLIST" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' > "$work/trimmed" \
+	# A byte-order mark stays glued to the first term otherwise, which then never matches.
+	bom=$(printf '\357\273\277')
+	tr -d '\r' < "$DENYLIST" | sed -e "1s/^$bom//" -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' > "$work/trimmed" \
 		|| { echo "publish-check: could not parse the denylist" >&2; exit 2; }
 	rc=0
 	grep -vE '^(#|$)' -- "$work/trimmed" > "$work/terms" || rc=$?
 	[ "$rc" -le 1 ] || { echo "publish-check: could not parse the denylist" >&2; exit 2; }
-	[ ! -s "$work/terms" ] || terms=$work/terms
+	if [ -s "$work/terms" ]; then
+		terms=$work/terms
+	else
+		echo "publish-check: the denylist at $DENYLIST holds no terms — fixed patterns only" >&2
+	fi
 elif [ -n "${PUBLISH_DENYLIST:-}" ] || [ -L "$DENYLIST" ]; then
 	# Asked for by name, or a link to nothing: absent here is a mistake, not a choice.
 	echo "publish-check: no denylist at $DENYLIST" >&2

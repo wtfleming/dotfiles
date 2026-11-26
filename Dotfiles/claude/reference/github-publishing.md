@@ -85,11 +85,13 @@ It refuses on a fixed set of credential shapes and on any term in the local deny
 (`~/.claude/publish-denylist`, one term per line, kept outside every repo). The denylist is
 what covers the work identity above, which no pattern can recognise. A hit names the line
 and the kind of match, never the text: redact that line and run it again. With no denylist
-on the machine it says so and checks the patterns alone, so a line reading `fixed patterns
+on the machine, or one that holds no terms, it says so and checks the patterns alone, so a line reading `fixed patterns
 only` means the work identity was not checked. A clean run is
 not the scrub — the patterns are deliberately few, so a credential in an unlisted shape
 passes — which is why reading the text first stays the rule and this is the net under it.
-`publish-verify-section.sh merge` runs it on the section itself.
+`publish-verify-section.sh merge` runs it on the section itself and exits 3 on a refusal.
+That status has no comment fallback: the section is what is wrong, so posting it by
+another channel publishes what was just refused.
 
 ## Look at every image before it goes up
 
@@ -166,9 +168,11 @@ gh pr view <n> --json body -q .body > "$OUT/body.raw" \
 
 # Replaces the section in place, or appends it when the body has none. Refuses on a body
 # whose markers are doubled, out of order or unterminated, on an empty section, and on any
-# merge that would change a byte outside the section.
+# merge that would change a byte outside the section. Refuses with exit 3 on a section the
+# publish check will not pass. Carry the status out as it is: 3 is the one refusal with no
+# comment fallback, and flattening it to 1 would send the section to a comment.
 ~/.claude/scripts/publish-verify-section.sh merge \
-  "$OUT/body.raw" "$OUT/SECTION.md" "$OUT/body.md" || exit 1
+  "$OUT/body.raw" "$OUT/SECTION.md" "$OUT/body.md" || exit $?
 
 # Re-read immediately before the write and refuse on a change. Everything above is a
 # read-modify-write over a body other people and bots also edit, and `--body-file`
