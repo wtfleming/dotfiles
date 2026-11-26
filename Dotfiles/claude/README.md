@@ -559,8 +559,8 @@ resolved to SHAs first, since `HEAD` inside that worktree is the good end and bi
 blames a commit outside the range without an error. And the deliverable is a test in the
 project's own suite, so the cause is something a reader can run rather than take on trust.
 
-Its report accounts for every hypothesis it listed — the cause, ruled out, or not checked
-— so one that was never tested does not read as eliminated.
+Its report accounts for every hypothesis it listed — the cause, ruled out, inconclusive,
+or not checked — so one that was never tested does not read as eliminated.
 
 ## Opening the PR
 

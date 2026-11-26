@@ -170,6 +170,9 @@ as §2 says, and name what would exercise the trigger in place of a captured fai
 ### Ruled out
 - <hypothesis> — <the check that killed it>
 
+### Inconclusive
+- <a hypothesis a check ran against and did not decide> — <the check, and what it showed>
+
 ### Not checked
 - <a hypothesis from §3 that no check was run against> — <why not>
 
@@ -183,9 +186,9 @@ as §2 says, and name what would exercise the trigger in place of a captured fai
 **Left behind:** <the test file edit; anything else you could not clean up>
 ```
 
-Leave out a section with nothing in it, except **Evidence**. Every hypothesis §3
-listed appears once: as the cause, under **Ruled out**, or under **Not checked**. One
-left off the page reads as eliminated. Where you queried production, read what is
+Leave out a section with nothing in it, except **Evidence**. Every hypothesis §3 listed
+appears once: as the cause, or under **Ruled out**, **Inconclusive** or **Not checked**.
+One left off the page reads as eliminated. Where you queried production, read what is
 deployed once more before reporting; if it changed while you worked, say which readings
 came from which revision. Then stop: the fix is the user's call.
 
