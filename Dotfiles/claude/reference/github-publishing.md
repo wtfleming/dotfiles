@@ -84,7 +84,9 @@ reply on a thread:
 It refuses on a fixed set of credential shapes and on any term in the local denylist
 (`~/.claude/publish-denylist`, one term per line, kept outside every repo). The denylist is
 what covers the work identity above, which no pattern can recognise. A hit names the line
-and the kind of match, never the text: redact that line and run it again. A clean run is
+and the kind of match, never the text: redact that line and run it again. With no denylist
+on the machine it says so and checks the patterns alone, so a line reading `fixed patterns
+only` means the work identity was not checked. A clean run is
 not the scrub — the patterns are deliberately few, so a credential in an unlisted shape
 passes — which is why reading the text first stays the rule and this is the net under it.
 `publish-verify-section.sh merge` runs it on the section itself.

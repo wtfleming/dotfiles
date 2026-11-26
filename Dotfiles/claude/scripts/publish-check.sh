@@ -9,12 +9,17 @@
 # scan_identifiers.py (MIT, see ~/.claude/reference/LICENSE-bughunter).
 set -euo pipefail
 
+# Bytes, not characters. In a UTF-8 locale BSD grep matches nothing on a line holding one
+# invalid byte, so a credential beside a Latin-1 character passed as a clean scan. Every
+# pattern here is ASCII. The cost is that a denylist term folds case for ASCII letters only.
+export LC_ALL=C
+
 DENYLIST=${PUBLISH_DENYLIST:-$HOME/.claude/publish-denylist}
 
 usage() {
 	cat >&2 <<'EOF'
-usage: publish-check.sh <file>...
-       publish-check.sh -          (read the text from stdin)
+usage: publish-check.sh [--tokens-only] <file>...
+       publish-check.sh [--tokens-only] -     (read the text from stdin)
 
 Exits 0 when nothing matched, 1 when something did, 2 when a file or the denylist could
 not be read. A hit is cleared by redacting the text, as `<redacted: KEY_NAME>`.
@@ -23,24 +28,32 @@ The denylist is one term per line, matched as a case-insensitive substring; blan
 and lines starting with # are skipped. It lives outside the repo, at
 ~/.claude/publish-denylist or wherever $PUBLISH_DENYLIST points, because the terms it
 holds — an employer's name, an internal hostname, a work email domain — are the ones
-that must not be published. A machine with no denylist checks the fixed patterns only.
+that must not be published. A machine with no denylist checks the fixed patterns only,
+and says so on stderr. A denylist named by $PUBLISH_DENYLIST that is not there is an
+error, since a mistyped path would otherwise read as a clean scan.
+
+--tokens-only checks the vendor token shapes alone: no header or URL shapes and no
+denylist. It is for a diff, where those would match ordinary code.
 EOF
 	exit 64
 }
 
-# name<TAB>extended regex. Fixed markers, not entropy: a literal match is a secret.
+# name<TAB>kind<TAB>extended regex. Fixed markers, not entropy: a literal match is a secret.
+# A `token` is a vendor shape with no innocent reading, and is all --tokens-only checks.
+# A `header` is matched without regard to case, in its raw form and as a quoted JSON key.
+# This is the one list: /wtf-create-pr's pre-flight scans a branch's diff with it too.
 patterns() {
 	cat <<'EOF'
-AWS access key	(AKIA|ASIA)[0-9A-Z]{16}
-GitHub token	(gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{22,})
-Slack token	xox[abpors]-[0-9A-Za-z-]{10,}
-Google API key	AIza[0-9A-Za-z_-]{35}
-API key (sk-)	(^|[^A-Za-z0-9])sk-(ant-)?[A-Za-z0-9_-]{20,}
-JSON web token	eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}
-private key block	-----BEGIN [A-Z ]*PRIVATE KEY-----
-Authorization header value	[Aa]uthorization:[[:space:]]*(Bearer|Basic|Token)[[:space:]]+[A-Za-z0-9._~+/=-]{8,}
-Cookie header value	[Cc]ookie:[[:space:]]*[A-Za-z0-9_.-]+=[^[:space:];<]{8,}
-password in a URL	[a-z][a-z0-9+.-]*://[^/[:space:]:@<]+:[^/[:space:]@<]{3,}@
+AWS access key	token	(AKIA|ASIA)[0-9A-Z]{16}
+GitHub token	token	(gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{22,})
+Slack token	token	xox[abpors]-[0-9A-Za-z-]{10,}
+Google API key	token	AIza[0-9A-Za-z_-]{35}
+API key (sk-)	token	(^|[^A-Za-z0-9])sk-(ant-)?[A-Za-z0-9_-]{20,}
+JSON web token	token	eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}
+private key block	token	-----BEGIN [A-Z ]*PRIVATE KEY-----
+Authorization header value	header	authorization["']?[[:space:]]*:[[:space:]]*["']?(bearer|basic|token)[[:space:]]+[A-Za-z0-9._~+/=-]{8,}
+Cookie header value	header	cookie["']?[[:space:]]*:[[:space:]]*["']?[A-Za-z0-9_.-]+=[^[:space:];<"']{8,}
+password in a URL	text	[a-z][a-z0-9+.-]*://[^/[:space:]:@<]+:[^/[:space:]@<]{3,}@
 EOF
 }
 
@@ -64,34 +77,54 @@ report() {
 }
 
 check_file() {
-	local file=$1 label=$2 name re
+	local file=$1 label=$2 name kind re
 	if [ ! -f "$file" ] || [ ! -r "$file" ]; then
 		echo "publish-check: cannot read $label" >&2
 		exit 2
 	fi
-	while IFS=$'\t' read -r name re; do
-		report "$label" "$name" -E -e "$re" -- "$file"
+	while IFS=$'\t' read -r name kind re; do
+		case $kind in
+			token) report "$label" "$name" -E -e "$re" -- "$file" ;;
+			header) [ "$tokens_only" -eq 1 ] || report "$label" "$name" -iE -e "$re" -- "$file" ;;
+			*) [ "$tokens_only" -eq 1 ] || report "$label" "$name" -E -e "$re" -- "$file" ;;
+		esac
 	done < <(patterns)
 	[ -z "$terms" ] || report "$label" "a term on the denylist" -i -F -f "$terms" -- "$file"
 }
 
+tokens_only=0
+if [ "${1:-}" = --tokens-only ]; then
+	tokens_only=1
+	shift
+fi
 [ $# -ge 1 ] || usage
 
 work=$(mktemp -d) || { echo "publish-check: could not create a temp directory" >&2; exit 2; }
 trap 'rm -rf "$work"' EXIT
 
 # An empty pattern line matches every line of the input, so blanks and comments come out
-# before grep sees the list.
+# before grep sees the list. Each term is trimmed first: grep -F takes a line byte for
+# byte, so a trailing space or a CRLF ending would leave a term that matches nothing.
 terms=
-if [ -e "$DENYLIST" ]; then
+if [ "$tokens_only" -eq 1 ]; then
+	:
+elif [ -e "$DENYLIST" ]; then
 	if [ ! -f "$DENYLIST" ] || [ ! -r "$DENYLIST" ]; then
 		echo "publish-check: cannot read the denylist at $DENYLIST" >&2
 		exit 2
 	fi
+	tr -d '\r' < "$DENYLIST" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' > "$work/trimmed" \
+		|| { echo "publish-check: could not parse the denylist" >&2; exit 2; }
 	rc=0
-	grep -vE '^[[:space:]]*(#|$)' -- "$DENYLIST" > "$work/terms" || rc=$?
+	grep -vE '^(#|$)' -- "$work/trimmed" > "$work/terms" || rc=$?
 	[ "$rc" -le 1 ] || { echo "publish-check: could not parse the denylist" >&2; exit 2; }
 	[ ! -s "$work/terms" ] || terms=$work/terms
+elif [ -n "${PUBLISH_DENYLIST:-}" ] || [ -L "$DENYLIST" ]; then
+	# Asked for by name, or a link to nothing: absent here is a mistake, not a choice.
+	echo "publish-check: no denylist at $DENYLIST" >&2
+	exit 2
+else
+	echo "publish-check: no denylist at $DENYLIST — fixed patterns only" >&2
 fi
 
 for arg in "$@"; do
