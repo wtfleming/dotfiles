@@ -53,6 +53,8 @@ check "a bearer value is refused" "1:text:1: Authorization header value" "$(run 
 check "a password in a URL is refused" "1:text:1: password in a URL" "$(run "postgres://app:${A20:0:8}@db/app")"
 check "a password with no user name is refused" "1:text:1: password in a URL" "$(run "redis://:${A20}@cache:6379/0")"
 check "whatever the case of the scheme" "1:text:1: password in a URL" "$(run "HTTPS://app:${A20:0:8}@host")"
+check "a colon and an @ in a query string, with no port before it, are not a password" "0:" "$(run 'https://example.com?contact=team:somebody@example.org')"
+check "nor is one in a fragment" "0:" "$(run 'https://example.com#at:1234@x')"
 check "a Slack token is refused" "1:text:1: Slack token" "$(run "xox""b-${A20:0:12}")"
 check "a Google API key is refused" "1:text:1: Google API key" "$(run "AIza""${A20}${A20:0:15}")"
 check "an sk- key is refused" "1:text:1: API key (sk-)" "$(run "key=sk""-ant-api03-${A20}")"
@@ -68,6 +70,13 @@ check "a cookie on a removed diff line is refused" "1:text:1: Cookie header valu
 check "so is one under another header name" "1:text:1: Cookie header value" "$(run "X-Cookie: session=${A20}")"
 check "and one whose name ends t-cookie" "1:text:1: Cookie header value" "$(run "X-Client-Cookie: session=${A20}")"
 check "or et-cookie" "1:text:1: Cookie header value" "$(run "X-Budget-Cookie: session=${A20}")"
+check "a quoted cookie value is refused" "1:text:1: Cookie header value" "$(run "Cookie: session=\"${A20}\"")"
+check "so is a quoted Set-Cookie value" "1:text:1: Cookie header value" "$(run "Set-Cookie: session=\"${A20}\"; Path=/")"
+check "and a cookie after a short quoted one" "1:text:1: Cookie header value" "$(run "Cookie: lang=\"en\"; session=${A20}")"
+for pair in "lang='en'" "note=it's" 'prefs={"a":1}' 'q="a;b"'; do
+  check "a cookie after $pair is refused" "1:text:1: Cookie header value" "$(run "Cookie: $pair; session=${A20}")"
+done
+check "a redacted quoted cookie passes" "0:" "$(run 'Cookie: session="<redacted: SESSION>"')"
 check "a redacted Set-Cookie with attributes passes" "0:" "$(run 'Set-Cookie: session=<redacted: SESSION>; Domain=example.com; Path=/api/v1/users; Max-Age=31536000')"
 check "a Set-Cookie value is refused" "1:text:1: Cookie header value" "$(run "Set-Cookie: session=${A20}; Path=/")"
 check "a header in escaped JSON is refused" "1:text:1: Authorization header value" "$(run "{\\\"Authorization\\\": \\\"Bearer ${A20}\\\"}")"

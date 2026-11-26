@@ -60,9 +60,9 @@ API key (sk-)	token	(^|[^A-Za-z0-9])sk-[A-Za-z0-9_-]*[A-Za-z0-9_]{20,}
 JSON web token	token	eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}
 private key block	token	-----BEGIN [A-Z ]*PRIVATE KEY-----
 Authorization header value	header	authorization\\?["']?[[:space:]]*:[[:space:]]*\\?["']?(bearer|basic|token)[[:space:]]+[A-Za-z0-9._~+/=-]{8,}
-Cookie header value	header	(^|[^-]|(^|[^Tt])-|(^|[^Ee])t-|(^|[^Ss])et-)cookie\\?["']?[[:space:]]*:[[:space:]]*\\?["']?([^;]*;[[:space:]]*)*[A-Za-z0-9_.-]+=[^[:space:];<"']{8,}
-Cookie header value	header	set-cookie\\?["']?[[:space:]]*:[[:space:]]*\\?["']?[A-Za-z0-9_.-]+=[^[:space:];<"']{8,}
-password in a URL	text	[A-Za-z][A-Za-z0-9+.-]*://[^/[:space:]:@<]*:[^/[:space:]@<]{3,}@
+Cookie header value	header	(^|[^-]|(^|[^Tt])-|(^|[^Ee])t-|(^|[^Ss])et-)cookie\\?["']?[[:space:]]*:[[:space:]]*\\?["']?([^;]*;[[:space:]]*)*[A-Za-z0-9_.-]+=\\?["']?[^[:space:];<"']{8,}
+Cookie header value	header	set-cookie\\?["']?[[:space:]]*:[[:space:]]*\\?["']?[A-Za-z0-9_.-]+=\\?["']?[^[:space:];<"']{8,}
+password in a URL	text	[A-Za-z][A-Za-z0-9+.-]*://[^/[:space:]:@<?#]*:[^/[:space:]@<]{3,}@
 EOF
 }
 
