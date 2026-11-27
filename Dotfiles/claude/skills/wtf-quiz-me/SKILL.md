@@ -93,14 +93,17 @@ change. Then ask the first question.
 
 - **One question per turn, then stop and wait.** Never ask several at once.
   Keep each question short enough to read on a phone.
-- **Start at orientation** and let the answers decide where to go next:
+- **Start at orientation** and keep each question in the user's zone of
+  proximal development: hard enough to stretch them, easy enough that they can
+  answer it. Let the answers decide where to go next:
   - a solid answer: go one level deeper on the same thread
   - a partial answer: say which part was right, then ask a follow-up about the
     part that was missing
   - a wrong answer or "don't know": give the answer in two or three sentences,
     citing `file:line`, the PR section or the source it came from. Then move to
     an easier question or a different thread. Come back to the same idea later
-    with a question phrased differently.
+    with a question phrased differently. That retrieval practice is what
+    rebuilds it.
   - two misses in a row on one thread: move on to a new thread instead of
     pushing harder on that one
 - **Ask what someone would need to know to review, debug or change the code.**
